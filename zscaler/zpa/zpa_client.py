@@ -1,70 +1,59 @@
-# This code is part of Ansible, but is an independent component.
-# This particular file snippet, and this file snippet only, is BSD licensed.
-# Modules you write using this snippet, which is embedded dynamically by Ansible
-# still belong to the author of the module, and may assign their own license
-# to the complete work.
-#
-# Copyright (c), Ansible Project 2017
-# Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
-
 import re
-
-import jsonify
-
 import json
 import random
 import time
 import urllib.parse
+import requests
+import logging
+import os
+from zscaler.cache.no_op_cache import NoOpCache
+from zscaler.cache.zscaler_cache import ZPACache
 
-from ansible.module_utils._text import to_text
-import env_fallback
-import fetch_url
+# Setup the logger
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Endpoint configuration from Go
+BASE_URLS = {
+    "PRODUCTION": "https://config.private.zscaler.com",
+    "BETA": "https://config.zpabeta.net",
+    "GOV": "https://config.zpagov.net",
+    "GOVUS": "https://config.zpagov.us",
+    "PREVIEW": "https://config.zpapreview.net",
+    "DEV": "https://public-api.dev.zpath.net",
+    "QA": "https://config.qa.zpath.net",
+    "QA2": "https://pdx2-zpa-config.qa2.zpath.net",
+}
 
 def retry_with_backoff(retries=5, backoff_in_seconds=1):
-    """
-    This decorator should be used on functions that make HTTP calls and
-    returns Response
-    """
-
     def decorator(f):
-        def wrapper(*args):
+        def wrapper(*args, **kwargs):
             x = 0
             while True:
-                resp = f(*args)
+                resp = f(*args, **kwargs)
                 if resp.status_code < 299 or resp.status_code == 400:
                     return resp
                 if x == retries:
-                    raise Exception("Reached max retries: %s" % (resp.json))
+                    raise Exception("Reached max retries: %s" % (resp.json()))
                 else:
                     sleep = backoff_in_seconds * 2 ** x + random.uniform(0, 1)
-                    args[0].module.log(
-                        "\n[INFO] args: %s\nretrying after %d seconds...\n"
-                        % (str(args), sleep)
-                    )
+                    logger.info("Args: %s, retrying after %d seconds...", str(args), sleep)
                     time.sleep(sleep)
                     x += 1
-
         return wrapper
-
     return decorator
 
 
 def delete_none(f):
-    """
-    This decorator should be used on functions that return an object to delete empty fields
-    """
-
-    def wrapper(*args):
-        _dict = f(*args)
+    def wrapper(*args, **kwargs):
+        _dict = f(*args, **kwargs)
         if _dict is not None:
             return deleteNone(_dict)
         return _dict
-
     return wrapper
 
 
 def deleteNone(_dict):
-    """Delete None values recursively from all of the dictionaries, tuples, lists, sets"""
     if isinstance(_dict, dict):
         for key, value in list(_dict.items()):
             if isinstance(value, (list, dict, tuple, set)):
@@ -94,50 +83,66 @@ def snakecaseToCamelcase(obj):
     return new_obj
 
 
-class Response(object):
-    def __init__(self, resp, info):
-        self.body = None
-        if resp:
-            self.body = resp.read()
-        self.info = info
-
-    @property
-    def json(self):
-        if not self.body:
-            if "body" in self.info:
-                return json.loads(to_text(self.info.get("body")))
-            return None
-        try:
-            return json.loads(to_text(self.body))
-        except ValueError:
-            return None
-
-    @property
-    def status_code(self):
-        return self.info.get("status")
-
-
 class ZPAClientHelper:
-    def __init__(self, module):
-        self.baseurl = "https://config.private.zscaler.com"
-        # self.private_baseurl = "https://api.private.zscaler.com"
+    def __init__(self, cache=None):
+        """
+        Initialize the ZPAClientHelper with optional caching.
+
+        Args:
+            cache (Cache, optional): A caching object. Defaults to NoOpCache.
+        """
+        # Check the environment variable to determine if caching is enabled
+        cache_enabled = os.environ.get('ZSCALER_CLIENT_CACHE_ENABLED', 'true').lower() == 'true'
+
+        if cache is None:
+            if cache_enabled:
+                self.cache = ZPACache(ttl=3600, tti=1800)  # You can set your desired default TTL and TTI
+            else:
+                self.cache = NoOpCache()
+        else:
+            self.cache = cache
+
+    def make_request(self, url, method, data=None):
+        cache_key = self.cache.create_key(url)
+
+        # Check if data is in cache before making a request
+        if self.cache.contains(cache_key):
+            return self.cache.get(cache_key)
+
+        # Here, perform the actual HTTP request using your preferred method
+        # For the sake of this example, let's assume the result is stored in `response`
+        response = ...  # make the actual request
+
+        # Cache the response
+        self.cache.add(cache_key, response)
+
+        return response
+
+    def __init__(self, client_id, client_secret, customer_id, cloud):
         self.timeout = 240
-        self.module = module
-        self.client_id = module.params.get("client_id")
-        self.client_secret = module.params.get("client_secret")
-        self.customer_id = module.params.get("customer_id")
-        self.tries = 0
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self.customer_id = customer_id
+        self.cloud = cloud
+        # Select the appropriate URL
+        self.baseurl = BASE_URLS.get(self.cloud, BASE_URLS["PRODUCTION"])
+
         # login
         response = self.login()
         if response is None or response.status_code > 299 or response.json is None:
+            logger.error(
+                "Failed to login using provided credentials, please verify validity of API ZPA_CLIENT_ID & ZPA_CLIENT_SECRET. response: %s",
+                response
+            )
             self.module.fail_json(
                 msg="Failed to login using provided credentials, please verify validity of API ZPA_CLIENT_ID & ZPA_CLIENT_SECRET. response: %s"
                 % (response)
             )
-        resp_json = response.json
+        resp_json = response.json()
+
         self.access_token = resp_json.get("access_token")
-        self.module.log("[INFO] access_token: '%s'" % (self.access_token))
-        self.headers = {  # 'referer': self.baseurl,
+        logger.info("access_token: '%s'", self.access_token)
+        self.headers = {
             "Content-Type": "application/json",
             "Accept": "application/json",
             "Authorization": "Bearer %s" % (self.access_token),
@@ -145,7 +150,6 @@ class ZPAClientHelper:
 
     @retry_with_backoff(retries=5)
     def login(self):
-        """get jwt token"""
         data = urllib.parse.urlencode(
             {"client_id": self.client_id, "client_secret": self.client_secret}
         )
@@ -154,63 +158,29 @@ class ZPAClientHelper:
             "Accept": "application/json",
         }
         try:
-            url = "%s/signin" % self.baseurl
-            resp, info = fetch_url(
-                module=self.module, url=url, data=data, method="POST", headers=headers
+            url = f"{self.baseurl}/signin"
+            resp = requests.post(url, data=data, headers=headers, timeout=self.timeout)
+            logger.info(
+                "Calling: POST %s %s. Response: %s",
+                url, str(data), resp.content
             )
-            resp = Response(resp, info)
-            self.module.log(
-                "[INFO] calling: %s %s %s\n response: %s"
-                % ("POST", url, str(data), str("" if resp is None else resp.json))
-            )
-            # self.module.log("[INFO] %s\n" % (to_text(resp.read())))
             return resp
         except Exception as e:
-            self._fail("login", str(e))
-
-    def jsonify(self, data):
-        try:
-            return jsonify(data)
-        except UnicodeError as e:
-            self.fail_json(msg=to_text(e))
-
-    def _fail(self, msg, e):
-        if "message" in e:
-            err_string = e.get("message")
-        else:
-            err_string = e
-        self.module.fail_json(msg="%s: %s" % (msg, err_string))
-
-    def _url_builder(self, path):
-        if path[0] == "/":
-            path = path[1:]
-        return "%s/%s" % (self.baseurl, path)
+            logger.error("Login failed: %s", str(e))
+            return None
 
     @retry_with_backoff(retries=5)
     def send(self, method, path, data=None, fail_safe=False):
-        url = self._url_builder(path)
-        data = self.module.jsonify(data)
-        if method == "DELETE":
-            if data == "null":
-                data = None
-
-        resp, info = fetch_url(
-            self.module,
-            url,
-            data=data,
-            headers=self.headers,
-            method=method,
-            timeout=self.timeout,
+        url = f"{self.baseurl}/{path.lstrip('/')}"
+        resp = requests.request(
+            method, url, json=data, headers=self.headers, timeout=self.timeout
         )
-        resp = Response(resp, info)
-        self.module.log(
-            "[INFO] calling: %s %s %s\n response: %s"
-            % (method, url, str(data), str("" if resp is None else resp.json))
+        logger.info(
+            "Calling: %s %s %s. Response: %s",
+            method, url, str(data), str(resp.json())
         )
         if resp.status_code == 400 and fail_safe:
-            self.module.fail_json(
-                msg="Operation failed. API response: %s\n" % (resp.json)
-            )
+            logger.error("Operation failed. API response: %s", resp.json())
         return resp
 
     def get(self, path, data=None, fail_safe=False):
@@ -225,85 +195,28 @@ class ZPAClientHelper:
     def delete(self, path, data=None):
         return self.send("DELETE", path, data)
 
-    @staticmethod
-    def zpa_argument_spec():
-        return dict(
-            client_id=dict(
-                no_log=True,
-                fallback=(
-                    env_fallback,
-                    ["ZPA_CLIENT_ID"],
-                ),
-            ),
-            client_secret=dict(
-                no_log=True,
-                fallback=(
-                    env_fallback,
-                    ["ZPA_CLIENT_SECRET"],
-                ),
-            ),
-            customer_id=dict(
-                no_log=True,
-                fallback=(
-                    env_fallback,
-                    ["ZPA_CUSTOMER_ID"],
-                ),
-            ),
-        )
-
-    def get_paginated_data(
-        self,
-        base_url=None,
-        data_key_name=None,
-        data_per_page=500,
-        expected_status_code=200,
-    ):
-        """
-        Function to get all paginated data from given URL
-        Args:
-            base_url: Base URL to get data from
-            data_key_name: Name of data key value
-            data_per_page: Number results per page (Default: 40)
-            expected_status_code: Expected returned code from DigitalOcean (Default: 200)
-        Returns: List of data
-
-        """
+    def get_paginated_data(self, base_url=None, data_key_name=None, data_per_page=500, expected_status_code=200):
         page = 0
         has_next = True
         ret_data = []
         status_code = None
         response = None
         while has_next or status_code != expected_status_code:
-            required_url = "{0}?page={1}&pagesize={2}".format(
-                base_url, page, data_per_page
-            )
+            required_url = f"{base_url}?page={page}&pagesize={data_per_page}"
             response = self.get(required_url)
             status_code = response.status_code
-            # stop if any error during pagination
             if status_code != expected_status_code:
                 break
             page += 1
-            if (
-                response is None
-                or response.json is None
-                or response.json.get(data_key_name) is None
-            ):
+            if response.json().get(data_key_name) is None:
                 has_next = False
                 continue
-            ret_data.extend(response.json[data_key_name])
-            try:
-                has_next = (
-                    response.json.get("totalPages") is not None
-                    and int(response.json["totalPages"]) != 0
-                    and int(response.json["totalPages"]) < page
-                )
-            except KeyError:
-                has_next = False
+            ret_data.extend(response.json()[data_key_name])
+            has_next = response.json().get("totalPages") is not None and int(response.json()["totalPages"]) != 0 and int(response.json()["totalPages"]) < page
 
         if status_code != expected_status_code:
-            msg = "Failed to fetch %s from %s" % (data_key_name, base_url)
+            msg = f"Failed to fetch {data_key_name} from {base_url}"
             if response:
-                msg += " due to error : %s" % response.json.get("message")
-            self.module.fail_json(msg=msg)
-
+                msg += f" due to error : {response.json().get('message')}"
+            logger.error(msg)
         return ret_data

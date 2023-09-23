@@ -1,11 +1,11 @@
 from .zpa_client import ZPAClientHelper
-import delete_none
+from .zpa_client import delete_none
 
 class PostureProfileService:
-    def __init__(self, module, customer_id):
-        self.module = module
+    def __init__(self, client_id, client_secret, customer_id, cloud):
         self.customer_id = customer_id
-        self.rest = ZPAClientHelper(module)
+        self.rest = ZPAClientHelper(client_id, client_secret, customer_id, cloud)
+
 
     def getByIDOrName(self, id, name):
         posture = None
@@ -22,7 +22,7 @@ class PostureProfileService:
         status_code = response.status_code
         if status_code != 200:
             return None
-        return self.mapRespJSONToApp(response.json)
+        return self.mapRespJSONToApp(response.json())
 
     def getAll(self):
         list = self.rest.get_paginated_data(

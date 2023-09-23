@@ -1,5 +1,5 @@
 from .zpa_client import ZPAClientHelper
-import camelcaseToSnakeCase
+from .zpa_client import camelcaseToSnakeCase
 
 class LSSStatusCodesService:
     def __init__(self, module):

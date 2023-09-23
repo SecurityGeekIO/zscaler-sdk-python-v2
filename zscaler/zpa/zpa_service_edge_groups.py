@@ -1,6 +1,6 @@
 from .zpa_client import ZPAClientHelper
-import delete_none
-import camelcaseToSnakeCase
+from .zpa_client import delete_none
+from .zpa_client import camelcaseToSnakeCase
 
 class ServiceEdgeGroupService:
     def __init__(self, module, customer_id):

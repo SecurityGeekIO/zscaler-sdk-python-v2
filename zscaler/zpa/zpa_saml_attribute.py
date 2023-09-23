@@ -1,5 +1,5 @@
 from .zpa_client import ZPAClientHelper
-import delete_none
+from .zpa_client import delete_none
 
 class SamlAttributeService:
     def __init__(self, module, customer_id):
