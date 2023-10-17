@@ -1,70 +1,59 @@
-from .zpa_client import ZPAClientHelper
-from .zpa_client import delete_none
+from .zpa_client import ZPAClientHelper, delete_none_values
 
 class TrustedNetworksService:
     def __init__(self, client_id, client_secret, customer_id, cloud):
         self.customer_id = customer_id
         self.rest = ZPAClientHelper(client_id, client_secret, customer_id, cloud)
 
-    def getByIDOrName(self, id, name):
-        network = None
-        if id is not None:
+    def getByIDOrName(self, id=None, name=None):
+        if id:
             network = self.getByID(id)
-        if network is None and name is not None:
-            network = self.getByName(name)
-        return network
+            if network:
+                return network
+        if name:
+            return self.getByName(name)
+        return None
 
     def getByID(self, id):
-        response = self.rest.get(
-            "/mgmtconfig/v1/admin/customers/%s/network/%s" % (self.customer_id, id)
-        )
-        status_code = response.status_code
-        if status_code != 200:
+        endpoint = f"/mgmtconfig/v1/admin/customers/{self.customer_id}/network/{id}"
+        response = self.rest.get(endpoint)
+
+        if response.status_code != 200:
             return None
-        return self.mapRespJSONToApp(response.json())
+        return self._map_response_to_object(response.json())
 
     def getAll(self):
-        list = self.rest.get_paginated_data(
-            base_url="/mgmtconfig/v2/admin/customers/%s/network" % (self.customer_id),
-            data_key_name="list",
-        )
-        networks = []
-        for network in list:
-            networks.append(self.mapRespJSONToApp(network))
-        return networks
+        endpoint = f"/mgmtconfig/v2/admin/customers/{self.customer_id}/network"
+        networks_data = self.rest.get_paginated_data(base_url=endpoint, data_key_name="list")
+        return [self._map_response_to_object(network) for network in networks_data]
 
     def getByName(self, name):
         networks = self.getAll()
-        for network in networks:
-            if network.get("name") == name:
-                return network
-        return None
+        return next((network for network in networks if network["name"] == name), None)
 
-    @delete_none
-    def mapRespJSONToApp(self, resp_json):
-        if resp_json is None:
-            return {}
-        return {
+    @staticmethod
+    def _map_response_to_object(resp_json):
+        if not isinstance(resp_json, dict):
+            raise TypeError(f"Expected dict but received {type(resp_json)}")
+
+        # Apply the delete_none_values directly to the dictionary
+        return delete_none_values({
             "creation_time": resp_json.get("creationTime"),
-            "domain": resp_json.get("domain"),
             "id": resp_json.get("id"),
-            "master_customer_id": resp_json.get("masterCustomerId"),
             "modified_by": resp_json.get("modifiedBy"),
             "modified_time": resp_json.get("modifiedTime"),
             "name": resp_json.get("name"),
             "network_id": resp_json.get("networkId"),
             "zscaler_cloud": resp_json.get("zscalerCloud"),
-        }
+        })
 
-    @delete_none
-    def mapAppToJSON(self, network):
-        if network is None:
+    def map_object_to_request(self, network):
+        if not network:
             return {}
+
         return {
             "creationTime": network.get("creation_time"),
-            "domain": network.get("domain"),
             "id": network.get("id"),
-            "masterCustomerId": network.get("master_customer_id"),
             "modifiedBy": network.get("modified_by"),
             "modifiedTime": network.get("modified_time"),
             "name": network.get("name"),
