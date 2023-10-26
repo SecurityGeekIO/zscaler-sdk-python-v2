@@ -2,11 +2,11 @@ from .zpa_client import ZPAClientHelper
 from .zpa_client import delete_none
 from .zpa_client import camelcaseToSnakeCase
 
+
 class ApplicationSegmentService:
-    def __init__(self, module, customer_id):
-        self.module = module
-        self.customer_id = customer_id
-        self.rest = ZPAClientHelper(module)
+    def __init__(self, client: ZPAClientHelper):
+        self.rest = client
+        self.customer_id = client.customer_id
 
     def getByIDOrName(self, id, name):
         app = None
@@ -17,18 +17,15 @@ class ApplicationSegmentService:
         return app
 
     def getByID(self, id):
-        response = self.rest.get(
-            "/mgmtconfig/v1/admin/customers/%s/application/%s" % (self.customer_id, id)
-        )
+        response = self.rest.get("/mgmtconfig/v1/admin/customers/%s/application/%s" % (self.customer_id, id))
         status_code = response.status_code
         if status_code != 200:
             return None
-        return self.mapRespJSONToApp(response.json)
+        return self.mapRespJSONToApp(response.json())
 
     def getAll(self):
-        list = self.rest.get_paginated_data(
-            base_url="/mgmtconfig/v1/admin/customers/%s/application"
-            % (self.customer_id),
+        list, error_message = self.rest.get_paginated_data(
+            base_url="/mgmtconfig/v1/admin/customers/%s/application" % (self.customer_id),
             data_key_name="list",
         )
         apps = []
@@ -93,14 +90,10 @@ class ApplicationSegmentService:
             "creation_time": resp_json.get("creationTime"),
             "modifiedby": resp_json.get("modifiedBy"),
             "id": resp_json.get("id"),
-            "server_groups": self.mapServerGroupsJSONToList(
-                resp_json.get("serverGroups")
-            ),
+            "server_groups": self.mapServerGroupsJSONToList(resp_json.get("serverGroups")),
             "segment_group_name": resp_json.get("segmentGroupName"),
             "domain_names": resp_json.get("domainNames"),
-            "clientless_apps": self.mapClientlessAppsJSONToList(
-                resp_json.get("clientlessApps")
-            ),
+            "clientless_apps": self.mapClientlessAppsJSONToList(resp_json.get("clientlessApps")),
         }
 
     @delete_none
@@ -150,8 +143,7 @@ class ApplicationSegmentService:
         """update the application"""
         appJSON = self.mapAppToJSON(app)
         response = self.rest.put(
-            "/mgmtconfig/v1/admin/customers/%s/application/%s"
-            % (self.customer_id, appJSON.get("id")),
+            "/mgmtconfig/v1/admin/customers/%s/application/%s" % (self.customer_id, appJSON.get("id")),
             data=appJSON,
         )
         status_code = response.status_code
@@ -160,10 +152,7 @@ class ApplicationSegmentService:
         return self.getByID(app.get("id"))
 
     def detach_from_segment_group(self, app_id, seg_group_id):
-        seg_group = self.rest.get(
-            "/mgmtconfig/v1/admin/customers/%s/segmentGroup/%s"
-            % (self.customer_id, seg_group_id)
-        )
+        seg_group = self.rest.get("/mgmtconfig/v1/admin/customers/%s/segmentGroup/%s" % (self.customer_id, seg_group_id))
         if seg_group.status_code > 299:
             return None
         data = seg_group.json
@@ -174,14 +163,11 @@ class ApplicationSegmentService:
                 addaptedApps.append(app)
         data["applications"] = addaptedApps
         self.rest.put(
-            "/mgmtconfig/v1/admin/customers/%s/segmentGroup/%s"
-            % (self.customer_id, seg_group_id),
+            "/mgmtconfig/v1/admin/customers/%s/segmentGroup/%s" % (self.customer_id, seg_group_id),
             data=data,
         )
 
     def delete(self, id):
         """delete the application"""
-        response = self.rest.delete(
-            "/mgmtconfig/v1/admin/customers/%s/application/%s" % (self.customer_id, id)
-        )
+        response = self.rest.delete("/mgmtconfig/v1/admin/customers/%s/application/%s" % (self.customer_id, id))
         return response.status_code

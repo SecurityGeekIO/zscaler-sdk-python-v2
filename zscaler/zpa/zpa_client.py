@@ -290,7 +290,7 @@ class ZPAClientHelper:
                 )
 
                 if resp.status_code == 429:  # HTTP Status code 429 indicates "Too Many Requests"
-                    sleep_time = int(resp.headers.get('Retry-After', 60))  # Default to 60 seconds if 'Retry-After' header is missing
+                    sleep_time = int(resp.headers.get('Retry-After', 2))  # Default to 60 seconds if 'Retry-After' header is missing
                     logger.warning(f"Rate limit exceeded. Retrying in {sleep_time} seconds.")
                     sleep(sleep_time)
                     attempts += 1
@@ -306,7 +306,8 @@ class ZPAClientHelper:
                     attempts += 1
                     sleep(5)  # Sleep for 5 seconds before retrying
 
-        # If Non-GET call, clear the cache
+        # If Non-GET call, clear the 
+        # TODO: clear only this resource cached value & list
         if method != "GET":
             self.cache.clear()
 
