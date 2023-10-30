@@ -81,8 +81,9 @@ class Cache():
             request {str} -- The key to use to produce a unique key
 
         Returns:
-            str -- Unique key based on the input
+            str -- Unique key based on the input URL without query parameters
         """
-        # Validate URL and return URL string
+        # Validate URL and return URL string without query parameters
         url_object = urlparse(request)
-        return url_object.geturl()
+        base_url = f"{url_object.netloc}{url_object.path}"
+        return base_url
