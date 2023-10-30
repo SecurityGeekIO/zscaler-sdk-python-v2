@@ -11,6 +11,9 @@ from zscaler.cache.zscaler_cache import ZPACache
 from zscaler.ratelimiter.ratelimiter import RateLimiter
 from zscaler.user_agent import UserAgent
 from restfly.utils import format_json_response
+from zscaler.zpa.zpa_application_segment import ApplicationSegmentService
+from . import ZPAClient
+
 
 # Setup the logger
 logging.basicConfig(level=logging.INFO)
@@ -159,7 +162,7 @@ def snakecaseToCamelcase(obj):
     return new_obj
 
 
-class ZPAClientHelper:
+class ZPAClientHelper(ZPAClient):
     """
     Client helper for ZPA operations.
 
@@ -426,3 +429,11 @@ class ZPAClientHelper:
             page += 1
 
         return ret_data, error_message
+    
+    @property
+    def app_segments(self):
+        """
+        The interface object for the :ref:`ZPA Application Segments interface <zpa-app_segments>`.
+
+        """
+        return ApplicationSegmentService(self)

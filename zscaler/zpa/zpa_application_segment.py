@@ -1,11 +1,9 @@
-from .zpa_client import ZPAClientHelper
-from .zpa_client import delete_none
-from .zpa_client import camelcaseToSnakeCase
+from . import ZPAClient
 from requests import Response
 
 
 class ApplicationSegmentService:
-    def __init__(self, client: ZPAClientHelper):
+    def __init__(self, client: ZPAClient):
         self.rest = client
         self.customer_id = client.customer_id
 
