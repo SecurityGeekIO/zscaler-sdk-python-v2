@@ -52,7 +52,7 @@ class ApplicationSegmentService:
             status_code = response.status_code
             if status_code > 299:
                 return None
-        return self.getByID(response.json.get("id"))
+        return self.getByID(response.get("id"))
 
     def update(self, app):
         """update the application"""
