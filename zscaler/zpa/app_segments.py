@@ -39,7 +39,7 @@ class ApplicationSegmentService:
             if app.get("name") == name:
                 return app
         return None
-    
+
     def create(self, app):
         """Create new application"""
         response = self.rest.post(
