@@ -10,34 +10,37 @@ from zscaler.cache.no_op_cache import NoOpCache
 from zscaler.cache.zscaler_cache import ZPACache
 from zscaler.ratelimiter.ratelimiter import RateLimiter
 from zscaler.user_agent import UserAgent
-from restfly.utils import format_json_response
+from zscaler.utils import format_json_response, convert_keys_to_snake
 from . import ZPAClient
 from zscaler.zpa.app_segments import ApplicationSegmentService
+
 # from zscaler.zpa.app_segments_pra import AppSegmentsPRAService
 # from zscaler.zpa.app_segments_inspection import AppSegmentsInspectionService
-from zscaler.zpa.certificates import CertificateService
+from zscaler.zpa.certificates import BrowserCertificateService
+
 # from zscaler.zpa.client_types import ClientTypesService
 from zscaler.zpa.cloud_connector_groups import CloudConnectorGroupService
 from zscaler.zpa.connector_groups import AppConnectorGroupService
 from zscaler.zpa.connectors import AppConnectorControllerService
 from zscaler.zpa.idp import IDPControllerService
+
 # from zscaler.zpa.inspection import InspectionControllerService
 # from zscaler.zpa.isolation_profile import IsolationProfileService
 # from zscaler.zpa.lss import LSSConfigControllerService
-from zscaler.zpa.machine_groups import MachineGroupsService
+from zscaler.zpa.machine_groups import MachineGroupService
+
 # from zscaler.zpa.platforms import PlatformsService
 # from zscaler.zpa.policies import PolicySetsService
-from zscaler.zpa.posture_profiles import PostureProfileService
+from zscaler.zpa.posture_profile import PostureProfileService
 from zscaler.zpa.provisioning import ProvisioningKeyService
-from zscaler.zpa.saml_attributes import SAMLAttributeService
-from zscaler.zpa.scim_attributes import SCIMAttributesService
-from zscaler.zpa.scim_groups import SCIMGroupService
+from zscaler.zpa.saml_attributes import SamlAttributeService
+from zscaler.zpa.scim_attributes import ScimAttributeHeaderService
+from zscaler.zpa.scim_groups import ScimGroupService
 from zscaler.zpa.segment_groups import SegmentGroupService
 from zscaler.zpa.server_groups import ServerGroupService
 from zscaler.zpa.servers import ApplicationServerService
-from zscaler.zpa.service_edges import ServiceEdgeService
+from zscaler.zpa.service_edges import ServiceEdgeGroupService
 from zscaler.zpa.trusted_networks import TrustedNetworksService
-
 
 
 # Setup the logger
@@ -445,7 +448,7 @@ class ZPAClientHelper(ZPAClient):
                 logger.info(self.ERROR_MESSAGES["EMPTY_RESULTS"].format(page=page))
                 break
 
-            ret_data.extend(data)
+            ret_data.extend(convert_keys_to_snake(data))
 
             # Check for more pages
             if response.json().get("totalPages") is None or int(response.json().get("totalPages")) <= page + 1:
@@ -485,7 +488,7 @@ class ZPAClientHelper(ZPAClient):
         The interface object for the :ref:`ZPA Browser Access Certificates interface <zpa-certificates>`.
 
         """
-        return CertificateService(self)
+        return BrowserCertificateService(self)
 
     # @property
     # def platforms(self):
@@ -565,7 +568,7 @@ class ZPAClientHelper(ZPAClient):
         The interface object for the :ref:`ZPA Machine Groups interface <zpa-machine_groups>`.
 
         """
-        return MachineGroupsService(self)
+        return MachineGroupService(self)
 
     # @property
     # def policies(self):
@@ -597,7 +600,7 @@ class ZPAClientHelper(ZPAClient):
         The interface object for the :ref:`ZPA SAML Attributes interface <zpa-saml_attributes>`.
 
         """
-        return SAMLAttributeService(self)
+        return SamlAttributeService(self)
 
     @property
     def scim_attributes(self):
@@ -605,7 +608,7 @@ class ZPAClientHelper(ZPAClient):
         The interface object for the :ref:`ZPA SCIM Attributes interface <zpa-scim_attributes>`.
 
         """
-        return SCIMAttributesService(self)
+        return ScimAttributeHeaderService(self)
 
     @property
     def scim_groups(self):
@@ -613,7 +616,7 @@ class ZPAClientHelper(ZPAClient):
         The interface object for the :ref:`ZPA SCIM Groups interface <zpa-scim_groups>`.
 
         """
-        return SCIMGroupService(self)
+        return ScimGroupService(self)
 
     @property
     def segment_groups(self):
@@ -645,8 +648,7 @@ class ZPAClientHelper(ZPAClient):
         The interface object for the :ref:`ZPA Service Edges interface <zpa-service_edges>`.
 
         """
-        return ServiceEdgeService(self)
-
+        return ServiceEdgeGroupService(self)
 
     @property
     def trusted_networks(self):
