@@ -1,11 +1,11 @@
-from .zpa_client import ZPAClientHelper
-from .zpa_client import delete_none
-from .zpa_client import camelcaseToSnakeCase
+from . import ZPAClient
+from zscaler.utils import delete_none
+from zscaler.utils import camelcaseToSnakeCase
 
 class SegmentGroupService:
-    def __init__(self, module, customer_id, rest):
-        self.module = module
-        self.customer_id = customer_id
+    def __init__(self, rest, client: ZPAClient):
+        self.rest = client
+        self.customer_id = client.customer_id
         self.rest = rest
 
     def getByIDOrName(self, id, name):

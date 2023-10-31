@@ -1,11 +1,11 @@
-from .zpa_client import ZPAClientHelper
-from .zpa_client import delete_none
+from . import ZPAClient
+from zscaler.utils import delete_none
 
-class BrowserCertificateService:
-    def __init__(self, module, customer_id):
-        self.module = module
-        self.customer_id = customer_id
-        self.rest = ZPAClientHelper(module)
+
+class EnrollementCertificateService:
+    def __init__(self, client: ZPAClient):
+        self.rest = client
+        self.customer_id = client.customer_id
 
     def getByIDOrName(self, id, name):
         certificate = None
@@ -17,7 +17,7 @@ class BrowserCertificateService:
 
     def getByID(self, id):
         response = self.rest.get(
-            "/mgmtconfig/v1/admin/customers/%s/clientlessCertificate/%s"
+            "/mgmtconfig/v1/admin/customers/%s/enrollmentCert/%s"
             % (self.customer_id, id)
         )
         status_code = response.status_code
@@ -27,7 +27,7 @@ class BrowserCertificateService:
 
     def getAll(self):
         list = self.rest.get_paginated_data(
-            base_url="/mgmtconfig/v2/admin/customers/%s/clientlessCertificate/issued"
+            base_url="/mgmtconfig/v2/admin/customers/%s/enrollmentCert"
             % (self.customer_id),
             data_key_name="list",
         )

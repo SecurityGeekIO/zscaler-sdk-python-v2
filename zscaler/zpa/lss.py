@@ -1,13 +1,38 @@
-from .zpa_client import ZPAClientHelper
-from .zpa_client import delete_none
-from .zpa_client import camelcaseToSnakeCase
-from .zpa_client import snakecaseToCamelcase
+from zscaler.zpa import ZPAClient
+from zscaler.utils import (
+    mapRespJSON,
+    snakecaseToCamelcase,
+    camelcaseToSnakeCase,
+    delete_none
+)
 
 class LSSConfigControllerService:
-    def __init__(self, module, customer_id):
-        self.module = module
-        self.customer_id = customer_id
-        self.rest = ZPAClientHelper(module)
+    def __init__(self, client: ZPAClient):
+        self.rest = client
+        self.customer_id = client.customer_id
+
+    def getByLogType(self, logType):
+        response = self.rest.get(
+            "/mgmtconfig/v2/admin/lssConfig/logType/formats?logType=%s" % (logType)
+        )
+        status_code = response.status_code
+        if status_code != 200:
+            return None
+        return mapRespJSON(response.json)
+
+    def getAllClientTypes(self):
+        response = self.rest.get("/mgmtconfig/v2/admin/lssConfig/clientTypes")
+        status_code = response.status_code
+        if status_code != 200:
+            return None
+        return self.mapRespJSON(response.json)
+
+    def getAllStatusCodes(self):
+        response = self.rest.get("/mgmtconfig/v2/admin/lssConfig/statusCodes")
+        status_code = response.status_code
+        if status_code != 200:
+            return None
+        return self.mapRespJSON(response.json)
 
     def getByIDOrName(self, id, name):
         lss_config = None

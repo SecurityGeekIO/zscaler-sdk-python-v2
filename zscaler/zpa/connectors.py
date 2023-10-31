@@ -1,12 +1,11 @@
-from .zpa_client import ZPAClientHelper
-from .zpa_client import delete_none
-from .zpa_client import camelcaseToSnakeCase
+from . import ZPAClient
+from zscaler.utils import delete_none
+from zscaler.utils import camelcaseToSnakeCase
 
 class AppConnectorControllerService:
-    def __init__(self, module, customer_id):
-        self.module = module
-        self.customer_id = customer_id
-        self.rest = ZPAClientHelper(module)
+    def __init__(self, client: ZPAClient):
+        self.rest = client
+        self.customer_id = client.customer_id
 
     def getByIDOrName(self, id, name):
         connector = None

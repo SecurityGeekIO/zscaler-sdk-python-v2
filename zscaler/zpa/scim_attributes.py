@@ -1,11 +1,10 @@
-from .zpa_client import ZPAClientHelper
-from .zpa_client import delete_none
+from . import ZPAClient
+from zscaler.utils import delete_none
 
 class ScimAttributeHeaderService:
-    def __init__(self, module, customer_id):
-        self.module = module
-        self.customer_id = customer_id
-        self.rest = ZPAClientHelper(module)
+    def __init__(self, client: ZPAClient):
+        self.rest = client
+        self.customer_id = client.customer_id
 
     def getByIDOrName(self, attribute_id, name):
         scimAttribute = None

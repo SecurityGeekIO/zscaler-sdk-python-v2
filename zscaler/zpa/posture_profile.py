@@ -1,11 +1,10 @@
-from .zpa_client import ZPAClientHelper
-from .zpa_client import delete_none
+from . import ZPAClient
+from zscaler.utils import delete_none
 
 class PostureProfileService:
-    def __init__(self, client_id, client_secret, customer_id, cloud):
-        self.customer_id = customer_id
-        self.rest = ZPAClientHelper(client_id, client_secret, customer_id, cloud)
-
+    def __init__(self, client: ZPAClient):
+        self.rest = client
+        self.customer_id = client.customer_id
 
     def getByIDOrName(self, id, name):
         posture = None

@@ -1,9 +1,12 @@
-from .zpa_client import ZPAClientHelper, delete_none_values
+from . import ZPAClient
+from zscaler.utils import (
+    delete_none_values,
+)
 
 class TrustedNetworksService:
-    def __init__(self, client_id, client_secret, customer_id, cloud):
-        self.customer_id = customer_id
-        self.rest = ZPAClientHelper(client_id, client_secret, customer_id, cloud)
+    def __init__(self, client: ZPAClient):
+        self.rest = client
+        self.customer_id = client.customer_id
 
     def getByIDOrName(self, id=None, name=None):
         if id:

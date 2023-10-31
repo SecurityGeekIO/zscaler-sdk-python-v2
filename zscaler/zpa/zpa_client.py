@@ -11,8 +11,33 @@ from zscaler.cache.zscaler_cache import ZPACache
 from zscaler.ratelimiter.ratelimiter import RateLimiter
 from zscaler.user_agent import UserAgent
 from restfly.utils import format_json_response
-from zscaler.zpa.zpa_application_segment import ApplicationSegmentService
 from . import ZPAClient
+from zscaler.zpa.app_segments import ApplicationSegmentService
+# from zscaler.zpa.app_segments_pra import AppSegmentsPRAService
+# from zscaler.zpa.app_segments_inspection import AppSegmentsInspectionService
+from zscaler.zpa.certificates import CertificateService
+# from zscaler.zpa.client_types import ClientTypesService
+from zscaler.zpa.cloud_connector_groups import CloudConnectorGroupService
+from zscaler.zpa.connector_groups import AppConnectorGroupService
+from zscaler.zpa.connectors import AppConnectorControllerService
+from zscaler.zpa.idp import IDPControllerService
+# from zscaler.zpa.inspection import InspectionControllerService
+# from zscaler.zpa.isolation_profile import IsolationProfileService
+# from zscaler.zpa.lss import LSSConfigControllerService
+from zscaler.zpa.machine_groups import MachineGroupsService
+# from zscaler.zpa.platforms import PlatformsService
+# from zscaler.zpa.policies import PolicySetsService
+from zscaler.zpa.posture_profiles import PostureProfileService
+from zscaler.zpa.provisioning import ProvisioningKeyService
+from zscaler.zpa.saml_attributes import SAMLAttributeService
+from zscaler.zpa.scim_attributes import SCIMAttributesService
+from zscaler.zpa.scim_groups import SCIMGroupService
+from zscaler.zpa.segment_groups import SegmentGroupService
+from zscaler.zpa.server_groups import ServerGroupService
+from zscaler.zpa.servers import ApplicationServerService
+from zscaler.zpa.service_edges import ServiceEdgeService
+from zscaler.zpa.trusted_networks import TrustedNetworksService
+
 
 
 # Setup the logger
@@ -82,84 +107,84 @@ def retry_with_backoff(method_type="GET", retries=5, backoff_in_seconds=0.5):
     return decorator
 
 
-def delete_none(f):
-    """
-    Decorator to remove None values from a dictionary.
+# def delete_none(f):
+#     """
+#     Decorator to remove None values from a dictionary.
 
-    Parameters:
-    - f (function): The function to be decorated.
+#     Parameters:
+#     - f (function): The function to be decorated.
 
-    Returns:
-    - function: Decorated function.
-    """
+#     Returns:
+#     - function: Decorated function.
+#     """
 
-    def wrapper(*args, **kwargs):
-        _dict = f(*args, **kwargs)
-        if _dict is not None:
-            return delete_none_values(_dict)
-        return _dict
+#     def wrapper(*args, **kwargs):
+#         _dict = f(*args, **kwargs)
+#         if _dict is not None:
+#             return delete_none_values(_dict)
+#         return _dict
 
-    return wrapper
-
-
-def delete_none_values(_dict):
-    """
-    Recursively removes None values from a dictionary or list.
-
-    Parameters:
-    - _dict (Union[dict, list]): The dictionary or list to process.
-
-    Returns:
-    - Union[dict, list]: Processed dictionary or list without None values.
-    """
-
-    if isinstance(_dict, dict):
-        for key, value in list(_dict.items()):
-            if isinstance(value, (list, dict, tuple, set)):
-                _dict[key] = delete_none_values(value)
-            elif value is None or key is None:
-                del _dict[key]
-    elif isinstance(_dict, (list, set, tuple)):
-        _dict = type(_dict)(delete_none_values(item) for item in _dict if item is not None)
-    return _dict
+#     return wrapper
 
 
-def camelcaseToSnakeCase(obj):
-    """
-    Converts keys of a dictionary from camelCase to snake_case.
+# def delete_none_values(_dict):
+#     """
+#     Recursively removes None values from a dictionary or list.
 
-    Parameters:
-    - obj (dict): Dictionary with camelCase keys.
+#     Parameters:
+#     - _dict (Union[dict, list]): The dictionary or list to process.
 
-    Returns:
-    - dict: Dictionary with snake_case keys.
-    """
+#     Returns:
+#     - Union[dict, list]: Processed dictionary or list without None values.
+#     """
 
-    new_obj = dict()
-    for key, value in obj.items():
-        if value is not None:
-            new_obj[re.sub(r"(?<!^)(?=[A-Z])", "_", key).lower()] = value
-    return new_obj
+#     if isinstance(_dict, dict):
+#         for key, value in list(_dict.items()):
+#             if isinstance(value, (list, dict, tuple, set)):
+#                 _dict[key] = delete_none_values(value)
+#             elif value is None or key is None:
+#                 del _dict[key]
+#     elif isinstance(_dict, (list, set, tuple)):
+#         _dict = type(_dict)(delete_none_values(item) for item in _dict if item is not None)
+#     return _dict
 
 
-def snakecaseToCamelcase(obj):
-    """
-    Converts keys of a dictionary from snake_case to camelCase.
+# def camelcaseToSnakeCase(obj):
+#     """
+#     Converts keys of a dictionary from camelCase to snake_case.
 
-    Parameters:
-    - obj (dict): Dictionary with snake_case keys.
+#     Parameters:
+#     - obj (dict): Dictionary with camelCase keys.
 
-    Returns:
-    - dict: Dictionary with camelCase keys.
-    """
+#     Returns:
+#     - dict: Dictionary with snake_case keys.
+#     """
 
-    new_obj = dict()
-    for key, value in obj.items():
-        if value is not None:
-            newKey = "".join(x.capitalize() or "_" for x in key.split("_"))
-            newKey = newKey[:1].lower() + newKey[1:]
-            new_obj[newKey] = value
-    return new_obj
+#     new_obj = dict()
+#     for key, value in obj.items():
+#         if value is not None:
+#             new_obj[re.sub(r"(?<!^)(?=[A-Z])", "_", key).lower()] = value
+#     return new_obj
+
+
+# def snakecaseToCamelcase(obj):
+#     """
+#     Converts keys of a dictionary from snake_case to camelCase.
+
+#     Parameters:
+#     - obj (dict): Dictionary with snake_case keys.
+
+#     Returns:
+#     - dict: Dictionary with camelCase keys.
+#     """
+
+#     new_obj = dict()
+#     for key, value in obj.items():
+#         if value is not None:
+#             newKey = "".join(x.capitalize() or "_" for x in key.split("_"))
+#             newKey = newKey[:1].lower() + newKey[1:]
+#             new_obj[newKey] = value
+#     return new_obj
 
 
 class ZPAClientHelper(ZPAClient):
@@ -429,7 +454,7 @@ class ZPAClientHelper(ZPAClient):
             page += 1
 
         return ret_data, error_message
-    
+
     @property
     def app_segments(self):
         """
@@ -437,3 +462,196 @@ class ZPAClientHelper(ZPAClient):
 
         """
         return ApplicationSegmentService(self)
+
+    # @property
+    # def app_segments_pra(self):
+    #     """
+    #     The interface object for the :ref:`ZPA Application Segments PRA interface <zpa-app_segments_pra>`.
+
+    #     """
+    #     return AppSegmentsPRAService(self)
+
+    # @property
+    # def app_segments_inspection(self):
+    #     """
+    #     The interface object for the :ref:`ZPA Application Segments PRA interface <zpa-app_segments_inspection>`.
+
+    #     """
+    #     return AppSegmentsInspectionService(self)
+
+    @property
+    def certificates(self):
+        """
+        The interface object for the :ref:`ZPA Browser Access Certificates interface <zpa-certificates>`.
+
+        """
+        return CertificateService(self)
+
+    # @property
+    # def platforms(self):
+    #     """
+    #     The interface object for the :ref:`ZPA Access Policy platform interface <zpa-platforms>`.
+
+    #     """
+    #     return PlatformsService(self)
+
+    # @property
+    # def client_types(self):
+    #     """
+    #     The interface object for the :ref:`ZPA Access Policy client types interface <zpa-client_types>`.
+
+    #     """
+    #     return ClientTypesService(self)
+
+    # @property
+    # def isolation_profile(self):
+    #     """
+    #     The interface object for the :ref:`ZPA Isolation Profiles <zpa-isolation_profile>`.
+
+    #     """
+    #     return IsolationProfileService(self)
+
+    @property
+    def cloud_connector_groups(self):
+        """
+        The interface object for the :ref:`ZPA Cloud Connector Groups interface <zpa-cloud_connector_groups>`.
+
+        """
+        return CloudConnectorGroupService(self)
+
+    @property
+    def connector_groups(self):
+        """
+        The interface object for the :ref:`ZPA Connector Groups interface <zpa-connector_groups>`.
+
+        """
+        return AppConnectorGroupService(self)
+
+    @property
+    def connectors(self):
+        """
+        The interface object for the :ref:`ZPA Connectors interface <zpa-connectors>`.
+
+        """
+        return AppConnectorControllerService(self)
+
+    @property
+    def idp(self):
+        """
+        The interface object for the :ref:`ZPA IDP interface <zpa-idp>`.
+
+        """
+        return IDPControllerService(self)
+
+    # @property
+    # def inspection(self):
+    #     """
+    #     The interface object for the :ref:`ZPA Inspection interface <zpa-inspection>`.
+
+    #     """
+    #     return InspectionControllerService(self)
+
+    # @property
+    # def lss(self):
+    #     """
+    #     The interface object for the :ref:`ZIA Log Streaming Service Config interface <zpa-lss>`.
+
+    #     """
+    #     return LSSConfigControllerService(self)
+
+    @property
+    def machine_groups(self):
+        """
+        The interface object for the :ref:`ZPA Machine Groups interface <zpa-machine_groups>`.
+
+        """
+        return MachineGroupsService(self)
+
+    # @property
+    # def policies(self):
+    #     """
+    #     The interface object for the :ref:`ZPA Policy Sets interface <zpa-policies>`.
+
+    #     """
+    #     return PolicySetsService(self)
+
+    @property
+    def posture_profiles(self):
+        """
+        The interface object for the :ref:`ZPA Posture Profiles interface <zpa-posture_profiles>`.
+
+        """
+        return PostureProfileService(self)
+
+    @property
+    def provisioning(self):
+        """
+        The interface object for the :ref:`ZPA Provisioning interface <zpa-provisioning>`.
+
+        """
+        return ProvisioningKeyService(self)
+
+    @property
+    def saml_attributes(self):
+        """
+        The interface object for the :ref:`ZPA SAML Attributes interface <zpa-saml_attributes>`.
+
+        """
+        return SAMLAttributeService(self)
+
+    @property
+    def scim_attributes(self):
+        """
+        The interface object for the :ref:`ZPA SCIM Attributes interface <zpa-scim_attributes>`.
+
+        """
+        return SCIMAttributesService(self)
+
+    @property
+    def scim_groups(self):
+        """
+        The interface object for the :ref:`ZPA SCIM Groups interface <zpa-scim_groups>`.
+
+        """
+        return SCIMGroupService(self)
+
+    @property
+    def segment_groups(self):
+        """
+        The interface object for the :ref:`ZPA Segment Groups interface <zpa-segment_groups>`.
+
+        """
+        return SegmentGroupService(self)
+
+    @property
+    def server_groups(self):
+        """
+        The interface object for the :ref:`ZPA Server Groups interface <zpa-server_groups>`.
+
+        """
+        return ServerGroupService(self)
+
+    @property
+    def servers(self):
+        """
+        The interface object for the :ref:`ZPA Application Servers interface <zpa-app_servers>`.
+
+        """
+        return ApplicationServerService(self)
+
+    @property
+    def service_edges(self):
+        """
+        The interface object for the :ref:`ZPA Service Edges interface <zpa-service_edges>`.
+
+        """
+        return ServiceEdgeService(self)
+
+
+    @property
+    def trusted_networks(self):
+        """
+        The interface object for the :ref:`ZPA Trusted Networks interface <zpa-trusted_networks>`.
+
+        """
+        return TrustedNetworksService(self)
