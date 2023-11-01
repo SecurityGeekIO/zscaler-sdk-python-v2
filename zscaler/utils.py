@@ -241,3 +241,17 @@ def format_json_response(
         elif conv_json:
             return convert_keys_to_snake(response.json())
     return response
+
+def remove_cloud_suffix(str_name: str) -> str:
+    """
+    Removes appended cloud name (e.g. "(zscalerthree.net)") from the string.
+
+    Args:
+        str_name (str): The string from which to remove the cloud name.
+
+    Returns:
+        str: The string without the cloud name.
+    """
+    reg = re.compile(r"(.*)\s+\([a-zA-Z0-9\-_\.]*\)\s*$")
+    res = reg.sub(r"\1", str_name)
+    return res.strip()

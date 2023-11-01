@@ -1,116 +1,186 @@
 from . import ZPAClient
-from zscaler.utils import delete_none
+from requests import Response
+from box import Box, BoxList
+from zscaler.utils import (
+    snake_to_camel,
+)
 
-
-class ApplicationServerService:
+class AppServersService:
     def __init__(self, client: ZPAClient):
         self.rest = client
         self.customer_id = client.customer_id
 
-    def getByIDOrName(self, id, name):
-        application_server = None
-        if id is not None:
-            application_server = self.getByID(id)
-        if application_server is None and name is not None:
-            application_server = self.getByName(name)
-        return application_server
+    def add_server(self, name: str, address: str, enabled: bool = True, **kwargs) -> Box:
+        """
+        Add a new application server.
 
-    def getByID(self, id):
-        response = self.rest.get(
-            "/mgmtconfig/v1/admin/customers/%s/server/%s" % (self.customer_id, id)
-        )
-        status_code = response.status_code
-        if status_code != 200:
-            return None
-        return self.mapRespJSONToApp(response.json)
+        Args:
+            name (str):
+                The name of the server.
+            address (str):
+                The IP address of the server.
+            enabled (bool):
+                 Enable the server. Defaults to True.
+            **kwargs:
+                Optional keyword args.
 
-    def getAll(self):
-        list = self.rest.get_paginated_data(
+        Keyword Args:
+            description (str):
+                A description for the server.
+            app_server_group_ids (list):
+                Unique identifiers for the server groups the server belongs to.
+            config_space (str):
+                The configuration space for the server. Defaults to DEFAULT.
+
+        Returns:
+            :obj:`Box`: The resource record for the newly created server.
+
+        Examples:
+            Create a server with the minimum required parameters:
+
+            >>> zpa.servers.add_server(
+            ...   name='myserver.example',
+            ...   address='192.0.2.10',
+            ...   enabled=True)
+
+        """
+        payload = {"name": name, "address": address, "enabled": enabled}
+
+        # Add optional parameters to payload
+        for key, value in kwargs.items():
+            payload[snake_to_camel(key)] = value
+
+        return self._post("server", json=payload)
+
+    def list_servers(self, **kwargs) -> BoxList:
+        """
+        Returns all configured servers.
+
+        Keyword Args:
+            **max_items (int):
+                The maximum number of items to request before stopping iteration.
+            **max_pages (int):
+                The maximum number of pages to request before stopping iteration.
+            **pagesize (int):
+                Specifies the page size. The default size is 20, but the maximum size is 500.
+            **search (str, optional):
+                The search string used to match against features and fields.
+
+        Returns:
+            :obj:`BoxList`: List of all configured servers.
+
+        Examples:
+            >>> servers = zpa.servers.list_servers()
+        """
+        list, _ = self.rest.get_paginated_data(
             base_url="/mgmtconfig/v1/admin/customers/%s/server" % (self.customer_id),
             data_key_name="list",
         )
-        application_servers = []
-        for application_server in list:
-            application_servers.append(self.mapRespJSONToApp(application_server))
-        return application_servers
+        return list
 
-    def getByName(self, name):
-        application_servers = self.getAll()
-        for application_server in application_servers:
-            if application_server.get("name") == name:
-                return application_server
+    def get_server(self, server_id: str) -> Box:
+        """
+        Gets information on the specified server.
+
+        Args:
+            server_id (str):
+                The unique identifier for the server.
+
+        Returns:
+            :obj:`Box`: The resource record for the server.
+
+        Examples:
+            >>> server = zpa.servers.get_server('99999')
+
+        """
+        response = self.rest.get("/mgmtconfig/v1/admin/customers/%s/server/%s" % (self.customer_id, server_id))
+        if isinstance(response, Response):
+            status_code = response.status_code
+            if status_code != 200:
+                return None
+        return response
+
+    def get_server_by_name(self, name):
+        apps = self.list_servers()
+        for app in apps:
+            if app.get("name") == name:
+                return app
         return None
 
-    @delete_none
-    def mapRespJSONToApp(self, resp_json):
-        if resp_json is None:
-            return {}
-        return {
-            "id": resp_json.get("id"),
-            "address": resp_json.get("address"),
-            "config_space": resp_json.get("configSpace"),
-            "name": resp_json.get("name"),
-            "description": resp_json.get("description"),
-            "enabled": resp_json.get("enabled"),
-            "app_server_group_ids": resp_json.get("appServerGroupIds"),
-        }
+    def delete_server(self, server_id: str) -> int:
+        """
+        Delete the specified server.
 
-    @delete_none
-    def mapAppToJSON(self, application_server):
-        if application_server is None:
-            return {}
-        return {
-            "id": application_server.get("id"),
-            "address": application_server.get("address"),
-            "configSpace": application_server.get("config_space"),
-            "name": application_server.get("name"),
-            "description": application_server.get("description"),
-            "enabled": application_server.get("enabled"),
-            "appServerGroupIds": application_server.get("app_server_group_ids"),
-        }
+        The server must not be assigned to any Server Groups or the operation will fail.
 
-    def unlinkAttachedServerGroups(self, appID):
-        server = self.getByID(appID)
-        if server is None:
-            return None
-        if len(server.get("app_server_group_ids", [])) > 0:
-            self.module.log(
-                "[INFO] Removing server group ID/s from application server: %s"
-                % (appID)
-            )
-            server["app_server_group_ids"] = []
-            return self.update(server)
-        return server
+        Args:
+            server_id (str): The unique identifier for the server to be deleted.
 
-    def create(self, application_server):
-        """Create new Application Serve"""
-        ApplicationServerJson = self.mapAppToJSON(application_server)
-        response = self.rest.post(
-            "/mgmtconfig/v1/admin/customers/%s/server" % (self.customer_id),
-            data=ApplicationServerJson,
-        )
-        status_code = response.status_code
-        if status_code > 299:
-            return None
-        return self.mapRespJSONToApp(response.json)
+        Returns:
+            :obj:`int`: The response code for the operation.
 
-    def update(self, application_server):
-        """update the Application Serve"""
-        ApplicationServerJson = self.mapAppToJSON(application_server)
-        response = self.rest.put(
-            "/mgmtconfig/v1/admin/customers/%s/server/%s"
-            % (self.customer_id, ApplicationServerJson.get("id")),
-            data=ApplicationServerJson,
-        )
-        status_code = response.status_code
-        if status_code > 299:
-            return None
-        return application_server
+        Examples:
+            >>> zpa.servers.delete_server('99999')
 
-    def delete(self, id):
-        """delete the Application Serve"""
-        self.unlinkAttachedServerGroups(id)
-        response = self.rest.delete(
-            "/mgmtconfig/v1/admin/customers/%s/server/%s" % (self.customer_id, id)
-        )
+        """
+        response = self.rest.delete("/mgmtconfig/v1/admin/customers/%s/server/%s?%s" % (self.customer_id, server_id))
         return response.status_code
+
+    def update_server(self, server_id: str, **kwargs) -> Box:
+        """
+        Updates the specified server.
+
+        Args:
+            server_id (str):
+                The unique identifier for the server being updated.
+            **kwargs:
+                Optional keyword args.
+
+        Keyword Args:
+            name (str):
+                The name of the server.
+            address (str):
+                The IP address of the server.
+            enabled (bool):
+                 Enable the server.
+            description (str):
+                A description for the server.
+            app_server_group_ids (list):
+                Unique identifiers for the server groups the server belongs to.
+            config_space (str):
+                The configuration space for the server.
+
+        Returns:
+            :obj:`Box`: The resource record for the updated server.
+
+        Examples:
+            Update the name of a server:
+
+            >>> zpa.servers.update_server(
+            ...   '99999',
+            ...   name='newname.example')
+
+            Update the address and enable a server:
+
+            >>> zpa.servers.update_server(
+            ...    '99999',
+            ...    address='192.0.2.20',
+            ...    enabled=True)
+
+        """
+        # Set payload to value of existing record
+        payload = {snake_to_camel(k): v for k, v in self.get_server(server_id).items()}
+
+        # Add optional parameters to payload
+        for key, value in kwargs.items():
+            payload[snake_to_camel(key)] = value
+
+        response = self.rest.put(
+            "/mgmtconfig/v1/admin/customers/%s/server/%s" % (self.customer_id, server_id),
+            data=payload,
+        )
+        if isinstance(response, Response):
+            status_code = response.status_code
+            if status_code > 299:
+                return None
+        return self.get_servers(server_id)

@@ -1,75 +1,99 @@
 from . import ZPAClient
-from zscaler.utils import delete_none
+from requests import Response
+from box import Box, BoxList
+from zscaler.utils import remove_cloud_suffix
 
-class PostureProfileService:
+class PostureProfilesService:
     def __init__(self, client: ZPAClient):
         self.rest = client
         self.customer_id = client.customer_id
 
-    def getByIDOrName(self, id, name):
-        posture = None
-        if id is not None:
-            posture = self.getByID(id)
-        if posture is None and name is not None:
-            posture = self.getByName(name)
-        return posture
 
-    def getByID(self, id):
-        response = self.rest.get(
-            "/mgmtconfig/v1/admin/customers/%s/posture/%s" % (self.customer_id, id)
-        )
-        status_code = response.status_code
-        if status_code != 200:
-            return None
-        return self.mapRespJSONToApp(response.json())
+    def list_profiles(self, **kwargs) -> BoxList:
+        """
+        Returns a list of all configured posture profiles.
 
-    def getAll(self):
-        list = self.rest.get_paginated_data(
-            base_url="/mgmtconfig/v2/admin/customers/%s/posture" % (self.customer_id),
+        Keyword Args:
+            **max_items (int):
+                The maximum number of items to request before stopping iteration.
+            **max_pages (int):
+                The maximum number of pages to request before stopping iteration.
+            **pagesize (int):
+                Specifies the page size. The default size is 20, but the maximum size is 500.
+            **search (str, optional):
+                The search string used to match against features and fields.
+
+        Returns:
+            :obj:`BoxList`: A list of all configured posture profiles.
+
+        Examples:
+            >>> for posture_profile in zpa.posture_profiles.list_profiles():
+            ...    pprint(posture_profile)
+
+        """
+        list, _ = self.rest.get_paginated_data(
+            base_url="/mgmtconfig/v1/admin/customers/%s/posture" % (self.customer_id),
             data_key_name="list",
         )
-        postures = []
-        for posture in list:
-            postures.append(self.mapRespJSONToApp(posture))
-        return postures
+        return list
 
-    def getByName(self, name):
-        postures = self.getAll()
-        for posture in postures:
-            if posture.get("name") == name:
-                return posture
+    def get_profile(self, profile_id: str) -> Box:
+        """
+        Returns information on the specified posture profiles.
+
+        Args:
+            profile_id (str):
+                The unique identifier for the posture profiles.
+
+        Returns:
+            :obj:`Box`: The resource record for the posture profiles.
+
+        Examples:
+            >>> pprint(zpa.posture_profiles.get_profile('99999'))
+
+        """
+        response = self.rest.get("/mgmtconfig/v1/admin/customers/%s/profile/%s" % (self.customer_id, profile_id))
+        if isinstance(response, Response):
+            status_code = response.status_code
+            if status_code != 200:
+                return None
+        return response
+
+    def get_udid_by_profile_name(self, search_name: str, **kwargs) -> str:
+        """
+        Searches for a posture profile by name and returns its posture_udid.
+
+        Args:
+            search_name (str): The name of the posture profile to search for.
+
+        Keyword Args:
+            **kwargs: Additional keyword arguments to pass to the list_profiles method.
+
+        Returns:
+            str: The posture_udid of the found posture profile, or None if not found.
+        """
+        profiles = self.list_profiles(**kwargs)
+        for profile in profiles:
+            clean_profile_name = remove_cloud_suffix(profile.get("name"))
+            if clean_profile_name == search_name or profile.get("name") == search_name:
+                return profile.get("posture_udid")
         return None
 
-    @delete_none
-    def mapRespJSONToApp(self, resp_json):
-        if resp_json is None:
-            return {}
-        return {
-            "creation_time": resp_json.get("creationTime"),
-            "domain": resp_json.get("domain"),
-            "id": resp_json.get("id"),
-            "master_customer_id": resp_json.get("masterCustomerId"),
-            "modified_by": resp_json.get("modifiedBy"),
-            "modified_time": resp_json.get("modifiedTime"),
-            "name": resp_json.get("name"),
-            "posture_udid": resp_json.get("postureUdid"),
-            "zscaler_cloud": resp_json.get("zscalerCloud"),
-            "zscaler_customer_id": resp_json.get("zscalerCustomerId"),
-        }
+    def get_name_by_posture_udid(self, search_udid: str, **kwargs) -> str:
+        """
+        Searches for a posture profile by posture_udid and returns its name.
 
-    @delete_none
-    def mapAppToJSON(self, posture):
-        if posture is None:
-            return {}
-        return {
-            "creationTime": posture.get("creation_time"),
-            "domain": posture.get("domain"),
-            "id": posture.get("id"),
-            "masterCustomerId": posture.get("master_customer_id"),
-            "modifiedBy": posture.get("modified_by"),
-            "modifiedTime": posture.get("modified_time"),
-            "name": posture.get("name"),
-            "postureUdid": posture.get("posture_udid"),
-            "zscalerCloud": posture.get("zscaler_cloud"),
-            "zscalerCustomerId": posture.get("zscaler_customer_id"),
-        }
+        Args:
+            search_udid (str): The posture_udid of the posture profile to search for.
+
+        Keyword Args:
+            **kwargs: Additional keyword arguments to pass to the list_profiles method.
+
+        Returns:
+            str: The name of the found posture profile, or None if not found.
+        """
+        profiles = self.list_profiles(**kwargs)
+        for profile in profiles:
+            if profile.get("posture_udid") == search_udid:
+                return profile.get("name")
+        return None

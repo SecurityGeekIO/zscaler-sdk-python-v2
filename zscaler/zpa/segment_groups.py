@@ -1,124 +1,178 @@
 from . import ZPAClient
-from zscaler.utils import delete_none
-from zscaler.utils import camelcaseToSnakeCase
+from requests import Response
+from box import Box, BoxList
+from zscaler.utils import (
+    snake_to_camel
+)
 
-class SegmentGroupService:
-    def __init__(self, rest, client: ZPAClient):
+class SegmentGroupsService:
+    def __init__(self, client: ZPAClient):
         self.rest = client
         self.customer_id = client.customer_id
-        self.rest = rest
 
-    def getByIDOrName(self, id, name):
-        segment_group = None
-        if id is not None:
-            segment_group = self.getByID(id)
-        if segment_group is None and name is not None:
-            segment_group = self.getByName(name)
-        return segment_group
+    def list_groups(self, **kwargs) -> BoxList:
+        """
+        Returns a list of all configured segment groups.
 
-    def getByID(self, id):
-        response = self.rest.get(
-            "/mgmtconfig/v1/admin/customers/%s/segmentGroup/%s" % (self.customer_id, id)
-        )
-        status_code = response.status_code
-        if status_code != 200:
-            return None
-        return self.mapRespJSONToApp(response.json)
+        Returns:
+            :obj:`BoxList`: A list of all configured segment groups.
 
-    def getAll(self):
-        list = self.rest.get_paginated_data(
-            base_url="/mgmtconfig/v1/admin/customers/%s/segmentGroup"
-            % (self.customer_id),
+        Examples:
+            >>> for segment_group in zpa.segment_groups.list_groups():
+            ...    pprint(segment_group)
+
+        """
+        list, _ = self.rest.get_paginated_data(
+            base_url="/mgmtconfig/v1/admin/customers/%s/segmentGroup" % (self.customer_id),
             data_key_name="list",
         )
-        segment_groups = []
-        for segment_group in list:
-            segment_groups.append(self.mapRespJSONToApp(segment_group))
-        return segment_groups
+        return list
 
-    def getByName(self, name):
-        segment_groups = self.getAll()
-        for segment_group in segment_groups:
-            if segment_group.get("name") == name:
-                return segment_group
+    def get_group(self, group_id: str) -> Box:
+        """
+        Returns information on the specified segment group.
+
+        Args:
+            group_id (str):
+                The unique identifier for the segment group.
+
+        Returns:
+            :obj:`Box`: The resource record for the segment group.
+
+        Examples:
+            >>> pprint(zpa.segment_groups.get_group('99999'))
+
+        """
+        response = self.rest.get("/mgmtconfig/v1/admin/customers/%s/segmentGroup/%s" % (self.customer_id, group_id))
+        if isinstance(response, Response):
+            status_code = response.status_code
+            if status_code != 200:
+                return None
+        return response
+
+    def get_segment_group_by_name(self, name):
+        apps = self.list_groups()
+        for app in apps:
+            if app.get("name") == name:
+                return app
         return None
 
-    def mapListJSONToList(self, entities):
-        if entities is None:
-            return []
-        l = []
-        for s in entities:
-            l.append(camelcaseToSnakeCase(s))
-        return l
+    def delete_group(self, group_id: str) -> int:
+        """
+        Deletes the specified segment group.
 
-    def mapListToJSONObjList(self, entities):
-        if entities is None:
-            return []
-        l = []
-        for e in entities:
-            l.append(dict(id=e.get("id")))
-        return l
+        Args:
+            group_id (str):
+                The unique identifier for the segment group to be deleted.
 
-    @delete_none
-    def mapRespJSONToApp(self, resp_json):
-        if resp_json is None:
-            return {}
-        return {
-            "applications": self.mapListJSONToList(resp_json.get("applications")),
-            "config_space": resp_json.get("configSpace"),
-            "description": resp_json.get("description"),
-            "enabled": resp_json.get("enabled"),
-            "id": resp_json.get("id"),
-            "name": resp_json.get("name"),
-            "policy_migrated": resp_json.get("policyMigrated"),
-            "tcp_keep_alive_enabled": resp_json.get("tcpKeepAliveEnabled"),
-        }
+        Returns:
+            :obj:`int`: The response code for the operation.
 
-    @delete_none
-    def mapAppToJSON(self, segment_group):
-        if segment_group is None:
-            return {}
-        return {
-            "applications": self.mapListToJSONObjList(
-                segment_group.get("applications")
-            ),
-            "configSpace": segment_group.get("config_space"),
-            "description": segment_group.get("description"),
-            "enabled": segment_group.get("enabled"),
-            "id": segment_group.get("id"),
-            "name": segment_group.get("name"),
-            "policyMigrated": segment_group.get("policy_migrated"),
-            "tcpKeepAliveEnabled": segment_group.get("tcp_keep_alive_enabled"),
-        }
+        Examples:
+            >>> zpa.segment_groups.delete_group('99999')
 
-    def create(self, segment_group):
-        """Create new Segment Group"""
-        segmentGroupJson = self.mapAppToJSON(segment_group)
-        response = self.rest.post(
-            "/mgmtconfig/v1/admin/customers/%s/segmentGroup" % (self.customer_id),
-            data=segmentGroupJson,
-        )
-        status_code = response.status_code
-        if status_code > 299:
-            return None
-        return self.getByID(response.json.get("id"))
-
-    def update(self, segment_group):
-        """update the Segment Group"""
-        segmentGroupJson = self.mapAppToJSON(segment_group)
-        response = self.rest.put(
-            "/mgmtconfig/v1/admin/customers/%s/segmentGroup/%s"
-            % (self.customer_id, segmentGroupJson.get("id")),
-            data=segmentGroupJson,
-        )
-        status_code = response.status_code
-        if status_code > 299:
-            return None
-        return self.getByID(segmentGroupJson.get("id"))
-
-    def delete(self, id):
-        """delete the Segment Group"""
-        response = self.rest.delete(
-            "/mgmtconfig/v1/admin/customers/%s/segmentGroup/%s" % (self.customer_id, id)
-        )
+        """
+        response = self.rest.delete("/mgmtconfig/v1/admin/customers/%s/segmentGroup/%s?%s" % (self.customer_id, group_id))
         return response.status_code
+
+    def add_group(self, name: str, enabled: bool = True, **kwargs) -> Box:
+        """
+        Adds a new segment group.
+
+        Args:
+            name (str):
+                The name of the new segment group.
+            enabled (bool):
+                Enable the segment group. Defaults to True.
+            **kwargs:
+
+        Keyword Args:
+            application_ids (:obj:`list` of :obj:`dict`):
+                Unique application IDs to associate with the segment group.
+            config_space (str):
+                The config space for the segment group. Can either be DEFAULT or SIEM.
+            description (str):
+                A description for the segment group.
+            policy_migrated (bool):
+
+        Returns:
+            :obj:`Box`: The resource record for the newly created segment group.
+
+        Examples:
+            Creating a segment group with the minimum required parameters:
+
+            >>> zpa.segment_groups.add_group('new_segment_group',
+            ...    True)
+
+        """
+
+        payload = {
+            "name": name,
+            "enabled": enabled,
+        }
+
+        if kwargs.get("application_ids"):
+            payload["applications"] = [{"id": app_id} for app_id in kwargs.pop("application_ids")]
+
+        # Add optional parameters to payload
+        for key, value in kwargs.items():
+            payload[snake_to_camel(key)] = value
+
+        response = self.rest.post("/mgmtconfig/v1/admin/customers/%s/segmentGroup" % (self.customer_id), data=payload)
+        if isinstance(response, Response):
+            status_code = response.status_code
+            if status_code > 299:
+                return None
+        return self.get_segment(response.get("id"))
+
+    def update_group(self, group_id: str, **kwargs) -> Box:
+        """
+        Updates an existing segment group.
+
+        Args:
+            group_id (str):
+                The unique identifier for the segment group to be updated.
+            **kwargs: Optional keyword args.
+
+        Keyword Args:
+            name (str):
+                The name of the new segment group.
+            enabled (bool):
+                Enable the segment group.
+            application_ids (:obj:`list` of :obj:`dict`):
+                Unique application IDs to associate with the segment group.
+            config_space (str):
+                The config space for the segment group. Can either be DEFAULT or SIEM.
+            description (str):
+                A description for the segment group.
+            policy_migrated (bool):
+
+        Returns:
+            :obj:`Box`: The resource record for the updated segment group.
+
+        Examples:
+            Updating the name of a segment group:
+
+            >>> zpa.segment_groups.update_group('99999',
+            ...    name='updated_name')
+
+        """
+        # Set payload to value of existing record
+        payload = {snake_to_camel(k): v for k, v in self.get_group(group_id).items()}
+
+        if kwargs.get("application_ids"):
+            payload["applications"] = [{"id": app_id} for app_id in kwargs.pop("application_ids")]
+
+        # Add optional parameters to payload
+        for key, value in kwargs.items():
+            payload[snake_to_camel(key)] = value
+
+        response = self.rest.put(
+            "/mgmtconfig/v1/admin/customers/%s/segmentGroup/%s" % (self.customer_id, group_id),
+            data=payload,
+        )
+        if isinstance(response, Response):
+            status_code = response.status_code
+            if status_code > 299:
+                return None
+        return self.get_segment(group_id)

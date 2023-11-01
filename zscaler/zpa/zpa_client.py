@@ -12,23 +12,23 @@ from zscaler.ratelimiter.ratelimiter import RateLimiter
 from zscaler.user_agent import UserAgent
 from zscaler.utils import format_json_response, convert_keys_to_snake
 from . import ZPAClient
+from zscaler.constants import (
+    RETRYABLE_STATUS_CODES,
+    ZPA_BASE_URLS,
+)
 from zscaler.zpa.app_segments import ApplicationSegmentService
-
 # from zscaler.zpa.app_segments_pra import AppSegmentsPRAService
 # from zscaler.zpa.app_segments_inspection import AppSegmentsInspectionService
 from zscaler.zpa.certificates import BrowserCertificateService
-
 # from zscaler.zpa.client_types import ClientTypesService
 from zscaler.zpa.cloud_connector_groups import CloudConnectorGroupService
 from zscaler.zpa.connector_groups import AppConnectorGroupService
 from zscaler.zpa.connectors import AppConnectorControllerService
 from zscaler.zpa.idp import IDPControllerService
-
 # from zscaler.zpa.inspection import InspectionControllerService
 # from zscaler.zpa.isolation_profile import IsolationProfileService
 # from zscaler.zpa.lss import LSSConfigControllerService
 from zscaler.zpa.machine_groups import MachineGroupService
-
 # from zscaler.zpa.platforms import PlatformsService
 # from zscaler.zpa.policies import PolicySetsService
 from zscaler.zpa.posture_profile import PostureProfileService
@@ -46,21 +46,6 @@ from zscaler.zpa.trusted_networks import TrustedNetworksService
 # Setup the logger
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# Endpoint configuration from Go
-BASE_URLS = {
-    "PRODUCTION": "https://config.private.zscaler.com",
-    "BETA": "https://config.zpabeta.net",
-    "GOV": "https://config.zpagov.net",
-    "GOVUS": "https://config.zpagov.us",
-    "PREVIEW": "https://config.zpapreview.net",
-    "DEV": "https://public-api.dev.zpath.net",
-    "QA": "https://config.qa.zpath.net",
-    "QA2": "https://pdx2-zpa-config.qa2.zpath.net",
-}
-
-RETRYABLE_STATUS_CODES = {500, 502, 503, 504}  # Add or remove status codes as needed
-
 
 def should_retry(status_code):
     """Determine if a given status code should be retried."""
@@ -109,87 +94,6 @@ def retry_with_backoff(method_type="GET", retries=5, backoff_in_seconds=0.5):
 
     return decorator
 
-
-# def delete_none(f):
-#     """
-#     Decorator to remove None values from a dictionary.
-
-#     Parameters:
-#     - f (function): The function to be decorated.
-
-#     Returns:
-#     - function: Decorated function.
-#     """
-
-#     def wrapper(*args, **kwargs):
-#         _dict = f(*args, **kwargs)
-#         if _dict is not None:
-#             return delete_none_values(_dict)
-#         return _dict
-
-#     return wrapper
-
-
-# def delete_none_values(_dict):
-#     """
-#     Recursively removes None values from a dictionary or list.
-
-#     Parameters:
-#     - _dict (Union[dict, list]): The dictionary or list to process.
-
-#     Returns:
-#     - Union[dict, list]: Processed dictionary or list without None values.
-#     """
-
-#     if isinstance(_dict, dict):
-#         for key, value in list(_dict.items()):
-#             if isinstance(value, (list, dict, tuple, set)):
-#                 _dict[key] = delete_none_values(value)
-#             elif value is None or key is None:
-#                 del _dict[key]
-#     elif isinstance(_dict, (list, set, tuple)):
-#         _dict = type(_dict)(delete_none_values(item) for item in _dict if item is not None)
-#     return _dict
-
-
-# def camelcaseToSnakeCase(obj):
-#     """
-#     Converts keys of a dictionary from camelCase to snake_case.
-
-#     Parameters:
-#     - obj (dict): Dictionary with camelCase keys.
-
-#     Returns:
-#     - dict: Dictionary with snake_case keys.
-#     """
-
-#     new_obj = dict()
-#     for key, value in obj.items():
-#         if value is not None:
-#             new_obj[re.sub(r"(?<!^)(?=[A-Z])", "_", key).lower()] = value
-#     return new_obj
-
-
-# def snakecaseToCamelcase(obj):
-#     """
-#     Converts keys of a dictionary from snake_case to camelCase.
-
-#     Parameters:
-#     - obj (dict): Dictionary with snake_case keys.
-
-#     Returns:
-#     - dict: Dictionary with camelCase keys.
-#     """
-
-#     new_obj = dict()
-#     for key, value in obj.items():
-#         if value is not None:
-#             newKey = "".join(x.capitalize() or "_" for x in key.split("_"))
-#             newKey = newKey[:1].lower() + newKey[1:]
-#             new_obj[newKey] = value
-#     return new_obj
-
-
 class ZPAClientHelper(ZPAClient):
     """
     Client helper for ZPA operations.
@@ -228,8 +132,8 @@ class ZPAClientHelper(ZPAClient):
         )
 
         # Validate cloud value
-        if cloud not in BASE_URLS:
-            valid_clouds = ", ".join(BASE_URLS.keys())
+        if cloud not in ZPA_BASE_URLS:
+            valid_clouds = ", ".join(ZPA_BASE_URLS.keys())
             raise ValueError(
                 f"The provided ZPA_CLOUD value '{cloud}' is not supported. "
                 f"Please use one of the following supported values: {valid_clouds}"
@@ -237,7 +141,7 @@ class ZPAClientHelper(ZPAClient):
 
         # Continue with existing initialization...
         # Select the appropriate URL
-        self.baseurl = BASE_URLS.get(cloud, BASE_URLS["PRODUCTION"])
+        self.baseurl = ZPA_BASE_URLS.get(cloud, ZPA_BASE_URLS["PRODUCTION"])
 
         self.timeout = timeout
         self.client_id = client_id

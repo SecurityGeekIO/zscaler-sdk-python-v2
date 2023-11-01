@@ -1,72 +1,65 @@
 from . import ZPAClient
-from zscaler.utils import delete_none
+from requests import Response
+from box import Box, BoxList
 
-class MachineGroupService:
+class MachineGroupsService:
     def __init__(self, client: ZPAClient):
         self.rest = client
         self.customer_id = client.customer_id
 
-    def getByIDOrName(self, id, name):
-        machineGroup = None
-        if id is not None:
-            machineGroup = self.getByID(id)
-        if machineGroup is None and name is not None:
-            machineGroup = self.getByName(name)
-        return machineGroup
+    def list_groups(self, **kwargs) -> BoxList:
+        """
+        Returns a list of all configured machine groups.
 
-    def getByID(self, id):
-        response = self.rest.get(
-            "/mgmtconfig/v1/admin/customers/%s/machineGroup/%s" % (self.customer_id, id)
-        )
-        status_code = response.status_code
-        if status_code != 200:
-            return None
-        return self.mapRespJSONToApp(response.json)
+        Keyword Args:
+            **max_items (int):
+                The maximum number of items to request before stopping iteration.
+            **max_pages (int):
+                The maximum number of pages to request before stopping iteration.
+            **pagesize (int):
+                Specifies the page size. The default size is 20, but the maximum size is 500.
+            **search (str, optional):
+                The search string used to match against features and fields.
 
-    def getAll(self):
-        list = self.rest.get_paginated_data(
-            base_url="/mgmtconfig/v1/admin/customers/%s/machineGroup"
-            % (self.customer_id),
+        Returns:
+            :obj:`list`: A list of all configured machine groups.
+
+        Examples:
+            >>> for machine_group in zpa.machine_groups.list_groups():
+            ...    pprint(machine_group)
+
+        """
+        list, _ = self.rest.get_paginated_data(
+            base_url="/mgmtconfig/v1/admin/customers/%s/machineGroup" % (self.customer_id),
             data_key_name="list",
         )
-        machineGroups = []
-        for machineGroup in list:
-            machineGroups.append(self.mapRespJSONToApp(machineGroup))
-        return machineGroups
+        return list
 
-    def getByName(self, name):
-        machineGroups = self.getAll()
-        for machineGroup in machineGroups:
-            if machineGroup.get("name") == name:
-                return machineGroup
+    def get_group(self, group_id: str) -> Box:
+        """
+        Returns information on the specified machine group.
+
+        Args:
+            group_id (str):
+                The unique identifier for the machine group.
+
+        Returns:
+            :obj:`Box`: The resource record for the machine group.
+
+        Examples:
+            >>> pprint(zpa.machine_groups.get_group('99999'))
+
+        """
+        response = self.rest.get("/mgmtconfig/v1/admin/customers/%s/machineGroup/%s" % (self.customer_id, group_id))
+        if isinstance(response, Response):
+            status_code = response.status_code
+            if status_code != 200:
+                return None
+        return response
+
+    def get_machine_group_by_name(self, name):
+        apps = self.list_groups()
+        for app in apps:
+            if app.get("name") == name:
+                return app
         return None
-
-    @delete_none
-    def mapRespJSONToApp(self, resp_json):
-        if resp_json is None:
-            return {}
-        return {
-            "creation_time": resp_json.get("creationTime"),
-            "description": resp_json.get("description"),
-            "enabled": resp_json.get("enabled"),
-            "id": resp_json.get("id"),
-            "modified_by": resp_json.get("modifiedBy"),
-            "modified_time": resp_json.get("modifiedTime"),
-            "name": resp_json.get("name"),
-            # "machines": resp_json.get("machines"), # Machines inner menu is missing
-        }
-
-    @delete_none
-    def mapAppToJSON(self, network):
-        if network is None:
-            return {}
-        return {
-            "creationTime": network.get("creation_time"),
-            "description": network.get("description"),
-            "enabled": network.get("enabled"),
-            "id": network.get("id"),
-            "modifiedBy": network.get("modified_by"),
-            "modifiedTime": network.get("modified_time"),
-            "name": network.get("name"),
-            # "machines": network.get("machines"),  # Machines inner menu is missing
-        }
