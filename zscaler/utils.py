@@ -165,6 +165,7 @@ def camel_to_snake(name: str):
         "nameL10nTag": "name_l10n_tag",
         "surrogateIP": "surrogate_ip",
         "surrogateIPEnforcedForKnownBrowsers": "surrogate_ip_enforced_for_known_browsers",
+        "isIncompleteDRConfig": "is_incomplete_dr_config",
     }
     return edge_cases.get(name, re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower())
 
@@ -180,6 +181,7 @@ def snake_to_camel(name: str):
         "name_l10n_tag": "nameL10nTag",
         "surrogate_ip": "surrogateIP",
         "surrogate_ip_enforced_for_known_browsers": "surrogateIPEnforcedForKnownBrowsers",
+        "is_incomplete_dr_config": "isIncompleteDRConfig",
     }
     return edge_cases.get(name, name[0].lower() + name.title()[1:].replace("_", ""))
 
