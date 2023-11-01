@@ -14,6 +14,7 @@ from zscaler.ratelimiter.ratelimiter import RateLimiter
 from zscaler.user_agent import UserAgent
 from zscaler.utils import format_json_response, convert_keys_to_snake
 from zscaler.zpa.client import ZPAClient
+from box import BoxList
 from zscaler.constants import (
     RETRYABLE_STATUS_CODES,
     ZPA_BASE_URLS,
@@ -131,6 +132,7 @@ def is_token_expired(token_string):
         logger.error(f"Error checking token expiration: {str(e)}")
         return True
 
+
 class ZPAClientHelper(ZPAClient):
     """
     Client helper for ZPA operations.
@@ -203,7 +205,7 @@ class ZPAClientHelper(ZPAClient):
         ua = UserAgent()
         self.user_agent = ua.get_user_agent_string()
         self.refreshToken()
-    
+
     def refreshToken(self):
         # login
         response = self.login()
@@ -217,7 +219,7 @@ class ZPAClientHelper(ZPAClient):
             "Authorization": f"Bearer {self.access_token}",
             "User-Agent": self.user_agent,
         }
-    
+
     @retry_with_backoff(retries=5)
     def login(self):
         """Log in to the ZPA API and set the access token for subsequent requests."""
@@ -302,7 +304,14 @@ class ZPAClientHelper(ZPAClient):
             response_data = resp.json()
         except ValueError:  # Using ValueError for JSON decoding errors
             response_data = resp.text
-        logger.info("Calling: %s %s. Status code: %d. Response data: %s", method, url, resp.status_code, response_data)
+        logger.info(
+            "Calling: %s %s. Status code: %d. Request data: %s, Response data: %s",
+            method,
+            url,
+            resp.status_code,
+            json.dumps(data),
+            json.dumps(response_data),
+        )
         # Cache the response if it's a successful GET request
         if method == "GET" and resp.status_code == 200:
             self.cache.add(cache_key, resp)
@@ -406,7 +415,7 @@ class ZPAClientHelper(ZPAClient):
 
             page += 1
 
-        return ret_data, error_message
+        return BoxList(ret_data), error_message
 
     @property
     def app_segments(self):

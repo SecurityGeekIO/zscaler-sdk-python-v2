@@ -230,6 +230,8 @@ def format_json_response(
             If neither flag is True, or if the response isn't JSON data, then
             a response object is returned (pass-through).
     """
+    if response.status_code > 299:
+        return response
     content_type = response.headers.get("content-type", "application/json")
     if (conv_json or conv_box) and "application/json" in content_type.lower() and len(response.text) > 0:  # noqa: E124
         if conv_box:
@@ -241,6 +243,7 @@ def format_json_response(
         elif conv_json:
             return convert_keys_to_snake(response.json())
     return response
+
 
 def remove_cloud_suffix(str_name: str) -> str:
     """
