@@ -1,4 +1,4 @@
-from . import ZPAClient
+from zscaler.zpa.client import ZPAClient
 from requests import Response
 from box import Box, BoxList
 from zscaler.utils import (
@@ -14,9 +14,9 @@ class ApplicationSegmentService:
         ("clientless_app_ids", "clientlessApps"),
         ("server_group_ids", "serverGroups"),
     ]
+
     def __init__(self, client: ZPAClient):
         self.rest = client
-        self.customer_id = client.customer_id
 
     def list_segments(self, **kwargs) -> BoxList:
         """
@@ -30,7 +30,7 @@ class ApplicationSegmentService:
 
         """
         list, _ = self.rest.get_paginated_data(
-            base_url="/mgmtconfig/v1/admin/customers/%s/application" % (self.customer_id),
+            path="/application",
             data_key_name="list",
         )
         return list
@@ -50,20 +50,20 @@ class ApplicationSegmentService:
             >>> app_segment = zpa.app_segments.details('99999')
 
         """
-        response = self.rest.get("/mgmtconfig/v1/admin/customers/%s/application/%s" % (self.customer_id, segment_id))
+        response = self.rest.get("/application/%s" % (segment_id))
         if isinstance(response, Response):
             status_code = response.status_code
             if status_code != 200:
                 return None
         return response
-    
+
     def get_segment_by_name(self, name):
         apps = self.list_segments()
         for app in apps:
             if app.get("name") == name:
                 return app
         return None
-    
+
     def delete_segment(self, segment_id: str, force_delete: bool = False) -> int:
         """
         Delete an application segment.
@@ -90,7 +90,7 @@ class ApplicationSegmentService:
         query = ""
         if force_delete:
             query = "forceDelete=true"
-        response = self.rest.delete("/mgmtconfig/v1/admin/customers/%s/application/%s?%s" % (self.customer_id, segment_id, query))
+        response = self.rest.delete("/application/%s?%s" % (segment_id, query))
         return response.status_code
 
     def add_segment(
@@ -186,8 +186,8 @@ class ApplicationSegmentService:
         # Add optional parameters to payload
         for key, value in kwargs.items():
             payload[snake_to_camel(key)] = value
-        
-        response = self.rest.post("/mgmtconfig/v1/admin/customers/%s/application" % (self.customer_id), data=payload)
+
+        response = self.rest.post("/application", data=payload)
         if isinstance(response, Response):
             status_code = response.status_code
             if status_code > 299:
@@ -281,7 +281,7 @@ class ApplicationSegmentService:
             payload[snake_to_camel(key)] = value
 
         response = self.rest.put(
-            "/mgmtconfig/v1/admin/customers/%s/application/%s" % (self.customer_id, segment_id),
+            "/application/%s" % (segment_id),
             data=payload,
         )
         if isinstance(response, Response):
@@ -291,7 +291,7 @@ class ApplicationSegmentService:
         return self.get_segment(segment_id)
 
     def detach_from_segment_group(self, app_id, seg_group_id):
-        seg_group = self.rest.get("/mgmtconfig/v1/admin/customers/%s/segmentGroup/%s" % (self.customer_id, seg_group_id))
+        seg_group = self.rest.get("/segmentGroup/%s" % (seg_group_id))
         if isinstance(seg_group, Response):
             status_code = seg_group.status_code
             if status_code > 299:
@@ -303,6 +303,6 @@ class ApplicationSegmentService:
                 addaptedApps.append(app)
         seg_group["applications"] = addaptedApps
         self.rest.put(
-            "/mgmtconfig/v1/admin/customers/%s/segmentGroup/%s" % (self.customer_id, seg_group_id),
+            "/segmentGroup/%s" % (seg_group_id),
             data=seg_group,
         )

@@ -2,7 +2,7 @@ from . import ZPAClient
 from requests import Response
 from box import Box, BoxList
 
-class MachineGroupsService:
+class MachineGroupService:
     def __init__(self, client: ZPAClient):
         self.rest = client
         self.customer_id = client.customer_id

@@ -3,7 +3,7 @@ from requests import Response
 from box import Box, BoxList
 from zscaler.utils import remove_cloud_suffix
 
-class PostureProfilesService:
+class PostureProfileService:
     def __init__(self, client: ZPAClient):
         self.rest = client
         self.customer_id = client.customer_id

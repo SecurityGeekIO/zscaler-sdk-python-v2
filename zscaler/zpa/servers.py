@@ -5,7 +5,7 @@ from zscaler.utils import (
     snake_to_camel,
 )
 
-class AppServersService:
+class ApplicationServerService:
     def __init__(self, client: ZPAClient):
         self.rest = client
         self.customer_id = client.customer_id
