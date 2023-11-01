@@ -1,8 +1,12 @@
 import re
+import json
+import base64
+import time
+import logging
 from box import Box, BoxList
 from typing import List, Optional, Any, Dict
-import re
 from requests import Response
+logger = logging.getLogger("zscaler-sdk-python")
 
 
 # Recursive function to convert all keys and nested keys from camel case
@@ -258,3 +262,44 @@ def remove_cloud_suffix(str_name: str) -> str:
     reg = re.compile(r"(.*)\s+\([a-zA-Z0-9\-_\.]*\)\s*$")
     res = reg.sub(r"\1", str_name)
     return res.strip()
+
+# ZPA Token refresh and caching logic
+def token_is_about_to_expire(token_fetch_time):
+    """Check if the token is about to expire using the timestamp."""
+    token_life_seconds = 3600
+    buffer_time = 10
+
+    # Check if the time since the token was fetched + buffer exceeds the token's life
+    if (time.time() - token_fetch_time) > (token_life_seconds - buffer_time):
+        return True
+    return False
+
+
+def is_token_expired(token_string):
+    # If token string is None or empty, consider it expired
+    if not token_string:
+        logger.warning("Token string is None or empty. Requesting a new token.")
+        return True
+
+    try:
+        # Split the token into its parts
+        parts = token_string.split(".")
+        if len(parts) != 3:
+            return True
+
+        # Decode the payload
+        payload_bytes = base64.urlsafe_b64decode(parts[1] + "==")  # Padding might be needed
+        payload = json.loads(payload_bytes)
+
+        # Check expiration time
+        if "exp" in payload:
+            # Deduct 10 seconds to account for any possible latency or clock skew
+            expiration_time = payload["exp"] - 10
+            if time.time() > expiration_time:
+                return True
+
+        return False
+
+    except Exception as e:
+        logger.error(f"Error checking token expiration: {str(e)}")
+        return True
