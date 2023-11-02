@@ -1,79 +1,76 @@
-from . import ZPAClient
-from zscaler.utils import delete_none
+# -*- coding: utf-8 -*-
 
-class CloudConnectorGroupService:
+# Copyright (c) 2023, Zscaler Inc.
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+
+from box import Box, BoxList
+from requests import Response
+
+from zscaler.zpa.client import ZPAClient
+
+
+class CloudConnectorGroupsAPI:
     def __init__(self, client: ZPAClient):
         self.rest = client
-        self.customer_id = client.customer_id
 
-    def getByIDOrName(self, id, name):
-        cloud_connector = None
-        if id is not None:
-            cloud_connector = self.getByID(id)
-        if cloud_connector is None and name is not None:
-            cloud_connector = self.getByName(name)
-        return cloud_connector
+    def list_groups(self, **kwargs) -> BoxList:
+        """
+        Returns a list of all configured cloud connector groups.
 
-    def getByID(self, id):
-        response = self.rest.get(
-            "/mgmtconfig/v1/admin/customers/%s/cloudConnectorGroup/%s"
-            % (self.customer_id, id)
-        )
-        status_code = response.status_code
-        if status_code != 200:
-            return None
-        return self.mapRespJSONToApp(response.json)
+        Keyword Args:
+            **max_items (int):
+                The maximum number of items to request before stopping iteration.
+            **max_pages (int):
+                The maximum number of pages to request before stopping iteration.
+            **pagesize (int):
+                Specifies the page size. The default size is 20, but the maximum size is 500.
+            **search (str, optional):
+                The search string used to match against features and fields.
 
-    def getAll(self):
-        list = self.rest.get_paginated_data(
-            base_url="/mgmtconfig/v1/admin/customers/%s/cloudConnectorGroup"
-            % (self.customer_id),
+        Returns:
+            :obj:`BoxList`: A list of all configured cloud connector groups.
+
+        Examples:
+            >>> for cloud_connector_group in zpa.cloud_connector_groups.list_groups():
+            ...    pprint(cloud_connector_group)
+
+        """
+        list, _ = self.rest.get_paginated_data(
+            path="/cloudConnectorGroup",
             data_key_name="list",
         )
-        cloud_connectors = []
-        for app in list:
-            cloud_connectors.append(self.mapRespJSONToApp(app))
-        return cloud_connectors
+        return list
 
-    def getByName(self, name):
-        cloud_connectors = self.getAll()
-        for cloud_connector in cloud_connectors:
-            if cloud_connector.get("name") == name:
-                return cloud_connector
-        return None
+    def get_group(self, group_id: str) -> Box:
+        """
+        Returns information on the specified cloud connector group.
 
-    @delete_none
-    def mapRespJSONToApp(self, resp_json):
-        if resp_json is None:
-            return {}
-        return {
-            "creation_time": resp_json.get("creationTime"),
-            "description": resp_json.get("description"),
-            "cloud_connectors": resp_json.get("cloudConnectors"),
-            "enabled": resp_json.get("enabled"),
-            "geolocation_id": resp_json.get("geoLocationId"),
-            "id": resp_json.get("id"),
-            "modified_by": resp_json.get("modifiedBy"),
-            "modified_time": resp_json.get("modifiedTime"),
-            "name": resp_json.get("name"),
-            "zia_cloud": resp_json.get("ziaCloud"),
-            "zia_org_id": resp_json.get("ziaOrgId"),
-        }
+        Args:
+            group_id (str):
+                The unique identifier for the cloud connector group.
 
-    @delete_none
-    def mapAppToJSON(self, cloudConnector):
-        if cloudConnector is None:
-            return {}
-        return {
-            "creationTime": cloudConnector.get("creation_time"),
-            "description": cloudConnector.get("description"),
-            "cloudConnectors": cloudConnector.get("cloud_connectors"),
-            "enabled": cloudConnector.get("enabled"),
-            "geoLocationId": cloudConnector.get("geolocation_id"),
-            "id": cloudConnector.get("id"),
-            "modifiedBy": cloudConnector.get("modified_by"),
-            "modifiedTime": cloudConnector.get("modified_time"),
-            "name": cloudConnector.get("name"),
-            "ziaCloud": cloudConnector.get("zia_cloud"),
-            "ziaOrgId": cloudConnector.get("zia_org_id"),
-        }
+        Returns:
+            :obj:`Box`: The resource record for the cloud connector group.
+
+        Examples:
+            >>> pprint(zpa.cloud_connector_groups.get_group('99999'))
+
+        """
+        response = self.rest.get("/cloudConnectorGroup/%s" % (group_id))
+        if isinstance(response, Response):
+            status_code = response.status_code
+            if status_code != 200:
+                return None
+        return response

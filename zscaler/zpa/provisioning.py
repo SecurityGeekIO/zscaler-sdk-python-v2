@@ -1,142 +1,259 @@
-from . import ZPAClient
-from zscaler.utils import delete_none
+# -*- coding: utf-8 -*-
 
-class ProvisioningKeyService:
+# Copyright (c) 2023, Zscaler Inc.
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+
+from box import Box, BoxList
+
+from zscaler.utils import Iterator, snake_to_camel
+from zscaler.zpa.client import ZPAClient
+
+
+def simplify_key_type(key_type):
+    # Simplify the key type for our users
+    if key_type == "connector":
+        return "CONNECTOR_GRP"
+    elif key_type == "service_edge":
+        return "SERVICE_EDGE_GRP"
+    else:
+        raise ValueError("Unexpected key type.")
+
+
+class ProvisioningKeyAPI:
     def __init__(self, client: ZPAClient):
         self.rest = client
-        self.customer_id = client.customer_id
-        self.association_types = ["CONNECTOR_GRP", "SERVICE_EDGE_GRP"]
 
-    def getByIDOrName(self, id, name, association_type):
-        provisioning_key = None
-        if id is not None:
-            provisioning_key = self.getByID(id, association_type)
-        if provisioning_key is None and name is not None:
-            provisioning_key = self.getByName(name, association_type)
-        return provisioning_key
+    def list_provisioning_keys(self, key_type: str, **kwargs) -> BoxList:
+        """
+        Returns a list of all configured provisioning keys that match the specified ``key_type``.
 
-    def getByID(self, id, association_type):
-        response = self.rest.get(
-            "/mgmtconfig/v1/admin/customers/%s/associationType/%s/provisioningKey/%s"
-            % (self.customer_id, association_type, id)
+        Args:
+            key_type (str): The type of provisioning key, accepted values are:
+
+                ``connector`` and ``service_edge``.
+            **kwargs: Optional keyword args.
+
+        Keyword Args:
+            **max_items (int, optional):
+                The maximum number of items to request before stopping iteration.
+            **max_pages (int, optional):
+                The maximum number of pages to request before stopping iteration.
+            **pagesize (int, optional):
+                Specifies the page size. The default size is 20, but the maximum size is 500.
+            **search (str, optional):
+                The search string used to match against features and fields.
+
+        Returns:
+            :obj:`BoxList`: A list containing the requested provisioning keys.
+
+        Examples:
+            List all App Connector provisioning keys.
+
+            >>> for key in zpa.provisioning.list_provisioning_keys(key_type="connector"):
+            ...    print(key)
+
+            List all Service Edge provisioning keys.
+
+            >>> for key in zpa.provisioning.list_provisioning_keys(key_type="service_edge"):
+            ...    print(key)
+
+        """
+
+        return BoxList(
+            Iterator(
+                self._api,
+                f"associationType/{simplify_key_type(key_type)}/provisioningKey",
+                **kwargs,
+            )
         )
-        status_code = response.status_code
-        if status_code != 200:
-            return None
-        return self.mapRespJSONToApp(response.json)
 
-    def getAll(self, association_type):
-        list = self.rest.get_paginated_data(
-            base_url="/mgmtconfig/v1/admin/customers/%s/associationType/%s/provisioningKey"
-            % (self.customer_id, association_type),
-            data_key_name="list",
-        )
-        provisioning_keys = []
-        for provisioning_key in list:
-            provisioning_keys.append(self.mapRespJSONToApp(provisioning_key))
-        return provisioning_keys
+    def get_provisioning_key(self, key_id: str, key_type: str) -> Box:
+        """
+        Returns information on the specified provisioning key.
 
-    def getByNameAllAssociations(self, name):
-        for assoc_type in self.association_types:
-            pro_key = self.getByName(name, assoc_type)
-            if pro_key is not None:
-                return pro_key
-            return None
+        Args:
+            key_id (str): The unique id of the provisioning key.
+            key_type (str): The type of provisioning key, accepted values are:
 
-    def getByIDAllAssociations(self, id):
-        for assoc_type in self.association_types:
-            pro_key = self.getByID(id, assoc_type)
-            if pro_key is not None:
-                return pro_key
-            return None
+                ``connector`` and ``service_edge``.
 
-    def getByName(self, name, association_type):
-        provisioning_keys = self.getAll(association_type)
-        for provisioning_key in provisioning_keys:
-            if provisioning_key.get("name") == name:
-                return provisioning_key
-        return None
+        Returns:
+            :obj:`Box`: The requested provisioning key resource record.
 
-    @delete_none
-    def mapRespJSONToApp(self, resp_json):
-        if resp_json is None:
-            return {}
-        return {
-            "app_connector_group_id": resp_json.get("appConnectorGroupId"),
-            "app_connector_group_name": resp_json.get("appConnectorGroupName"),
-            "creation_time": resp_json.get("creationTime"),
-            "enabled": resp_json.get("enabled"),
-            "expiration_in_epoch_sec": resp_json.get("expirationInEpochSec"),
-            "id": resp_json.get("id"),
-            "ip_acl": resp_json.get("ipAcl"),
-            "max_usage": resp_json.get("maxUsage"),
-            "modified_by": resp_json.get("modifiedBy"),
-            "modified_time": resp_json.get("modifiedTime"),
-            "name": resp_json.get("name"),
-            "provisioning_key": resp_json.get("provisioningKey"),
-            "enrollment_cert_id": resp_json.get("enrollmentCertId"),
-            "enrollment_cert_name": resp_json.get("enrollmentCertName"),
-            "ui_config": resp_json.get("uiConfig"),
-            "usage_count": resp_json.get("usageCount"),
-            "zcomponent_id": resp_json.get("zcomponentId"),
-            "zcomponent_name": resp_json.get("zcomponentName"),
+        Examples:
+            Get the specified App Connector key.
+
+            >>> provisioning_key = zpa.provisioning.get_provisioning_key("999999",
+            ...    key_type="connector")
+
+            Get the specified Service Edge key.
+
+            >>> provisioning_key = zpa.provisioning.get_provisioning_key("888888",
+            ...    key_type="service_edge")
+
+        """
+
+        return self._get(f"associationType/{simplify_key_type(key_type)}/provisioningKey/{key_id}")
+
+    def add_provisioning_key(
+        self,
+        key_type: str,
+        name: str,
+        max_usage: str,
+        enrollment_cert_id: str,
+        component_id: str,
+        **kwargs,
+    ) -> Box:
+        """
+        Adds a new provisioning key to ZPA.
+
+        Args:
+            key_type (str): The type of provisioning key, accepted values are:
+
+                ``connector`` and ``service_edge``.
+            name (str): The name of the provisioning key.
+            max_usage (int): The maximum amount of times this key can be used.
+            enrollment_cert_id (str):
+                The unique id of the enrollment certificate that will be used for this provisioning key.
+            component_id (str):
+                The unique id of the component that this provisioning key will be linked to. For App Connectors, this
+                will be the App Connector Group Id. For Service Edges, this will be the Service Edge Group Id.
+            **kwargs: Optional keyword args.
+
+        Keyword Args:
+            enabled (bool): Enable the provisioning key. Defaults to ``True``.
+
+        Returns:
+            :obj:`Box`: The newly created Provisioning Key resource record.
+
+        Examples:
+            Add a new App Connector Provisioning Key that can be used a maximum of 2 times.
+
+            >>> key = zpa.provisioning.add_provisioning_key(key_type="connector",
+            ...    name="Example App Connector Provisioning Key",
+            ...    max_usage=2,
+            ...    enrollment_cert_id="99999",
+            ...    component_id="888888")
+
+            Add a new Service Edge Provisioning Key in the disabled state that can be used once.
+
+            >>> key = zpa.provisioning.add_provisioning_key(key_type="service_edge",
+            ...    name="Example Service Edge Provisioning Key",
+            ...    max_usage=1,
+            ...    enrollment_cert_id="99999",
+            ...    component_id="777777"
+            ...    enabled=False)
+
+        """
+
+        payload = {
+            "name": name,
+            "maxUsage": max_usage,
+            "enrollmentCertId": enrollment_cert_id,
+            "zcomponentId": component_id,
         }
 
-    @delete_none
-    def mapAppToJSON(self, provisioning_key):
-        if provisioning_key is None:
-            return {}
-        return {
-            "appConnectorGroupId": provisioning_key.get("app_connector_group_id"),
-            "appConnectorGroupName": provisioning_key.get("app_connector_group_name"),
-            "creationTime": provisioning_key.get("creation_time"),
-            "enabled": provisioning_key.get("enabled"),
-            "expirationInEpochSec": provisioning_key.get("expiration_in_epoch_sec"),
-            "id": provisioning_key.get("id"),
-            "ipAcl": provisioning_key.get("ip_acl"),
-            "maxUsage": provisioning_key.get("max_usage"),
-            "modifiedBy": provisioning_key.get("modified_by"),
-            "modifiedTime": provisioning_key.get("modified_time"),
-            "name": provisioning_key.get("name"),
-            "provisioningKey": provisioning_key.get("provisioning_key"),
-            "enrollmentCertId": provisioning_key.get("enrollment_cert_id"),
-            "enrollmentCertName": provisioning_key.get("enrollment_cert_name"),
-            "uiConfig": provisioning_key.get("ui_config"),
-            "usageCount": provisioning_key.get("usage_count"),
-            "zcomponentId": provisioning_key.get("zcomponent_id"),
-            "zcomponentName": provisioning_key.get("zcomponent_name"),
-        }
+        # Add optional parameters to payload
+        for key, value in kwargs.items():
+            payload[snake_to_camel(key)] = value
 
-    def create(self, provisioning_key, association_type):
-        """Create new Provisioning Key"""
-        provisioningKeyJson = self.mapAppToJSON(provisioning_key)
-        response = self.rest.post(
-            "/mgmtconfig/v1/admin/customers/%s/associationType/%s/provisioningKey"
-            % (self.customer_id, association_type),
-            data=provisioningKeyJson,
+        return self._post(
+            f"associationType/{simplify_key_type(key_type)}/provisioningKey",
+            json=payload,
         )
-        status_code = response.status_code
-        if status_code > 299:
-            return None
-        return self.getByID(response.json.get("id"), association_type)
 
-    def update(self, provisioning_key, association_type):
-        """update the Provisioning Key"""
-        provisioningKeyJson = self.mapAppToJSON(provisioning_key)
-        response = self.rest.put(
-            "/mgmtconfig/v1/admin/customers/%s/associationType/%s/provisioningKey/%s"
-            % (self.customer_id, association_type, provisioningKeyJson.get("id")),
-            data=provisioningKeyJson,
-        )
-        status_code = response.status_code
-        if status_code > 299:
-            return None
-        return self.getByID(provisioningKeyJson.get("id"), association_type)
+    def update_provisioning_key(self, key_id: str, key_type: str, **kwargs) -> Box:
+        """
+        Updates the specified provisioning key.
 
-    def delete(self, id, association_type):
-        """delete the Provisioning Key"""
-        response = self.rest.delete(
-            "/mgmtconfig/v1/admin/customers/%s/associationType/%s/provisioningKey/%s"
-            % (self.customer_id, association_type, id)
-        )
-        return response.status_code
+        Args:
+            key_id (str): The unique id of the Provisioning Key being updated.
+            key_type (str): The type of provisioning key, accepted values are:
+
+                ``connector`` and ``service_edge``.
+            **kwargs: Optional keyword args.
+
+        Keyword Args:
+            name (str): The name of the provisioning key.
+            max_usage (int): The maximum amount of times this key can be used.
+            enrollment_cert_id (str):
+                The unique id of the enrollment certificate that will be used for this provisioning key.
+            component_id (str):
+                The unique id of the component that this provisioning key will be linked to. For App Connectors, this
+                will be the App Connector Group Id. For Service Edges, this will be the Service Edge Group Id.
+
+        Returns:
+            :obj:`Box`: The updated Provisioning Key resource record.
+
+        Examples:
+            Update the name of an App Connector provisioning key:
+
+            >>> updated_key = zpa.provisioning.update_provisioning_key('999999',
+            ...    key_type="connector",
+            ...    name="Updated Name")
+
+            Change the max usage of a Service Edge provisioning key:
+
+            >>> updated_key = zpa.provisioning.update_provisioning_key('888888',
+            ...    key_type="service_edge",
+            ...    max_usage=10)
+
+        """
+
+        # Get the provided provisioning key record
+        payload = {snake_to_camel(k): v for k, v in self.get_provisioning_key(key_id, key_type=key_type).items()}
+
+        # Add optional parameters to payload
+        for key, value in kwargs.items():
+            payload[snake_to_camel(key)] = value
+
+        resp = self._put(
+            f"associationType/{simplify_key_type(key_type)}/provisioningKey/{key_id}",
+            json=payload,
+        ).status_code
+
+        if resp == 204:
+            return self.get_provisioning_key(key_id, key_type=key_type)
+
+    def delete_provisioning_key(self, key_id: str, key_type: str) -> int:
+        """
+        Deletes the specified provisioning key from ZPA.
+
+        Args:
+            key_id (str): The unique id of the provisioning key that will be deleted.
+            key_type (str): The type of provisioning key, accepted values are:
+
+                ``connector`` and ``service_edge``.
+
+        Returns:
+            :obj:`int`: The status code for the operation.
+
+        Examples:
+            Delete an App Connector provisioning key:
+
+            >>> zpa.provisioning.delete_provisioning_key(key_id="999999",
+            ...    key_type="connector")
+
+            Delete a Service Edge provisioning key:
+
+            >>> zpa.provisioning.delete_provisioning_key(key_id="888888",
+            ...    key_type="service_edge")
+
+        """
+
+        return self._delete(
+            f"associationType/{simplify_key_type(key_type)}/provisioningKey/{key_id}",
+            box=False,
+        ).status_code

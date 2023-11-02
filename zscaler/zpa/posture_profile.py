@@ -1,40 +1,37 @@
-from . import ZPAClient
-from requests import Response
 from box import Box, BoxList
+from requests import Response
+
 from zscaler.utils import remove_cloud_suffix
 
-class PostureProfileService:
+from . import ZPAClient
+
+
+class PostureProfilesAPI:
     def __init__(self, client: ZPAClient):
         self.rest = client
-        self.customer_id = client.customer_id
-
 
     def list_profiles(self, **kwargs) -> BoxList:
         """
         Returns a list of all configured posture profiles.
 
         Keyword Args:
-            **max_items (int):
+            max_items (int):
                 The maximum number of items to request before stopping iteration.
-            **max_pages (int):
+            max_pages (int):
                 The maximum number of pages to request before stopping iteration.
-            **pagesize (int):
+            pagesize (int):
                 Specifies the page size. The default size is 20, but the maximum size is 500.
-            **search (str, optional):
+            search (str, optional):
                 The search string used to match against features and fields.
 
         Returns:
-            :obj:`BoxList`: A list of all configured posture profiles.
+            BoxList: A list of all configured posture profiles.
 
         Examples:
             >>> for posture_profile in zpa.posture_profiles.list_profiles():
             ...    pprint(posture_profile)
-
         """
-        list, _ = self.rest.get_paginated_data(
-            base_url="/mgmtconfig/v1/admin/customers/%s/posture" % (self.customer_id),
-            data_key_name="list",
-        )
+        list, _ = self.rest.get_paginated_data(path="/posture", data_key_name="list", **kwargs)
         return list
 
     def get_profile(self, profile_id: str) -> Box:
@@ -52,7 +49,7 @@ class PostureProfileService:
             >>> pprint(zpa.posture_profiles.get_profile('99999'))
 
         """
-        response = self.rest.get("/mgmtconfig/v1/admin/customers/%s/profile/%s" % (self.customer_id, profile_id))
+        response = self.rest.get("/posture/%s" % (profile_id))
         if isinstance(response, Response):
             status_code = response.status_code
             if status_code != 200:

@@ -17,16 +17,17 @@
 
 from box import Box, BoxList
 from requests import Response
+
 from zscaler.zpa.client import ZPAClient
 
 
-class IDPControllerAPI:
+class IsolationProfileAPI:
     def __init__(self, client: ZPAClient):
         self.rest = client
 
-    def list_idps(self, **kwargs) -> BoxList:
+    def list_profiles(self, **kwargs) -> BoxList:
         """
-        Returns a list of all configured IdPs.
+        Returns a list of all configured isolation profiles.
 
         Keyword Args:
             **max_items (int):
@@ -35,46 +36,43 @@ class IDPControllerAPI:
                 The maximum number of pages to request before stopping iteration.
             **pagesize (int):
                 Specifies the page size. The default size is 20, but the maximum size is 500.
-            **scim_enabled (bool):
-                Returns all SCIM IdPs if ``True``. Returns all non-SCIM IdPs if ``False``.
             **search (str, optional):
                 The search string used to match against features and fields.
 
         Returns:
-            :obj:`BoxList`: A list of all configured IdPs.
+            :obj:`list`: A list of all configured isolation profiles.
 
         Examples:
-            >>> for idp in zpa.idp.list_idps():
-            ...    pprint(idp)
+            >>> for isolation_profiles in zpa.isolation_profiles.list_profiles():
+            ...    pprint(isolation_profiles)
 
         """
-        list, _ = self.rest.get_paginated_data(path="/idp", data_key_name="list", **kwargs)
+        list, _ = self.rest.get_paginated_data(path="/isolation/profiles", data_key_name="list", **kwargs)
         return list
 
-    def get_idp_by_name(self, name):
-        idps = self.list_idps()
-        for idp in idps:
-            if idp.get("name") == name:
-                return idp
+    def get_profile_by_name(self, name):
+        profiles = self.list_profiles()
+        for profile in profiles:
+            if profile.get("name") == name:
+                return profile
         return None
 
-    def get_idp(self, idp_id: str) -> Box:
+    def get_profile(self, profile_id: str) -> Box:
         """
-        Returns information on the specified IdP.
+        Returns information on the specified isolation profile.
 
         Args:
-            idp_id (str):
-                The unique identifier for the IdP.
+            profile_id (str):
+                The unique identifier for the isolation profile.
 
         Returns:
-            :obj:`Box`: The resource record for the IdP.
+            :obj:`Box`: The resource record for the isolation profile.
 
         Examples:
-            >>> pprint(zpa.idp.get_idp('99999'))
+            >>> pprint(zpa.isolation_profiles.get_profile('99999'))
 
         """
-
-        response = self.rest.get("/idp/%s" % (idp_id))
+        response = self.rest.get("/isolation/profiles/%s" % (profile_id))
         if isinstance(response, Response):
             status_code = response.status_code
             if status_code != 200:

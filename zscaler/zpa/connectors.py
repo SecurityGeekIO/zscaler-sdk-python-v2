@@ -1,191 +1,373 @@
-from . import ZPAClient
-from zscaler.utils import delete_none
-from zscaler.utils import camelcaseToSnakeCase
+from box import Box, BoxList
+from requests import Response
 
-class AppConnectorControllerService:
+from zscaler.utils import add_id_groups, pick_version_profile, snake_to_camel
+from zscaler.zpa.client import ZPAClient
+
+
+class AppConnectorControllerAPI:
+    reformat_params = [
+        ("connector_ids", "connectors"),
+        ("server_group_ids", "serverGroups"),
+    ]
+
     def __init__(self, client: ZPAClient):
         self.rest = client
-        self.customer_id = client.customer_id
 
-    def getByIDOrName(self, id, name):
-        connector = None
-        if id is not None:
-            connector = self.getByID(id)
-        if connector is None and name is not None:
-            connector = self.getByName(name)
-        return connector
+    def list_connectors(self, **kwargs) -> BoxList:
+        """
+        Returns a list of all configured App Connectors.
 
-    def getByID(self, id):
-        response = self.rest.get(
-            "/mgmtconfig/v1/admin/customers/%s/connector/%s" % (self.customer_id, id)
-        )
-        status_code = response.status_code
-        if status_code != 200:
-            return None
-        return self.mapRespJSONToApp(response.json)
+        Args:
+            **kwargs: Optional keyword args.
 
-    def getAll(self):
-        list = self.rest.get_paginated_data(
-            base_url="/mgmtconfig/v1/admin/customers/%s/connector" % (self.customer_id),
+        Keyword Args:
+            **max_items (int, optional):
+                The maximum number of items to request before stopping iteration.
+            **max_pages (int, optional):
+                The maximum number of pages to request before stopping iteration.
+            **pagesize (int, optional):
+                Specifies the page size. The default size is 100, but the maximum size is 1000.
+            **search (str, optional):
+                The search string used to match against a department's name or comments attributes.
+
+        Returns:
+            :obj:`BoxList`: List containing all configured ZPA App Connectors.
+
+        Examples:
+            List all configured App Connectors:
+
+            >>> for connector in zpa.connectors.list_connectors():
+            ...    print(connector)
+
+        """
+        list, _ = self.rest.get_paginated_data(
+            path="/connector",
             data_key_name="list",
         )
-        connectors = []
-        for connector in list:
-            connectors.append(self.mapRespJSONToApp(connector))
-        return connectors
+        return list
 
-    def getByName(self, name):
-        connectors = self.getAll()
-        for connector in connectors:
-            if connector.get("name") == name:
-                return connector
+    def get_connector(self, connector_id: str) -> Box:
+        """
+        Returns information on the specified App Connector.
+
+        Args:
+            connector_id (str): The unique id for the ZPA App Connector.
+
+        Returns:
+            :obj:`Box`: The specified App Connector resource record.
+
+        Examples:
+            >>> app_connector = zpa.connectors.get_connector('99999')
+
+        """
+        response = self.rest.get("/connector/%s" % (connector_id))
+        if isinstance(response, Response):
+            status_code = response.status_code
+            if status_code != 200:
+                return None
+        return response
+
+    def get_connector_by_name(self, name):
+        apps = self.list_connectors()
+        for app in apps:
+            if app.get("name") == name:
+                return app
         return None
 
-    def mapConnectorsJSONToList(self, connectors):
-        if connectors is None:
-            return []
-        l = []
-        for s in connectors:
-            d = camelcaseToSnakeCase(s)
-            l.append(d)
-        return l
+    def update_connector(self, connector_id: str, **kwargs):
+        """
+        Updates an existing ZPA App Connector.
 
-    def mapConnectorsListToJSON(self, connectors):
-        if connectors is None:
-            return []
-        l = []
-        for s in connectors:
-            d = dict(id=s.get("id"))
-            l.append(d)
-        return l
+        Args:
+            connector_id (str): The unique id of the ZPA App Connector.
+            **kwargs: Optional keyword args.
 
-    @delete_none
-    def mapRespJSONToApp(self, resp_json):
-        if resp_json is None:
-            return {}
-        return {
-            # "connectors": self.mapConnectorsJSONToList(resp_json.get("connectors")),
-            "application_start_time": resp_json.get("applicationStartTime"),
-            "app_connector_group_id": resp_json.get("appConnectorGroupId"),
-            "app_connector_group_name": resp_json.get("appConnectorGroupName"),
-            "control_channel_status": resp_json.get("controlChannelStatus"),
-            "creation_time": resp_json.get("creationTime"),
-            "country_code": resp_json.get("countryCode"),
-            "ctrl_broker_name": resp_json.get("ctrlBrokerName"),
-            "current_version": resp_json.get("currentVersion"),
-            "description": resp_json.get("description"),
-            "enabled": resp_json.get("enabled"),
-            "expected_upgrade_time": resp_json.get("expectedUpgradeTime"),
-            "expected_version": resp_json.get("expectedVersion"),
-            "fingerprint": resp_json.get("fingerprint"),
-            "id": resp_json.get("id"),
-            "ip_acl": resp_json.get("ipAcl"),
-            "issued_cert_id": resp_json.get("issuedCertId"),
-            "last_broker_connect_time": resp_json.get("lastBrokerConnectTime"),
-            "last_broker_connect_time_duration": resp_json.get(
-                "lastBrokerConnectTimeDuration"
-            ),
-            "last_broker_disconnect_time": resp_json.get("lastBrokerDisconnectTime"),
-            "last_broker_disconnect_time_duration": resp_json.get(
-                "lastBrokerDisconnectTimeDuration"
-            ),
-            "last_upgrade_time": resp_json.get("lastUpgradeTime"),
-            "latitude": resp_json.get("latitude"),
-            "location": resp_json.get("location"),
-            "longitude": resp_json.get("longitude"),
-            "modified_by": resp_json.get("modifiedBy"),
-            "modified_time": resp_json.get("modifiedTime"),
-            "name": resp_json.get("name"),
-            "provisioning_key_id": resp_json.get("provisioningKeyId"),
-            "provisioning_key_name": resp_json.get("provisioningKeyName"),
-            "platform": resp_json.get("platform"),
-            "previous_version": resp_json.get("previousVersion"),
-            "private_ip": resp_json.get("privateIp"),
-            "public_ip": resp_json.get("c"),
-            "sarge_version": resp_json.get("sargeVersion"),
-            "enrollment_cert": resp_json.get("enrollmentCert"),
-            "upgrade_attempt": resp_json.get("upgradeAttempt"),
-            "upgrade_status": resp_json.get("upgradeStatus"),
-        }
+        Keyword Args:
+            **description (str): Additional information about the App Connector.
+            **enabled (bool): True if the App Connector is enabled.
+            **name (str): The name of the App Connector.
 
-    @delete_none
-    def mapAppToJSON(self, connector):
-        if connector is None:
-            return {}
-        return {
-            # "connectors": self.mapConnectorsListToJSON(connector.get("connectors")),
-            "applicationStartTime": connector.get("application_start_time"),
-            "appConnectorGroupId": connector.get("app_connector_group_id"),
-            "appConnectorGroupName": connector.get("app_connector_group_name"),
-            "controlChannelStatus": connector.get("control_channel_status"),
-            "creationTime": connector.get("creation_time"),
-            "countryCode": connector.get("country_code"),
-            "ctrlBrokerName": connector.get("ctrl_broker_name"),
-            "currentVersion": connector.get("current_version"),
-            "description": connector.get("description"),
-            "enabled": connector.get("enabled"),
-            "expectedUpgradeTime": connector.get("expected_upgrade_time"),
-            "expectedVersion": connector.get("expected_version"),
-            "fingerprint": connector.get("fingerprint"),
-            "id": connector.get("id"),
-            "ipAcl": connector.get("ip_acl"),
-            "issuedCertId": connector.get("issued_cert_id"),
-            "lastBrokerConnectTime": connector.get("last_broker_connect_time"),
-            "lastBrokerConnectTimeDuration": connector.get(
-                "last_broker_connect_time_duration"
-            ),
-            "lastBrokerDisconnectTime": connector.get("last_broker_disconnect_time"),
-            "lastBrokerDisconnectTimeDuration": connector.get(
-                "last_broker_disconnect_time_duration"
-            ),
-            "lastUpgradeTime": connector.get("last_upgrade_time"),
-            "latitude": connector.get("latitude"),
-            "location": connector.get("location"),
-            "longitude": connector.get("longitude"),
-            "modifiedBy": connector.get("modified_by"),
-            "modifiedTime": connector.get("modified_time"),
-            "name": connector.get("name"),
-            "provisioningKeyId": connector.get("provisioning_key_id"),
-            "provisioningKeyName": connector.get("provisioning_key_name"),
-            "platform": connector.get("platform"),
-            "previousVersion": connector.get("previous_version"),
-            "privateIp": connector.get("private_ip"),
-            "publicIp": connector.get("public_ip"),
-            "sargeVersion": connector.get("sarge_version"),
-            "enrollmentCert": connector.get("enrollment_cert"),
-            "upgradeAttempt": connector.get("upgrade_attempt"),
-            "upgradeStatus": connector.get("upgrade_status"),
-        }
+        Returns:
+            :obj:`Box`: The updated App Connector resource record.
 
-    def bulkDelete(self, app):
-        """Bulk Delete App Connectors"""
-        appJSON = self.mapAppToJSON(app)
-        response = self.rest.post(
-            "/mgmtconfig/v1/admin/customers/%s/connector/bulkDelete"
-            % (self.customer_id),
-            data=appJSON,
-        )
-        status_code = response.status_code
-        if status_code > 299:
-            return None
-        return self.mapRespJSONToApp(response.json)
+        Examples:
+            Update an App Connector name and disable it.
 
-    def update(self, app):
-        """update the App Connectors"""
-        appJSON = self.mapAppToJSON(app)
+            >>> app_connector = zpa.connectors.update_connector('999999',
+            ...    name="Updated App Connector Name",
+            ...    enabled=False)
+
+        """
+        # Set payload to equal existing record
+        payload = {snake_to_camel(k): v for k, v in self.get_connector(connector_id).items()}
+
+        # Perform formatting on simplified params
+        add_id_groups(self.reformat_params, kwargs, payload)
+
+        # Add optional parameters to payload
+        for key, value in kwargs.items():
+            payload[snake_to_camel(key)] = value
+
         response = self.rest.put(
-            "/mgmtconfig/v1/admin/customers/%s/connector/%s"
-            % (self.customer_id, appJSON.get("id")),
-            data=appJSON,
+            "/connector/%s" % (connector_id),
+            data=payload,
         )
-        status_code = response.status_code
-        if status_code > 299:
-            return None
-        return app
+        if isinstance(response, Response):
+            status_code = response.status_code
+            if status_code > 299:
+                return None
+        return self.get_segment(connector_id)
 
-    def delete(self, id):
-        """delete the App Connectors"""
-        response = self.rest.delete(
-            "/mgmtconfig/v1/admin/customers/%s/connector/%s" % (self.customer_id, id)
+    def delete_connector(self, connector_id: str) -> int:
+        """
+        Deletes the specified App Connector from ZPA.
+
+        Args:
+            connector_id (str): The unique id for the ZPA App Connector that will be deleted.
+
+        Returns:
+            :obj:`int`: The status code for the operation.
+
+        Examples:
+            >>> zpa.connectors.delete_connector('999999')
+
+        """
+        return self.rest.delete(f"connector/{connector_id}").status_code
+
+    def bulk_delete_connectors(self, connector_ids: list) -> int:
+        """
+        Deletes all specified App Connectors from ZPA.
+
+        Args:
+            connector_ids (list): The list of unique ids for the ZPA App Connectors that will be deleted.
+
+        Returns:
+            :obj:`int`: The status code for the operation.
+
+        Examples:
+            >>> zpa.connectors.bulk_delete_connectors(['111111', '222222', '333333'])
+
+        """
+        payload = {"ids": connector_ids}
+        return self.rest.post("connector/bulkDelete", json=payload).status_code
+
+    def list_connector_groups(self, **kwargs) -> BoxList:
+        """
+        Returns a list of all connector groups.
+
+        Keyword Args:
+            **max_items (int, optional):
+                The maximum number of items to request before stopping iteration.
+            **max_pages (int, optional):
+                The maximum number of pages to request before stopping iteration.
+            **pagesize (int, optional):
+                Specifies the page size. The default size is 100, but the maximum size is 1000.
+            **search (str, optional):
+                The search string used to match against a department's name or comments attributes.
+
+        Returns:
+            :obj:`BoxList`: List of all configured connector groups.
+
+        Examples:
+            >>> connector_groups = zpa.connectors.list_connector_groups()
+
+        """
+        list, _ = self.rest.get_paginated_data(
+            path="/appConnectorGroup",
+            data_key_name="list",
         )
-        return response.status_code
+        return list
+
+    def get_connector_group(self, group_id: str) -> Box:
+        """
+        Gets information for a specified connector group.
+
+        Args:
+            group_id (str):
+                The unique identifier for the connector group.
+
+        Returns:
+            :obj:`Box`:
+                The connector group resource record.
+
+        Examples:
+            >>> connector_group = zpa.connectors.get_connector_group('99999')
+
+        """
+        response = self.rest.get("/appConnectorGroup/%s" % (group_id))
+        if isinstance(response, Response):
+            status_code = response.status_code
+            if status_code != 200:
+                return None
+        return response
+
+    def add_connector_group(self, name: str, latitude: int, location: str, longitude: int, **kwargs) -> Box:
+        """
+        Adds a new ZPA App Connector Group.
+
+        Args:
+            name (str): The name of the App Connector Group.
+            latitude (int): The latitude representing the App Connector's physical location.
+            location (str): The name of the location that the App Connector Group represents.
+            longitude (int): The longitude representing the App Connector's physical location.
+            **kwargs: Optional keyword args.
+
+        Keyword Args:
+            **connector_ids (list):
+                The unique ids for the App Connectors that will be added to this App Connector Group.
+            **city_country (str):
+                The City and Country for where the App Connectors are located. Format is:
+
+                ``<City>, <Country Code>`` e.g. ``Sydney, AU``
+            **country_code (str):
+                The ISO<std> Country Code that represents the country where the App Connectors are located.
+            **description (str):
+                Additional information about the App Connector Group.
+            **dns_query_type (str):
+                The type of DNS queries that are enabled for this App Connector Group. Accepted values are:
+                ``IPV4_IPV6``, ``IPV4`` and ``IPV6``
+            **enabled (bool):
+                Is the App Connector Group enabled? Defaults to ``True``.
+            **override_version_profile (bool):
+                Override the local App Connector version according to ``version_profile``. Defaults to ``False``.
+            **server_group_ids (list):
+                The unique ids of the Server Groups that are associated with this App Connector Group
+            **lss_app_connector_group (bool):
+            **upgrade_day (str):
+                The day of the week that upgrades will be pushed to the App Connector.
+            **upgrade_time_in_secs (str):
+                The time of the day that upgrades will be pushed to the App Connector.
+            **version_profile (str):
+                The version profile to use. This will automatically set ``override_version_profile`` to True.
+                Accepted values are:
+                ``default``, ``previous_default`` and ``new_release``
+
+        Returns:
+            :obj:`Box`: The resource record of the newly created App Connector Group.
+
+        Examples:
+            Add a new ZPA App Connector Group with parameters.
+
+            >>> group = zpa.connectors.add_connector_group(name="New App Connector Group",
+            ...    location="Sydney",
+            ...    latitude="33.8688",
+            ...    longitude="151.2093",
+            ...    version_profile="default")
+
+        """
+        payload = {
+            "name": name,
+            "latitude": latitude,
+            "location": location,
+            "longitude": longitude,
+        }
+
+        # Perform formatting on simplified params
+        add_id_groups(self.reformat_params, kwargs, payload)
+        pick_version_profile(kwargs, payload)
+
+        # Add optional parameters to payload
+        for key, value in kwargs.items():
+            payload[snake_to_camel(key)] = value
+
+        response = self.rest.post("/appConnectorGroup", data=payload)
+        if isinstance(response, Response):
+            status_code = response.status_code
+            if status_code > 299:
+                return None
+        return self.get_connector_group(response.get("id"))
+
+    def update_connector_group(self, group_id: str, **kwargs) -> Box:
+        """
+        Updates an existing ZPA App Connector Group.
+
+        Args:
+            group_id (str): The unique id for the App Connector Group in ZPA.
+            **kwargs: Optional keyword args.
+
+        Keyword Args:
+            **connector_ids (list):
+                The unique ids for the App Connectors that will be added to this App Connector Group.
+            **city_country (str):
+                The City and Country for where the App Connectors are located. Format is:
+
+                ``<City>, <Country Code>`` e.g. ``Sydney, AU``
+            **country_code (str):
+                The ISO<std> Country Code that represents the country where the App Connectors are located.
+            **description (str):
+                Additional information about the App Connector Group.
+            **dns_query_type (str):
+                The type of DNS queries that are enabled for this App Connector Group. Accepted values are:
+                ``IPV4_IPV6``, ``IPV4`` and ``IPV6``
+            **enabled (bool):
+                Is the App Connector Group enabled? Defaults to ``True``.
+            **name (str): The name of the App Connector Group.
+            **latitude (int): The latitude representing the App Connector's physical location.
+            **location (str): The name of the location that the App Connector Group represents.
+            **longitude (int): The longitude representing the App Connector's physical location.
+            **override_version_profile (bool):
+                Override the local App Connector version according to ``version_profile``. Defaults to ``False``.
+            **server_group_ids (list):
+                The unique ids of the Server Groups that are associated with this App Connector Group
+            **lss_app_connector_group (bool):
+            **upgrade_day (str):
+                The day of the week that upgrades will be pushed to the App Connector.
+            **upgrade_time_in_secs (str):
+                The time of the day that upgrades will be pushed to the App Connector.
+            **version_profile (str):
+                The version profile to use. This will automatically set ``override_version_profile`` to True.
+                Accepted values are:
+
+                ``default``, ``previous_default`` and ``new_release``
+
+        Returns:
+            :obj:`Box`: The updated ZPA App Connector Group resource record.
+
+        Examples:
+            Update the name of an App Connector Group in ZPA, change the version profile to new releases and disable
+            the group.
+
+            >>> group = zpa.connectors.update_connector_group('99999',
+            ...    name="Updated App Connector Group",
+            ...    version_profile="new_release",
+            ...    enabled=False)
+
+        """
+
+        # Set payload to equal existing record
+        payload = {snake_to_camel(k): v for k, v in self.get_connector_group(group_id).items()}
+
+        # Perform formatting on simplified params
+        add_id_groups(self.reformat_params, kwargs, payload)
+        pick_version_profile(kwargs, payload)
+
+        # Add optional parameters to payload
+        for key, value in kwargs.items():
+            payload[snake_to_camel(key)] = value
+
+        response = self.rest.put(
+            "/appConnectorGroup/%s" % (group_id),
+            data=payload,
+        )
+        if isinstance(response, Response):
+            status_code = response.status_code
+            if status_code > 299:
+                return None
+        return self.get_connector_group(group_id)
+
+    def delete_connector_group(self, group_id: str) -> int:
+        """
+        Deletes the specified App Connector Group from ZPA.
+
+        Args:
+            group_id (str): The unique identifier for the App Connector Group.
+
+        Returns:
+            :obj:`int`: The status code for the operation.
+
+        Examples:
+            >>> zpa.connectors.delete_connector_group('1876541121')
+
+        """
+        return self.rest.delete(f"appConnectorGroup/{group_id}").status_code

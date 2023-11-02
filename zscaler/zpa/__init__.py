@@ -1,136 +1,53 @@
-import re
-import random
-import time
-import base64
 import json
-import requests
 import logging
+import os
+import time
 import urllib.parse
 from time import sleep
-import os
+
+import requests
+from box import BoxList
+
 from zscaler.cache.no_op_cache import NoOpCache
 from zscaler.cache.zscaler_cache import ZPACache
+from zscaler.constants import ZPA_BASE_URLS
 from zscaler.ratelimiter.ratelimiter import RateLimiter
 from zscaler.user_agent import UserAgent
-from zscaler.utils import format_json_response, convert_keys_to_snake
-from zscaler.zpa.client import ZPAClient
-from box import BoxList
-from zscaler.constants import (
-    RETRYABLE_STATUS_CODES,
-    ZPA_BASE_URLS,
+from zscaler.utils import (
+    convert_keys_to_snake,
+    format_json_response,
+    is_token_expired,
+    retry_with_backoff,
 )
-from zscaler.zpa.app_segments import ApplicationSegmentService
-
-# from zscaler.zpa.app_segments_pra import AppSegmentsPRAService
-# from zscaler.zpa.app_segments_inspection import AppSegmentsInspectionService
-from zscaler.zpa.certificates import BrowserCertificateService
-
-# from zscaler.zpa.client_types import ClientTypesService
-from zscaler.zpa.cloud_connector_groups import CloudConnectorGroupService
-from zscaler.zpa.connector_groups import AppConnectorGroupService
-from zscaler.zpa.connectors import AppConnectorControllerService
-from zscaler.zpa.idp import IDPControllerService
-
-# from zscaler.zpa.inspection import InspectionControllerService
-# from zscaler.zpa.isolation_profile import IsolationProfileService
-# from zscaler.zpa.lss import LSSConfigControllerService
-from zscaler.zpa.machine_groups import MachineGroupService
-
-# from zscaler.zpa.platforms import PlatformsService
-# from zscaler.zpa.policies import PolicySetsService
-from zscaler.zpa.posture_profile import PostureProfileService
-from zscaler.zpa.provisioning import ProvisioningKeyService
-from zscaler.zpa.saml_attributes import SamlAttributeService
-from zscaler.zpa.scim_attributes import ScimAttributeHeaderService
-from zscaler.zpa.scim_groups import ScimGroupService
-from zscaler.zpa.segment_groups import SegmentGroupService
-from zscaler.zpa.server_groups import ServerGroupService
-from zscaler.zpa.servers import ApplicationServerService
-from zscaler.zpa.service_edges import ServiceEdgeGroupService
-from zscaler.zpa.trusted_networks import TrustedNetworksService
-
+from zscaler.zpa.app_segments import ApplicationSegmentAPI
+from zscaler.zpa.app_segments_inspection import AppSegmentsInspectionAPI
+from zscaler.zpa.app_segments_pra import AppSegmentsPRAAPI
+from zscaler.zpa.certificates import CertificatesAPI
+from zscaler.zpa.client import ZPAClient
+from zscaler.zpa.client_types import ClientTypesAPI
+from zscaler.zpa.cloud_connector_groups import CloudConnectorGroupsAPI
+from zscaler.zpa.connectors import AppConnectorControllerAPI
+from zscaler.zpa.idp import IDPControllerAPI
+from zscaler.zpa.inspection import InspectionControllerAPI
+from zscaler.zpa.isolation_profile import IsolationProfileAPI
+from zscaler.zpa.lss import LSSConfigControllerAPI
+from zscaler.zpa.machine_groups import MachineGroupsAPI
+from zscaler.zpa.platforms import PlatformsAPI
+from zscaler.zpa.policies import PolicySetsAPI
+from zscaler.zpa.posture_profile import PostureProfilesAPI
+from zscaler.zpa.provisioning import ProvisioningKeyAPI
+from zscaler.zpa.saml_attributes import SAMLAttributesAPI
+from zscaler.zpa.scim_attributes import ScimAttributeHeaderAPI
+from zscaler.zpa.scim_groups import SCIMGroupsAPI
+from zscaler.zpa.segment_groups import SegmentGroupsAPI
+from zscaler.zpa.server_groups import ServerGroupsAPI
+from zscaler.zpa.servers import AppServersAPI
+from zscaler.zpa.service_edges import ServiceEdgesAPI
+from zscaler.zpa.trusted_networks import TrustedNetworksAPI
 
 # Setup the logger
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-
-def should_retry(status_code):
-    """Determine if a given status code should be retried."""
-    return status_code in RETRYABLE_STATUS_CODES
-
-
-def retry_with_backoff(method_type="GET", retries=5, backoff_in_seconds=0.5):
-    """
-    Decorator to retry a function in case of an unsuccessful response.
-
-    Parameters:
-    - method_type (str): The HTTP method. Defaults to "GET".
-    - retries (int): Number of retries before giving up. Defaults to 5.
-    - backoff_in_seconds (float): Initial wait time (in seconds) before retry. Defaults to 0.5.
-
-    Returns:
-    - function: Decorated function with retry and backoff logic.
-    """
-
-    if method_type != "GET":
-        retries = min(retries, 3)  # more conservative retry count for non-GET
-
-    def decorator(f):
-        def wrapper(*args, **kwargs):
-            x = 0
-            while True:
-                resp = f(*args, **kwargs)
-
-                # Check if it's a successful status code, 400, or if it shouldn't be retried
-                if 299 >= resp.status_code >= 200 or resp.status_code == 400 or not should_retry(resp.status_code):
-                    return resp
-
-                if x == retries:
-                    try:
-                        error_msg = resp.json()
-                    except Exception as e:
-                        error_msg = str(e)
-                    raise Exception(f"Reached max retries. Response: {error_msg}")
-                else:
-                    sleep = backoff_in_seconds * 2**x + random.uniform(0, 1)
-                    logger.info("Args: %s, retrying after %d seconds...", str(args), sleep)
-                    time.sleep(sleep)
-                    x += 1
-
-        return wrapper
-
-    return decorator
-
-
-def is_token_expired(token_string):
-    # If token string is None or empty, consider it expired
-    if not token_string:
-        logger.warning("Token string is None or empty. Requesting a new token.")
-        return True
-
-    try:
-        # Split the token into its parts
-        parts = token_string.split(".")
-        if len(parts) != 3:
-            return True
-
-        # Decode the payload
-        payload_bytes = base64.urlsafe_b64decode(parts[1] + "==")  # Padding might be needed
-        payload = json.loads(payload_bytes)
-
-        # Check expiration time
-        if "exp" in payload:
-            # Deduct 10 seconds to account for any possible latency or clock skew
-            expiration_time = payload["exp"] - 10
-            if time.time() > expiration_time:
-                return True
-
-        return False
-
-    except Exception as e:
-        logger.error(f"Error checking token expiration: {str(e)}")
-        return True
 
 
 class ZPAClientHelper(ZPAClient):
@@ -423,23 +340,23 @@ class ZPAClientHelper(ZPAClient):
         The interface object for the :ref:`ZPA Application Segments interface <zpa-app_segments>`.
 
         """
-        return ApplicationSegmentService(self)
+        return ApplicationSegmentAPI(self)
 
-    # @property
-    # def app_segments_pra(self):
-    #     """
-    #     The interface object for the :ref:`ZPA Application Segments PRA interface <zpa-app_segments_pra>`.
+    @property
+    def app_segments_pra(self):
+        """
+        The interface object for the :ref:`ZPA Application Segments PRA interface <zpa-app_segments_pra>`.
 
-    #     """
-    #     return AppSegmentsPRAService(self)
+        """
+        return AppSegmentsPRAAPI(self)
 
-    # @property
-    # def app_segments_inspection(self):
-    #     """
-    #     The interface object for the :ref:`ZPA Application Segments PRA interface <zpa-app_segments_inspection>`.
+    @property
+    def app_segments_inspection(self):
+        """
+        The interface object for the :ref:`ZPA Application Segments PRA interface <zpa-app_segments_inspection>`.
 
-    #     """
-    #     return AppSegmentsInspectionService(self)
+        """
+        return AppSegmentsInspectionAPI(self)
 
     @property
     def certificates(self):
@@ -447,31 +364,31 @@ class ZPAClientHelper(ZPAClient):
         The interface object for the :ref:`ZPA Browser Access Certificates interface <zpa-certificates>`.
 
         """
-        return BrowserCertificateService(self)
+        return CertificatesAPI(self)
 
-    # @property
-    # def platforms(self):
-    #     """
-    #     The interface object for the :ref:`ZPA Access Policy platform interface <zpa-platforms>`.
+    @property
+    def platforms(self):
+        """
+        The interface object for the :ref:`ZPA Access Policy platform interface <zpa-platforms>`.
 
-    #     """
-    #     return PlatformsService(self)
+        """
+        return PlatformsAPI(self)
 
-    # @property
-    # def client_types(self):
-    #     """
-    #     The interface object for the :ref:`ZPA Access Policy client types interface <zpa-client_types>`.
+    @property
+    def client_types(self):
+        """
+        The interface object for the :ref:`ZPA Access Policy client types interface <zpa-client_types>`.
 
-    #     """
-    #     return ClientTypesService(self)
+        """
+        return ClientTypesAPI(self)
 
-    # @property
-    # def isolation_profile(self):
-    #     """
-    #     The interface object for the :ref:`ZPA Isolation Profiles <zpa-isolation_profile>`.
+    @property
+    def isolation_profile(self):
+        """
+        The interface object for the :ref:`ZPA Isolation Profiles <zpa-isolation_profile>`.
 
-    #     """
-    #     return IsolationProfileService(self)
+        """
+        return IsolationProfileAPI(self)
 
     @property
     def cloud_connector_groups(self):
@@ -479,15 +396,7 @@ class ZPAClientHelper(ZPAClient):
         The interface object for the :ref:`ZPA Cloud Connector Groups interface <zpa-cloud_connector_groups>`.
 
         """
-        return CloudConnectorGroupService(self)
-
-    @property
-    def connector_groups(self):
-        """
-        The interface object for the :ref:`ZPA Connector Groups interface <zpa-connector_groups>`.
-
-        """
-        return AppConnectorGroupService(self)
+        return CloudConnectorGroupsAPI(self)
 
     @property
     def connectors(self):
@@ -495,7 +404,7 @@ class ZPAClientHelper(ZPAClient):
         The interface object for the :ref:`ZPA Connectors interface <zpa-connectors>`.
 
         """
-        return AppConnectorControllerService(self)
+        return AppConnectorControllerAPI(self)
 
     @property
     def idp(self):
@@ -503,23 +412,23 @@ class ZPAClientHelper(ZPAClient):
         The interface object for the :ref:`ZPA IDP interface <zpa-idp>`.
 
         """
-        return IDPControllerService(self)
+        return IDPControllerAPI(self)
 
-    # @property
-    # def inspection(self):
-    #     """
-    #     The interface object for the :ref:`ZPA Inspection interface <zpa-inspection>`.
+    @property
+    def inspection(self):
+        """
+        The interface object for the :ref:`ZPA Inspection interface <zpa-inspection>`.
 
-    #     """
-    #     return InspectionControllerService(self)
+        """
+        return InspectionControllerAPI(self)
 
-    # @property
-    # def lss(self):
-    #     """
-    #     The interface object for the :ref:`ZIA Log Streaming Service Config interface <zpa-lss>`.
+    @property
+    def lss(self):
+        """
+        The interface object for the :ref:`ZIA Log Streaming Service Config interface <zpa-lss>`.
 
-    #     """
-    #     return LSSConfigControllerService(self)
+        """
+        return LSSConfigControllerAPI(self)
 
     @property
     def machine_groups(self):
@@ -527,15 +436,15 @@ class ZPAClientHelper(ZPAClient):
         The interface object for the :ref:`ZPA Machine Groups interface <zpa-machine_groups>`.
 
         """
-        return MachineGroupService(self)
+        return MachineGroupsAPI(self)
 
-    # @property
-    # def policies(self):
-    #     """
-    #     The interface object for the :ref:`ZPA Policy Sets interface <zpa-policies>`.
+    @property
+    def policies(self):
+        """
+        The interface object for the :ref:`ZPA Policy Sets interface <zpa-policies>`.
 
-    #     """
-    #     return PolicySetsService(self)
+        """
+        return PolicySetsAPI(self)
 
     @property
     def posture_profiles(self):
@@ -543,7 +452,7 @@ class ZPAClientHelper(ZPAClient):
         The interface object for the :ref:`ZPA Posture Profiles interface <zpa-posture_profiles>`.
 
         """
-        return PostureProfileService(self)
+        return PostureProfilesAPI(self)
 
     @property
     def provisioning(self):
@@ -551,7 +460,7 @@ class ZPAClientHelper(ZPAClient):
         The interface object for the :ref:`ZPA Provisioning interface <zpa-provisioning>`.
 
         """
-        return ProvisioningKeyService(self)
+        return ProvisioningKeyAPI(self)
 
     @property
     def saml_attributes(self):
@@ -559,7 +468,7 @@ class ZPAClientHelper(ZPAClient):
         The interface object for the :ref:`ZPA SAML Attributes interface <zpa-saml_attributes>`.
 
         """
-        return SamlAttributeService(self)
+        return SAMLAttributesAPI(self)
 
     @property
     def scim_attributes(self):
@@ -567,7 +476,7 @@ class ZPAClientHelper(ZPAClient):
         The interface object for the :ref:`ZPA SCIM Attributes interface <zpa-scim_attributes>`.
 
         """
-        return ScimAttributeHeaderService(self)
+        return ScimAttributeHeaderAPI(self)
 
     @property
     def scim_groups(self):
@@ -575,7 +484,7 @@ class ZPAClientHelper(ZPAClient):
         The interface object for the :ref:`ZPA SCIM Groups interface <zpa-scim_groups>`.
 
         """
-        return ScimGroupService(self)
+        return SCIMGroupsAPI(self)
 
     @property
     def segment_groups(self):
@@ -583,7 +492,7 @@ class ZPAClientHelper(ZPAClient):
         The interface object for the :ref:`ZPA Segment Groups interface <zpa-segment_groups>`.
 
         """
-        return SegmentGroupService(self)
+        return SegmentGroupsAPI(self)
 
     @property
     def server_groups(self):
@@ -591,7 +500,7 @@ class ZPAClientHelper(ZPAClient):
         The interface object for the :ref:`ZPA Server Groups interface <zpa-server_groups>`.
 
         """
-        return ServerGroupService(self)
+        return ServerGroupsAPI(self)
 
     @property
     def servers(self):
@@ -599,7 +508,7 @@ class ZPAClientHelper(ZPAClient):
         The interface object for the :ref:`ZPA Application Servers interface <zpa-app_servers>`.
 
         """
-        return ApplicationServerService(self)
+        return AppServersAPI(self)
 
     @property
     def service_edges(self):
@@ -607,7 +516,7 @@ class ZPAClientHelper(ZPAClient):
         The interface object for the :ref:`ZPA Service Edges interface <zpa-service_edges>`.
 
         """
-        return ServiceEdgeGroupService(self)
+        return ServiceEdgesAPI(self)
 
     @property
     def trusted_networks(self):
@@ -615,4 +524,4 @@ class ZPAClientHelper(ZPAClient):
         The interface object for the :ref:`ZPA Trusted Networks interface <zpa-trusted_networks>`.
 
         """
-        return TrustedNetworksService(self)
+        return TrustedNetworksAPI(self)

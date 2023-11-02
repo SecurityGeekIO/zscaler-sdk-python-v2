@@ -1,65 +1,121 @@
-from . import ZPAClient
-from zscaler.utils import (
-    delete_none_values,
-)
+# -*- coding: utf-8 -*-
 
-class TrustedNetworksService:
+# Copyright (c) 2023, Zscaler Inc.
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+
+from typing import Union
+from box import Box, BoxList
+from requests import Response
+from zscaler.utils import Iterator
+from zscaler.zpa.client import ZPAClient
+
+
+class TrustedNetworksAPI:
     def __init__(self, client: ZPAClient):
         self.rest = client
-        self.customer_id = client.customer_id
 
-    def getByIDOrName(self, id=None, name=None):
-        if id:
-            network = self.getByID(id)
-            if network:
-                return network
-        if name:
-            return self.getByName(name)
+    def list_networks(self, **kwargs) -> BoxList:
+        """
+        Returns a list of all configured trusted networks.
+
+        Keyword Args:
+            **max_items (int):
+                The maximum number of items to request before stopping iteration.
+            **max_pages (int):
+                The maximum number of pages to request before stopping iteration.
+            **pagesize (int):
+                Specifies the page size. The default size is 20, but the maximum size is 500.
+            **search (str, optional):
+                The search string used to match against features and fields.
+
+        Returns:
+            :obj:`BoxList`: A list of all configured trusted networks.
+
+        Examples:
+            >>> for trusted_network in zpa.trusted_networks.list_networks():
+            ...    pprint(trusted_network)
+
+        """
+        list, _ = self.rest.get_paginated_data(
+            path="/network",
+            data_key_name="list",
+            **kwargs
+        )
+        return list
+
+    def get_network(self, network_id: str) -> Box:
+        """
+        Returns information on the specified trusted network.
+
+        Args:
+            network_id (str):
+                The unique identifier for the trusted network.
+
+        Returns:
+            :obj:`Box`: The resource record for the trusted network.
+
+        Examples:
+            >>> pprint(zpa.trusted_networks.get_network('99999'))
+
+        """
+        response = self.rest.get("/network/%s" % (network_id))
+        if isinstance(response, Response):
+            status_code = response.status_code
+            if status_code != 200:
+                return None
+        return response
+
+    def get_by_network_id(self, network_id: str, **kwargs) -> Union[Box, None]:
+        """
+        Returns the trusted network based on the networkId.
+
+        Args:
+            network_id (str): The unique Network ID for the network ID.
+
+        Keyword Args:
+            **max_items (int): The maximum number of items to request before stopping iteration.
+            **max_pages (int): The maximum number of pages to request before stopping iteration.
+            **pagesize (int): Specifies the page size. The default size is 100, but the maximum size is 500.
+            **search (str, optional): The search string used to match against features and fields.
+
+        Returns:
+            Union[Box, None]: The resource record for the trusted networks.
+        """
+
+        page = 0
+        page_size = kwargs.get("pagesize", 100)  # default page size changed to 100
+        max_pages = kwargs.get("max_pages", None)
+
+        while True:
+            params = {
+                "pagesize": page_size,
+                "page": page,
+                "search": network_id,  # use the search parameter if supported
+                **kwargs,
+            }
+            networks = self.list_networks(**params)
+
+            if not networks:
+                break  # exit if no more networks
+
+            for network in networks:
+                if network.get("networkId") == network_id:
+                    return Box(network)
+
+            page += 1
+            if max_pages and page >= max_pages:
+                break
+
         return None
-
-    def getByID(self, id):
-        endpoint = f"/mgmtconfig/v1/admin/customers/{self.customer_id}/network/{id}"
-        response = self.rest.get(endpoint)
-
-        if response.status_code != 200:
-            return None
-        return self._map_response_to_object(response.json())
-
-    def getAll(self):
-        endpoint = f"/mgmtconfig/v2/admin/customers/{self.customer_id}/network"
-        networks_data = self.rest.get_paginated_data(base_url=endpoint, data_key_name="list")
-        return [self._map_response_to_object(network) for network in networks_data]
-
-    def getByName(self, name):
-        networks = self.getAll()
-        return next((network for network in networks if network["name"] == name), None)
-
-    @staticmethod
-    def _map_response_to_object(resp_json):
-        if not isinstance(resp_json, dict):
-            raise TypeError(f"Expected dict but received {type(resp_json)}")
-
-        # Apply the delete_none_values directly to the dictionary
-        return delete_none_values({
-            "creation_time": resp_json.get("creationTime"),
-            "id": resp_json.get("id"),
-            "modified_by": resp_json.get("modifiedBy"),
-            "modified_time": resp_json.get("modifiedTime"),
-            "name": resp_json.get("name"),
-            "network_id": resp_json.get("networkId"),
-            "zscaler_cloud": resp_json.get("zscalerCloud"),
-        })
-
-    def map_object_to_request(self, network):
-        if not network:
-            return {}
-
-        return {
-            "creationTime": network.get("creation_time"),
-            "id": network.get("id"),
-            "modifiedBy": network.get("modified_by"),
-            "modifiedTime": network.get("modified_time"),
-            "name": network.get("name"),
-            "networkId": network.get("network_id"),
-            "zscalerCloud": network.get("zscaler_cloud"),
-        }

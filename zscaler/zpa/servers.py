@@ -1,14 +1,30 @@
-from . import ZPAClient
-from requests import Response
-from box import Box, BoxList
-from zscaler.utils import (
-    snake_to_camel,
-)
+# -*- coding: utf-8 -*-
 
-class ApplicationServerService:
+# Copyright (c) 2023, Zscaler Inc.
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+
+from box import Box, BoxList
+from requests import Response
+
+from zscaler.utils import snake_to_camel
+from zscaler.zpa.client import ZPAClient
+
+
+class AppServersAPI:
     def __init__(self, client: ZPAClient):
         self.rest = client
-        self.customer_id = client.customer_id
 
     def add_server(self, name: str, address: str, enabled: bool = True, **kwargs) -> Box:
         """
@@ -50,7 +66,12 @@ class ApplicationServerService:
         for key, value in kwargs.items():
             payload[snake_to_camel(key)] = value
 
-        return self._post("server", json=payload)
+        response = self.rest.post("/server", data=payload)
+        if isinstance(response, Response):
+            status_code = response.status_code
+            if status_code > 299:
+                return None
+        return self.get_server(response.get("id"))
 
     def list_servers(self, **kwargs) -> BoxList:
         """
@@ -73,7 +94,7 @@ class ApplicationServerService:
             >>> servers = zpa.servers.list_servers()
         """
         list, _ = self.rest.get_paginated_data(
-            base_url="/mgmtconfig/v1/admin/customers/%s/server" % (self.customer_id),
+            path="/server",
             data_key_name="list",
         )
         return list
@@ -93,7 +114,7 @@ class ApplicationServerService:
             >>> server = zpa.servers.get_server('99999')
 
         """
-        response = self.rest.get("/mgmtconfig/v1/admin/customers/%s/server/%s" % (self.customer_id, server_id))
+        response = self.rest.get("/server/%s" % (server_id))
         if isinstance(response, Response):
             status_code = response.status_code
             if status_code != 200:
@@ -123,8 +144,7 @@ class ApplicationServerService:
             >>> zpa.servers.delete_server('99999')
 
         """
-        response = self.rest.delete("/mgmtconfig/v1/admin/customers/%s/server/%s?%s" % (self.customer_id, server_id))
-        return response.status_code
+        return self.rest.delete(f"server/{server_id}").status_code
 
     def update_server(self, server_id: str, **kwargs) -> Box:
         """
@@ -175,12 +195,7 @@ class ApplicationServerService:
         for key, value in kwargs.items():
             payload[snake_to_camel(key)] = value
 
-        response = self.rest.put(
-            "/mgmtconfig/v1/admin/customers/%s/server/%s" % (self.customer_id, server_id),
-            data=payload,
-        )
-        if isinstance(response, Response):
-            status_code = response.status_code
-            if status_code > 299:
-                return None
-        return self.get_servers(server_id)
+        resp = self.rest.put(f"server/{server_id}", json=payload, box=False).status_code
+
+        if resp == 204:
+            return self.get_server(server_id)

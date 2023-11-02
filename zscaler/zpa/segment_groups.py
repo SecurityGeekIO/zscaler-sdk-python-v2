@@ -1,14 +1,14 @@
-from . import ZPAClient
-from requests import Response
 from box import Box, BoxList
-from zscaler.utils import (
-    snake_to_camel
-)
+from requests import Response
 
-class SegmentGroupService:
+from zscaler.utils import snake_to_camel
+
+from . import ZPAClient
+
+
+class SegmentGroupsAPI:
     def __init__(self, client: ZPAClient):
         self.rest = client
-        self.customer_id = client.customer_id
 
     def list_groups(self, **kwargs) -> BoxList:
         """
@@ -23,7 +23,7 @@ class SegmentGroupService:
 
         """
         list, _ = self.rest.get_paginated_data(
-            base_url="/mgmtconfig/v1/admin/customers/%s/segmentGroup" % (self.customer_id),
+            path="/segmentGroup",
             data_key_name="list",
         )
         return list
@@ -43,7 +43,7 @@ class SegmentGroupService:
             >>> pprint(zpa.segment_groups.get_group('99999'))
 
         """
-        response = self.rest.get("/mgmtconfig/v1/admin/customers/%s/segmentGroup/%s" % (self.customer_id, group_id))
+        response = self.rest.get("/segmentGroup/%s" % (group_id))
         if isinstance(response, Response):
             status_code = response.status_code
             if status_code != 200:
@@ -72,8 +72,7 @@ class SegmentGroupService:
             >>> zpa.segment_groups.delete_group('99999')
 
         """
-        response = self.rest.delete("/mgmtconfig/v1/admin/customers/%s/segmentGroup/%s?%s" % (self.customer_id, group_id))
-        return response.status_code
+        return self.rest.delete(f"segmentGroup/{group_id}").status_code
 
     def add_group(self, name: str, enabled: bool = True, **kwargs) -> Box:
         """
@@ -118,12 +117,12 @@ class SegmentGroupService:
         for key, value in kwargs.items():
             payload[snake_to_camel(key)] = value
 
-        response = self.rest.post("/mgmtconfig/v1/admin/customers/%s/segmentGroup" % (self.customer_id), data=payload)
+        response = self.rest.post("/segmentGroup", data=payload)
         if isinstance(response, Response):
             status_code = response.status_code
             if status_code > 299:
                 return None
-        return self.get_segment(response.get("id"))
+        return self.get_group(response.get("id"))
 
     def update_group(self, group_id: str, **kwargs) -> Box:
         """
@@ -168,11 +167,11 @@ class SegmentGroupService:
             payload[snake_to_camel(key)] = value
 
         response = self.rest.put(
-            "/mgmtconfig/v1/admin/customers/%s/segmentGroup/%s" % (self.customer_id, group_id),
+            "/segmentGroup/%s" % (group_id),
             data=payload,
         )
         if isinstance(response, Response):
             status_code = response.status_code
             if status_code > 299:
                 return None
-        return self.get_segment(group_id)
+        return self.get_group(group_id)

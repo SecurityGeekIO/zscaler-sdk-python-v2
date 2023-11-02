@@ -1,178 +1,384 @@
-from . import ZPAClient
-from zscaler.utils import (
-    delete_none,
-    camelcaseToSnakeCase
-)
+# -*- coding: utf-8 -*-
 
-class ServiceEdgeGroupService:
+# Copyright (c) 2023, Zscaler Inc.
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+
+from box import Box, BoxList
+from requests import Response
+
+from zscaler.utils import Iterator, add_id_groups, pick_version_profile, snake_to_camel
+from zscaler.zpa.client import ZPAClient
+
+
+class ServiceEdgesAPI:
+    # Parameter names that will be reformatted to be compatible with ZPAs API
+    reformat_params = [
+        ("service_edge_ids", "serviceEdges"),
+        ("trusted_network_ids", "trustedNetworks"),
+    ]
+
     def __init__(self, client: ZPAClient):
         self.rest = client
-        self.customer_id = client.customer_id
 
-    def getByIDOrName(self, id, name):
-        app = None
-        if id is not None:
-            app = self.getByID(id)
-        if app is None and name is not None:
-            app = self.getByName(name)
-        return app
+    def list_service_edges(self, **kwargs) -> BoxList:
+        """
+        Returns information on all configured ZPA Service Edges.
 
-    def getByID(self, id):
-        response = self.rest.get(
-            "/mgmtconfig/v1/admin/customers/%s/serviceEdgeGroup/%s"
-            % (self.customer_id, id)
-        )
-        status_code = response.status_code
-        if status_code != 200:
-            return None
-        return self.mapRespJSONToApp(response.json)
+        Args:
+            **kwargs: Optional keyword args.
 
-    def getAll(self):
-        list = self.rest.get_paginated_data(
-            base_url="/mgmtconfig/v1/admin/customers/%s/serviceEdgeGroup"
-            % (self.customer_id),
+        Keyword Args:
+            **max_items (int, optional):
+                The maximum number of items to request before stopping iteration.
+            **max_pages (int, optional):
+                The maximum number of pages to request before stopping iteration.
+            **pagesize (int, optional):
+                Specifies the page size. The default size is 100, but the maximum size is 1000.
+            **search (str, optional):
+                The search string used to match against a department's name or comments attributes.
+
+        Returns:
+            :obj:`BoxList`: List containing information on all configured ZPA Service Edges.
+
+        Examples:
+            >>> for service_edge in zpa.service_edges.list_service_edges():
+            ...    print(service_edge)
+
+        """
+        list, _ = self.rest.get_paginated_data(
+            path="/serviceEdge",
             data_key_name="list",
         )
-        apps = []
-        for app in list:
-            apps.append(self.mapRespJSONToApp(app))
-        return apps
+        return list
 
-    def getByName(self, name):
-        apps = self.getAll()
-        for app in apps:
-            if app.get("name") == name:
-                return app
-        return None
+    def get_service_edge(self, service_edge_id: str) -> Box:
+        """
+        Returns information on the specified Service Edge.
 
-    def mapServiceEdgesJSONToList(self, serviceEdges):
-        if serviceEdges is None:
-            return []
-        l = []
-        for s in serviceEdges:
-            d = camelcaseToSnakeCase(s)
-            l.append(d)
-        return l
+        Args:
+            service_edge_id (str): The unique id of the ZPA Service Edge.
 
-    def mapServiceEdgesListToJSON(self, serviceEdges):
-        if serviceEdges is None:
-            return []
-        l = []
-        for s in serviceEdges:
-            d = dict(id=s.get("id"))
-            l.append(d)
-        return l
+        Returns:
+            :obj:`Box`: The Service Edge resource record.
 
-    def mapTrustedNetworksJSONToList(self, trustedNetworks):
-        if trustedNetworks is None:
-            return []
-        l = []
-        for app in trustedNetworks:
-            d = camelcaseToSnakeCase(app)
-            l.append(d)
-        return l
+        Examples:
+            >>> service_edge = zpa.service_edges.get_service_edge('999999')
 
-    def mapTrustedNetworksListToJSON(self, trustedNetworks):
-        if trustedNetworks is None:
-            return []
-        l = []
-        for s in trustedNetworks:
-            d = dict(id=s.get("id"))
-            l.append(d)
-        return l
+        """
+        response = self.rest.get("/serviceEdge/%s" % (service_edge_id))
+        if isinstance(response, Response):
+            status_code = response.status_code
+            if status_code != 200:
+                return None
+        return response
 
-    @delete_none
-    def mapRespJSONToApp(self, resp_json):
-        if resp_json is None:
-            return {}
-        return {
-            "city_country": resp_json.get("cityCountry"),
-            "country_code": resp_json.get("countryCode"),
-            "description": resp_json.get("description"),
-            "enabled": resp_json.get("enabled"),
-            "geolocation_id": resp_json.get("geoLocationId"),
-            "id": resp_json.get("id"),
-            "is_public": resp_json.get("isPublic"),
-            "latitude": resp_json.get("latitude"),
-            "location": resp_json.get("location"),
-            "longitude": resp_json.get("longitude"),
-            "name": resp_json.get("name"),
-            "override_version_profile": resp_json.get("overrideVersionProfile"),
-            "upgrade_day": resp_json.get("upgradeDay"),
-            "upgrade_time_in_secs": resp_json.get("upgradeTimeInSecs"),
-            "version_profile_id": resp_json.get("versionProfileId"),
-            "version_profile_name": resp_json.get("versionProfileName"),
-            "version_profile_visibility_scope": resp_json.get(
-                "versionProfileVisibilityScope"
-            ),
-            "service_edges": self.mapServiceEdgesJSONToList(
-                resp_json.get("serviceEdges")
-            ),
-            "trusted_networks": self.mapTrustedNetworksJSONToList(
-                resp_json.get("trustedNetworks")
-            ),
+    def update_service_edge(self, service_edge_id: str, **kwargs) -> Box:
+        """
+        Updates the specified ZPA Service Edge.
+
+        Args:
+            service_edge_id (str): The unique id of the Service Edge that will be updated in ZPA.
+            **kwargs: Optional keyword args.
+
+        Keyword Args:
+            **description (str): Additional information about the Service Edge.
+            **enabled (bool): Enable the Service Edge. Defaults to ``True``.
+            **name (str): The name of the Service Edge in ZPA.
+
+        Returns:
+            :obj:`Box`: The updated Service Edge resource record.
+
+        Examples:
+            >>> updated_service_edge = zpa.service_edge.update_service_edge('99999',
+            ...    description="Updated Description",
+            ...    name="Updated Name")
+
+        """
+
+        # Set payload to equal existing record
+        payload = {snake_to_camel(k): v for k, v in self.get_service_edge(service_edge_id).items()}
+
+        # Add optional parameters to payload
+        for key, value in kwargs.items():
+            payload[snake_to_camel(key)] = value
+
+        # Add optional parameters to payload
+        for key, value in kwargs.items():
+            payload[snake_to_camel(key)] = value
+
+        resp = self.rest.put(f"serviceEdge/{service_edge_id}", json=payload, box=False).status_code
+
+        if resp == 204:
+            return self.get_service_edge(service_edge_id)
+
+    def delete_service_edge(self, service_edge_id: str) -> int:
+        """
+        Deletes the specified Service Edge from ZPA.
+
+        Args:
+            service_edge_id (str): The unique id of the ZPA Service Edge that will be deleted.
+
+        Returns:
+            :obj:`int`: The status code of the operation.
+
+        Examples:
+            >>> zpa.service_edges.delete_service_edge('99999')
+
+        """
+        return self.rest.delete(f"serviceEdge/{service_edge_id}").status_code
+
+    def bulk_delete_service_edges(self, service_edge_ids: list) -> int:
+        """
+        Bulk deletes the specified Service Edges from ZPA.
+
+        Args:
+            service_edge_ids (list): A list of Service Edge ids that will be deleted from ZPA.
+
+        Returns:
+            :obj:`int`: The status code for the operation.
+
+        Examples:
+            >>> zpa.service_edges.bulk_delete_service_edges(['99999', '88888'])
+
+        """
+        payload = {
+            "ids": service_edge_ids,
         }
 
-    @delete_none
-    def mapAppToJSON(self, serviceEdge):
-        if serviceEdge is None:
-            return {}
-        return {
-            "cityCountry": serviceEdge.get("city_country"),
-            "countryCode": serviceEdge.get("country_code"),
-            "description": serviceEdge.get("description"),
-            "enabled": serviceEdge.get("enabled"),
-            "geoLocationId": serviceEdge.get("geolocation_id"),
-            "id": serviceEdge.get("id"),
-            "isPublic": serviceEdge.get("is_public"),
-            "latitude": serviceEdge.get("latitude"),
-            "location": serviceEdge.get("location"),
-            "longitude": serviceEdge.get("longitude"),
-            "name": serviceEdge.get("name"),
-            "overrideVersionProfile": serviceEdge.get("override_version_profile"),
-            "upgradeDay": serviceEdge.get("upgrade_day"),
-            "upgradeTimeInSecs": serviceEdge.get("upgrade_time_in_secs"),
-            "versionProfileId": serviceEdge.get("version_profile_id"),
-            "versionProfileVisibilityScope": serviceEdge.get(
-                "version_profile_visibility_scope"
-            ),
-            "serviceEdges": self.mapServiceEdgesListToJSON(
-                serviceEdge.get("service_edges")
-            ),
-            "trustedNetworks": self.mapTrustedNetworksListToJSON(
-                serviceEdge.get("trusted_networks")
-            ),
-        }
+        return self._post("serviceEdge/bulkDelete", json=payload).status_code
 
-    def create(self, app):
-        """Create new ServiceEdgeGroup"""
-        appJSON = self.mapAppToJSON(app)
-        response = self.rest.post(
-            "/mgmtconfig/v1/admin/customers/%s/serviceEdgeGroup" % (self.customer_id),
-            data=appJSON,
+    def list_service_edge_groups(self, **kwargs) -> BoxList:
+        """
+        Returns information on all configured Service Edge Groups in ZPA.
+
+        Args:
+            **kwargs: Optional keyword args.
+
+        Keyword Args:
+            **max_items (int, optional):
+                The maximum number of items to request before stopping iteration.
+            **max_pages (int, optional):
+                The maximum number of pages to request before stopping iteration.
+            **pagesize (int, optional):
+                Specifies the page size. The default size is 100, but the maximum size is 1000.
+            **search (str, optional):
+                The search string used to match against a department's name or comments attributes.
+
+        Returns:
+            :obj:`BoxList`: A list of all ZPA Service Edge Group resource records.
+
+        Examples:
+            Print all Service Edge Groups in ZPA.
+
+            >>> for group in zpa.service_edges.list_service_edge_groups():
+            ...    print(group)
+
+        """
+        list, _ = self.rest.get_paginated_data(
+            path="/serviceEdgeGroup",
+            data_key_name="list",
         )
-        status_code = response.status_code
-        if status_code > 299:
-            return None
-        return self.mapRespJSONToApp(response.json)
+        return list
 
-    def update(self, app):
-        """update the ServiceEdgeGroup"""
-        appJSON = self.mapAppToJSON(app)
+    def get_service_edge_group(self, group_id: str) -> Box:
+        """
+        Returns information on the specified ZPA Service Edge Group.
+
+        Args:
+            group_id (str): The unique id of the ZPA Service Edge Group.
+
+        Returns:
+            :obj:`Box`: The specified ZPA Service Edge Group resource record.
+
+        Examples:
+            >>> group = zpa.service_edges.get_service_edge_group("99999")
+
+        """
+        response = self.rest.get("/serviceEdgeGroup/%s" % (group_id))
+        if isinstance(response, Response):
+            status_code = response.status_code
+            if status_code != 200:
+                return None
+        return response
+
+    def add_service_edge_group(self, name: str, latitude: str, longitude: str, location: str, **kwargs):
+        """
+        Adds a new Service Edge Group to ZPA.
+
+        Args:
+            latitude (str): The latitude representing the physical location of the ZPA Service Edges in this group.
+            longitude (str): The longitude representing the physical location of the ZPA Service Edges in this group.
+            location (str): The name of the physical location of the ZPA Service Edges in this group.
+            name (str): The name of the Service Edge Group.
+            **kwargs: Optional keyword args.
+
+        Keyword Args:
+            **cityCountry (str):
+                The City and Country for where the App Connectors are located. Format is:
+
+                ``<City>, <Country Code>`` e.g. ``Sydney, AU``
+            **country_code (str):
+                The ISO<std> Country Code that represents the country where the App Connectors are located.
+            **enabled (bool):
+                Is the Service Edge Group enabled? Defaults to ``True``.
+            **is_public (bool):
+                Is the Service Edge publicly accessible? Defaults to ``False``.
+            **override_version_profile (bool):
+                Override the local App Connector version according to ``version_profile``. Defaults to ``False``.
+            **service_edge_ids (list):
+                A list of unique ids of ZPA Service Edges that belong to this Service Edge Group.
+            **trusted_network_ids (list):
+                A list of unique ids of Trusted Networks that are associated with this Service Edge Group.
+            **upgrade_day (str):
+                The day of the week that upgrades will be pushed to the App Connector.
+            **upgrade_time_in_secs (str):
+                The time of the day that upgrades will be pushed to the App Connector.
+            **version_profile (str):
+                The version profile to use. This will automatically set ``override_version_profile`` to True.
+                Accepted values are:
+
+                ``default``, ``previous_default`` and ``new_release``
+
+        Returns:
+            :obj:`Box`: The resource record of the newly created Service Edge Group.
+
+        Examples:
+            Add a new Service Edge Group for Service Edges in Sydney and set the version profile to new releases.
+
+            >>> group = zpa.service_edges.add_service_edge_group(name="My SE Group",
+            ...    latitude="33.8688",
+            ...    longitude="151.2093",
+            ...    location="Sydney",
+            ...    version_profile="new_release)
+
+        """
+        payload = {
+            "name": name,
+            "latitude": latitude,
+            "longitude": longitude,
+            "location": location,
+        }
+
+        # Perform formatting on simplified params
+        add_id_groups(self.reformat_params, kwargs, payload)
+        pick_version_profile(kwargs, payload)
+
+        # Add optional parameters to payload
+        for key, value in kwargs.items():
+            payload[snake_to_camel(key)] = value
+
+        response = self.rest.post("/serviceEdgeGroup", data=payload)
+        if isinstance(response, Response):
+            status_code = response.status_code
+            if status_code > 299:
+                return None
+        return self.get_service_edge_group(response.get("id"))
+
+    def update_service_edge_group(self, group_id: str, **kwargs) -> Box:
+        """
+        Updates the specified ZPA Service Edge Group.
+
+        Args:
+            group_id (str): The unique id of the ZPA Service Edge Group that will be updated.
+            **kwargs: Optional keyword args.
+
+        Keyword Args:
+            **cityCountry (str):
+                The City and Country for where the App Connectors are located. Format is:
+
+                ``<City>, <Country Code>`` e.g. ``Sydney, AU``
+            **country_code (str):
+                The ISO<std> Country Code that represents the country where the App Connectors are located.
+            **enabled (bool):
+                Is the Service Edge Group enabled? Defaults to ``True``.
+            **is_public (bool):
+                Is the Service Edge publicly accessible? Defaults to ``False``.
+            **latitude (str):
+                The latitude representing the physical location of the ZPA Service Edges in this group.
+            **longitude (str):
+                The longitude representing the physical location of the ZPA Service Edges in this group.
+            **location (str): T
+                he name of the physical location of the ZPA Service Edges in this group.
+            **name (str):
+                The name of the Service Edge Group.
+            **override_version_profile (bool):
+                Override the local App Connector version according to ``version_profile``. Defaults to ``False``.
+            **service_edge_ids (list):
+                A list of unique ids of ZPA Service Edges that belong to this Service Edge Group.
+            **trusted_network_ids (list):
+                A list of unique ids of Trusted Networks that are associated with this Service Edge Group.
+            **upgrade_day (str):
+                The day of the week that upgrades will be pushed to the Service Edges in this group.
+            **upgrade_time_in_secs (str):
+                The time of the day that upgrades will be pushed to the Service Edges in this group.
+            **version_profile (str):
+                The version profile to use. This will automatically set ``override_version_profile`` to True.
+                Accepted values are:
+
+                ``default``, ``previous_default`` and ``new_release``
+
+        Returns:
+            :obj:`Box`: The updated ZPA Service Edge Group resource record.
+
+        Examples:
+            Update the name of a Service Edge Group, change the Version Profile to 'default' and the upgrade day to
+            Friday.
+
+            >>> group = zpa.service_edges.update_service_edge_group('99999',
+            ...    name="Updated Name",
+            ...    version_profile="default",
+            ...    upgrade_day="friday")
+
+        """
+        # Set payload to equal existing record
+        payload = {snake_to_camel(k): v for k, v in self.get_service_edge_group(group_id).items()}
+
+        # Perform formatting on simplified params
+        add_id_groups(self.reformat_params, kwargs, payload)
+        pick_version_profile(kwargs, payload)
+
+        # Add optional parameters to payload
+        for key, value in kwargs.items():
+            payload[snake_to_camel(key)] = value
+
+        # Add optional parameters to payload
+        for key, value in kwargs.items():
+            payload[snake_to_camel(key)] = value
+
         response = self.rest.put(
-            "/mgmtconfig/v1/admin/customers/%s/serviceEdgeGroup/%s"
-            % (self.customer_id, appJSON.get("id")),
-            data=appJSON,
+            "/serviceEdgeGroup/%s" % (group_id),
+            data=payload,
         )
-        status_code = response.status_code
-        if status_code > 299:
-            return None
-        return app
+        if isinstance(response, Response):
+            status_code = response.status_code
+            if status_code > 299:
+                return None
+        return self.get_service_edge_group(group_id)
 
-    def delete(self, id):
-        """delete the ServiceEdgeGroup"""
-        response = self.rest.delete(
-            "/mgmtconfig/v1/admin/customers/%s/serviceEdgeGroup/%s"
-            % (self.customer_id, id)
-        )
-        return response.status_code
+    def delete_service_edge_group(self, service_edge_group_id: str) -> int:
+        """
+        Deletes the specified Service Edge Group from ZPA.
+
+        Args:
+            service_edge_group_id (str): The unique id of the ZPA Service Edge Group.
+
+        Returns:
+            :obj:`int`: The status code for the operation.
+
+        Examples:
+            >>> zpa.service_edges.delete_service_edge_group("99999")
+
+        """
+        return self.rest.delete(f"serviceEdgeGroup/{service_edge_group_id}").status_code

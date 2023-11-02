@@ -1,75 +1,97 @@
-from . import ZPAClient
-from zscaler.utils import delete_none
+# -*- coding: utf-8 -*-
 
-class SamlAttributeService:
-    def __init__(self, client: ZPAClient):
-        self.rest = client
-        self.customer_id = client.customer_id
+# Copyright (c) 2023, Zscaler Inc.
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-    def getByIDOrName(self, id, name):
-        samlAttribute = None
-        if id is not None:
-            samlAttribute = self.getByID(id)
-        if samlAttribute is None and name is not None:
-            samlAttribute = self.getByName(name)
-        return samlAttribute
 
-    def getByID(self, id):
-        response = self.rest.get(
-            "/mgmtconfig/v1/admin/customers/%s/samlAttribute/%s"
-            % (self.customer_id, id)
-        )
-        status_code = response.status_code
-        if status_code != 200:
-            return None
-        return self.mapRespJSONToApp(response.json)
+from box import Box, BoxList
 
-    def getAll(self):
-        list = self.rest.get_paginated_data(
-            base_url="/mgmtconfig/v2/admin/customers/%s/samlAttribute"
-            % (self.customer_id),
-            data_key_name="list",
-        )
-        samlAttributes = []
-        for samlAttribute in list:
-            samlAttributes.append(self.mapRespJSONToApp(samlAttribute))
-        return samlAttributes
+from zscaler.utils import Iterator
+from zscaler.zpa.client import ZPAClient
 
-    def getByName(self, name):
-        samlAttributes = self.getAll()
-        for samlAttribute in samlAttributes:
-            if samlAttribute.get("name") == name:
-                return samlAttribute
-        return None
 
-    @delete_none
-    def mapRespJSONToApp(self, resp_json):
-        if resp_json is None:
-            return {}
-        return {
-            "creation_time": resp_json.get("creationTime"),
-            "id": resp_json.get("id"),
-            "idp_id": resp_json.get("idpId"),
-            "idp_name": resp_json.get("idpName"),
-            "modified_by": resp_json.get("modifiedBy"),
-            "modified_time": resp_json.get("modifiedTime"),
-            "name": resp_json.get("name"),
-            "saml_name": resp_json.get("samlName"),
-            "user_attribute": resp_json.get("userAttribute"),
-        }
+class SAMLAttributesAPI:
+    def __init__(self, api: ZPAClient):
+        super().__init__(api)
 
-    @delete_none
-    def mapAppToJSON(self, samlAttribute):
-        if samlAttribute is None:
-            return {}
-        return {
-            "creationTime": samlAttribute.get("creation_time"),
-            "id": samlAttribute.get("id"),
-            "idpId": samlAttribute.get("idp_id"),
-            "idpName": samlAttribute.get("idp_name"),
-            "modifiedBy": samlAttribute.get("modified_by"),
-            "modifiedTime": samlAttribute.get("modified_time"),
-            "name": samlAttribute.get("name"),
-            "samlName": samlAttribute.get("saml_name"),
-            "userAttribute": samlAttribute.get("user_attribute"),
-        }
+        self.v2_url = api.v2_url
+
+    def list_attributes(self, **kwargs) -> BoxList:
+        """
+        Returns a list of all configured SAML attributes.
+
+        Keyword Args:
+            **max_items (int):
+                The maximum number of items to request before stopping iteration.
+            **max_pages (int):
+                The maximum number of pages to request before stopping iteration.
+            **pagesize (int):
+                Specifies the page size. The default size is 20, but the maximum size is 500.
+            **search (str, optional):
+                The search string used to match against features and fields.
+
+        Returns:
+            :obj:`BoxList`: A list of all configured SAML attributes.
+
+        Examples:
+            >>> for saml_attribute in zpa.saml_attributes.list_attributes():
+            ...    pprint(saml_attribute)
+
+        """
+        return BoxList(Iterator(self._api, f"{self.v2_url}/samlAttribute", **kwargs))
+
+    def list_attributes_by_idp(self, idp_id: str, **kwargs) -> BoxList:
+        """
+        Returns a list of all configured SAML attributes for the specified IdP.
+
+        Args:
+            idp_id (str): The unique id of the IdP to retrieve SAML attributes from.
+
+        Keyword Args:
+            **max_items (int):
+                The maximum number of items to request before stopping iteration.
+            **max_pages (int):
+                The maximum number of pages to request before stopping iteration.
+            **pagesize (int):
+                Specifies the page size. The default size is 20, but the maximum size is 500.
+            **search (str, optional):
+                The search string used to match against features and fields.
+
+        Returns:
+            :obj:`BoxList`: A list of all configured SAML attributes for the specified IdP.
+
+        Examples:
+            >>> for saml_attribute in zpa.saml_attributes.list_attributes_by_idp('99999'):
+            ...    pprint(saml_attribute)
+
+        """
+        return BoxList(Iterator(self._api, f"{self.v2_url}/samlAttribute/idp/{idp_id}", **kwargs))
+
+    def get_attribute(self, attribute_id: str) -> Box:
+        """
+        Returns information on the specified SAML attributes.
+
+        Args:
+            attribute_id (str):
+                The unique identifier for the SAML attributes.
+
+        Returns:
+            :obj:`dict`: The resource record for the SAML attributes.
+
+        Examples:
+            >>> pprint(zpa.saml_attributes.get_attribute('99999'))
+
+        """
+
+        return self._get(f"samlAttribute/{attribute_id}")

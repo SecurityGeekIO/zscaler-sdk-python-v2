@@ -1,109 +1,113 @@
-from . import ZPAClient
-from zscaler.utils import delete_none
+# -*- coding: utf-8 -*-
 
-class ScimAttributeHeaderService:
-    def __init__(self, client: ZPAClient):
-        self.rest = client
-        self.customer_id = client.customer_id
+# Copyright (c) 2023, Zscaler Inc.
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-    def getByIDOrName(self, attribute_id, name):
-        scimAttribute = None
-        if attribute_id is not None:
-            scimAttribute = self.getByID(attribute_id)
-        if scimAttribute is None and name is not None:
-            scimAttribute = self.getByName(name)
-        return scimAttribute
 
-    def getByID(self, attribute_id, idpName):
-        idp = self.getIDPByName(idpName)
-        if idp is None or idp.get("id") is None:
-            return None
-        response = self.rest.get(
-            "/mgmtconfig/v1/admin/customers/%s/idp/%s/scimattribute/%s"
-            % (self.customer_id, idp.get("id"), attribute_id)
+from box import Box, BoxList
+
+from zscaler.utils import Iterator
+from zscaler.zpa.client import ZPAClient
+
+
+class ScimAttributeHeaderAPI:
+    def __init__(self, api: ZPAClient):
+        super().__init__(api)
+        self.user_config_url = api.user_config_url
+
+    def list_attributes_by_idp(self, idp_id: str, **kwargs) -> BoxList:
+        """
+        Returns a list of all configured SCIM attributes for the specified IdP.
+
+        Args:
+            idp_id (str): The unique id of the IdP to retrieve SCIM attributes for.
+            **kwargs: Optional keyword args.
+
+        Keyword Args:
+            **max_items (int):
+                The maximum number of items to request before stopping iteration.
+            **max_pages (int):
+                The maximum number of pages to request before stopping iteration.
+            **pagesize (int):
+                Specifies the page size. The default size is 20, but the maximum size is 500.
+            **search (str, optional):
+                The search string used to match against features and fields.
+
+        Returns:
+            :obj:`BoxList`: A list of all configured SCIM attributes for the specified IdP.
+
+        Examples:
+            >>> for scim_attribute in zpa.scim_attributes.list_attributes_by_idp('99999'):
+            ...    pprint(scim_attribute)
+
+        """
+        return BoxList(Iterator(self._api, f"idp/{idp_id}/scimattribute", **kwargs))
+
+    def get_attribute(self, idp_id: str, attribute_id: str) -> Box:
+        """
+        Returns information on the specified SCIM attribute.
+
+        Args:
+            idp_id (str):
+                The unique id of the Idp corresponding to the SCIM attribute.
+            attribute_id (str):
+                The unique id of the SCIM attribute.
+
+        Returns:
+            :obj:`Box`: The resource record for the SCIM attribute.
+
+        Examples:
+            >>> pprint(zpa.scim_attributes.get_attribute('99999',
+            ...    scim_attribute_id="88888"))
+
+        """
+
+        return self._get(f"idp/{idp_id}/scimattribute/{attribute_id}")
+
+    def get_values(self, idp_id: str, attribute_id: str, **kwargs) -> BoxList:
+        """
+        Returns information on the specified SCIM attributes.
+
+        Args:
+            idp_id (str):
+                The unique identifier for the IDP.
+            attribute_id (str):
+                The unique identifier for the attribute.
+            **kwargs:
+                Optional keyword args.
+
+        Keyword Args:
+            **max_items (int):
+                The maximum number of items to request before stopping iteration.
+            **max_pages (int):
+                The maximum number of pages to request before stopping iteration.
+            **pagesize (int):
+                Specifies the page size. The default size is 20, but the maximum size is 500.
+            **search (str, optional):
+                The search string used to match against features and fields.
+
+        Returns:
+            :obj:`BoxList`: The resource record for the SCIM attribute values.
+
+        Examples:
+            >>> pprint(zpa.scim_attributes.get_values('99999', '88888'))
+
+        """
+        return BoxList(
+            Iterator(
+                self._api,
+                f"{self.user_config_url}/scimattribute/idpId/{idp_id}/attributeId/{attribute_id}",
+                **kwargs,
+            )
         )
-        status_code = response.status_code
-        if status_code != 200:
-            return None
-        return self.mapRespJSONToApp(response.json)
-
-    def getAllIDPControllersRaw(self):
-        list = self.rest.get_paginated_data(
-            base_url="/mgmtconfig/v2/admin/customers/%s/idp" % (self.customer_id),
-            data_key_name="list",
-        )
-        return list
-
-    def getIDPByName(self, idpName):
-        idps = self.getAllIDPControllersRaw()
-        for idp in idps:
-            if idp.get("name") == idpName:
-                return idp
-        return None
-
-    def getAllByIDPName(self, idpName):
-        idp = self.getIDPByName(idpName)
-        if idp is None or idp.get("id") is None:
-            return []
-        list = self.rest.get_paginated_data(
-            base_url="/mgmtconfig/v1/admin/customers/%s/idp/%s/scimattribute"
-            % (self.customer_id, idp.get("id")),
-            data_key_name="list",
-        )
-        scimAttributes = []
-        for scimAttribute in list:
-            scimAttributes.append(self.mapRespJSONToApp(scimAttribute))
-        return scimAttributes
-
-    def getByName(self, name, idpName):
-        samlAttributes = self.getAllByIDPName(idpName)
-        for samlAttribute in samlAttributes:
-            if samlAttribute.get("name") == name:
-                return samlAttribute
-        return None
-
-    @delete_none
-    def mapRespJSONToApp(self, resp_json):
-        if resp_json is None:
-            return {}
-        return {
-            "canonical_values": resp_json.get("canonicalValues"),
-            "case_sensitive": resp_json.get("caseSensitive"),
-            "creation_time": resp_json.get("creationTime"),
-            "data_type": resp_json.get("dataType"),
-            "description": resp_json.get("description"),
-            "id": resp_json.get("id"),
-            "idp_id": resp_json.get("idpId"),
-            "modified_by": resp_json.get("modifiedBy"),
-            "modified_time": resp_json.get("modifiedTime"),
-            "multivalued": resp_json.get("multivalued"),
-            "mutability": resp_json.get("mutability"),
-            "name": resp_json.get("name"),
-            "required": resp_json.get("required"),
-            "returned": resp_json.get("returned"),
-            "schema_uri": resp_json.get("schemaURI"),
-            "uniqueness": resp_json.get("uniqueness"),
-        }
-
-    @delete_none
-    def mapAppToJSON(self, scimAttribute):
-        if scimAttribute is None:
-            return {}
-        return {
-            "canonicalValues": scimAttribute.get("canonical_values"),
-            "caseSensitive": scimAttribute.get("case_sensitive"),
-            "creationTime": scimAttribute.get("creation_time"),
-            "dataType": scimAttribute.get("data_type"),
-            "description": scimAttribute.get("description"),
-            "id": scimAttribute.get("id"),
-            "idpId": scimAttribute.get("idp_id"),
-            "modifiedBy": scimAttribute.get("modified_by"),
-            "modifiedTime": scimAttribute.get("modified_time"),
-            "multivalued": scimAttribute.get("multivalued"),
-            "mutability": scimAttribute.get("mutability"),
-            "name": scimAttribute.get("name"),
-            "required": scimAttribute.get("required"),
-            "returned": scimAttribute.get("returned"),
-            "schemaURI": scimAttribute.get("schema_uri"),
-            "uniqueness": scimAttribute.get("uniqueness"),
-        }
