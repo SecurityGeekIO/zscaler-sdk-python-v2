@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
-from setuptools import setup
-
-packages = ["zscaler", "zscaler.zia", "zscaler.zpa"]
+from setuptools import setup, find_packages
 
 package_data = {"": ["*"]}
 
-install_requires = ["python-box==7.0.0", "restfly==1.4.7"]
+install_requires = ["python-box==7.0.0"]
 
 setup_kwargs = {
     "name": "zscaler-sdk-python",
@@ -17,7 +15,7 @@ setup_kwargs = {
     "maintainer": "None",
     "maintainer_email": "None",
     "url": "https://github.com/zscaler/zscaler-sdk-python",
-    "packages": packages,
+    "packages": find_packages(),
     "package_data": package_data,
     "install_requires": install_requires,
     "python_requires": ">=3.8,<4.0",

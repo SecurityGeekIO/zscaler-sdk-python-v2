@@ -95,12 +95,17 @@ class ZPACache(Cache):
         Arguments:
             key {str} -- Desired key
         """
+        logger.info(f'Removing value from cache for key "{key}".')
         # Make sure key is in cache
         if key in self._store:
             # Delete entry
             del self._store[key]
             logger.info(f'Removed value from cache for key "{key}".')
-
+        for other_key in self._store.keys():
+            # If not valid, delete
+            if not self._is_valid_entry(self._store[other_key]) and other_key.startswith(key):
+                del self._store[other_key]
+                logger.info(f'Removed also value from cache for key "{other_key}".')
     def clear(self):
         """
         Clear the cache.

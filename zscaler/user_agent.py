@@ -1,9 +1,9 @@
-from zscaler import __version__ as VERSION
-
 import platform
 
+from zscaler import __version__ as VERSION
 
-class UserAgent():
+
+class UserAgent:
     SDK_NAME = "zscaler-sdk-python"
     PYTHON = "python"
 
@@ -11,10 +11,10 @@ class UserAgent():
         python_version = platform.python_version()
         os_name = platform.system()
         os_version = platform.release()
-        self._user_agent_string = (f"{UserAgent.SDK_NAME}/{VERSION} "
-                                   f"{UserAgent.PYTHON}/{python_version} "
-                                   f"{os_name}/{os_version}")
-        if (user_agent_extra):
+        self._user_agent_string = (
+            f"{UserAgent.SDK_NAME}/{VERSION} " f"{UserAgent.PYTHON}/{python_version} " f"{os_name}/{os_version}"
+        )
+        if user_agent_extra:
             self._user_agent_string += f" {user_agent_extra}"
 
     def get_user_agent_string(self):
