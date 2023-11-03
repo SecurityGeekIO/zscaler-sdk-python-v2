@@ -4,7 +4,7 @@ import os
 import time
 import urllib.parse
 from time import sleep
-
+import uuid
 import requests
 from box import BoxList
 
@@ -18,6 +18,8 @@ from zscaler.utils import (
     format_json_response,
     is_token_expired,
     retry_with_backoff,
+    dump_request,
+    dump_response,
 )
 from zscaler.zpa.app_segments import ApplicationSegmentAPI
 from zscaler.zpa.app_segments_inspection import AppSegmentsInspectionAPI
@@ -178,15 +180,27 @@ class ZPAClientHelper(ZPAClient):
             api = self.user_config_url
 
         url = f"{api}/{path.lstrip('/')}"
-
+        start_time = time.time()
         # Update headers to include the user agent
         headers_with_user_agent = self.headers.copy()
         headers_with_user_agent["User-Agent"] = self.user_agent
-
+        # Generate a unique UUID for this request
+        request_uuid = uuid.uuid4()
+        dump_request(logger, url, method, data, headers_with_user_agent, request_uuid)
         # Check cache before sending request
         cache_key = self.cache.create_key(url)
         if method == "GET" and self.cache.contains(cache_key):
-            return self.cache.get(cache_key)
+            resp = self.cache.get(cache_key)
+            dump_response(
+                logger=logger,
+                url=url,
+                method=method,
+                resp=resp,
+                request_uuid=request_uuid,
+                start_time=start_time,
+                from_cache=True,
+            )
+            return resp
 
         attempts = 0
         while attempts < 5:  # Trying a maximum of 5 times
@@ -196,7 +210,9 @@ class ZPAClientHelper(ZPAClient):
                     self.logger.warning("The provided or fetched token was already expired. Refreshing...")
                     self.refreshToken()
                 resp = requests.request(method, url, json=data, headers=headers_with_user_agent, timeout=self.timeout)
-
+                dump_response(
+                    logger=logger, url=url, method=method, resp=resp, request_uuid=request_uuid, start_time=start_time
+                )
                 if resp.status_code == 429:  # HTTP Status code 429 indicates "Too Many Requests"
                     sleep_time = int(
                         resp.headers.get("Retry-After", 2)
@@ -229,14 +245,6 @@ class ZPAClientHelper(ZPAClient):
             response_data = resp.json()
         except ValueError:  # Using ValueError for JSON decoding errors
             response_data = resp.text
-        logger.info(
-            "Calling: %s %s. Status code: %d. Request data: %s, Response data: %s",
-            method,
-            url,
-            resp.status_code,
-            json.dumps(data),
-            json.dumps(response_data),
-        )
         # Cache the response if it's a successful GET request
         if method == "GET" and resp.status_code == 200:
             self.cache.add(cache_key, resp)
