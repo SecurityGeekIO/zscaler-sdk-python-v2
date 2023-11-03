@@ -116,7 +116,9 @@ class ZPAClientHelper(ZPAClient):
         cache_enabled = os.environ.get("ZSCALER_CLIENT_CACHE_ENABLED", "true").lower() == "true"
         if cache is None:
             if cache_enabled:
-                self.cache = ZPACache(ttl=3600, tti=1800)
+                ttl = int(os.environ.get("ZSCALER_CLIENT_CACHE_DEFAULT_TTL", 3600))
+                tti = int(os.environ.get("ZSCALER_CLIENT_CACHE_DEFAULT_TTI", 1800))
+                self.cache = ZPACache(ttl=ttl, tti=tti)
             else:
                 self.cache = NoOpCache()
         else:
