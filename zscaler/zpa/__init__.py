@@ -156,7 +156,7 @@ class ZPAClientHelper(ZPAClient):
             logger.error("Login failed due to an exception: %s", str(e))
             return None
 
-    def send(self, method, path, data=None, fail_safe=False, api_version: str = None):
+    def send(self, method, path, data=None, params=None, fail_safe=False, api_version: str = None):
         """
         Send a request to the ZPA API.
 
@@ -242,7 +242,7 @@ class ZPAClientHelper(ZPAClient):
             self.cache.add(cache_key, resp)
         return resp
 
-    def get(self, path, data=None, fail_safe=False, api_version: str = None):
+    def get(self, path, data=None, params=None, fail_safe=False, api_version: str = None):
         """
         Send a GET request to the ZPA API.
 
@@ -261,31 +261,31 @@ class ZPAClientHelper(ZPAClient):
             time.sleep(delay)
 
         # Now proceed with sending the request
-        resp = self.send("GET", path, data, fail_safe, api_version=api_version)
+        resp = self.send("GET", path, data, params, fail_safe, api_version=api_version)
         formatted_resp = format_json_response(resp, box_attrs=dict())
         return formatted_resp
 
-    def put(self, path, data=None, api_version: str = None):
+    def put(self, path, data=None, params=None, api_version: str = None):
         should_wait, delay = self.rate_limiter.wait("PUT")
         if should_wait:
             time.sleep(delay)
-        resp = self.send("PUT", path, data, api_version=api_version)
+        resp = self.send("PUT", path, data, params, api_version=api_version)
         formatted_resp = format_json_response(resp, box_attrs=dict())
         return formatted_resp
 
-    def post(self, path, data=None, api_version: str = None):
+    def post(self, path, data=None, params=None, api_version: str = None):
         should_wait, delay = self.rate_limiter.wait("POST")
         if should_wait:
             time.sleep(delay)
-        resp = self.send("POST", path, data, api_version=api_version)
+        resp = self.send("POST", path, data, params, api_version=api_version)
         formatted_resp = format_json_response(resp, box_attrs=dict())
         return formatted_resp
 
-    def delete(self, path, data=None, api_version: str = None):
+    def delete(self, path, data=None, params=None, api_version: str = None):
         should_wait, delay = self.rate_limiter.wait("DELETE")
         if should_wait:
             time.sleep(delay)
-        return self.send("DELETE", path, data, api_version=api_version)
+        return self.send("DELETE", path, data, params, api_version=api_version)
 
     ERROR_MESSAGES = {
         "UNEXPECTED_STATUS": "Unexpected status code {status_code} received for page {page}.",
