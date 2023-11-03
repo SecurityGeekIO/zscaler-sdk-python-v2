@@ -9,6 +9,7 @@ import requests
 from box import BoxList
 
 from zscaler.cache.no_op_cache import NoOpCache
+from zscaler.zpa.errors import ZpaAPIError, ZpaAPIException, HTTPError, HTTPException
 from zscaler.cache.zscaler_cache import ZPACache
 from zscaler.constants import ZPA_BASE_URLS
 from zscaler.ratelimiter.ratelimiter import RateLimiter
@@ -68,7 +69,7 @@ class ZPAClientHelper(ZPAClient):
     - headers (dict): Headers for API requests.
     """
 
-    def __init__(self, client_id, client_secret, customer_id, cloud, timeout=240, cache=None):
+    def __init__(self, client_id, client_secret, customer_id, cloud, timeout=240, cache=None, fail_safe=False):
         """
         Initialize ZPAClientHelper.
 
@@ -78,6 +79,7 @@ class ZPAClientHelper(ZPAClient):
         - customer_id (str): The customer ID.
         - cloud (str): The cloud endpoint to be used.
         - cache (object, optional): Cache object. Defaults to None.
+        - fail_safe (bool, optional): Log an error and continue on failure. Defaults to False.
         """
 
         # Initialize rate limiter
@@ -109,7 +111,7 @@ class ZPAClientHelper(ZPAClient):
         self.url = f"{self.baseurl}/mgmtconfig/v1/admin/customers/{customer_id}"
         self.user_config_url = f"{self.baseurl}/userconfig/v1/customers/{customer_id}"
         self.v2_url = f"{self.baseurl}/mgmtconfig/v2/admin/customers/{customer_id}"
-
+        self.fail_safe = fail_safe
         # Cache setup
         cache_enabled = os.environ.get("ZSCALER_CLIENT_CACHE_ENABLED", "true").lower() == "true"
         if cache is None:
@@ -158,7 +160,7 @@ class ZPAClientHelper(ZPAClient):
             logger.error("Login failed due to an exception: %s", str(e))
             return None
 
-    def send(self, method, path, data=None, params=None, fail_safe=False, api_version: str = None):
+    def send(self, method, path, data=None, params=None, api_version: str = None):
         """
         Send a request to the ZPA API.
 
@@ -166,8 +168,6 @@ class ZPAClientHelper(ZPAClient):
         - method (str): The HTTP method.
         - path (str): API endpoint path.
         - data (dict, optional): Request payload. Defaults to None.
-        - fail_safe (bool, optional): Log an error and continue on failure. Defaults to False.
-
         Returns:
         - Response: Response object from the request.
         """
@@ -236,29 +236,38 @@ class ZPAClientHelper(ZPAClient):
         if method != "GET":
             self.cache.delete(cache_key)
 
-        if resp.status_code == 400 and fail_safe:
-            error_msg = f"Operation failed. API response code: {resp.status_code}"
-            logger.error(error_msg)
-            raise Exception(error_msg)
         # Detailed logging for request and response
         try:
             response_data = resp.json()
         except ValueError:  # Using ValueError for JSON decoding errors
             response_data = resp.text
+        # check if call was succesful
+        if 200 > resp.status_code or resp.status_code > 299:
+            # create errors
+            try:
+                error = ZpaAPIError(url, resp, response_data)
+                if self.fail_safe:
+                    raise ZpaAPIException(response_data)
+            except ZpaAPIException:
+                raise
+            except Exception:
+                error = HTTPError(url, resp, response_data)
+                if self.fail_safe:
+                    logger.error(response_data)
+                    raise HTTPException(response_data)
+            logger.error(error)
         # Cache the response if it's a successful GET request
         if method == "GET" and resp.status_code == 200:
             self.cache.add(cache_key, resp)
         return resp
 
-    def get(self, path, data=None, params=None, fail_safe=False, api_version: str = None):
+    def get(self, path, data=None, params=None, api_version: str = None):
         """
         Send a GET request to the ZPA API.
 
         Parameters:
         - path (str): API endpoint path.
         - data (dict, optional): Request payload. Defaults to None.
-        - fail_safe (bool, optional): Log an error and continue on failure. Defaults to False.
-
         Returns:
         - Response: Response object from the request.
         """
@@ -269,7 +278,7 @@ class ZPAClientHelper(ZPAClient):
             time.sleep(delay)
 
         # Now proceed with sending the request
-        resp = self.send("GET", path, data, params, fail_safe, api_version=api_version)
+        resp = self.send("GET", path, data, params, api_version=api_version)
         formatted_resp = format_json_response(resp, box_attrs=dict())
         return formatted_resp
 
