@@ -15,12 +15,7 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 
-import asyncio
-from concurrent.futures import ThreadPoolExecutor
-
 from box import Box, BoxList
-
-from zscaler.utils import Iterator
 from zscaler.zpa.client import ZPAClient
 
 
