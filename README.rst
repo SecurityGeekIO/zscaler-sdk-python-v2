@@ -1,6 +1,7 @@
 # Zscaler SDK Python for the Zscaler API
 
-[![CI/CD](https://github.com/zscaler/zscaler-sdk-python/actions/workflows/ci.yml/badge.svg)](https://github.com/zscaler/zscaler-sdk-python/actions/workflows/ci.yml)
+[![Build Status](https://github.com/zscaler/zscaler-sdk-python/actions/workflows/build.yml/badge.svg)](https://github.com/zscaler/zscaler-sdk-python/actions/workflows/build.yml)
+[![Documentation Status](https://readthedocs.org/projects/zscaler/badge/?version=latest)](https://zscaler.readthedocs.io/?badge=latest)
 [![License](https://img.shields.io/github/license/zscaler/zscaler-sdk-python.svg)](https://github.com/zscaler/zscaler-sdk-python)
 [![Code Quality](https://app.codacy.com/project/badge/Grade/d339fa5d957140f496fdb5c40abc4666)](https://www.codacy.com/gh/zscaler/zscaler-sdk-python/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=zscaler/zscaler-sdk-python&amp;utm_campaign=Badge_Grade)
 [![PyPI Version](https://img.shields.io/pypi/v/zscaler.svg)](https://pypi.org/project/zscaler-sdk-python)
@@ -10,13 +11,11 @@
 Zscaler SDK Python is an SDK that provides a uniform and easy-to-use interface for each of the Zscaler product APIs.
 
 ## Quick links
-* [Zscaler SDK Python API Documentation](https://zscaler-sdk-python.readthedocs.io)
+* [Zscaler SDK Python API Documentation](https://zscaler.readthedocs.io)
 
 ## Overview
 Each Zscaler product has separate developer documentation and authentication methods. This SDK simplifies
 software development using the Zscaler API.
-
-Note: This SDK was built off the amazing [pyZscaler](https://github.com/mitchos/pyZscaler) project created by [Mitch Kelly](https://github.com/mitchos)
 
 This SDK leverages the [RESTfly framework](https://restfly.readthedocs.io/en/latest/index.html) developed
 by Steve McGrath.
@@ -32,11 +31,12 @@ by Steve McGrath.
 - Zscaler Private Access (ZPA)
 - Zscaler Internet Access (ZIA)
 
+
 ## Installation
 
 The most recent version can be installed from pypi as per below.
 
-    $ pip install zscaler-sdk-python
+    $ pip install zscaler
 
 ## Usage
 
@@ -67,7 +67,7 @@ for app_segment in zpa.app_segments.list_segments():
 
 ## Documentation
 ### API Documentation
-Zscaler SDK Python's API is fully 100% documented and is hosted at [ReadTheDocs](https://zscaler-sdk-python.readthedocs.io).
+Zscaler SDK Python's API is fully 100% documented and is hosted at [ReadTheDocs](https://zscaler.readthedocs.io).
 
 This documentation should be used when working with Zscaler SDK Python rather than referring to Zscaler's API reference.
 Zscaler SDK Python makes some quality of life improvements to simplify and clarify arguments passed to Zscaler's API.

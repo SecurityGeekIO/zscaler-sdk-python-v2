@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 package_data = {"": ["*"]}
 
-install_requires = ["python-box==7.0.0"]
+install_requires = ["python-box==7.0.0", "restfly==1.4.7"]
 
 setup_kwargs = {
     "name": "zscaler-sdk-python",
