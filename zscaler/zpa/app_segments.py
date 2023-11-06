@@ -201,7 +201,7 @@ class ApplicationSegmentAPI:
         for key, value in kwargs.items():
             payload[snake_to_camel(key)] = value
 
-        return self.rest.post("application", data=payload)
+        return self.rest.post("application", json=payload)
 
     def update_segment(self, segment_id: str, **kwargs) -> Box:
         """
@@ -289,7 +289,7 @@ class ApplicationSegmentAPI:
         for key, value in kwargs.items():
             payload[snake_to_camel(key)] = value
 
-        resp = self.rest.put(f"application/{segment_id}", data=payload).status_code
+        resp = self.rest.put(f"application/{segment_id}", json=payload).status_code
 
         # Return the object if it was updated successfully
         if resp == 204:
@@ -309,5 +309,5 @@ class ApplicationSegmentAPI:
         seg_group["applications"] = addaptedApps
         self.rest.put(
             "/segmentGroup/%s" % (seg_group_id),
-            data=seg_group,
+            json=seg_group,
         )

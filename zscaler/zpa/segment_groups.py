@@ -91,7 +91,7 @@ class SegmentGroupsAPI:
         for key, value in kwargs.items():
             payload[snake_to_camel(key)] = value
 
-        return self.rest.post("segmentGroup", data=payload)
+        return self.rest.post("segmentGroup", json=payload)
 
     def update_group(self, group_id: str, **kwargs) -> Box:
         """

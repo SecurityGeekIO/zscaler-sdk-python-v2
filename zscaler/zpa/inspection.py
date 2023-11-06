@@ -102,7 +102,7 @@ class InspectionControllerAPI:
             # Convert snake to camelcase
             payload = convert_keys(payload)
 
-        response = self.rest.post("/inspectionControls/custom", data=payload)
+        response = self.rest.post("/inspectionControls/custom", json=payload)
         if isinstance(response, Response):
             status_code = response.status_code
             if status_code > 299:
@@ -218,7 +218,7 @@ class InspectionControllerAPI:
 
         payload = convert_keys(payload)
 
-        response = self.rest.post("/inspectionProfile", data=payload)
+        response = self.rest.post("/inspectionProfile", json=payload)
         if isinstance(response, Response):
             status_code = response.status_code
             if status_code > 299:

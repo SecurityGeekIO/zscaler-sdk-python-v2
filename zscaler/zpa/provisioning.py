@@ -169,7 +169,7 @@ class ProvisioningKeyAPI:
         for key, value in kwargs.items():
             payload[snake_to_camel(key)] = value
 
-        return self.rest.post(f"associationType/{simplify_key_type(key_type)}/provisioningKey", data=payload)
+        return self.rest.post(f"associationType/{simplify_key_type(key_type)}/provisioningKey", json=payload)
 
 
     def update_provisioning_key(self, key_id: str, key_type: str, **kwargs) -> Box:
@@ -217,7 +217,7 @@ class ProvisioningKeyAPI:
         for key, value in kwargs.items():
             payload[snake_to_camel(key)] = value
 
-        resp = self.rest.put(f"associationType/{simplify_key_type(key_type)}/provisioningKey/{key_id}", data=payload).status_code
+        resp = self.rest.put(f"associationType/{simplify_key_type(key_type)}/provisioningKey/{key_id}", json=payload).status_code
 
         if resp == 204:
             return self.get_provisioning_key(key_id, key_type=key_type)

@@ -202,7 +202,7 @@ class AppSegmentsPRAAPI:
             if value is not None:
                 camel_payload[snake_to_camel(key)] = value
 
-        response = self.rest.post("application", data=camel_payload)
+        response = self.rest.post("application", json=camel_payload)
         if isinstance(response, Response):
             status_code = response.status_code
             if 200 <= status_code < 300:
@@ -304,7 +304,7 @@ class AppSegmentsPRAAPI:
         for key, value in kwargs.items():
             payload[snake_to_camel(key)] = value
 
-        resp = self.rest.put(f"application/{segment_id}", data=payload).status_code
+        resp = self.rest.put(f"application/{segment_id}", json=payload).status_code
 
         # Return the object if it was updated successfully
         if resp == 204:

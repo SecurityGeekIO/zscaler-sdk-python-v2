@@ -407,7 +407,7 @@ class LSSConfigControllerAPI:
             payload[snake_to_camel(key)] = value
 
         # return payload
-        return self.rest.post(f"/lssConfig", api_version="v2", data=payload)
+        return self.rest.post(f"/lssConfig", api_version="v2", json=payload)
 
     def update_lss_config(self, lss_config_id: str, **kwargs):
         """
@@ -515,7 +515,7 @@ class LSSConfigControllerAPI:
         # Add additional provided parameters to payload
         for key, value in kwargs.items():
             payload[snake_to_camel(key)] = value
-        resp = self.rest.put(f"/lssConfig/{lss_config_id}", api_version="v2", data=payload).status_code
+        resp = self.rest.put(f"/lssConfig/{lss_config_id}", api_version="v2", json=payload).status_code
 
         if resp == 204:
             return self.get_config(lss_config_id)

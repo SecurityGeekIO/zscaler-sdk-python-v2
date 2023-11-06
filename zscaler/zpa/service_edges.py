@@ -124,7 +124,7 @@ class ServiceEdgesAPI:
 
         response = self.rest.put(
             f"/serviceEdge/%s" % (service_edge_id),
-            data=payload,
+            json=payload,
         )
         if isinstance(response, Response):
             status_code = response.status_code
@@ -292,9 +292,9 @@ class ServiceEdgesAPI:
         for key, value in kwargs.items():
             payload[snake_to_camel(key)] = value
 
-        return self.rest.post("serviceEdgeGroup", data=payload)
+        return self.rest.post("serviceEdgeGroup", json=payload)
 
-        # response = self.rest.post("/serviceEdgeGroup", data=payload)
+        # response = self.rest.post("/serviceEdgeGroup", json=payload)
         # if isinstance(response, Response):
         #     status_code = response.status_code
         #     if status_code > 299:
@@ -373,14 +373,14 @@ class ServiceEdgesAPI:
         for key, value in kwargs.items():
             payload[snake_to_camel(key)] = value
 
-        resp = self.rest.put(f"serviceEdgeGroup/{group_id}", data=payload).status_code
+        resp = self.rest.put(f"serviceEdgeGroup/{group_id}", json=payload).status_code
 
         if resp == 204:
             return self.get_service_edge_group(group_id)
 
         # response = self.rest.put(
         #     "/serviceEdgeGroup/%s" % (group_id),
-        #     data=payload,
+        #     json=payload,
         # )
         # if isinstance(response, Response):
         #     status_code = response.status_code

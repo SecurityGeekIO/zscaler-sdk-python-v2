@@ -108,7 +108,7 @@ class AppConnectorControllerAPI:
 
         response = self.rest.put(
             f"/connector/%s" % (connector_id),
-            data=payload,
+            json=payload,
         )
         if isinstance(response, Response):
             status_code = response.status_code
@@ -147,7 +147,7 @@ class AppConnectorControllerAPI:
 
         """
         payload = {"ids": connector_ids}
-        return self.rest.post("connector/bulkDelete", data=payload).status_code
+        return self.rest.post("connector/bulkDelete", json=payload).status_code
 
     def list_connector_groups(self, **kwargs) -> BoxList:
         """
@@ -272,9 +272,9 @@ class AppConnectorControllerAPI:
         for key, value in kwargs.items():
             payload[snake_to_camel(key)] = value
 
-        return self.rest.post("appConnectorGroup", data=payload)
+        return self.rest.post("appConnectorGroup", json=payload)
 
-        # response = self.rest.post(f"/appConnectorGroup", data=payload)
+        # response = self.rest.post(f"/appConnectorGroup", json=payload)
         # if isinstance(response, Response):
         #     status_code = response.status_code
         #     if status_code > 299:
@@ -349,7 +349,7 @@ class AppConnectorControllerAPI:
         for key, value in kwargs.items():
             payload[snake_to_camel(key)] = value
 
-        resp = self.rest.put(f"appConnectorGroup/{group_id}", data=payload).status_code
+        resp = self.rest.put(f"appConnectorGroup/{group_id}", json=payload).status_code
 
         if resp == 204:
             return self.get_connector_group(group_id)
