@@ -15,7 +15,7 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from box import Box, BoxList
-
+from requests import Response
 from zscaler.utils import add_id_groups, snake_to_camel
 from zscaler.zpa.client import ZPAClient
 
@@ -52,10 +52,7 @@ class ServerGroupsAPI:
             ...    pprint(server_group)
 
         """
-        list, _ = self.rest.get_paginated_data(
-            path="/serverGroup",
-            data_key_name="list",
-        )
+        list, _ = self.rest.get_paginated_data(path="/serverGroup", data_key_name="list", **kwargs, api_version="v1")
         return list
 
     def get_group(self, group_id: str) -> Box:
@@ -76,22 +73,13 @@ class ServerGroupsAPI:
 
         return self.rest.get(f"serverGroup/{group_id}")
 
-    def delete_group(self, group_id: str) -> int:
-        """
-        Deletes the specified server group.
+    def get_server_group_by_name(self, name):
+        groups = self.list_groups()
+        for group in groups:
+            if group.get("name") == name:
+                return group
+        return None
 
-        Args:
-            group_id (str):
-                The unique id for the server group to be deleted.
-
-        Returns:
-            :obj:`int`: The response code for the operation.
-
-        Examples:
-            >>> zpa.server_groups.delete_group('99999')
-
-        """
-        return self.rest.delete(f"serverGroup/{group_id}").status_code
 
     def add_group(self, app_connector_group_ids: list, name: str, **kwargs) -> Box:
         """
@@ -148,7 +136,13 @@ class ServerGroupsAPI:
         for key, value in kwargs.items():
             payload[snake_to_camel(key)] = value
 
-        return self.rest.post("serverGroup", json=payload)
+        response = self.rest.post("serverGroup", json=payload)
+        if isinstance(response, Response):
+            # this is only true when the creation failed (status code is not 2xx)
+            status_code = response.status_code
+            # Handle error response
+            raise Exception(f"API call failed with status {status_code}: {response.json()}")
+        return response
 
     def update_group(self, group_id: str, **kwargs) -> Box:
         """
@@ -196,7 +190,26 @@ class ServerGroupsAPI:
         for key, value in kwargs.items():
             payload[snake_to_camel(key)] = value
 
-        resp = self.rest.put(f"serverGroup/{group_id}", json=payload, box=False).status_code
+        resp = self.rest.put(f"serverGroup/{group_id}", json=payload).status_code
 
-        if resp == 204:
+        # Return the object if it was updated successfully
+        if not isinstance(resp, Response):
             return self.get_group(group_id)
+
+
+    def delete_group(self, group_id: str) -> int:
+        """
+        Deletes the specified server group.
+
+        Args:
+            group_id (str):
+                The unique id for the server group to be deleted.
+
+        Returns:
+            :obj:`int`: The response code for the operation.
+
+        Examples:
+            >>> zpa.server_groups.delete_group('99999')
+
+        """
+        return self.rest.delete(f"serverGroup/{group_id}").status_code

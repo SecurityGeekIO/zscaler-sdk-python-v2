@@ -46,10 +46,7 @@ class ApplicationSegmentAPI:
             >>> app_segments = zpa.app_segments.list_segments()
 
         """
-        list, _ = self.rest.get_paginated_data(
-            path="/application",
-            data_key_name="list",
-        )
+        list, _ = self.rest.get_paginated_data(path="/application", data_key_name="list", **kwargs)
         return list
 
     def get_segment(self, segment_id: str) -> Box:
@@ -204,12 +201,7 @@ class ApplicationSegmentAPI:
         for key, value in kwargs.items():
             payload[snake_to_camel(key)] = value
 
-        response = self.rest.post("/application", data=payload)
-        if isinstance(response, Response):
-            status_code = response.status_code
-            if status_code > 299:
-                return None
-        return self.get_segment(response.get("id"))
+        return self.rest.post("application", json=payload)
 
     def update_segment(self, segment_id: str, **kwargs) -> Box:
         """
@@ -297,15 +289,11 @@ class ApplicationSegmentAPI:
         for key, value in kwargs.items():
             payload[snake_to_camel(key)] = value
 
-        response = self.rest.put(
-            "/application/%s" % (segment_id),
-            data=payload,
-        )
-        if isinstance(response, Response):
-            status_code = response.status_code
-            if status_code > 299:
-                return None
-        return self.get_segment(segment_id)
+        resp = self.rest.put(f"application/{segment_id}", json=payload).status_code
+
+        # Return the object if it was updated successfully
+        if not isinstance(resp, Response):
+            return self.get_segment(segment_id)
 
     def detach_from_segment_group(self, app_id, seg_group_id):
         seg_group = self.rest.get("/segmentGroup/%s" % (seg_group_id))
@@ -321,5 +309,5 @@ class ApplicationSegmentAPI:
         seg_group["applications"] = addaptedApps
         self.rest.put(
             "/segmentGroup/%s" % (seg_group_id),
-            data=seg_group,
+            json=seg_group,
         )
