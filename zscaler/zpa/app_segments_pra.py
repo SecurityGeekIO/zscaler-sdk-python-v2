@@ -296,5 +296,5 @@ class AppSegmentsPRAAPI:
         resp = self.rest.put(f"application/{segment_id}", json=payload).status_code
 
         # Return the object if it was updated successfully
-        if resp == 204:
+        if not isinstance(resp, Response):
             return self.get_segment_pra(segment_id)

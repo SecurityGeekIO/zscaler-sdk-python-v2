@@ -16,7 +16,7 @@
 
 
 from box import Box, BoxList
-from restfly.endpoint import APIEndpoint
+from requests import Response
 
 from zscaler.utils import (
     Iterator,
@@ -277,5 +277,5 @@ class AppSegmentsInspectionAPI:
         # Convert the payload's keys to camelCase before sending
         camel_payload = recursive_snake_to_camel(payload)  # use the recursive function
         resp = self._put(f"application/{segment_id}", json=camel_payload).status_code
-        if resp == 204:
+        if not isinstance(resp, Response):
             return self.get_segment_inspection(segment_id)

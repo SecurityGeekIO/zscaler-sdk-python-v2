@@ -292,7 +292,7 @@ class ApplicationSegmentAPI:
         resp = self.rest.put(f"application/{segment_id}", json=payload).status_code
 
         # Return the object if it was updated successfully
-        if resp == 204:
+        if not isinstance(resp, Response):
             return self.get_segment(segment_id)
 
     def detach_from_segment_group(self, app_id, seg_group_id):
