@@ -6,7 +6,7 @@ from urllib.parse import urlparse, urlencode, parse_qs
 logger = logging.getLogger("zscaler-sdk-python")
 
 
-class ZPACache(Cache):
+class ZscalerCache(Cache):
     """
     This is a base class implementing a Cache using TTL and TTI.
     Implementing the zscaler.cache.cache.Cache abstract class.

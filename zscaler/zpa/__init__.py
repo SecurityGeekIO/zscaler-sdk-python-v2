@@ -10,7 +10,7 @@ from box import BoxList
 
 from zscaler.cache.no_op_cache import NoOpCache
 from zscaler.errors import ZscalerAPIError, ZscalerAPIException, HTTPError, HTTPException
-from zscaler.cache.zscaler_cache import ZPACache
+from zscaler.cache.zscaler_cache import ZscalerCache
 from zscaler.constants import ZPA_BASE_URLS
 from zscaler.ratelimiter.ratelimiter import RateLimiter
 from zscaler.user_agent import UserAgent
@@ -118,7 +118,7 @@ class ZPAClientHelper(ZscalerClient):
             if cache_enabled:
                 ttl = int(os.environ.get("ZSCALER_CLIENT_CACHE_DEFAULT_TTL", 3600))
                 tti = int(os.environ.get("ZSCALER_CLIENT_CACHE_DEFAULT_TTI", 1800))
-                self.cache = ZPACache(ttl=ttl, tti=tti)
+                self.cache = ZscalerCache(ttl=ttl, tti=tti)
             else:
                 self.cache = NoOpCache()
         else:

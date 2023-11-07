@@ -28,7 +28,7 @@ from box import Box
 from restfly.endpoint import APIEndpoint
 from restfly.session import APISession
 
-from .utils import __version__, obfuscate_api_key
+from zscaler.utils import obfuscate_api_key
 
 
 def retry_with_backoff(retries=5, backoff_in_seconds=1):
@@ -144,7 +144,6 @@ class ZIA(APISession):
     _vendor = "Zscaler"
     _product = "Zscaler Internet Access"
     _backoff = 3
-    _build = __version__
     _box = True
     _box_attrs = {"camel_killer_box": True}
     _env_base = "ZIA"

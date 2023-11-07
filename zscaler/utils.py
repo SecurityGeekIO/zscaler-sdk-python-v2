@@ -166,13 +166,13 @@ def format_clientless_apps(clientless_apps):
     return formatted_apps
 
 
-def obfuscate_api_key(seed: list):
+def obfuscate_api_key(seed):
     now = int(time.time() * 1000)
     n = str(now)[-6:]
     r = str(int(n) >> 1).zfill(6)
     key = "".join(seed[int(str(n)[i])] for i in range(len(str(n))))
-    for j in range(len(r)):
-        key += seed[int(r[j]) + 2]
+    for j in range(len(str(r))):
+        key += seed[int(str(r)[j]) + 2]
 
     return {"timestamp": now, "key": key}
 

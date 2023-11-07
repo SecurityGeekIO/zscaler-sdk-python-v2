@@ -6,10 +6,10 @@ import time
 import datetime
 import uuid
 from box import Box, BoxList
-from zscaler.errors import ZscalerAPIError, ZscalerAPIException, HTTPError, HTTPException
+from zscaler.zia.errors import ZscalerAPIError, ZscalerAPIException, HTTPError, HTTPException
 from zscaler.cache.no_op_cache import NoOpCache
-from zscaler.cache.zscaler_cache import ZPACache
-from .utils import __version__, obfuscate_api_key
+from zscaler.cache.zscaler_cache import ZscalerCache
+from zscaler.utils import obfuscate_api_key
 from zscaler.user_agent import UserAgent
 from zscaler.ratelimiter.ratelimiter import RateLimiter
 from zscaler.utils import (
@@ -21,7 +21,24 @@ from zscaler.utils import (
 )
 from time import sleep
 import requests
-from .zia_dlp_dictionaries import ZiaDLPDictionariesService
+from zscaler.zia.admin_and_role_management import AdminAndRoleManagementAPI
+from zscaler.zia.audit_logs import AuditLogsAPI
+from zscaler.zia.authentication_settings import AuthenticationSettingsAPI
+from zscaler.zia.activate import ActivationAPI
+from zscaler.zia.device import DeviceAPI
+from zscaler.zia.dlp import DLPAPI
+from zscaler.zia.firewall import FirewallPolicyAPI
+from zscaler.zia.labels import RuleLabelsAPI
+from zscaler.zia.locations import LocationsAPI
+from zscaler.zia.sandbox import CloudSandboxAPI
+from zscaler.zia.security import SecurityPolicyAPI
+from zscaler.zia.ssl_inspection import SSLInspectionAPI
+from zscaler.zia.traffic import TrafficForwardingAPI
+from zscaler.zia.url_categories import URLCategoriesAPI
+from zscaler.zia.url_filters import URLFilteringAPI
+from zscaler.zia.users import UserManagementAPI
+from zscaler.zia.vips import DataCenterVIPSAPI
+from zscaler.zia.web_dlp import WebDLPAPI
 
 # Setup the logger
 logging.basicConfig(level=logging.INFO)
@@ -74,6 +91,33 @@ def snakecaseToCamelcase(obj):
 
 
 class ZIAClientHelper:
+
+    """
+    A Controller to access Endpoints in the Zscaler Internet Access (ZIA) API.
+
+    The ZIA object stores the session token and simplifies access to CRUD options within the ZIA platform.
+
+    Attributes:
+        api_key (str): The ZIA API key generated from the ZIA console.
+        username (str): The ZIA administrator username.
+        password (str): The ZIA administrator password.
+        cloud (str): The Zscaler cloud for your tenancy, accepted values are:
+
+            * ``zscaler``
+            * ``zscalerone``
+            * ``zscalertwo``
+            * ``zscalerthree``
+            * ``zscloud``
+            * ``zscalerbeta``
+        override_url (str):
+            If supplied, this attribute can be used to override the production URL that is derived
+            from supplying the `cloud` attribute. Use this attribute if you have a non-standard tenant URL
+            (e.g. internal test instance etc). When using this attribute, there is no need to supply the `cloud`
+            attribute. The override URL will be prepended to the API endpoint suffixes. The protocol must be included
+            i.e. http:// or https://.
+
+    """
+
     def __init__(self, api_key, username, password, cloud, timeout=240, cache=None, fail_safe=False):
         self.api_key = api_key
         self.username = username
@@ -91,7 +135,7 @@ class ZIAClientHelper:
             if cache_enabled:
                 ttl = int(os.environ.get("ZSCALER_CLIENT_CACHE_DEFAULT_TTL", 3600))
                 tti = int(os.environ.get("ZSCALER_CLIENT_CACHE_DEFAULT_TTI", 1800))
-                self.cache = ZPACache(ttl=ttl, tti=tti)
+                self.cache = ZscalerCache(ttl=ttl, tti=tti)
             else:
                 self.cache = NoOpCache()
         else:
@@ -376,9 +420,147 @@ class ZIAClientHelper:
         return BoxList(ret_data), error_message
 
     @property
-    def dlp_dict(self):
+    def admin_and_role_management(self):
         """
-        The interface object for the :ref:`ZPA Service Edges interface <zpa-service_edges>`.
+        The interface object for the :ref:`ZIA Admin and Role Management interface <zia-admin_and_role_management>`.
 
         """
-        return ZiaDLPDictionariesService(self)
+        return AdminAndRoleManagementAPI(self)
+
+    @property
+    def audit_logs(self):
+        """
+        The interface object for the :ref:`ZIA Admin Audit Logs interface <zia-audit_logs>`.
+
+        """
+        return AuditLogsAPI(self)
+
+    @property
+    def config(self):
+        """
+        The interface object for the :ref:`ZIA Activation interface <zia-config>`.
+
+        """
+        return ActivationAPI(self)
+
+    @property
+    def dlp(self):
+        """
+        The interface object for the :ref:`ZIA DLP Dictionaries interface <zia-dlp>`.
+
+
+        """
+        return DLPAPI(self)
+
+    @property
+    def firewall(self):
+        """
+        The interface object for the :ref:`ZIA Firewall Policies interface <zia-firewall>`.
+
+        """
+        return FirewallPolicyAPI(self)
+
+    @property
+    def labels(self):
+        """
+        The interface object for the :ref:`ZIA Rule Labels interface <zia-labels>`.
+
+        """
+        return RuleLabelsAPI(self)
+
+    @property
+    def device(self):
+        """
+        The interface object for the :ref:`ZIA device interface <zia-device>`.
+
+        """
+        return DeviceAPI(self)
+
+    @property
+    def locations(self):
+        """
+        The interface object for the :ref:`ZIA Locations interface <zia-locations>`.
+
+        """
+        return LocationsAPI(self)
+
+    @property
+    def sandbox(self):
+        """
+        The interface object for the :ref:`ZIA Cloud Sandbox interface <zia-sandbox>`.
+
+        """
+        return CloudSandboxAPI(self)
+
+    @property
+    def security(self):
+        """
+        The interface object for the :ref:`ZIA Security Policy Settings interface <zia-security>`.
+
+        """
+        return SecurityPolicyAPI(self)
+
+    @property
+    def authentication_settings(self):
+        """
+        The interface object for the :ref:`ZIA Authentication Security Settings interface <zia-auth-settings>`.
+
+        """
+        return AuthenticationSettingsAPI(self)
+
+    @property
+    def ssl(self):
+        """
+        The interface object for the :ref:`ZIA SSL Inspection interface <zia-ssl_inspection>`.
+
+        """
+        return SSLInspectionAPI(self)
+
+    @property
+    def traffic(self):
+        """
+        The interface object for the :ref:`ZIA Traffic Forwarding interface <zia-traffic>`.
+
+        """
+        return TrafficForwardingAPI(self)
+
+    @property
+    def url_categories(self):
+        """
+        The interface object for the :ref:`ZIA URL Categories interface <zia-url_categories>`.
+
+        """
+        return URLCategoriesAPI(self)
+
+    @property
+    def url_filters(self):
+        """
+        The interface object for the :ref:`ZIA URL Filtering interface <zia-url_filters>`.
+
+        """
+        return URLFilteringAPI(self)
+
+    @property
+    def users(self):
+        """
+        The interface object for the :ref:`ZIA User Management interface <zia-users>`.
+
+        """
+        return UserManagementAPI(self)
+
+    @property
+    def vips(self):
+        """
+        The interface object for the :ref:`ZIA Data Center VIPs interface <zia-vips>`.
+
+        """
+        return DataCenterVIPSAPI(self)
+
+    @property
+    def web_dlp(self):
+        """
+        The interface object for the :ref: `ZIA Data-Loss-Prevention Web DLP Rules`.
+
+        """
+        return WebDLPAPI(self)
+
