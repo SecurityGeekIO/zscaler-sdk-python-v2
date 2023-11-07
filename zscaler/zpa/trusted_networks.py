@@ -19,11 +19,11 @@ from typing import Union
 from box import Box, BoxList
 from requests import Response
 from zscaler.utils import Iterator
-from zscaler.client import ZscalerClient
+from zscaler.zpa.client import ZPAClient
 
 
 class TrustedNetworksAPI:
-    def __init__(self, client: ZscalerClient):
+    def __init__(self, client: ZPAClient):
         self.rest = client
 
     def list_networks(self, **kwargs) -> BoxList:

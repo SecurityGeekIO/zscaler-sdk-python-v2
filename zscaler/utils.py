@@ -15,7 +15,7 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 import base64
-import json as jsonp
+import json
 import logging
 import random
 import re
@@ -166,13 +166,13 @@ def format_clientless_apps(clientless_apps):
     return formatted_apps
 
 
-def obfuscate_api_key(seed):
+def obfuscate_api_key(seed: list):
     now = int(time.time() * 1000)
     n = str(now)[-6:]
     r = str(int(n) >> 1).zfill(6)
     key = "".join(seed[int(str(n)[i])] for i in range(len(str(n))))
-    for j in range(len(str(r))):
-        key += seed[int(str(r)[j]) + 2]
+    for j in range(len(r)):
+        key += seed[int(r[j]) + 2]
 
     return {"timestamp": now, "key": key}
 
@@ -366,7 +366,7 @@ def is_token_expired(token_string):
 
         # Decode the payload
         payload_bytes = base64.urlsafe_b64decode(parts[1] + "==")  # Padding might be needed
-        payload = jsonp.loads(payload_bytes)
+        payload = json.loads(payload_bytes)
 
         # Check expiration time
         if "exp" in payload:
@@ -382,18 +382,17 @@ def is_token_expired(token_string):
         return True
 
 
-def dump_request(logger, url: str, method: str, json, params, headers, request_uuid: str):
+def dump_request(logger, url: str, method: str, data, headers, request_uuid: str):
     request_headers_filtered = {key: value for key, value in headers.items() if key != "Authorization"}
     # Log the request details before sending the request
     request_data = {
         "url": url,
         "method": method,
-        "request_body": jsonp.dumps(json),
-        "params": jsonp.dumps(params),
+        "request_body": json.dumps(data),
         "uuid": str(request_uuid),
-        "request_headers": jsonp.dumps(request_headers_filtered),
+        "request_headers": json.dumps(request_headers_filtered),
     }
-    logger.info("Request details: %s", jsonp.dumps(request_data))
+    logger.info("Request details: %s", json.dumps(request_data))
 
 
 def dump_response(logger, url: str, method: str, resp, request_uuid: str, start_time, from_cache: bool = None):
@@ -410,10 +409,10 @@ def dump_response(logger, url: str, method: str, resp, request_uuid: str, start_
         "method": method,
         "response_body": resp.text,
         "duration": str(duration_ms) + "ms",
-        "response_headers": jsonp.dumps(response_headers_dict),
+        "response_headers": json.dumps(response_headers_dict),
         "uuid": str(request_uuid),
     }
     if from_cache:
-        logger.info("Response details from cache: %s", jsonp.dumps(response_data))
+        logger.info("Response details from cache: %s", json.dumps(response_data))
     else:
-        logger.info("Response details: %s", jsonp.dumps(response_data))
+        logger.info("Response details: %s", json.dumps(response_data))

@@ -5,9 +5,12 @@ import os
 import time
 import datetime
 import uuid
+from time import sleep
+import requests
 from box import Box, BoxList
-from zscaler.zia.errors import ZscalerAPIError, ZscalerAPIException, HTTPError, HTTPException
 from zscaler.cache.no_op_cache import NoOpCache
+from zscaler.errors.http_error import ZscalerAPIError, HTTPError
+from zscaler.exceptions.exceptions import ZscalerAPIException, HTTPException
 from zscaler.cache.zscaler_cache import ZscalerCache
 from zscaler.utils import obfuscate_api_key
 from zscaler.user_agent import UserAgent
@@ -19,8 +22,8 @@ from zscaler.utils import (
     dump_request,
     dump_response,
 )
-from time import sleep
-import requests
+
+from zscaler.zia.client import ZIAClient
 from zscaler.zia.admin_and_role_management import AdminAndRoleManagementAPI
 from zscaler.zia.audit_logs import AuditLogsAPI
 from zscaler.zia.authentication_settings import AuthenticationSettingsAPI
@@ -90,7 +93,7 @@ def snakecaseToCamelcase(obj):
     return new_obj
 
 
-class ZIAClientHelper:
+class ZIAClientHelper(ZIAClient):
 
     """
     A Controller to access Endpoints in the Zscaler Internet Access (ZIA) API.
@@ -104,11 +107,15 @@ class ZIAClientHelper:
         cloud (str): The Zscaler cloud for your tenancy, accepted values are:
 
             * ``zscaler``
+            * ``zscloud``
+            * ``zscalerbeta``
+            * ``zspreview``
             * ``zscalerone``
             * ``zscalertwo``
             * ``zscalerthree``
-            * ``zscloud``
-            * ``zscalerbeta``
+            * ``zscalergov``
+            * ``zscalerten``
+
         override_url (str):
             If supplied, this attribute can be used to override the production URL that is derived
             from supplying the `cloud` attribute. Use this attribute if you have a non-standard tenant URL

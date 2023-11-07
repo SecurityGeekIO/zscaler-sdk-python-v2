@@ -16,11 +16,11 @@
 
 from box import Box
 
-from zscaler.client import ZscalerClient
+from zscaler.zpa.client import ZPAClient
 
 
 class ClientTypesAPI:
-    def __init__(self, client: ZscalerClient):
+    def __init__(self, client: ZPAClient):
         self.rest = client
 
     def list_client_types(self) -> Box:

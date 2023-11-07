@@ -15,11 +15,11 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 
-class ZIAClient:
+class ZPAClient:
     def __init__():
         pass
 
-    def get(self, path: str, json=None, params=None, fail_safe: bool = False):
+    def get(self, path: str, json=None, params=None, fail_safe: bool = False, api_version: str = None):
         """
         Send a GET request to the ZPA API.
         Parameters:
@@ -37,6 +37,7 @@ class ZIAClient:
         data_key_name: str = None,
         data_per_page: int = 500,
         expected_status_code=200,
+        api_version: str = None,
     ):
         """
         Send a GET request to the ZPA API to fetch all pages of a resources.
@@ -49,7 +50,7 @@ class ZIAClient:
         """
         pass
 
-    def put(self, path: str, json=None, params=None):
+    def put(self, path: str, json=None, params=None, api_version: str = None):
         """
         Send a PUT request to the ZPA API.
         Parameters:
@@ -60,7 +61,7 @@ class ZIAClient:
         """
         pass
 
-    def patch(self, path: str, json=None, params=None):
+    def patch(self, path: str, json=None, params=None, api_version: str = None):
         """
         Send a PATCH request to the ZPA API.
         Parameters:
@@ -71,7 +72,7 @@ class ZIAClient:
         """
         pass
 
-    def post(self, path: str, json=None, params=None):
+    def post(self, path: str, json=None, params=None, api_version: str = None):
         """
         Send a POST request to the ZPA API.
         Parameters:
@@ -82,7 +83,7 @@ class ZIAClient:
         """
         pass
 
-    def delete(self, path: str, json=None, params=None):
+    def delete(self, path: str, json=None, params=None, api_version: str = None):
         """
         Send a DELETE request to the ZPA API.
         Parameters:

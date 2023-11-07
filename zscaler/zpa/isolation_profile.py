@@ -18,11 +18,11 @@
 from box import Box, BoxList
 from requests import Response
 
-from zscaler.client import ZscalerClient
+from zscaler.zpa.client import ZPAClient
 
 
 class IsolationProfileAPI:
-    def __init__(self, client: ZscalerClient):
+    def __init__(self, client: ZPAClient):
         self.rest = client
 
     def list_profiles(self, **kwargs) -> BoxList:

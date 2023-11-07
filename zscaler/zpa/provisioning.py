@@ -18,7 +18,7 @@
 from box import Box, BoxList
 from requests import Response
 from zscaler.utils import snake_to_camel
-from zscaler.client import ZscalerClient
+from zscaler.zpa.client import ZPAClient
 
 
 def simplify_key_type(key_type):
@@ -32,7 +32,7 @@ def simplify_key_type(key_type):
 
 
 class ProvisioningKeyAPI:
-    def __init__(self, client: ZscalerClient):
+    def __init__(self, client: ZPAClient):
         self.rest = client
 
     def list_provisioning_keys(self, key_type: str, **kwargs) -> BoxList:

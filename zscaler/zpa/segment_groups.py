@@ -2,11 +2,11 @@ from box import Box, BoxList
 from requests import Response
 
 from zscaler.utils import snake_to_camel
-from . import ZscalerClient
+from . import ZPAClient
 
 
 class SegmentGroupsAPI:
-    def __init__(self, client: ZscalerClient):
+    def __init__(self, client: ZPAClient):
         self.rest = client
 
     def list_groups(self, **kwargs) -> BoxList:
