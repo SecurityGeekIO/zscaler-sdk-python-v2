@@ -2,7 +2,7 @@ from box import Box, BoxList
 from requests import Response
 
 from zscaler.utils import add_id_groups, pick_version_profile, snake_to_camel
-from zscaler.zpa.client import ZPAClient
+from zscaler.client import ZscalerClient
 
 
 class AppConnectorControllerAPI:
@@ -11,7 +11,7 @@ class AppConnectorControllerAPI:
         ("server_group_ids", "serverGroups"),
     ]
 
-    def __init__(self, client: ZPAClient):
+    def __init__(self, client: ZscalerClient):
         self.rest = client
 
     def list_connectors(self, **kwargs) -> BoxList:

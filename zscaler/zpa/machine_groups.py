@@ -1,11 +1,11 @@
 from box import Box, BoxList
 from requests import Response
 
-from . import ZPAClient
+from . import ZscalerClient
 
 
 class MachineGroupsAPI:
-    def __init__(self, client: ZPAClient):
+    def __init__(self, client: ZscalerClient):
         self.rest = client
 
     def list_groups(self, **kwargs) -> BoxList:

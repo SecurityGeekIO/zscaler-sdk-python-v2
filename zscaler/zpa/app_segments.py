@@ -23,7 +23,7 @@ from zscaler.utils import (
     snake_to_camel,
     transform_clientless_apps,
 )
-from zscaler.zpa.client import ZPAClient
+from zscaler.client import ZscalerClient
 
 
 class ApplicationSegmentAPI:
@@ -32,7 +32,7 @@ class ApplicationSegmentAPI:
         ("server_group_ids", "serverGroups"),
     ]
 
-    def __init__(self, client: ZPAClient):
+    def __init__(self, client: ZscalerClient):
         self.rest = client
 
     def list_segments(self, **kwargs) -> BoxList:

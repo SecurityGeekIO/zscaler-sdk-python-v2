@@ -3,11 +3,11 @@ from requests import Response
 
 from zscaler.utils import remove_cloud_suffix
 
-from . import ZPAClient
+from . import ZscalerClient
 
 
 class PostureProfilesAPI:
-    def __init__(self, client: ZPAClient):
+    def __init__(self, client: ZscalerClient):
         self.rest = client
 
     def list_profiles(self, **kwargs) -> BoxList:

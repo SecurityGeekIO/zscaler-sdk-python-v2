@@ -24,7 +24,7 @@ from zscaler.utils import (
     recursive_snake_to_camel,
     snake_to_camel,
 )
-from zscaler.zpa.client import ZPAClient
+from zscaler.client import ZscalerClient
 
 class AppSegmentsInspectionAPI:
     # Params that need reformatting
@@ -32,7 +32,7 @@ class AppSegmentsInspectionAPI:
         ("server_group_ids", "serverGroups"),
     ]
 
-    def __init__(self, client: ZPAClient):
+    def __init__(self, client: ZscalerClient):
         self.rest = client
 
     def list_segment_inspection(self, **kwargs) -> BoxList:

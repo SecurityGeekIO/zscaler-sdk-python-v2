@@ -21,11 +21,11 @@ from box import Box, BoxList
 from requests import Response
 
 from zscaler.utils import convert_keys, snake_to_camel
-from zscaler.zpa.client import ZPAClient
+from zscaler.client import ZscalerClient
 
 
 class InspectionControllerAPI:
-    def __init__(self, client: ZPAClient):
+    def __init__(self, client: ZscalerClient):
         self.rest = client
 
     @staticmethod

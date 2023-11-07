@@ -18,11 +18,11 @@
 from box import Box, BoxList
 from requests import Response
 from zscaler.utils import add_id_groups, convert_keys, snake_to_camel
-from zscaler.zpa.client import ZPAClient
+from zscaler.client import ZscalerClient
 
 
 class PolicySetsAPI:
-    def __init__(self, client: ZPAClient):
+    def __init__(self, client: ZscalerClient):
         self.rest = client
 
     POLICY_MAP = {

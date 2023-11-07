@@ -15,7 +15,7 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 
-class ZPAClient:
+class ZscalerClient:
     def __init__():
         pass
 
@@ -26,7 +26,7 @@ class ZPAClient:
         - path (str): API endpoint path.
         - json (str): the request body.
         - params (dict): the query params
-        - api_version (str): the api version, availbale values: v1, v2 or userconfig_v1
+        - api_version (str): the api version for ZPA, availbale values: v1, v2 or userconfig_v1
         """
         pass
         pass
@@ -40,56 +40,55 @@ class ZPAClient:
         api_version: str = None,
     ):
         """
-        Send a GET request to the ZPA API to fetch all pages of a resources.
+        Send a GET request to the ZSCALER API to fetch all pages of a resources.
         Parameters:
         - path (str): API endpoint path.
         - data_key_name (str): list field key.
         - data_per_page: the page size
-        - params (dict): the query params
-        - api_version (str): the api version, availbale values: v1, v2 or userconfig_v1
+        - api_version (str): the api version for ZPA, availbale values: v1, v2 or userconfig_v1
         """
         pass
 
     def put(self, path: str, json=None, params=None, api_version: str = None):
         """
-        Send a PUT request to the ZPA API.
+        Send a PUT request to the ZSCALER API.
         Parameters:
         - path (str): API endpoint path.
         - json (str): the request body.
         - params (dict): the query params
-        - api_version (str): the api version, availbale values: v1, v2 or userconfig_v1
+        - api_version (str): the api version for ZPA, availbale values: v1, v2 or userconfig_v1
         """
         pass
 
     def patch(self, path: str, json=None, params=None, api_version: str = None):
         """
-        Send a PATCH request to the ZPA API.
+        Send a PATCH request to the ZSCALER API.
         Parameters:
         - path (str): API endpoint path.
         - json (str): the request body.
         - params (dict): the query params
-        - api_version (str): the api version, availbale values: v1, v2 or userconfig_v1
+        - api_version (str): the api version for ZPA, availbale values: v1, v2 or userconfig_v1
         """
         pass
 
     def post(self, path: str, json=None, params=None, api_version: str = None):
         """
-        Send a POST request to the ZPA API.
+        Send a POST request to the ZSCALER API.
         Parameters:
         - path (str): API endpoint path.
         - json (str): the request body.
         - params (dict): the query params
-        - api_version (str): the api version, availbale values: v1, v2 or userconfig_v1
+        - api_version (str): the api version for ZPA, availbale values: v1, v2 or userconfig_v1
         """
         pass
 
     def delete(self, path: str, json=None, params=None, api_version: str = None):
         """
-        Send a DELETE request to the ZPA API.
+        Send a DELETE request to the ZSCALER API.
         Parameters:
         - path (str): API endpoint path.
         - json (str): the request body.
         - params (dict): the query params
-        - api_version (str): the api version, availbale values: v1, v2 or userconfig_v1
+        - api_version (str): the api version for ZPA, availbale values: v1, v2 or userconfig_v1
         """
         pass

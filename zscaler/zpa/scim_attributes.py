@@ -16,11 +16,11 @@
 
 
 from box import Box, BoxList
-from zscaler.zpa.client import ZPAClient
+from zscaler.client import ZscalerClient
 
 
 class ScimAttributeHeaderAPI:
-    def __init__(self, client: ZPAClient):
+    def __init__(self, client: ZscalerClient):
         self.rest = client
 
     def list_attributes_by_idp(self, idp_id: str, **kwargs) -> BoxList:

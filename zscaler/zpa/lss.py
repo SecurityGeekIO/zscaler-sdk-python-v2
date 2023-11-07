@@ -19,7 +19,7 @@ from box import Box, BoxList
 from requests import Response
 import requests
 from zscaler.utils import convert_keys, keys_exists, snake_to_camel
-from zscaler.zpa.client import ZPAClient
+from zscaler.client import ZscalerClient
 
 
 class LSSConfigControllerAPI:
@@ -34,7 +34,7 @@ class LSSConfigControllerAPI:
         "web_inspection": "zpn_waf_http_exchanges_log",
     }
 
-    def __init__(self, client: ZPAClient):
+    def __init__(self, client: ZscalerClient):
         self.rest = client
 
         self.v2_admin_url = "https://config.private.zscaler.com/mgmtconfig/v2/admin/lssConfig"

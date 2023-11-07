@@ -17,11 +17,11 @@
 
 from box import Box, BoxList
 from requests import Response
-from zscaler.zpa.client import ZPAClient
+from zscaler.client import ZscalerClient
 
 
 class IDPControllerAPI:
-    def __init__(self, client: ZPAClient):
+    def __init__(self, client: ZscalerClient):
         self.rest = client
 
     def list_idps(self, **kwargs) -> BoxList:
