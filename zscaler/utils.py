@@ -382,12 +382,13 @@ def is_token_expired(token_string):
         return True
 
 
-def dump_request(logger, url: str, method: str, data, headers, request_uuid: str):
+def dump_request(logger, url: str, params: str, method: str, data, headers, request_uuid: str):
     request_headers_filtered = {key: value for key, value in headers.items() if key != "Authorization"}
     # Log the request details before sending the request
     request_data = {
         "url": url,
         "method": method,
+        "params": params,
         "request_body": json.dumps(data),
         "uuid": str(request_uuid),
         "request_headers": json.dumps(request_headers_filtered),
@@ -395,7 +396,7 @@ def dump_request(logger, url: str, method: str, data, headers, request_uuid: str
     logger.info("Request details: %s", json.dumps(request_data))
 
 
-def dump_response(logger, url: str, method: str, resp, request_uuid: str, start_time, from_cache: bool = None):
+def dump_response(logger, url: str, method: str, params, resp, request_uuid: str, start_time, from_cache: bool = None):
     # Calculate the duration in seconds
     end_time = time.time()
     duration_seconds = end_time - start_time
@@ -407,8 +408,9 @@ def dump_response(logger, url: str, method: str, resp, request_uuid: str, start_
     response_data = {
         "url": url,
         "method": method,
+        "params": params,
         "response_body": resp.text,
-        "duration": str(duration_ms) + "ms",
+        "duration": f"{duration_ms:.2f}ms",
         "response_headers": json.dumps(response_headers_dict),
         "uuid": str(request_uuid),
     }

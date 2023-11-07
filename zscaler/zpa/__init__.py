@@ -190,15 +190,16 @@ class ZPAClientHelper(ZPAClient):
         headers_with_user_agent["User-Agent"] = self.user_agent
         # Generate a unique UUID for this request
         request_uuid = uuid.uuid4()
-        dump_request(logger, url, method, json, headers_with_user_agent, request_uuid)
+        dump_request(logger, url, method, json, params, headers_with_user_agent, request_uuid)
         # Check cache before sending request
-        cache_key = self.cache.create_key(url)
+        cache_key = self.cache.create_key(url, params)
         if method == "GET" and self.cache.contains(cache_key):
             resp = self.cache.get(cache_key)
             dump_response(
                 logger=logger,
                 url=url,
                 method=method,
+                params=params,
                 resp=resp,
                 request_uuid=request_uuid,
                 start_time=start_time,
@@ -215,7 +216,7 @@ class ZPAClientHelper(ZPAClient):
                     self.refreshToken()
                 resp = requests.request(method, url, json=json, headers=headers_with_user_agent, timeout=self.timeout)
                 dump_response(
-                    logger=logger, url=url, method=method, resp=resp, request_uuid=request_uuid, start_time=start_time
+                    logger=logger, url=url, params=params, method=method, resp=resp, request_uuid=request_uuid, start_time=start_time
                 )
                 if resp.status_code == 429:  # HTTP Status code 429 indicates "Too Many Requests"
                     sleep_time = int(
