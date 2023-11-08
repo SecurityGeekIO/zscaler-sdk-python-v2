@@ -410,7 +410,7 @@ def dump_response(logger, url: str, method: str, resp, params, request_uuid: str
         "method": method,
         "response_body": resp.text,
         "params": jsonp.dumps(params),
-        "duration": str(duration_ms) + "ms",
+        "duration": f"{duration_ms:.2f}ms",
         "response_headers": jsonp.dumps(response_headers_dict),
         "uuid": str(request_uuid),
     }
