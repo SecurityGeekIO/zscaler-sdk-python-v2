@@ -24,6 +24,8 @@ from typing import Any, Dict, List, Optional
 
 from box import Box, BoxList
 from requests import Response
+from restfly import APIIterator
+
 from zscaler.constants import RETRYABLE_STATUS_CODES
 
 logger = logging.getLogger("zscaler-sdk-python")
@@ -264,6 +266,44 @@ def remove_cloud_suffix(str_name: str) -> str:
     return res.strip()
 
 
+class Iterator(APIIterator):
+    """Iterator class."""
+
+    page_size = 500
+
+    def __init__(self, api, path: str = "", **kw):
+        """Initialize Iterator class."""
+        super().__init__(api, **kw)
+
+        self.path = path
+        self.max_items = kw.pop("max_items", 0)
+        self.max_pages = kw.pop("max_pages", 0)
+        self.payload = {}
+        if kw:
+            self.payload = {snake_to_camel(key): value for key, value in kw.items()}
+
+    def _get_page(self) -> None:
+        """Iterator function to get the page."""
+        resp = self._api.get(
+            self.path,
+            params={**self.payload, "page": self.num_pages + 1},
+        )
+        try:
+            # If we are using ZPA then the API will return records under the
+            # 'list' key.
+            self.page = resp.get("list") or []
+        except AttributeError:
+            # If the list key doesn't exist then we're likely using ZIA so just
+            # return the full response.
+            self.page = resp
+        finally:
+            # If we use the default retry-after logic in Restfly then we are
+            # going to keep seeing 429 messages in stdout. ZIA and ZPA have a
+            # standard 1 sec rate limit on the API endpoints with pagination so
+            # we are going to include it here.
+            time.sleep(1)
+
+
 def should_retry(status_code):
     """Determine if a given status code should be retried."""
     return status_code in RETRYABLE_STATUS_CODES
@@ -356,7 +396,7 @@ def dump_request(logger, url: str, method: str, json, params, headers, request_u
     logger.info("Request details: %s", jsonp.dumps(request_data))
 
 
-def dump_response(logger, url: str, method: str, resp, request_uuid: str, start_time, from_cache: bool = None):
+def dump_response(logger, url: str, method: str, resp, params, request_uuid: str, start_time, from_cache: bool = None):
     # Calculate the duration in seconds
     end_time = time.time()
     duration_seconds = end_time - start_time
@@ -369,7 +409,8 @@ def dump_response(logger, url: str, method: str, resp, request_uuid: str, start_
         "url": url,
         "method": method,
         "response_body": resp.text,
-        "duration": f"{duration_ms:.2f}ms",
+        "params": jsonp.dumps(params),
+        "duration": str(duration_ms) + "ms",
         "response_headers": jsonp.dumps(response_headers_dict),
         "uuid": str(request_uuid),
     }
