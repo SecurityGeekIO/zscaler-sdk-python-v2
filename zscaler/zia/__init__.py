@@ -170,7 +170,7 @@ class ZIAClientHelper(ZIAClient):
         self.auth_details = resp.json()
         return resp
 
-    def send(self, method, path, json=None, params=None, api_version: str = None):
+    def send(self, method, path, json=None, params=None):
         """
         Send a request to the ZPA API.
 
@@ -272,7 +272,7 @@ class ZIAClientHelper(ZIAClient):
             self.cache.add(cache_key, resp)
         return resp
 
-    def get(self, path, json=None, params=None, api_version: str = None):
+    def get(self, path, json=None, params=None):
         """
         Send a GET request to the ZPA API.
 
@@ -289,31 +289,31 @@ class ZIAClientHelper(ZIAClient):
             time.sleep(delay)
 
         # Now proceed with sending the request
-        resp = self.send("GET", path, json, params, api_version=api_version)
+        resp = self.send("GET", path, json, params)
         formatted_resp = format_json_response(resp, box_attrs=dict())
         return formatted_resp
 
-    def put(self, path, json=None, params=None, api_version: str = None):
+    def put(self, path, json=None, params=None):
         should_wait, delay = self.rate_limiter.wait("PUT")
         if should_wait:
             time.sleep(delay)
-        resp = self.send("PUT", path, json, params, api_version=api_version)
+        resp = self.send("PUT", path, json, params)
         formatted_resp = format_json_response(resp, box_attrs=dict())
         return formatted_resp
 
-    def post(self, path, json=None, params=None, api_version: str = None):
+    def post(self, path, json=None, params=None):
         should_wait, delay = self.rate_limiter.wait("POST")
         if should_wait:
             time.sleep(delay)
-        resp = self.send("POST", path, json, params, api_version=api_version)
+        resp = self.send("POST", path, json, params)
         formatted_resp = format_json_response(resp, box_attrs=dict())
         return formatted_resp
 
-    def delete(self, path, json=None, params=None, api_version: str = None):
+    def delete(self, path, json=None, params=None):
         should_wait, delay = self.rate_limiter.wait("DELETE")
         if should_wait:
             time.sleep(delay)
-        return self.send("DELETE", path, json, params, api_version=api_version)
+        return self.send("DELETE", path, json, params)
 
     ERROR_MESSAGES = {
         "UNEXPECTED_STATUS": "Unexpected status code {status_code} received for page {page}.",
@@ -321,9 +321,7 @@ class ZIAClientHelper(ZIAClient):
         "EMPTY_RESULTS": "No results found for page {page}.",
     }
 
-    def get_paginated_data(
-        self, path=None, data_key_name=None, data_per_page=5, expected_status_code=200, api_version: str = None
-    ):
+    def get_paginated_data(self, path=None, data_key_name=None, data_per_page=5, expected_status_code=200):
         """
         Fetch paginated data from the ZPA API.
         ...
@@ -348,7 +346,6 @@ class ZIAClientHelper(ZIAClient):
                 method="GET",
                 path=required_url,
                 params={"page": page, "pageSize": data_per_page},
-                api_version=api_version,
             )
 
             if response.status_code != expected_status_code:

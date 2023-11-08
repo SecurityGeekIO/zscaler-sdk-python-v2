@@ -26,7 +26,6 @@ class ZIAClient:
         - path (str): API endpoint path.
         - json (str): the request body.
         - params (dict): the query params
-        - api_version (str): the api version, availbale values: v1, v2, userconfig_v1, cbiconfig_v1
         """
         pass
         pass
@@ -45,7 +44,6 @@ class ZIAClient:
         - data_key_name (str): list field key.
         - data_per_page: the page size
         - params (dict): the query params
-        - api_version (str): the api version, availbale values: v1, v2, userconfig_v1 or cbiconfig
         """
         pass
 
@@ -56,7 +54,6 @@ class ZIAClient:
         - path (str): API endpoint path.
         - json (str): the request body.
         - params (dict): the query params
-        - api_version (str): the api version, availbale values: v1, v2, userconfig_v1 or cbiconfig
         """
         pass
 
@@ -67,7 +64,6 @@ class ZIAClient:
         - path (str): API endpoint path.
         - json (str): the request body.
         - params (dict): the query params
-        - api_version (str): the api version, availbale values: v1, v2, userconfig_v1 or cbiconfig
         """
         pass
 
@@ -78,7 +74,6 @@ class ZIAClient:
         - path (str): API endpoint path.
         - json (str): the request body.
         - params (dict): the query params
-        - api_version (str): the api version, availbale values: v1, v2, userconfig_v1 or cbiconfig
         """
         pass
 
@@ -89,6 +84,5 @@ class ZIAClient:
         - path (str): API endpoint path.
         - json (str): the request body.
         - params (dict): the query params
-        - api_version (str): the api version, availbale values: v1, v2, userconfig_v1 or cbiconfig
         """
         pass
