@@ -21,7 +21,7 @@ class ZIAClient:
 
     def get(self, path: str, json=None, params=None, fail_safe: bool = False):
         """
-        Send a GET request to the ZPA API.
+        Send a GET request to the ZIA API.
         Parameters:
         - path (str): API endpoint path.
         - json (str): the request body.
@@ -38,7 +38,7 @@ class ZIAClient:
         expected_status_code=200,
     ):
         """
-        Send a GET request to the ZPA API to fetch all pages of a resources.
+        Send a GET request to the ZIA API to fetch all pages of a resources.
         Parameters:
         - path (str): API endpoint path.
         - data_key_name (str): list field key.
@@ -49,7 +49,7 @@ class ZIAClient:
 
     def put(self, path: str, json=None, params=None):
         """
-        Send a PUT request to the ZPA API.
+        Send a PUT request to the ZIA API.
         Parameters:
         - path (str): API endpoint path.
         - json (str): the request body.
@@ -59,7 +59,7 @@ class ZIAClient:
 
     def patch(self, path: str, json=None, params=None):
         """
-        Send a PATCH request to the ZPA API.
+        Send a PATCH request to the ZIA API.
         Parameters:
         - path (str): API endpoint path.
         - json (str): the request body.
@@ -69,7 +69,7 @@ class ZIAClient:
 
     def post(self, path: str, json=None, params=None):
         """
-        Send a POST request to the ZPA API.
+        Send a POST request to the ZIA API.
         Parameters:
         - path (str): API endpoint path.
         - json (str): the request body.
@@ -79,7 +79,7 @@ class ZIAClient:
 
     def delete(self, path: str, json=None, params=None):
         """
-        Send a DELETE request to the ZPA API.
+        Send a DELETE request to the ZIA API.
         Parameters:
         - path (str): API endpoint path.
         - json (str): the request body.
