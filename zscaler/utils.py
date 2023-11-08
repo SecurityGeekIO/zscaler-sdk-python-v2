@@ -24,8 +24,6 @@ from typing import Any, Dict, List, Optional
 
 from box import Box, BoxList
 from requests import Response
-from restfly import APIIterator
-
 from zscaler.constants import RETRYABLE_STATUS_CODES
 
 logger = logging.getLogger("zscaler-sdk-python")
@@ -264,44 +262,6 @@ def remove_cloud_suffix(str_name: str) -> str:
     reg = re.compile(r"(.*)\s+\([a-zA-Z0-9\-_\.]*\)\s*$")
     res = reg.sub(r"\1", str_name)
     return res.strip()
-
-
-class Iterator(APIIterator):
-    """Iterator class."""
-
-    page_size = 500
-
-    def __init__(self, api, path: str = "", **kw):
-        """Initialize Iterator class."""
-        super().__init__(api, **kw)
-
-        self.path = path
-        self.max_items = kw.pop("max_items", 0)
-        self.max_pages = kw.pop("max_pages", 0)
-        self.payload = {}
-        if kw:
-            self.payload = {snake_to_camel(key): value for key, value in kw.items()}
-
-    def _get_page(self) -> None:
-        """Iterator function to get the page."""
-        resp = self._api.get(
-            self.path,
-            params={**self.payload, "page": self.num_pages + 1},
-        )
-        try:
-            # If we are using ZPA then the API will return records under the
-            # 'list' key.
-            self.page = resp.get("list") or []
-        except AttributeError:
-            # If the list key doesn't exist then we're likely using ZIA so just
-            # return the full response.
-            self.page = resp
-        finally:
-            # If we use the default retry-after logic in Restfly then we are
-            # going to keep seeing 429 messages in stdout. ZIA and ZPA have a
-            # standard 1 sec rate limit on the API endpoints with pagination so
-            # we are going to include it here.
-            time.sleep(1)
 
 
 def should_retry(status_code):
