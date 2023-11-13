@@ -750,3 +750,39 @@ class PolicySetsAPI:
 
         if resp == 204:
             return self.get_rule(policy_type, rule_id)
+
+    # Implement Bulk Reorder capability to resource: resource_zpa_policy_access_rule_reorder. It must be backwards compatible with the single reorder approach
+    def bulkReorderRule(self, policy_type: str, rule_id: str, rule_order: str) -> Box:
+        """
+        Change the order of an existing policy rule.
+
+        Args:
+            rule_id (str):
+                The unique id of the rule that will be reordered.
+            rule_order (str):
+                The new order for the rule.
+            policy_type (str):
+                The policy type. Accepted values are:
+
+                 |  ``access``
+                 |  ``timeout``
+                 |  ``client_forwarding``
+
+        Returns:
+             :obj:`Box`: The updated policy rule resource record.
+
+        Examples:
+            Updates the order for an existing policy rule:
+
+            >>> zpa.policies.reorder_rule(policy_type='access',
+            ...    rule_id='88888',
+            ...    rule_order='2')
+
+        """
+        # Get policy id for specified policy type
+        policy_id = self.get_policy(policy_type).id
+
+        resp = self._put(f"policySet/{policy_id}/rule/{rule_id}/reorder/{rule_order}").status_code
+
+        if resp == 204:
+            return self.get_rule(policy_type, rule_id)
