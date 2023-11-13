@@ -52,7 +52,7 @@ class CloudSandboxAPI:
             "force": int(force),  # convert boolean to int for ZIA
         }
 
-        return self._post(
+        return self.rest.post(
             f"https://csbapi.{self.env_cloud}.net/zscsb/submit",
             params=params,
             data=data,
@@ -79,7 +79,7 @@ class CloudSandboxAPI:
 
         params = {"api_token": self.sandbox_token}
 
-        return self._post(
+        return self.rest.post(
             f"https://csbapi.{self.env_cloud}.net/zscsb/discan",
             params=params,
             data=data,
@@ -96,7 +96,7 @@ class CloudSandboxAPI:
             >>> pprint(zia.sandbox.get_quota())
 
         """
-        return self._get("sandbox/report/quota")[0]
+        return self.rest.get("sandbox/report/quota")[0]
 
     def get_report(self, md5_hash: str, report_details: str = "summary") -> Box:
         """
@@ -122,4 +122,4 @@ class CloudSandboxAPI:
 
         """
 
-        return self._get(f"sandbox/report/{md5_hash}?details={report_details}")
+        return self.rest.get(f"sandbox/report/{md5_hash}?details={report_details}")

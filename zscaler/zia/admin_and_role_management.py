@@ -16,7 +16,7 @@
 
 
 from box import Box, BoxList
-
+from requests import Response
 
 from zscaler.utils import Iterator, snake_to_camel
 from zscaler.zia import ZIAClient
@@ -122,7 +122,7 @@ class AdminAndRoleManagementAPI:
             else:
                 payload[snake_to_camel(key)] = value
 
-        return self._post("adminUsers", json=payload)
+        return self.rest.post("adminUsers", json=payload)
 
     def list_users(self, **kwargs) -> BoxList:
         """
@@ -170,7 +170,7 @@ class AdminAndRoleManagementAPI:
         """
         payload = {snake_to_camel(key): value for key, value in kwargs.items()}
 
-        return self._get("adminRoles/lite", params=payload)
+        return self.rest.get("adminRoles/lite", params=payload)
 
     def get_user(self, user_id: str) -> Box:
         """
@@ -204,8 +204,8 @@ class AdminAndRoleManagementAPI:
             >>> zia.admin_role_management.delete_admin_user('99272455')
 
         """
-
-        return self._delete(f"adminUsers/{user_id}", box=False).status_code
+        response = self.rest.delete(f"/adminUsers/%s" % (user_id))
+        return response.status_code
 
     def update_user(self, user_id: str, **kwargs) -> dict:
         """
@@ -285,4 +285,10 @@ class AdminAndRoleManagementAPI:
             else:
                 payload[snake_to_camel(key)] = value
 
-        return self._put(f"adminUsers/{user_id}", json=payload)
+        # Update payload
+        for key, value in kwargs.items():
+            payload[snake_to_camel(key)] = value
+        response = self.rest.put("/adminUsers/%s" % (user_id), json=payload)
+        if not isinstance(response, Response):
+            return self.get_user(user_id)
+

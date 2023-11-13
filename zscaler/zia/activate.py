@@ -35,7 +35,7 @@ class ActivationAPI:
             >>> config_status = zia.config.status()
 
         """
-        return self._get("status").status
+        return self.rest.get("status").status
 
     def activate(self) -> str:
         """
@@ -49,4 +49,4 @@ class ActivationAPI:
             >>> config_activate = zia.config.activate()
 
         """
-        return self._post("status/activate").status
+        return self.rest.post("status/activate").status

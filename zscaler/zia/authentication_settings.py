@@ -35,7 +35,7 @@ class AuthenticationSettingsAPI:
             >>> for url in zia.authentication_settings.get_exempted_urls():
             ...    pprint(url)
         """
-        response = self._get("authSettings/exemptedUrls")
+        response = self.rest.get("authSettings/exemptedUrls")
 
         # Ensure the correct attribute key is used in the response check.
         if "urls" in response:
@@ -58,7 +58,7 @@ class AuthenticationSettingsAPI:
 
         payload = {"urls": url_list}
 
-        resp = self._post("authSettings/exemptedUrls?action=ADD_TO_LIST", json=payload)
+        resp = self.rest.post("authSettings/exemptedUrls?action=ADD_TO_LIST", json=payload)
 
         # Check if the response object has a 'status_code' attribute before accessing it
         if hasattr(resp, "status_code"):
@@ -87,7 +87,7 @@ class AuthenticationSettingsAPI:
 
         """
         payload = {"urls": url_list}
-        resp = self._post("authSettings/exemptedUrls?action=REMOVE_FROM_LIST", json=payload).status_code
+        resp = self.rest.post("authSettings/exemptedUrls?action=REMOVE_FROM_LIST", json=payload)
 
         # Return the updated exemption list if the removal was successful.
         if resp == 204:
