@@ -15,18 +15,17 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 
-class ZPAClient:
+class ZIAClient:
     def __init__():
         pass
 
-    def get(self, path: str, json=None, params=None, fail_safe: bool = False, api_version: str = None):
+    def get(self, path: str, json=None, params=None, fail_safe: bool = False):
         """
-        Send a GET request to the ZPA API.
+        Send a GET request to the ZIA API.
         Parameters:
         - path (str): API endpoint path.
         - json (str): the request body.
         - params (dict): the query params
-        - api_version (str): the api version, availbale values: v1, v2, userconfig_v1, cbiconfig_v1
         """
         pass
         pass
@@ -37,59 +36,53 @@ class ZPAClient:
         data_key_name: str = None,
         data_per_page: int = 500,
         expected_status_code=200,
-        api_version: str = None,
     ):
         """
-        Send a GET request to the ZPA API to fetch all pages of a resources.
+        Send a GET request to the ZIA API to fetch all pages of a resources.
         Parameters:
         - path (str): API endpoint path.
         - data_key_name (str): list field key.
         - data_per_page: the page size
         - params (dict): the query params
-        - api_version (str): the api version, availbale values: v1, v2, userconfig_v1 or cbiconfig
         """
         pass
 
-    def put(self, path: str, json=None, params=None, api_version: str = None):
+    def put(self, path: str, json=None, params=None):
         """
-        Send a PUT request to the ZPA API.
+        Send a PUT request to the ZIA API.
         Parameters:
         - path (str): API endpoint path.
         - json (str): the request body.
         - params (dict): the query params
-        - api_version (str): the api version, availbale values: v1, v2, userconfig_v1 or cbiconfig
         """
         pass
 
-    def patch(self, path: str, json=None, params=None, api_version: str = None):
+    def patch(self, path: str, json=None, params=None):
         """
-        Send a PATCH request to the ZPA API.
+        Send a PATCH request to the ZIA API.
         Parameters:
         - path (str): API endpoint path.
         - json (str): the request body.
         - params (dict): the query params
-        - api_version (str): the api version, availbale values: v1, v2, userconfig_v1 or cbiconfig
         """
         pass
 
-    def post(self, path: str, json=None, params=None, api_version: str = None):
+    def post(self, path: str, json=None, params=None):
         """
-        Send a POST request to the ZPA API.
+        Send a POST request to the ZIA API.
         Parameters:
         - path (str): API endpoint path.
         - json (str): the request body.
         - params (dict): the query params
-        - api_version (str): the api version, availbale values: v1, v2, userconfig_v1 or cbiconfig
         """
         pass
 
-    def delete(self, path: str, json=None, params=None, api_version: str = None):
+    def delete(self, path: str, json=None, params=None):
         """
-        Send a DELETE request to the ZPA API.
+        Send a DELETE request to the ZIA API.
         Parameters:
         - path (str): API endpoint path.
         - json (str): the request body.
         - params (dict): the query params
-        - api_version (str): the api version, availbale values: v1, v2, userconfig_v1 or cbiconfig
         """
         pass

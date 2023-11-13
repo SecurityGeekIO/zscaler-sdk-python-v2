@@ -18,9 +18,6 @@ software development using the Zscaler API.
 
 Note: This SDK was built off the amazing [pyZscaler](https://github.com/mitchos/pyZscaler) project created by [Mitch Kelly](https://github.com/mitchos)
 
-This SDK leverages the [RESTfly framework](https://restfly.readthedocs.io/en/latest/index.html) developed
-by Steve McGrath.
-
 ## Features
 - Simplified authentication with Zscaler APIs.
 - Uniform interaction with all Zscaler APIs.

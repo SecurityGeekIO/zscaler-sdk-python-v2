@@ -9,8 +9,9 @@ import requests
 from box import BoxList
 
 from zscaler.cache.no_op_cache import NoOpCache
-from zscaler.zpa.errors import ZpaAPIError, ZpaAPIException, HTTPError, HTTPException
-from zscaler.cache.zscaler_cache import ZPACache
+from zscaler.errors.http_error import ZscalerAPIError, HTTPError
+from zscaler.exceptions.exceptions import ZscalerAPIException, HTTPException
+from zscaler.cache.zscaler_cache import ZscalerCache
 from zscaler.constants import ZPA_BASE_URLS
 from zscaler.ratelimiter.ratelimiter import RateLimiter
 from zscaler.user_agent import UserAgent
@@ -22,11 +23,11 @@ from zscaler.utils import (
     dump_request,
     dump_response,
 )
+from zscaler.zpa.client import ZPAClient
 from zscaler.zpa.app_segments import ApplicationSegmentAPI
 from zscaler.zpa.app_segments_inspection import AppSegmentsInspectionAPI
 from zscaler.zpa.app_segments_pra import AppSegmentsPRAAPI
 from zscaler.zpa.certificates import CertificatesAPI
-from zscaler.zpa.client import ZPAClient
 from zscaler.zpa.client_types import ClientTypesAPI
 from zscaler.zpa.cloud_connector_groups import CloudConnectorGroupsAPI
 from zscaler.zpa.connectors import AppConnectorControllerAPI
@@ -111,6 +112,7 @@ class ZPAClientHelper(ZPAClient):
         self.url = f"{self.baseurl}/mgmtconfig/v1/admin/customers/{customer_id}"
         self.user_config_url = f"{self.baseurl}/userconfig/v1/customers/{customer_id}"
         self.v2_url = f"{self.baseurl}/mgmtconfig/v2/admin/customers/{customer_id}"
+        self.cbi_url = f"{self.baseurl}/cbiconfig/cbi/api/customers/{customer_id}"
         self.fail_safe = fail_safe
         # Cache setup
         cache_enabled = os.environ.get("ZSCALER_CLIENT_CACHE_ENABLED", "true").lower() == "true"
@@ -118,7 +120,7 @@ class ZPAClientHelper(ZPAClient):
             if cache_enabled:
                 ttl = int(os.environ.get("ZSCALER_CLIENT_CACHE_DEFAULT_TTL", 3600))
                 tti = int(os.environ.get("ZSCALER_CLIENT_CACHE_DEFAULT_TTI", 1800))
-                self.cache = ZPACache(ttl=ttl, tti=tti)
+                self.cache = ZscalerCache(ttl=ttl, tti=tti)
             else:
                 self.cache = NoOpCache()
         else:
@@ -188,15 +190,16 @@ class ZPAClientHelper(ZPAClient):
         headers_with_user_agent["User-Agent"] = self.user_agent
         # Generate a unique UUID for this request
         request_uuid = uuid.uuid4()
-        dump_request(logger, url, method, json, headers_with_user_agent, request_uuid)
+        dump_request(logger, url, method, json, params, headers_with_user_agent, request_uuid)
         # Check cache before sending request
-        cache_key = self.cache.create_key(url)
+        cache_key = self.cache.create_key(url, params)
         if method == "GET" and self.cache.contains(cache_key):
             resp = self.cache.get(cache_key)
             dump_response(
                 logger=logger,
                 url=url,
                 method=method,
+                params=params,
                 resp=resp,
                 request_uuid=request_uuid,
                 start_time=start_time,
@@ -213,7 +216,7 @@ class ZPAClientHelper(ZPAClient):
                     self.refreshToken()
                 resp = requests.request(method, url, json=json, headers=headers_with_user_agent, timeout=self.timeout)
                 dump_response(
-                    logger=logger, url=url, method=method, resp=resp, request_uuid=request_uuid, start_time=start_time
+                    logger=logger, url=url, params=params, method=method, resp=resp, request_uuid=request_uuid, start_time=start_time
                 )
                 if resp.status_code == 429:  # HTTP Status code 429 indicates "Too Many Requests"
                     sleep_time = int(
@@ -247,10 +250,10 @@ class ZPAClientHelper(ZPAClient):
         if 200 > resp.status_code or resp.status_code > 299:
             # create errors
             try:
-                error = ZpaAPIError(url, resp, response_data)
+                error = ZscalerAPIError(url, resp, response_data)
                 if self.fail_safe:
-                    raise ZpaAPIException(response_data)
-            except ZpaAPIException:
+                    raise ZscalerAPIException(response_data)
+            except ZscalerAPIException:
                 raise
             except Exception:
                 error = HTTPError(url, resp, response_data)

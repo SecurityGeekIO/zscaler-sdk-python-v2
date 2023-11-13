@@ -687,15 +687,6 @@ urllib3 = ">=1.25.10,<3.0"
 tests = ["coverage (>=6.0.0)", "flake8", "mypy", "pytest (>=7.0.0)", "pytest-asyncio", "pytest-cov", "pytest-httpserver", "tomli", "tomli-w", "types-requests"]
 
 [[package]]
-name = "restfly"
-version = "1.4.7"
-description = "REST API library framework"
-optional = false
-python-versions = "*"
-files = [
-    {file = "restfly-1.4.7-py3-none-any.whl", hash = "sha256:b50cb15f49c6ae1afb41514e01e1f6d1cb45d621176ea2fb2fa1e7faa301f914"},
-    {file = "restfly-1.4.7.tar.gz", hash = "sha256:0a8e07f45745b6a4dabdee29befadc3d9803662afd423ab5ad7c13d70b9ccee2"},
-]
 
 [package.dependencies]
 arrow = ">=1.0.3"
