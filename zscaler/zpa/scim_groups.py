@@ -117,3 +117,5 @@ class SCIMGroupsAPI:
         params = {"page": page_number, "search": search, "pagesize": page_size}
         page = self.rest.get(path=f"/scimgroup/idpId/{idp_id}", params=params, api_version="userconfig_v1")
         return page
+
+# SCIM Group - Implement new search parameters sortBy and sortOrder with ASC being the default; however, the user should have the ability to set DSC as a search criteria as well. SortBy name must. be the default option
