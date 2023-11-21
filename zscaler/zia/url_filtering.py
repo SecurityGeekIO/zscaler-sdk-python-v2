@@ -16,8 +16,8 @@
 
 
 from box import Box, BoxList
+from requests import Response
 from zscaler.zia import ZIAClient
-
 from zscaler.utils import snake_to_camel
 
 
@@ -52,7 +52,10 @@ class URLFilteringAPI:
             ...    pprint(rule)
 
         """
-        return self._get("urlFilteringRules")
+        response = self.rest.get("urlFilteringRules")
+        if isinstance(response, Response):
+            return None
+        return response
 
     def get_rule(self, rule_id: str) -> Box:
         """
@@ -69,23 +72,7 @@ class URLFilteringAPI:
 
         """
 
-        return self._get(f"urlFilteringRules/{rule_id}")
-
-    def delete_rule(self, rule_id: str) -> int:
-        """
-        Deletes the specified URL Filtering Policy rule.
-
-        Args:
-            rule_id (str): The unique ID for the URL Filtering Policy rule.
-
-        Returns:
-            :obj:`int`: The status code for the operation.
-
-        Examples:
-            >>> zia.url_filters.delete_rule('977463')
-
-        """
-        return self._delete(f"urlFilteringRules/{rule_id}", box=False).status_code
+        return self.rest.get(f"urlFilteringRules/{rule_id}")
 
     def add_rule(self, rank: str, name: str, action: str, protocols: list, **kwargs) -> Box:
         """
@@ -161,6 +148,9 @@ class URLFilteringAPI:
             ...    url_categories=["SOCIAL_NETWORKING"])
 
         """
+        # Convert rule_state to API format if present
+        if 'rule_state' in kwargs:
+            kwargs['state'] = "ENABLED" if kwargs.pop('rule_state') else "DISABLED"
 
         payload = {
             "rank": rank,
@@ -179,7 +169,13 @@ class URLFilteringAPI:
             else:
                 payload[snake_to_camel(key)] = value
 
-        return self._post("urlFilteringRules", json=payload)
+        response = self.rest.post("urlFilteringRules", json=payload)
+        if isinstance(response, Response):
+            # this is only true when the creation failed (status code is not 2xx)
+            status_code = response.status_code
+            # Handle error response
+            raise Exception(f"API call failed with status {status_code}: {response.json()}")
+        return response
 
     def update_rule(self, rule_id: str, **kwargs) -> Box:
         """
@@ -250,16 +246,39 @@ class URLFilteringAPI:
 
         """
 
-        # Set payload to value of existing record
-        payload = {snake_to_camel(k): v for k, v in self.get_rule(rule_id).items()}
+        existing_data = self.get_rule(rule_id)
 
-        # Add optional parameters to payload
+        # Convert rule_state to API format if present in kwargs
+        if 'rule_state' in kwargs:
+            kwargs['state'] = "ENABLED" if kwargs.pop('rule_state') else "DISABLED"
+
+        # Merge existing data with new data from kwargs
+        payload = {snake_to_camel(k): v for k, v in existing_data.items()}
         for key, value in kwargs.items():
-            if key in self._key_id_list:
-                payload[snake_to_camel(key)] = []
-                for item in value:
-                    payload[snake_to_camel(key)].append({"id": item})
-            else:
-                payload[snake_to_camel(key)] = value
+            # Override the existing data with new data
+            payload[snake_to_camel(key)] = value
 
-        return self._put(f"urlFilteringRules/{rule_id}", json=payload)
+        response = self.rest.put(f"urlFilteringRules/{rule_id}", json=payload)
+        if isinstance(response, Response) and not response.ok:
+            # Handle error response
+            raise Exception(f"API call failed with status {response.status_code}: {response.json()}")
+
+        # Return the updated object
+        return self.get_rule(rule_id)
+
+    def delete_rule(self, rule_id: str) -> int:
+        """
+        Deletes the specified URL Filtering Policy rule.
+
+        Args:
+            rule_id (str): The unique ID for the URL Filtering Policy rule.
+
+        Returns:
+            :obj:`int`: The status code for the operation.
+
+        Examples:
+            >>> zia.url_filters.delete_rule('977463')
+
+        """
+        response = self.rest.delete(f"urlFilteringRules/{rule_id}").status_code
+        return response.status_code if isinstance(response, Response) else None

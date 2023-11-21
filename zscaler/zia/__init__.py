@@ -39,7 +39,7 @@ from zscaler.zia.security import SecurityPolicyAPI
 from zscaler.zia.ssl_inspection import SSLInspectionAPI
 from zscaler.zia.traffic import TrafficForwardingAPI
 from zscaler.zia.url_categories import URLCategoriesAPI
-from zscaler.zia.url_filters import URLFilteringAPI
+from zscaler.zia.url_filtering import URLFilteringAPI
 from zscaler.zia.users import UserManagementAPI
 from zscaler.zia.vips import DataCenterVIPSAPI
 from zscaler.zia.web_dlp import WebDLPAPI
@@ -191,7 +191,7 @@ class ZIAClientHelper(ZIAClient):
 
     def send(self, method, path, json=None, params=None):
         """
-        Send a request to the ZPA API.
+        Send a request to the ZIA API.
 
         Parameters:
         - method (str): The HTTP method.
@@ -294,7 +294,7 @@ class ZIAClientHelper(ZIAClient):
 
     def get(self, path, json=None, params=None):
         """
-        Send a GET request to the ZPA API.
+        Send a GET request to the ZIA API.
 
         Parameters:
         - path (str): API endpoint path.
@@ -343,7 +343,7 @@ class ZIAClientHelper(ZIAClient):
 
     def get_paginated_data(self, path=None, data_key_name=None, data_per_page=5, expected_status_code=200):
         """
-        Fetch paginated data from the ZPA API.
+        Fetch paginated data from the ZIA API.
         ...
 
         Returns:
@@ -511,9 +511,9 @@ class ZIAClientHelper(ZIAClient):
         return URLCategoriesAPI(self)
 
     @property
-    def url_filters(self):
+    def url_filtering(self):
         """
-        The interface object for the :ref:`ZIA URL Filtering interface <zia-url_filters>`.
+        The interface object for the :ref:`ZIA URL Filtering interface <zia-url_filtering>`.
 
         """
         return URLFilteringAPI(self)

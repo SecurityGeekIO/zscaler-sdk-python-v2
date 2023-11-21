@@ -19,6 +19,10 @@ from box import Box, BoxList
 from requests import Response
 from zscaler.utils import snake_to_camel
 from zscaler.zia import ZIAClient
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 class FirewallPolicyAPI:
     # Firewall filter rule keys that only require an ID to be provided.
@@ -144,13 +148,16 @@ class FirewallPolicyAPI:
             "action": action,
             "order": kwargs.pop("order", len(self.list_rules())),
         }
+        # Convert rule_state to API format if present
+        if 'rule_state' in kwargs:
+            kwargs['state'] = "ENABLED" if kwargs.pop('rule_state') else "DISABLED"
 
         # Add optional parameters to payload
         for key, value in kwargs.items():
             if key in self._key_id_list:
-                if value is None:
-                    continue  # Skip if value is None
-                payload[snake_to_camel(key)] = [{"id": item} for item in value]
+                payload[snake_to_camel(key)] = []
+                for item in value:
+                    payload[snake_to_camel(key)].append({"id": item})
             else:
                 payload[snake_to_camel(key)] = value
 
@@ -176,7 +183,6 @@ class FirewallPolicyAPI:
             state (str): The rule state. Accepted values are 'ENABLED' or 'DISABLED'.
             description (str): Additional information about the rule
             src_ips (list): The source IPs that this rule applies to. Individual IP addresses or CIDR ranges accepted.
-            src_ip_groups (list): The IDs for the source IP groups that this rule applies to.
             dest_addresses (list): The destination IP addresses that this rule applies to. Individual IP addresses or
             CIDR ranges accepted.
             dest_ip_categories (list): The IP address categories that this rule applies to.
@@ -187,9 +193,6 @@ class FirewallPolicyAPI:
             app_service_groups (list): The IDs for the application service groups that this rule applies to.
             departments (list): The IDs for the departments that this rule applies to.
             dest_ip_groups (list): The IDs for the destination IP groups that this rule applies to.
-            device_trust_levels (list): The list of device trust levels for which the rule must be applied.
-            devices (list): The IDs for the devices that are managed using Zscaler Client Connector that this rule applies to.
-            device_groups (list): The IDs for the device groups that are managed using Zscaler Client Connector that this rule applies to.
             groups (list): The IDs for the groups that this rule applies to.
             labels (list): The IDs for the labels that this rule applies to.
             locations (list): The IDs for the locations that this rule applies to.
@@ -218,22 +221,26 @@ class FirewallPolicyAPI:
 
         """
 
-        # Set payload to value of existing record
-        payload = {snake_to_camel(k): v for k, v in self.get_rule(rule_id).items()}
+        # Fetch existing data - consider whether all fields should be merged or only specific ones
+        existing_data = self.get_rule(rule_id)
 
-        # Add optional parameters to payload
+        # Convert rule_state to API format if present in kwargs
+        if 'rule_state' in kwargs:
+            kwargs['state'] = "ENABLED" if kwargs.pop('rule_state') else "DISABLED"
+
+        # Merge existing data with new data from kwargs
+        payload = {snake_to_camel(k): v for k, v in existing_data.items()}
         for key, value in kwargs.items():
-            if key in self._key_id_list:
-                payload[snake_to_camel(key)] = []
-                for item in value:
-                    payload[snake_to_camel(key)].append({"id": item})
-            else:
-                payload[snake_to_camel(key)] = value
+            # Override the existing data with new data
+            payload[snake_to_camel(key)] = value
 
         response = self.rest.put(f"firewallFilteringRules/{rule_id}", json=payload)
-        if isinstance(response, Response) and response.ok:
-            return self.get_rule(rule_id)
-        return Box()
+        if isinstance(response, Response) and not response.ok:
+            # Handle error response
+            raise Exception(f"API call failed with status {response.status_code}: {response.json()}")
+
+        # Return the updated object
+        return self.get_rule(rule_id)
 
     def delete_rule(self, rule_id: str) -> int:
         """
