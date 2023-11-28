@@ -26,6 +26,7 @@ from zscaler.utils import (
 
 from zscaler.zia.client import ZIAClient
 from zscaler.zia.admin_and_role_management import AdminAndRoleManagementAPI
+from zscaler.zia.apptotal import AppTotalAPI
 from zscaler.zia.audit_logs import AuditLogsAPI
 from zscaler.zia.authentication_settings import AuthenticationSettingsAPI
 from zscaler.zia.activate import ActivationAPI
@@ -404,6 +405,14 @@ class ZIAClientHelper(ZIAClient):
 
         """
         return AdminAndRoleManagementAPI(self)
+
+    @property
+    def apptotal(self):
+        """
+        The interface object for the :ref:`ZIA AppTotal interface <zia-apptotal>`.
+
+        """
+        return AppTotalAPI(self)
 
     @property
     def audit_logs(self):
