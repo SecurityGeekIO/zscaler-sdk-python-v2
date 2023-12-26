@@ -17,6 +17,9 @@
 
 from box import Box
 from zscaler.zia import ZIAClient
+import gzip
+import mimetypes
+import io
 
 
 class CloudSandboxAPI:
@@ -44,18 +47,31 @@ class CloudSandboxAPI:
 
         """
         with open(file, "rb") as f:
-            data = f.read()
+            file_content = f.read()
+
+        content_type, _ = mimetypes.guess_type(file)
+        if not content_type:
+            content_type = "application/octet-stream"
+
+        # Create a buffer to store the gzipped file
+        gzipped_data = io.BytesIO()
+        with gzip.GzipFile(fileobj=gzipped_data, mode="wb") as gz:
+            gz.write(file_content)
+
+        # Create a dictionary with the gzipped file data
+        files = {"file": (file, gzipped_data.getvalue(), content_type)}
 
         params = {
             "api_token": self.sandbox_token,
             "force": int(force),  # convert boolean to int for ZIA
         }
 
-        url = f"https://csbapi.{self.env_cloud}.net/zscsb/submit?api_token={self.sandbox_token}&force={int(force)}"
+        url = f"/zscsb/submit"
 
         return self.rest.post(
             url,
-            json=data,  # Assuming data is correctly formatted for your API
+            files=files,
+            params=params,
         )
 
     def submit_file_for_inspection(self, file: str) -> Box:
@@ -75,14 +91,28 @@ class CloudSandboxAPI:
 
         """
         with open(file, "rb") as f:
-            data = f.read()
+            file_content = f.read()
 
-        params = {"api_token": self.sandbox_token}
+        content_type, _ = mimetypes.guess_type(file)
+        if not content_type:
+            content_type = "application/octet-stream"
+
+        # Create a buffer to store the gzipped file
+        gzipped_data = io.BytesIO()
+        with gzip.GzipFile(fileobj=gzipped_data, mode="wb") as gz:
+            gz.write(file_content)
+
+        # Create a dictionary with the gzipped file data
+        files = {"file": (file, gzipped_data.getvalue(), content_type)}
+
+        params = {
+            "api_token": self.sandbox_token,
+        }
 
         return self.rest.post(
-            f"https://csbapi.{self.env_cloud}.net/zscsb/discan",
+            f"/zscsb/discan",
             params=params,
-            param=data,
+            files=files,
         )
 
     def get_quota(self) -> Box:
@@ -136,7 +166,6 @@ class CloudSandboxAPI:
 
         """
         return self.rest.get("behavioralAnalysisAdvancedSettings")
-
 
     def add_hash_to_custom_list(self, file_hashes_to_be_blocked: list) -> Box:
         """
