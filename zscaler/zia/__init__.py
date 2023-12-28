@@ -32,6 +32,7 @@ from zscaler.zia.activate import ActivationAPI
 from zscaler.zia.device import DeviceAPI
 from zscaler.zia.dlp import DLPAPI
 from zscaler.zia.firewall import FirewallPolicyAPI
+from zscaler.zia.forwarding_control import ForwardingControlAPI
 from zscaler.zia.labels import RuleLabelsAPI
 from zscaler.zia.locations import LocationsAPI
 from zscaler.zia.sandbox import CloudSandboxAPI
@@ -43,6 +44,8 @@ from zscaler.zia.url_filtering import URLFilteringAPI
 from zscaler.zia.users import UserManagementAPI
 from zscaler.zia.vips import DataCenterVIPSAPI
 from zscaler.zia.web_dlp import WebDLPAPI
+from zscaler.zia.zpa_gateway import ZPAGatewayAPI
+from zscaler.zia.isolation_profile import IsolationProfileAPI
 
 # Setup the logger
 logging.basicConfig(level=logging.INFO)
@@ -462,6 +465,14 @@ class ZIAClientHelper(ZIAClient):
         return FirewallPolicyAPI(self)
 
     @property
+    def forwarding_control(self):
+        """
+        The interface object for the :ref:`ZIA Forwarding Control Policies interface <zia-forwarding>`.
+
+        """
+        return ForwardingControlAPI(self)
+
+    @property
     def labels(self):
         """
         The interface object for the :ref:`ZIA Rule Labels interface <zia-labels>`.
@@ -564,3 +575,20 @@ class ZIAClientHelper(ZIAClient):
 
         """
         return WebDLPAPI(self)
+
+    @property
+    def zpa_gateway(self):
+        """
+        The interface object for the :ref: `ZIA Data-Loss-Prevention Web DLP Rules`.
+
+        """
+        return ZPAGatewayAPI(self)
+
+    @property
+    def isolation_profile(self):
+        """
+        The interface object for the :ref: `ZIA Cloud Browser Isolation Profile`.
+
+        """
+        return IsolationProfileAPI(self)
+
