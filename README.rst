@@ -17,6 +17,9 @@ Zscaler SDK Python is an SDK that provides a uniform and easy-to-use interface f
 Each Zscaler product has separate developer documentation and authentication methods. This SDK simplifies
 software development using the Zscaler API.
 
+This SDK leverages the [RESTfly framework](https://restfly.readthedocs.io/en/latest/index.html) developed
+by Steve McGrath.
+
 ## Features
 - Simplified authentication with Zscaler APIs.
 - Uniform interaction with all Zscaler APIs.
