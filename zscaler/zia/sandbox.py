@@ -17,15 +17,17 @@
 
 from box import Box
 from zscaler.zia import ZIAClient
+import gzip
+import mimetypes
+import io
 
 
 class CloudSandboxAPI:
 
     def __init__(self, client: ZIAClient):
         self.rest = client
-
-        # self.sandbox_token = api.sandbox_token
-        # self.env_cloud = api.env_cloud
+        self.sandbox_token = client.sandbox_token
+        self.env_cloud = client.env_cloud
 
     def submit_file(self, file: str, force: bool = False) -> Box:
         """
@@ -45,17 +47,31 @@ class CloudSandboxAPI:
 
         """
         with open(file, "rb") as f:
-            data = f.read()
+            file_content = f.read()
+
+        content_type, _ = mimetypes.guess_type(file)
+        if not content_type:
+            content_type = "application/octet-stream"
+
+        # Create a buffer to store the gzipped file
+        gzipped_data = io.BytesIO()
+        with gzip.GzipFile(fileobj=gzipped_data, mode="wb") as gz:
+            gz.write(file_content)
+
+        # Create a dictionary with the gzipped file data
+        files = {"file": (file, gzipped_data.getvalue(), content_type)}
 
         params = {
             "api_token": self.sandbox_token,
             "force": int(force),  # convert boolean to int for ZIA
         }
 
+        url = f"/zscsb/submit"
+
         return self.rest.post(
-            f"https://csbapi.{self.env_cloud}.net/zscsb/submit",
+            url,
+            files=files,
             params=params,
-            data=data,
         )
 
     def submit_file_for_inspection(self, file: str) -> Box:
@@ -75,14 +91,28 @@ class CloudSandboxAPI:
 
         """
         with open(file, "rb") as f:
-            data = f.read()
+            file_content = f.read()
 
-        params = {"api_token": self.sandbox_token}
+        content_type, _ = mimetypes.guess_type(file)
+        if not content_type:
+            content_type = "application/octet-stream"
+
+        # Create a buffer to store the gzipped file
+        gzipped_data = io.BytesIO()
+        with gzip.GzipFile(fileobj=gzipped_data, mode="wb") as gz:
+            gz.write(file_content)
+
+        # Create a dictionary with the gzipped file data
+        files = {"file": (file, gzipped_data.getvalue(), content_type)}
+
+        params = {
+            "api_token": self.sandbox_token,
+        }
 
         return self.rest.post(
-            f"https://csbapi.{self.env_cloud}.net/zscsb/discan",
+            f"/zscsb/discan",
             params=params,
-            data=data,
+            files=files,
         )
 
     def get_quota(self) -> Box:
@@ -123,3 +153,41 @@ class CloudSandboxAPI:
         """
 
         return self.rest.get(f"sandbox/report/{md5_hash}?details={report_details}")
+
+    def get_behavioral_analysis(self) -> Box:
+        """
+        Returns the custom list of MD5 file hashes that are blocked by Sandbox.
+
+        Returns:
+            :obj:`Box`: The custom list of MD5 file hashes that are blocked by Sandbox.
+
+        Examples:
+            >>> pprint(zia.sandbox.get_behavioral_analysis())
+
+        """
+        return self.rest.get("behavioralAnalysisAdvancedSettings")
+
+    def add_hash_to_custom_list(self, file_hashes_to_be_blocked: list) -> Box:
+        """
+        Updates the custom list of MD5 file hashes that are blocked by Sandbox.
+
+        Args:
+            file_hashes_to_be_blocked (:obj:`list` of :obj:`str`):
+                The list of MD5 Hashes to be added. Pass an empty list to clear the blocklist.
+
+        Returns:
+            :obj:`Box`: The updated custom list of MD5 Hashes.
+
+        Examples:
+            >>> zia.sandbox.add_hash_to_custom_list(['42914d6d213a20a2684064be5c80ffa9', 'c0202cf6aeab8437c638533d14563d35'])
+            >>> zia.sandbox.add_hash_to_custom_list([])  # Clear the list
+
+        """
+
+        payload = {"fileHashesToBeBlocked": file_hashes_to_be_blocked}
+
+        # Update the custom list with the provided hashes
+        self.rest.put("behavioralAnalysisAdvancedSettings", json=payload)
+
+        # Return the most up-to-date list after the update
+        return self.get_behavioral_analysis()
