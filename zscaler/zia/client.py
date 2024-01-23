@@ -33,6 +33,7 @@ class ZIAClient:
     def get_paginated_data(
         self,
         path: str = None,
+        params = None,
         data_key_name: str = None,
         data_per_page: int = 500,
         expected_status_code=200,
@@ -67,13 +68,14 @@ class ZIAClient:
         """
         pass
 
-    def post(self, path: str, json=None, params=None):
+    def post(self, path: str, json=None, params=None, files=None):
         """
         Send a POST request to the ZIA API.
         Parameters:
         - path (str): API endpoint path.
         - json (str): the request body.
         - params (dict): the query params
+        - files: (optional) Dictionary of ``'filename': file-like-objects`` for multipart encoding upload.
         """
         pass
 

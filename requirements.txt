@@ -117,6 +117,9 @@ python-dateutil==2.8.2 ; python_version >= "3.8" and python_version < "4.0" \
 requests==2.31.0 ; python_version >= "3.8" and python_version < "4.0" \
     --hash=sha256:58cd2187c01e70e6e26505bca751777aa9f2ee0b7f4300988b709f44e013003f \
     --hash=sha256:942c5a758f98d790eaed1a29cb6eefc7ffb0d1cf7af05c3d2791656dbd6ad1e1
+restfly==1.4.7 ; python_version >= "3.8" and python_version < "4.0" \
+    --hash=sha256:0a8e07f45745b6a4dabdee29befadc3d9803662afd423ab5ad7c13d70b9ccee2 \
+    --hash=sha256:b50cb15f49c6ae1afb41514e01e1f6d1cb45d621176ea2fb2fa1e7faa301f914
 six==1.16.0 ; python_version >= "3.8" and python_version < "4.0" \
     --hash=sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926 \
     --hash=sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254

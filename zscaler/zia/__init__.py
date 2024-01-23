@@ -23,15 +23,16 @@ from zscaler.utils import (
     dump_request,
     dump_response,
 )
-
 from zscaler.zia.client import ZIAClient
 from zscaler.zia.admin_and_role_management import AdminAndRoleManagementAPI
+from zscaler.zia.apptotal import AppTotalAPI
 from zscaler.zia.audit_logs import AuditLogsAPI
 from zscaler.zia.authentication_settings import AuthenticationSettingsAPI
 from zscaler.zia.activate import ActivationAPI
 from zscaler.zia.device import DeviceAPI
 from zscaler.zia.dlp import DLPAPI
 from zscaler.zia.firewall import FirewallPolicyAPI
+from zscaler.zia.forwarding_control import ForwardingControlAPI
 from zscaler.zia.labels import RuleLabelsAPI
 from zscaler.zia.locations import LocationsAPI
 from zscaler.zia.sandbox import CloudSandboxAPI
@@ -39,10 +40,12 @@ from zscaler.zia.security import SecurityPolicyAPI
 from zscaler.zia.ssl_inspection import SSLInspectionAPI
 from zscaler.zia.traffic import TrafficForwardingAPI
 from zscaler.zia.url_categories import URLCategoriesAPI
-from zscaler.zia.url_filters import URLFilteringAPI
+from zscaler.zia.url_filtering import URLFilteringAPI
 from zscaler.zia.users import UserManagementAPI
 from zscaler.zia.vips import DataCenterVIPSAPI
 from zscaler.zia.web_dlp import WebDLPAPI
+from zscaler.zia.zpa_gateway import ZPAGatewayAPI
+from zscaler.zia.isolation_profile import IsolationProfileAPI
 
 # Setup the logger
 logging.basicConfig(level=logging.INFO)
@@ -89,24 +92,29 @@ class ZIAClientHelper(ZIAClient):
     env_cloud = "zscaler"
 
     def __init__(self, cloud, timeout=240, cache=None, fail_safe=False, **kw):
-
         self.api_key = kw.get("api_key", os.getenv(f"{self._env_base}_API_KEY"))
         self.username = kw.get("username", os.getenv(f"{self._env_base}_USERNAME"))
         self.password = kw.get("password", os.getenv(f"{self._env_base}_PASSWORD"))
         # The 'cloud' parameter should have precedence over environment variables
-        self.env_cloud = cloud or kw.get('cloud') or os.getenv(f"{self._env_base}_CLOUD")
+        self.env_cloud = cloud or kw.get("cloud") or os.getenv(f"{self._env_base}_CLOUD")
         if not self.env_cloud:
-            raise ValueError(f"The cloud environment must be set via the 'cloud' argument or the {self._env_base}_CLOUD environment variable.")
+            raise ValueError(
+                f"The cloud environment must be set via the 'cloud' argument or the {self._env_base}_CLOUD environment variable."
+            )
 
         # URL construction
         if cloud == "zspreview":
             self.url = f"https://admin.{self.env_cloud}.net/api/v1"
         else:
             # Use override URL if provided, else construct the URL
-            self.url = kw.get('override_url') or os.getenv(f"{self._env_base}_OVERRIDE_URL") or f"https://zsapi.{self.env_cloud}.net/api/v1"
+            self.url = (
+                kw.get("override_url")
+                or os.getenv(f"{self._env_base}_OVERRIDE_URL")
+                or f"https://zsapi.{self.env_cloud}.net/api/v1"
+            )
 
         self.conv_box = True
-        self.sandbox_token = kw.get('sandbox_token') or os.getenv(f"{self._env_base}_SANDBOX_TOKEN")
+        self.sandbox_token = kw.get("sandbox_token") or os.getenv(f"{self._env_base}_SANDBOX_TOKEN")
         self.timeout = timeout
         self.fail_safe = fail_safe
         cache_enabled = os.environ.get("ZSCALER_CLIENT_CACHE_ENABLED", "true").lower() == "true"
@@ -189,9 +197,9 @@ class ZIAClientHelper(ZIAClient):
         self.auth_details = resp.json()
         return resp
 
-    def send(self, method, path, json=None, params=None):
+    def send(self, method, path, json=None, params=None, files=None):
         """
-        Send a request to the ZPA API.
+        Send a request to the ZIA API.
 
         Parameters:
         - method (str): The HTTP method.
@@ -200,7 +208,10 @@ class ZIAClientHelper(ZIAClient):
         Returns:
         - Response: Response object from the request.
         """
+        is_sandbox = "zscsb" in path
         api = self.url
+        if is_sandbox:
+            api = f"https://csbapi.{self.env_cloud}.net"
         url = f"{api}/{path.lstrip('/')}"
         start_time = time.time()
         # Update headers to include the user agent
@@ -208,7 +219,7 @@ class ZIAClientHelper(ZIAClient):
         headers_with_user_agent["User-Agent"] = self.user_agent
         # Generate a unique UUID for this request
         request_uuid = uuid.uuid4()
-        dump_request(logger, url, method, json, params, headers_with_user_agent, request_uuid)
+        dump_request(logger, url, method, json, params, headers_with_user_agent, request_uuid, body=not is_sandbox)
         # Check cache before sending request
         cache_key = self.cache.create_key(url, params)
         if method == "GET" and self.cache.contains(cache_key):
@@ -236,13 +247,20 @@ class ZIAClientHelper(ZIAClient):
                     method=method,
                     url=url,
                     json=json,
+                    files=files,
                     params=params,
                     headers=headers_with_user_agent,
                     timeout=self.timeout,
                     cookies={"JSESSIONID": self.session_id},
                 )
                 dump_response(
-                    logger=logger, url=url, params=params, method=method, resp=resp, request_uuid=request_uuid, start_time=start_time
+                    logger=logger,
+                    url=url,
+                    params=params,
+                    method=method,
+                    resp=resp,
+                    request_uuid=request_uuid,
+                    start_time=start_time,
                 )
                 if resp.status_code == 429:  # HTTP Status code 429 indicates "Too Many Requests"
                     sleep_time = int(
@@ -294,7 +312,7 @@ class ZIAClientHelper(ZIAClient):
 
     def get(self, path, json=None, params=None):
         """
-        Send a GET request to the ZPA API.
+        Send a GET request to the ZIA API.
 
         Parameters:
         - path (str): API endpoint path.
@@ -321,11 +339,11 @@ class ZIAClientHelper(ZIAClient):
         formatted_resp = format_json_response(resp, box_attrs=dict())
         return formatted_resp
 
-    def post(self, path, json=None, params=None):
+    def post(self, path, json=None, params=None, files=None):
         should_wait, delay = self.rate_limiter.wait("POST")
         if should_wait:
             time.sleep(delay)
-        resp = self.send("POST", path, json, params)
+        resp = self.send("POST", path, json, params, files=files)
         formatted_resp = format_json_response(resp, box_attrs=dict())
         return formatted_resp
 
@@ -341,9 +359,9 @@ class ZIAClientHelper(ZIAClient):
         "EMPTY_RESULTS": "No results found for page {page}.",
     }
 
-    def get_paginated_data(self, path=None, data_key_name=None, data_per_page=5, expected_status_code=200):
+    def get_paginated_data(self, path=None, params = None, data_key_name=None, data_per_page=500, expected_status_code=200):
         """
-        Fetch paginated data from the ZPA API.
+        Fetch paginated data from the ZIA API.
         ...
 
         Returns:
@@ -356,7 +374,12 @@ class ZIAClientHelper(ZIAClient):
         error_message = None
 
         while True:
-            required_url = f"{path}"
+            # Construct the URL with parameters
+            url_params = f"?page={page}&pagesize={data_per_page}"
+            if params:
+                url_params += "&" + "&".join(f"{key}={value}" for key, value in params.items())
+
+            required_url = f"{path}{url_params}"
             should_wait, delay = self.rate_limiter.wait("GET")
             if should_wait:
                 time.sleep(delay)
@@ -365,7 +388,6 @@ class ZIAClientHelper(ZIAClient):
             response = self.send(
                 method="GET",
                 path=required_url,
-                params={"page": page, "pageSize": data_per_page},
             )
 
             if response.status_code != expected_status_code:
@@ -406,6 +428,14 @@ class ZIAClientHelper(ZIAClient):
         return AdminAndRoleManagementAPI(self)
 
     @property
+    def apptotal(self):
+        """
+        The interface object for the :ref:`ZIA AppTotal interface <zia-apptotal>`.
+
+        """
+        return AppTotalAPI(self)
+
+    @property
     def audit_logs(self):
         """
         The interface object for the :ref:`ZIA Admin Audit Logs interface <zia-audit_logs>`.
@@ -437,6 +467,14 @@ class ZIAClientHelper(ZIAClient):
 
         """
         return FirewallPolicyAPI(self)
+
+    @property
+    def forwarding_control(self):
+        """
+        The interface object for the :ref:`ZIA Forwarding Control Policies interface <zia-forwarding>`.
+
+        """
+        return ForwardingControlAPI(self)
 
     @property
     def labels(self):
@@ -511,9 +549,9 @@ class ZIAClientHelper(ZIAClient):
         return URLCategoriesAPI(self)
 
     @property
-    def url_filters(self):
+    def url_filtering(self):
         """
-        The interface object for the :ref:`ZIA URL Filtering interface <zia-url_filters>`.
+        The interface object for the :ref:`ZIA URL Filtering interface <zia-url_filtering>`.
 
         """
         return URLFilteringAPI(self)
@@ -541,3 +579,20 @@ class ZIAClientHelper(ZIAClient):
 
         """
         return WebDLPAPI(self)
+
+    @property
+    def zpa_gateway(self):
+        """
+        The interface object for the :ref: `ZIA Data-Loss-Prevention Web DLP Rules`.
+
+        """
+        return ZPAGatewayAPI(self)
+
+    @property
+    def isolation_profile(self):
+        """
+        The interface object for the :ref: `ZIA Cloud Browser Isolation Profile`.
+
+        """
+        return IsolationProfileAPI(self)
+

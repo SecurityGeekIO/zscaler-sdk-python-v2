@@ -56,7 +56,6 @@ def camel_to_snake(name: str):
         "nameL10nTag": "name_l10n_tag",
         "surrogateIP": "surrogate_ip",
         "surrogateIPEnforcedForKnownBrowsers": "surrogate_ip_enforced_for_known_browsers",
-        "capturePCAP": "capture_pcap",
         "startIPAddress": "start_ip_address",
         "endIPAddress": "end_ip_address",
         "isIncompleteDRConfig": "is_incomplete_dr_config",
@@ -135,6 +134,21 @@ def add_id_groups(id_groups: list, kwargs: dict, payload: dict):
     for entry in id_groups:
         if kwargs.get(entry[0]):
             payload[entry[1]] = [{"id": param_id} for param_id in kwargs.pop(entry[0])]
+    return
+
+def transform_common_id_fields(id_groups: list, kwargs: dict, payload: dict):
+    for entry in id_groups:
+        if kwargs.get(entry[0]):
+            # Ensure each ID is treated as an integer before adding it to the payload
+            payload[entry[1]] = [{"id": int(param_id)} for param_id in kwargs.pop(entry[0])]
+    return
+
+
+def transform_common_id_fields(id_groups: list, kwargs: dict, payload: dict):
+    for entry in id_groups:
+        if kwargs.get(entry[0]):
+            # Ensure each ID is treated as an integer before adding it to the payload
+            payload[entry[1]] = [{"id": int(param_id)} for param_id in kwargs.pop(entry[0])]
     return
 
 
@@ -385,17 +399,19 @@ def is_token_expired(token_string):
         return True
 
 
-def dump_request(logger, url: str, method: str, json, params, headers, request_uuid: str):
+def dump_request(logger, url: str, method: str, json, params, headers, request_uuid: str, body=True):
     request_headers_filtered = {key: value for key, value in headers.items() if key != "Authorization"}
     # Log the request details before sending the request
     request_data = {
         "url": url,
         "method": method,
-        "request_body": jsonp.dumps(json),
         "params": jsonp.dumps(params),
         "uuid": str(request_uuid),
         "request_headers": jsonp.dumps(request_headers_filtered),
     }
+
+    if body:
+        request_data["request_body"] = jsonp.dumps(json)
     logger.info("Request details: %s", jsonp.dumps(request_data))
 
 

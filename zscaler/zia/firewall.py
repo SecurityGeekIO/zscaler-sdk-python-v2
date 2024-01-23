@@ -17,29 +17,40 @@
 
 from box import Box, BoxList
 from requests import Response
-from zscaler.utils import snake_to_camel
+from zscaler.utils import (
+    snake_to_camel,
+    transform_common_id_fields,
+    recursive_snake_to_camel,
+    convert_keys
+)
 from zscaler.zia import ZIAClient
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 class FirewallPolicyAPI:
     # Firewall filter rule keys that only require an ID to be provided.
-    _key_id_list = [
-        "app_services",
-        "app_service_groups",
-        "departments",
-        "dest_ip_groups",
-        "devices",
-        "device_groups",
-        "groups",
-        "labels",
-        "locations",
-        "location_groups",
-        "nw_application_groups",
-        "nw_services",
-        "nw_service_groups",
-        "src_ip_groups",
-        "time_windows",
-        "users",
+    reformat_params = [
+        ("app_services", "appServices"),
+        ("app_service_groups", "appServiceGroups"),
+        ("departments", "departments"),
+        ("devices", "devices"),
+        ("device_groups", "deviceGroups"),
+        ("dest_ip_groups", "destIpGroups"),
+        ("dest_ipv6_groups", "destIpv6Groups"),
+        ("groups", "groups"),
+        ("labels", "labels"),
+        ("locations", "locations"),
+        ("location_groups", "locationGroups"),
+        ("nw_application_groups", "nwApplicationGroups"),
+        ("nw_service_groups", "nwServiceGroups"),
+        ("src_ip_groups", "srcIpGroups"),
+        ("src_ipv6_groups", "srcIpv6Groups"),
+        ("time_windows", "timeWindows"),
+        ("users", "users"),
     ]
+
 
     def __init__(self, client: ZIAClient):
         self.rest = client
@@ -102,20 +113,20 @@ class FirewallPolicyAPI:
             enable_full_logging (bool): Enables full logging if True.
             nw_applications (list): The network service applications that this rule applies to.
             app_services (list): The IDs for the application services that this rule applies to.
-            app_service_groups (list): The IDs for the application service groups that this rule applies to.
-            departments (list): The IDs for the departments that this rule applies to.
-            dest_ip_groups (list): The IDs for the destination IP groups that this rule applies to.
-            devices (list): The IDs for the devices that are managed using Zscaler Client Connector that this rule applies to.
-            device_groups (list): The IDs for the device groups that are managed using Zscaler Client Connector that this rule applies to.
-            groups (list): The IDs for the groups that this rule applies to.
-            labels (list): The IDs for the labels that this rule applies to.
-            locations (list): The IDs for the locations that this rule applies to.
-            location_groups (list): The IDs for the location groups that this rule applies to.
-            nw_application_groups (list): The IDs for the network application groups that this rule applies to.
-            nw_services (list): The IDs for the network services that this rule applies to.
-            nw_service_groups (list): The IDs for the network service groups that this rule applies to.
-            time_windows (list): The IDs for the time windows that this rule applies to.
-            users (list): The IDs for the users that this rule applies to.
+            app_service_groups (:obj:`list` of :obj:`int`): The IDs for the application service groups that this rule applies to.
+            departments (:obj:`list` of :obj:`int`): The IDs for the departments that this rule applies to.
+            dest_ip_groups (:obj:`list` of :obj:`int`): The IDs for the destination IP groups that this rule applies to.
+            devices (:obj:`list` of :obj:`int`): The IDs for the devices that are managed using Zscaler Client Connector that this rule applies to.
+            device_groups (:obj:`list` of :obj:`int`):The IDs for the device groups that are managed using Zscaler Client Connector that this rule applies to.
+            groups (:obj:`list` of :obj:`int`): The IDs for the groups that this rule applies to.
+            labels (:obj:`list` of :obj:`int`): The IDs for the labels that this rule applies to.
+            locations (:obj:`list` of :obj:`int`): The IDs for the locations that this rule applies to.
+            location_groups (:obj:`list` of :obj:`int`): The IDs for the location groups that this rule applies to.
+            nw_application_groups (:obj:`list` of :obj:`int`): The IDs for the network application groups that this rule applies to.
+            nw_services (:obj:`list` of :obj:`int`): The IDs for the network services that this rule applies to.
+            nw_service_groups (:obj:`list` of :obj:`int`):The IDs for the network service groups that this rule applies to.
+            time_windows (:obj:`list` of :obj:`int`): The IDs for the time windows that this rule applies to.
+            users (:obj:`list` of :obj:`int`): The IDs for the users that this rule applies to.
 
         Returns:
             :obj:`Box`: The new firewall filter rule resource record.
@@ -139,27 +150,35 @@ class FirewallPolicyAPI:
             ...    description='TT#1965432122')
 
         """
+        # Convert enabled to API format if present
+        if 'enabled' in kwargs:
+            kwargs['state'] = "ENABLED" if kwargs.pop('enabled') else "DISABLED"
+
         payload = {
             "name": name,
             "action": action,
             "order": kwargs.pop("order", len(self.list_rules())),
         }
 
-        # Add optional parameters to payload
+        # Transform ID fields in kwargs
+        transform_common_id_fields(self.reformat_params, kwargs, payload)
         for key, value in kwargs.items():
-            if key in self._key_id_list:
-                if value is None:
-                    continue  # Skip if value is None
-                payload[snake_to_camel(key)] = [{"id": item} for item in value]
-            else:
+            if value is not None:
                 payload[snake_to_camel(key)] = value
 
+        # Convert the entire payload's keys to camelCase before sending
+        camel_payload = recursive_snake_to_camel(payload)
+        for key, value in kwargs.items():
+            if value is not None:
+                camel_payload[snake_to_camel(key)] = value
+
+        # Send POST request to create the rule
         response = self.rest.post("firewallFilteringRules", json=payload)
         if isinstance(response, Response):
-            # this is only true when the creation failed (status code is not 2xx)
-            status_code = response.status_code
             # Handle error response
-            raise Exception(f"API call failed with status {status_code}: {response.json()}")
+            status_code = response.status_code
+            if status_code != 200:
+                raise Exception(f"API call failed with status {status_code}: {response.json()}")
         return response
 
     def update_rule(self, rule_id: str, **kwargs) -> Box:
@@ -176,7 +195,6 @@ class FirewallPolicyAPI:
             state (str): The rule state. Accepted values are 'ENABLED' or 'DISABLED'.
             description (str): Additional information about the rule
             src_ips (list): The source IPs that this rule applies to. Individual IP addresses or CIDR ranges accepted.
-            src_ip_groups (list): The IDs for the source IP groups that this rule applies to.
             dest_addresses (list): The destination IP addresses that this rule applies to. Individual IP addresses or
             CIDR ranges accepted.
             dest_ip_categories (list): The IP address categories that this rule applies to.
@@ -187,9 +205,6 @@ class FirewallPolicyAPI:
             app_service_groups (list): The IDs for the application service groups that this rule applies to.
             departments (list): The IDs for the departments that this rule applies to.
             dest_ip_groups (list): The IDs for the destination IP groups that this rule applies to.
-            device_trust_levels (list): The list of device trust levels for which the rule must be applied.
-            devices (list): The IDs for the devices that are managed using Zscaler Client Connector that this rule applies to.
-            device_groups (list): The IDs for the device groups that are managed using Zscaler Client Connector that this rule applies to.
             groups (list): The IDs for the groups that this rule applies to.
             labels (list): The IDs for the labels that this rule applies to.
             locations (list): The IDs for the locations that this rule applies to.
@@ -218,22 +233,27 @@ class FirewallPolicyAPI:
 
         """
 
-        # Set payload to value of existing record
-        payload = {snake_to_camel(k): v for k, v in self.get_rule(rule_id).items()}
+        # Set payload to value of existing record and convert nested dict keys.
+        payload = convert_keys(self.get_rule(rule_id))
 
-        # Add optional parameters to payload
+        # Convert enabled to API format if present in kwargs
+        if 'enabled' in kwargs:
+            kwargs['state'] = "ENABLED" if kwargs.pop('enabled') else "DISABLED"
+
+        # Transform ID fields in kwargs
+        transform_common_id_fields(self.reformat_params, kwargs, payload)
+
+        # Add remaining optional parameters to payload
         for key, value in kwargs.items():
-            if key in self._key_id_list:
-                payload[snake_to_camel(key)] = []
-                for item in value:
-                    payload[snake_to_camel(key)].append({"id": item})
-            else:
-                payload[snake_to_camel(key)] = value
+            payload[snake_to_camel(key)] = value
 
         response = self.rest.put(f"firewallFilteringRules/{rule_id}", json=payload)
-        if isinstance(response, Response) and response.ok:
-            return self.get_rule(rule_id)
-        return Box()
+        if isinstance(response, Response) and not response.ok:
+            # Handle error response
+            raise Exception(f"API call failed with status {response.status_code}: {response.json()}")
+
+        # Return the updated object
+        return self.get_rule(rule_id)
 
     def delete_rule(self, rule_id: str) -> int:
         """
@@ -249,8 +269,7 @@ class FirewallPolicyAPI:
             >>> zia.firewall.delete_rule('278454')
 
         """
-        response = self.rest.delete(f"firewallFilteringRules/{rule_id}")
-        return response.status_code if isinstance(response, Response) else None
+        return self.rest.delete(f"firewallFilteringRules/{rule_id}").status_code
 
     def list_ip_destination_groups(self, exclude_type: str = None) -> BoxList:
         """

@@ -18,7 +18,7 @@
 from box import Box, BoxList
 from zscaler.zia import ZIAClient
 
-from zscaler.utils import Iterator, convert_keys, snake_to_camel
+from zscaler.utils import convert_keys, snake_to_camel
 
 
 class UserManagementAPI:
@@ -30,7 +30,7 @@ class UserManagementAPI:
     def __init__(self, client: ZIAClient):
         self.rest = client
 
-    def list_departments(self, **kwargs) -> BoxList:
+    def list_departments(self, sort_by: str = "name", sort_order: str = "DESC", **kwargs) -> BoxList:
         """
         Returns the list of departments.
 
@@ -45,6 +45,10 @@ class UserManagementAPI:
                 Specifies the page size. The default size is 100, but the maximum size is 1000.
             **search (str, optional):
                 The search string used to match against a department's name or comments attributes.
+            **sort_by (str):
+                The field name to sort by, supported values: id, name, creationTime or modifiedTime (default to name)
+            **sort_order (str):
+                The sort order, values: ASC or DESC (default DESC)
 
         Returns:
             :obj:`BoxList`: The list of departments configured in ZIA.
@@ -65,7 +69,12 @@ class UserManagementAPI:
             >>> for department in zia.users.list_departments(page_size=200, max_pages=2):
             ...    print(department)
         """
-        return BoxList(Iterator(self._api, "departments", **kwargs))
+        if kwargs is None:
+            kwargs = {}
+        if sort_order != "" and sort_by != "":
+            kwargs["sortBy"] = sort_by
+            kwargs["sortOrder"] = sort_order
+        return self.rest.get_paginated_data("departments", params=kwargs)
 
     def get_department(self, department_id: str) -> Box:
         """
@@ -83,7 +92,7 @@ class UserManagementAPI:
         """
         return self._get(f"departments/{department_id}")
 
-    def list_groups(self, **kwargs) -> BoxList:
+    def list_groups(self, sort_by: str = "name", sort_order: str = "DESC", **kwargs) -> BoxList:
         """
         Returns the list of user groups.
 
@@ -96,7 +105,10 @@ class UserManagementAPI:
                 Specifies the page size. The default size is 100, but the maximum size is 1000.
             **search (str, optional):
                 The search string used to match against a group's name or comments attributes.
-
+            **sort_by (str):
+                The field name to sort by, supported values: id, name, creationTime or modifiedTime (default to name)
+            **sort_order (str):
+                The sort order, values: ASC or DESC (default DESC)
         Returns:
             :obj:`BoxList`: The list of user groups configured in ZIA.
 
@@ -117,7 +129,12 @@ class UserManagementAPI:
             ...    print(group)
 
         """
-        return BoxList(Iterator(self._api, "groups", **kwargs))
+        if kwargs is None:
+            kwargs = {}
+        if sort_order != "" and sort_by != "":
+            kwargs["sortBy"] = sort_by
+            kwargs["sortOrder"] = sort_order
+        return self.rest.get_paginated_data("groups", params=kwargs)
 
     def get_group(self, group_id: str) -> Box:
         """
@@ -135,7 +152,7 @@ class UserManagementAPI:
         """
         return self._get(f"groups/{group_id}")
 
-    def list_users(self, **kwargs) -> BoxList:
+    def list_users(self, sort_by: str = "name", sort_order: str = "DESC", **kwargs) -> BoxList:
         """
         Returns the list of users.
 
@@ -152,6 +169,10 @@ class UserManagementAPI:
                 Filters by user name. This is a `partial` match.
             **page_size (int, optional):
                 Specifies the page size. The default size is 100, but the maximum size is 1000.
+            **sort_by (str):
+                The field name to sort by, supported values: id, name, creationTime or modifiedTime (default to name)
+            **sort_order (str):
+                The sort order, values: ASC or DESC (default DESC)
 
         Returns:
             :obj:`BoxList`: The list of users configured in ZIA.
@@ -173,7 +194,12 @@ class UserManagementAPI:
             ...    print(user)
 
         """
-        return BoxList(Iterator(self._api, "users", **kwargs))
+        if kwargs is None:
+            kwargs = {}
+        if sort_order != "" and sort_by != "":
+            kwargs["sortBy"] = sort_by
+            kwargs["sortOrder"] = sort_order
+        return self.rest.get_paginated_data("users", params=kwargs)
 
     def add_user(self, name: str, email: str, groups: list, department: dict, **kwargs) -> Box:
         """
