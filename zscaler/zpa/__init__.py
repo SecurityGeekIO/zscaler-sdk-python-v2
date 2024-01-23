@@ -216,7 +216,13 @@ class ZPAClientHelper(ZPAClient):
                     self.refreshToken()
                 resp = requests.request(method, url, json=json, headers=headers_with_user_agent, timeout=self.timeout)
                 dump_response(
-                    logger=logger, url=url, params=params, method=method, resp=resp, request_uuid=request_uuid, start_time=start_time
+                    logger=logger,
+                    url=url,
+                    params=params,
+                    method=method,
+                    resp=resp,
+                    request_uuid=request_uuid,
+                    start_time=start_time,
                 )
                 if resp.status_code == 429:  # HTTP Status code 429 indicates "Too Many Requests"
                     sleep_time = int(
@@ -316,7 +322,7 @@ class ZPAClientHelper(ZPAClient):
     }
 
     def get_paginated_data(
-        self, path=None, data_key_name=None, data_per_page=500, expected_status_code=200, api_version: str = None
+        self, path=None, params=None, data_key_name=None, data_per_page=500, expected_status_code=200, api_version: str = None
     ):
         """
         Fetch paginated data from the ZPA API.
@@ -332,7 +338,12 @@ class ZPAClientHelper(ZPAClient):
         error_message = None
 
         while True:
-            required_url = f"{path}?page={page}&pagesize={data_per_page}"
+            # Construct the URL with parameters
+            url_params = f"?page={page}&pagesize={data_per_page}"
+            if params:
+                url_params += "&" + "&".join(f"{key}={value}" for key, value in params.items())
+            
+            required_url = f"{path}{url_params}"
             should_wait, delay = self.rate_limiter.wait("GET")
             if should_wait:
                 time.sleep(delay)
