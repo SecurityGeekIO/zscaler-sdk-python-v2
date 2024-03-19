@@ -1,0 +1,447 @@
+interactions:
+- request:
+    body: client_id=dummy_client_id&client_secret=dummy_client_secret
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '155'
+      Content-Type:
+      - application/x-www-form-urlencoded
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.7 Darwin/23.3.0
+    method: POST
+    uri: https://config.private.zscaler.com/signin
+  response:
+    body:
+      string: "{\n  \"token_type\" : \"Bearer\",\n  \"access_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTA4OTMxMDF9.4mHiCdm4WcEArK9KCg4PajqMvU3ybnnw4FD-CCYCxJo\",\n
+        \ \"expires_in\" : \"3600\"\n}"
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 19 Mar 2024 00:05:01 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=jVohFWswYsjXijvHSY7csKpguVWMZ9Jhf7Uatv9OfenMrItgQ5YRGx09TWriGlTXqlI6pOR2/Q6emRBuj6pDA6KhT5BoGaB4BaCnKOhkU1dD3KZFrt3/jQKm5Jfz;
+        Expires=Tue, 26 Mar 2024 00:05:00 GMT; Path=/
+      - AWSALBCORS=jVohFWswYsjXijvHSY7csKpguVWMZ9Jhf7Uatv9OfenMrItgQ5YRGx09TWriGlTXqlI6pOR2/Q6emRBuj6pDA6KhT5BoGaB4BaCnKOhkU1dD3KZFrt3/jQKm5Jfz;
+        Expires=Tue, 26 Mar 2024 00:05:00 GMT; Path=/; SameSite=None; Secure
+      Strict-Transport-Security:
+      - max-age=63072000 ; includeSubDomains ; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"name": "itest app group", "enabled": true}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '44'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.7 Darwin/23.3.0
+    method: POST
+    uri: https://config.private.zscaler.com/mgmtconfig/v1/admin/customers/216196257331281920/segmentGroup
+  response:
+    body:
+      string: '{"id":"216196257331372676","modifiedTime":"1710806702","creationTime":"1710806702","modifiedBy":"216196257331282070","name":"itest
+        app group","enabled":true,"configSpace":"DEFAULT","tcpKeepAliveEnabled":"0"}'
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; upgrade-insecure-requests
+      Content-Type:
+      - application/json;charset=utf-8
+      Date:
+      - Tue, 19 Mar 2024 00:05:02 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=jDO0Cq5z3OVYdjZTlvcdCXCZml74a7YdrYfB3iPBDDhQLGCEQkrDhGMd0lSY2GCPUmm77Qu9597I0ON3zkW2UEi0CO7SP82MPBrcVLRkl2jIv72RD2eBMxIRJnpY;
+        Expires=Tue, 26 Mar 2024 00:05:02 GMT; Path=/
+      - AWSALBCORS=jDO0Cq5z3OVYdjZTlvcdCXCZml74a7YdrYfB3iPBDDhQLGCEQkrDhGMd0lSY2GCPUmm77Qu9597I0ON3zkW2UEi0CO7SP82MPBrcVLRkl2jIv72RD2eBMxIRJnpY;
+        Expires=Tue, 26 Mar 2024 00:05:02 GMT; Path=/; SameSite=None; Secure
+      - AWSALB=8ZBc95ark+B2DI/eEQhh+8/JveDhq0t+kNa6AsFv6uykOfX/Fn2ks8xUv4h4Ea+ZOBO6i0G1KhtCkx052j8lcC4vCIVyAfzzLnM5gFX8v+UhRtgWB40ZPDSVoou7;
+        Expires=Tue, 26 Mar 2024 00:05:02 GMT; Path=/, AWSALBCORS=8ZBc95ark+B2DI/eEQhh+8/JveDhq0t+kNa6AsFv6uykOfX/Fn2ks8xUv4h4Ea+ZOBO6i0G1KhtCkx052j8lcC4vCIVyAfzzLnM5gFX8v+UhRtgWB40ZPDSVoou7;
+        Expires=Tue, 26 Mar 2024 00:05:02 GMT; Path=/; SameSite=None; Secure, JSESSIONIDCORS=node0rcy6zrniffba12b00kqhxhfo66466108.node0;
+        Path=/; Secure; HttpOnly; SameSite=Lax
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 201
+      message: Created
+- request:
+    body: '{"name": "itest-appsegment", "domainNames": ["crm.example.com"], "tcpPortRanges":
+      ["80", "80"], "udpPortRanges": null, "segmentGroupId": "216196257331372676",
+      "serverGroups": []}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '178'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.7 Darwin/23.3.0
+    method: POST
+    uri: https://config.private.zscaler.com/mgmtconfig/v1/admin/customers/216196257331281920/application
+  response:
+    body:
+      string: '{"id":"216196257331372677","domainNames":["crm.example.com"],"name":"itest-appsegment","tcpPortRanges":["80","80"],"doubleEncrypt":false,"configSpace":"DEFAULT","bypassType":"NEVER","healthCheckType":"DEFAULT","icmpAccessType":"NONE","isCnameEnabled":true,"ipAnchored":false,"bypassOnReauth":false,"inspectTrafficWithZia":false,"tcpKeepAlive":"0","matchStyle":"EXCLUSIVE","isIncompleteDRConfig":false,"adpEnabled":false,"fqdnDnsCheck":false,"segmentGroupId":"216196257331372676"}'
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; upgrade-insecure-requests
+      Content-Type:
+      - application/json;charset=utf-8
+      Date:
+      - Tue, 19 Mar 2024 00:05:04 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=uPrgsUETLeWtTImLFJmN1rIjyEc+6MJ4iWGOJRBlEGSzYitgi/sH73gwA+ihryI0/dwFjgtLsWVZXWc3l8LU291//t+kusJcc5zLC4K4hRVkhH3xtLKtlSsIXlj4;
+        Expires=Tue, 26 Mar 2024 00:05:03 GMT; Path=/
+      - AWSALBCORS=uPrgsUETLeWtTImLFJmN1rIjyEc+6MJ4iWGOJRBlEGSzYitgi/sH73gwA+ihryI0/dwFjgtLsWVZXWc3l8LU291//t+kusJcc5zLC4K4hRVkhH3xtLKtlSsIXlj4;
+        Expires=Tue, 26 Mar 2024 00:05:03 GMT; Path=/; SameSite=None; Secure
+      - AWSALB=h1BXOvkw9UadhtR2vVOuHWoIbiHpCkrJpEJDuT4sflXV2456NkwRvMheHRjbokuxJ1rn3g25RBDN/3fHKusRqpjjX7fiP8igNSaGCBlTFO2LhHeHp6ATh7esgqit;
+        Expires=Tue, 26 Mar 2024 00:05:04 GMT; Path=/, AWSALBCORS=h1BXOvkw9UadhtR2vVOuHWoIbiHpCkrJpEJDuT4sflXV2456NkwRvMheHRjbokuxJ1rn3g25RBDN/3fHKusRqpjjX7fiP8igNSaGCBlTFO2LhHeHp6ATh7esgqit;
+        Expires=Tue, 26 Mar 2024 00:05:04 GMT; Path=/; SameSite=None; Secure, JSESSIONIDCORS=node01pot3zuwaxmg5c58mkjchtxcs6472528.node0;
+        Path=/; Secure; HttpOnly; SameSite=Lax
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 201
+      message: Created
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.7 Darwin/23.3.0
+    method: GET
+    uri: https://config.private.zscaler.com/mgmtconfig/v1/admin/customers/216196257331281920/application/216196257331372677
+  response:
+    body:
+      string: '{"modifiedTime":"1710806704","creationTime":"1710806704","modifiedBy":"216196257331282070","id":"216196257331372677","domainNames":["crm.example.com"],"name":"itest-appsegment","enabled":true,"passiveHealthEnabled":true,"tcpPortRanges":["80","80"],"tcpPortRange":[{"from":"80","to":"80"}],"doubleEncrypt":false,"configSpace":"DEFAULT","bypassType":"NEVER","healthCheckType":"DEFAULT","icmpAccessType":"NONE","isCnameEnabled":true,"ipAnchored":false,"bypassOnReauth":false,"inspectTrafficWithZia":false,"healthReporting":"ON_ACCESS","useInDrMode":false,"tcpKeepAlive":"0","selectConnectorCloseToApp":false,"matchStyle":"EXCLUSIVE","isIncompleteDRConfig":false,"adpEnabled":false,"fqdnDnsCheck":false,"microtenantName":"Default","segmentGroupId":"216196257331372676","segmentGroupName":"itest
+        app group"}'
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; upgrade-insecure-requests
+      Content-Type:
+      - application/json;charset=utf-8
+      Date:
+      - Tue, 19 Mar 2024 00:05:10 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=UF3cll4Xqm47CvSjuppNDxGDi24Wevd60Hdpt61i+ML2Txjwt1So5IsXrlMawcK2pjXW8I6XtBb/abDsSCuhqrM/bMURlueYmCg9ajGKiWSKXKbmR18Xur+gli07;
+        Expires=Tue, 26 Mar 2024 00:05:05 GMT; Path=/
+      - AWSALBCORS=UF3cll4Xqm47CvSjuppNDxGDi24Wevd60Hdpt61i+ML2Txjwt1So5IsXrlMawcK2pjXW8I6XtBb/abDsSCuhqrM/bMURlueYmCg9ajGKiWSKXKbmR18Xur+gli07;
+        Expires=Tue, 26 Mar 2024 00:05:05 GMT; Path=/; SameSite=None; Secure
+      - AWSALB=jgyMKWIsnc4oeVRIUOpd6TuxFAkDS/dmFudbnIPlwb5gK6P3ICIMS4Lgj4n4micYQuoJG7mxUrNzzcL3Xuzd3UsN3Wvlbhxv7eus5+BcZGZmNTCsBKF3FD6+Md+3;
+        Expires=Tue, 26 Mar 2024 00:05:10 GMT; Path=/, AWSALBCORS=jgyMKWIsnc4oeVRIUOpd6TuxFAkDS/dmFudbnIPlwb5gK6P3ICIMS4Lgj4n4micYQuoJG7mxUrNzzcL3Xuzd3UsN3Wvlbhxv7eus5+BcZGZmNTCsBKF3FD6+Md+3;
+        Expires=Tue, 26 Mar 2024 00:05:10 GMT; Path=/; SameSite=None; Secure, JSESSIONIDCORS=node0fazg79gdi9l8zrqlywds5zf56466215.node0;
+        Path=/; Secure; HttpOnly; SameSite=Lax
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.7 Darwin/23.3.0
+    method: GET
+    uri: https://config.private.zscaler.com/mgmtconfig/v1/admin/customers/216196257331281920/application?page=1&pagesize=500
+  response:
+    body:
+      string: '{"totalPages":"1","totalCount":"0","list":[{"modifiedTime":"1706823437","creationTime":"1698164996","modifiedBy":"216196257331282070","id":"216196257331370181","domainNames":["app1.securitygeek.io"],"name":"app01","serverGroups":[{"id":"216196257331370169","modifiedTime":"1698164996","creationTime":"1698164996","modifiedBy":"216196257331282070","name":"Example100","enabled":true,"description":"Example100","configSpace":"DEFAULT","dynamicDiscovery":true}],"enabled":true,"passiveHealthEnabled":true,"tcpPortRanges":["3389","3389"],"tcpPortRange":[{"from":"3389","to":"3389"}],"doubleEncrypt":false,"configSpace":"DEFAULT","bypassType":"NEVER","healthCheckType":"NONE","icmpAccessType":"NONE","isCnameEnabled":false,"praApps":[{"id":"216196257331370199","name":"app1.securitygeek.io","enabled":true,"applicationPort":"3389","applicationProtocol":"RDP","domain":"app1.securitygeek.io","appId":"216196257331370181","hidden":false,"connectionSecurity":"ANY"}],"ipAnchored":false,"bypassOnReauth":false,"inspectTrafficWithZia":false,"healthReporting":"NONE","useInDrMode":false,"tcpKeepAlive":"0","selectConnectorCloseToApp":false,"matchStyle":"EXCLUSIVE","isIncompleteDRConfig":false,"adpEnabled":false,"fqdnDnsCheck":false,"microtenantName":"Default","segmentGroupId":"216196257331370167","segmentGroupName":"Example100"},{"modifiedTime":"1708009774","creationTime":"1698164996","modifiedBy":"216196257331282070","id":"216196257331370173","domainNames":["app2.securitygeek.io"],"name":"app02","description":"app02.securitygeek.io","serverGroups":[{"id":"216196257331370169","modifiedTime":"1698164996","creationTime":"1698164996","modifiedBy":"216196257331282070","name":"Example100","enabled":true,"description":"Example100","configSpace":"DEFAULT","dynamicDiscovery":true}],"enabled":true,"passiveHealthEnabled":true,"tcpPortRanges":["1002","1002"],"tcpPortRange":[{"from":"1002","to":"1002"}],"doubleEncrypt":false,"configSpace":"DEFAULT","bypassType":"NEVER","healthCheckType":"DEFAULT","icmpAccessType":"NONE","isCnameEnabled":false,"ipAnchored":false,"bypassOnReauth":false,"inspectTrafficWithZia":false,"healthReporting":"ON_ACCESS","useInDrMode":false,"tcpKeepAlive":"0","selectConnectorCloseToApp":false,"matchStyle":"EXCLUSIVE","isIncompleteDRConfig":false,"adpEnabled":false,"fqdnDnsCheck":false,"microtenantName":"Default","segmentGroupId":"216196257331370167","segmentGroupName":"Example100"},{"modifiedTime":"1698164996","creationTime":"1698164996","modifiedBy":"216196257331282070","id":"216196257331370179","domainNames":["app3.securitygeek.io"],"name":"app03","description":"app03.securitygeek.io","serverGroups":[{"id":"216196257331370169","modifiedTime":"1698164996","creationTime":"1698164996","modifiedBy":"216196257331282070","name":"Example100","enabled":true,"description":"Example100","configSpace":"DEFAULT","dynamicDiscovery":true}],"enabled":true,"passiveHealthEnabled":true,"tcpPortRanges":["1003","1003"],"tcpPortRange":[{"from":"1003","to":"1003"}],"doubleEncrypt":false,"configSpace":"DEFAULT","bypassType":"NEVER","healthCheckType":"DEFAULT","icmpAccessType":"NONE","isCnameEnabled":false,"ipAnchored":false,"bypassOnReauth":false,"inspectTrafficWithZia":false,"healthReporting":"ON_ACCESS","useInDrMode":false,"tcpKeepAlive":"0","selectConnectorCloseToApp":false,"matchStyle":"EXCLUSIVE","isIncompleteDRConfig":false,"adpEnabled":false,"fqdnDnsCheck":false,"microtenantName":"Default","segmentGroupId":"216196257331370167","segmentGroupName":"Example100"},{"modifiedTime":"1698164996","creationTime":"1698164996","modifiedBy":"216196257331282070","id":"216196257331370171","domainNames":["app4.securitygeek.io"],"name":"app04","description":"app04.securitygeek.io","serverGroups":[{"id":"216196257331370169","modifiedTime":"1698164996","creationTime":"1698164996","modifiedBy":"216196257331282070","name":"Example100","enabled":true,"description":"Example100","configSpace":"DEFAULT","dynamicDiscovery":true}],"enabled":true,"passiveHealthEnabled":true,"tcpPortRanges":["1004","1004"],"tcpPortRange":[{"from":"1004","to":"1004"}],"doubleEncrypt":false,"configSpace":"DEFAULT","bypassType":"NEVER","healthCheckType":"DEFAULT","icmpAccessType":"NONE","isCnameEnabled":false,"ipAnchored":false,"bypassOnReauth":false,"inspectTrafficWithZia":false,"healthReporting":"ON_ACCESS","useInDrMode":false,"tcpKeepAlive":"0","selectConnectorCloseToApp":false,"matchStyle":"EXCLUSIVE","isIncompleteDRConfig":false,"adpEnabled":false,"fqdnDnsCheck":false,"microtenantName":"Default","segmentGroupId":"216196257331370167","segmentGroupName":"Example100"},{"modifiedTime":"1706823661","creationTime":"1706823661","modifiedBy":"216196257331282070","id":"216196257331372536","domainNames":["app5.securitygeek.io"],"name":"app05","description":"app05.securitygeek.io","serverGroups":[{"id":"216196257331370169","modifiedTime":"1698164996","creationTime":"1698164996","modifiedBy":"216196257331282070","name":"Example100","enabled":true,"description":"Example100","configSpace":"DEFAULT","dynamicDiscovery":true}],"enabled":true,"passiveHealthEnabled":true,"tcpPortRanges":["1005","1005"],"tcpPortRange":[{"from":"1005","to":"1005"}],"doubleEncrypt":false,"configSpace":"DEFAULT","bypassType":"NEVER","healthCheckType":"DEFAULT","icmpAccessType":"NONE","isCnameEnabled":false,"ipAnchored":false,"bypassOnReauth":false,"inspectTrafficWithZia":false,"healthReporting":"ON_ACCESS","useInDrMode":false,"tcpKeepAlive":"0","selectConnectorCloseToApp":false,"matchStyle":"EXCLUSIVE","isIncompleteDRConfig":false,"adpEnabled":false,"fqdnDnsCheck":false,"microtenantName":"Default","segmentGroupId":"216196257331370167","segmentGroupName":"Example100"},{"modifiedTime":"1706823437","creationTime":"1698164996","modifiedBy":"216196257331282070","id":"216196257331370172","domainNames":["app6.securitygeek.io"],"name":"app06","description":"app06.securitygeek.io","serverGroups":[{"id":"216196257331370169","modifiedTime":"1698164996","creationTime":"1698164996","modifiedBy":"216196257331282070","name":"Example100","enabled":true,"description":"Example100","configSpace":"DEFAULT","dynamicDiscovery":true}],"enabled":true,"passiveHealthEnabled":true,"tcpPortRanges":["1006","1006"],"tcpPortRange":[{"from":"1006","to":"1006"}],"doubleEncrypt":false,"configSpace":"DEFAULT","bypassType":"NEVER","healthCheckType":"DEFAULT","icmpAccessType":"NONE","isCnameEnabled":false,"ipAnchored":false,"bypassOnReauth":false,"inspectTrafficWithZia":false,"healthReporting":"ON_ACCESS","useInDrMode":false,"tcpKeepAlive":"0","selectConnectorCloseToApp":false,"matchStyle":"EXCLUSIVE","isIncompleteDRConfig":false,"adpEnabled":false,"fqdnDnsCheck":false,"microtenantName":"Default","segmentGroupId":"216196257331370167","segmentGroupName":"Example100"},{"modifiedTime":"1708009860","creationTime":"1708009860","modifiedBy":"216196257331282070","id":"216196257331372621","domainNames":["app7.securitygeek.io"],"name":"app07","description":"app07.securitygeek.io","serverGroups":[{"id":"216196257331370169","modifiedTime":"1698164996","creationTime":"1698164996","modifiedBy":"216196257331282070","name":"Example100","enabled":true,"description":"Example100","configSpace":"DEFAULT","dynamicDiscovery":true}],"enabled":true,"passiveHealthEnabled":true,"tcpPortRanges":["1007","1007"],"tcpPortRange":[{"from":"1007","to":"1007"}],"doubleEncrypt":false,"configSpace":"DEFAULT","bypassType":"NEVER","healthCheckType":"DEFAULT","icmpAccessType":"NONE","isCnameEnabled":false,"ipAnchored":false,"bypassOnReauth":false,"inspectTrafficWithZia":false,"healthReporting":"ON_ACCESS","useInDrMode":false,"tcpKeepAlive":"0","selectConnectorCloseToApp":false,"matchStyle":"EXCLUSIVE","isIncompleteDRConfig":false,"adpEnabled":false,"fqdnDnsCheck":false,"microtenantName":"Default","segmentGroupId":"216196257331370167","segmentGroupName":"Example100"},{"modifiedTime":"1708009860","creationTime":"1708009860","modifiedBy":"216196257331282070","id":"216196257331372620","domainNames":["app8.securitygeek.io"],"name":"app08","description":"app08.securitygeek.io","serverGroups":[{"id":"216196257331370169","modifiedTime":"1698164996","creationTime":"1698164996","modifiedBy":"216196257331282070","name":"Example100","enabled":true,"description":"Example100","configSpace":"DEFAULT","dynamicDiscovery":true}],"enabled":true,"passiveHealthEnabled":true,"tcpPortRanges":["1008","1008"],"tcpPortRange":[{"from":"1008","to":"1008"}],"doubleEncrypt":false,"configSpace":"DEFAULT","bypassType":"NEVER","healthCheckType":"DEFAULT","icmpAccessType":"NONE","isCnameEnabled":false,"ipAnchored":false,"bypassOnReauth":false,"inspectTrafficWithZia":false,"healthReporting":"ON_ACCESS","useInDrMode":false,"tcpKeepAlive":"0","selectConnectorCloseToApp":false,"matchStyle":"EXCLUSIVE","isIncompleteDRConfig":false,"adpEnabled":false,"fqdnDnsCheck":false,"microtenantName":"Default","segmentGroupId":"216196257331370167","segmentGroupName":"Example100"},{"modifiedTime":"1698164996","creationTime":"1698164996","modifiedBy":"216196257331282070","id":"216196257331370170","domainNames":["app9.securitygeek.io"],"name":"app09","description":"app09.securitygeek.io","serverGroups":[{"id":"216196257331370169","modifiedTime":"1698164996","creationTime":"1698164996","modifiedBy":"216196257331282070","name":"Example100","enabled":true,"description":"Example100","configSpace":"DEFAULT","dynamicDiscovery":true}],"enabled":true,"passiveHealthEnabled":true,"tcpPortRanges":["1009","1009"],"tcpPortRange":[{"from":"1009","to":"1009"}],"doubleEncrypt":false,"configSpace":"DEFAULT","bypassType":"NEVER","healthCheckType":"DEFAULT","icmpAccessType":"NONE","isCnameEnabled":false,"ipAnchored":false,"bypassOnReauth":false,"inspectTrafficWithZia":false,"healthReporting":"ON_ACCESS","useInDrMode":false,"tcpKeepAlive":"0","selectConnectorCloseToApp":false,"matchStyle":"EXCLUSIVE","isIncompleteDRConfig":false,"adpEnabled":false,"fqdnDnsCheck":false,"microtenantName":"Default","segmentGroupId":"216196257331370167","segmentGroupName":"Example100"},{"modifiedTime":"1698164996","creationTime":"1698164996","modifiedBy":"216196257331282070","id":"216196257331370177","domainNames":["app10.securitygeek.io"],"name":"app10","description":"app10.securitygeek.io","serverGroups":[{"id":"216196257331370169","modifiedTime":"1698164996","creationTime":"1698164996","modifiedBy":"216196257331282070","name":"Example100","enabled":true,"description":"Example100","configSpace":"DEFAULT","dynamicDiscovery":true}],"enabled":true,"passiveHealthEnabled":true,"tcpPortRanges":["1010","1010"],"tcpPortRange":[{"from":"1010","to":"1010"}],"doubleEncrypt":false,"configSpace":"DEFAULT","bypassType":"NEVER","healthCheckType":"DEFAULT","icmpAccessType":"NONE","isCnameEnabled":false,"ipAnchored":false,"bypassOnReauth":false,"inspectTrafficWithZia":false,"healthReporting":"ON_ACCESS","useInDrMode":false,"tcpKeepAlive":"0","selectConnectorCloseToApp":false,"matchStyle":"EXCLUSIVE","isIncompleteDRConfig":false,"adpEnabled":false,"fqdnDnsCheck":false,"microtenantName":"Default","segmentGroupId":"216196257331370167","segmentGroupName":"Example100"},{"modifiedTime":"1698164996","creationTime":"1698164996","modifiedBy":"216196257331282070","id":"216196257331370175","domainNames":["app11.securitygeek.io"],"name":"app11","description":"app11.securitygeek.io","serverGroups":[{"id":"216196257331370169","modifiedTime":"1698164996","creationTime":"1698164996","modifiedBy":"216196257331282070","name":"Example100","enabled":true,"description":"Example100","configSpace":"DEFAULT","dynamicDiscovery":true}],"enabled":true,"passiveHealthEnabled":true,"tcpPortRanges":["1011","1011"],"tcpPortRange":[{"from":"1011","to":"1011"}],"doubleEncrypt":false,"configSpace":"DEFAULT","bypassType":"NEVER","healthCheckType":"DEFAULT","icmpAccessType":"NONE","isCnameEnabled":false,"ipAnchored":false,"bypassOnReauth":false,"inspectTrafficWithZia":false,"healthReporting":"ON_ACCESS","useInDrMode":false,"tcpKeepAlive":"0","selectConnectorCloseToApp":false,"matchStyle":"EXCLUSIVE","isIncompleteDRConfig":false,"adpEnabled":false,"fqdnDnsCheck":false,"microtenantName":"Default","segmentGroupId":"216196257331370167","segmentGroupName":"Example100"},{"modifiedTime":"1701362278","creationTime":"1701362278","modifiedBy":"216196257331282070","id":"216196257331370461","domainNames":["app12.securitygeek.io"],"name":"app12","description":"app12.securitygeek.io","serverGroups":[{"id":"216196257331370169","modifiedTime":"1698164996","creationTime":"1698164996","modifiedBy":"216196257331282070","name":"Example100","enabled":true,"description":"Example100","configSpace":"DEFAULT","dynamicDiscovery":true}],"enabled":true,"passiveHealthEnabled":true,"tcpPortRanges":["1012","1012"],"tcpPortRange":[{"from":"1012","to":"1012"}],"doubleEncrypt":false,"configSpace":"DEFAULT","bypassType":"NEVER","healthCheckType":"DEFAULT","icmpAccessType":"NONE","isCnameEnabled":false,"ipAnchored":false,"bypassOnReauth":false,"inspectTrafficWithZia":false,"healthReporting":"ON_ACCESS","useInDrMode":false,"tcpKeepAlive":"0","selectConnectorCloseToApp":false,"matchStyle":"EXCLUSIVE","isIncompleteDRConfig":false,"adpEnabled":false,"fqdnDnsCheck":false,"microtenantName":"Default","segmentGroupId":"216196257331370167","segmentGroupName":"Example100"},{"modifiedTime":"1706823518","creationTime":"1701325273","modifiedBy":"216196257331281921","id":"216196257331370455","domainNames":["server1.bd-hashicorp.com"],"name":"App_Segment_IP_Source_Anchoring1","description":"DO
+        NOT DELETE - USED FOR INTEGRATION TESTS","serverGroups":[{"id":"216196257331370454","modifiedTime":"1701408995","creationTime":"1701325204","modifiedBy":"216196257331281921","name":"SIPA_Server_Group01","enabled":true,"description":"DON&#39;T
+        DELETE - USED FOR INTEGRATION TESTS","configSpace":"DEFAULT","dynamicDiscovery":true}],"enabled":true,"passiveHealthEnabled":true,"tcpPortRanges":["8000","8000"],"tcpPortRange":[{"from":"8000","to":"8000"}],"doubleEncrypt":false,"configSpace":"DEFAULT","bypassType":"NEVER","healthCheckType":"DEFAULT","icmpAccessType":"PING","isCnameEnabled":true,"ipAnchored":true,"bypassOnReauth":false,"inspectTrafficWithZia":false,"healthReporting":"ON_ACCESS","useInDrMode":false,"tcpKeepAlive":"1","selectConnectorCloseToApp":true,"matchStyle":"EXCLUSIVE","isIncompleteDRConfig":false,"adpEnabled":false,"fqdnDnsCheck":false,"microtenantName":"Default","segmentGroupId":"216196257331370167","segmentGroupName":"Example100"},{"modifiedTime":"1706823526","creationTime":"1701371942","modifiedBy":"216196257331281921","id":"216196257331370465","domainNames":["server2.bd-hashicorp.com"],"name":"App_Segment_IP_Source_Anchoring2","description":"DO
+        NOT DELETE - USED FOR INTEGRATION TESTS","serverGroups":[{"id":"216196257331370454","modifiedTime":"1701408995","creationTime":"1701325204","modifiedBy":"216196257331281921","name":"SIPA_Server_Group01","enabled":true,"description":"DON&#39;T
+        DELETE - USED FOR INTEGRATION TESTS","configSpace":"DEFAULT","dynamicDiscovery":true}],"enabled":true,"passiveHealthEnabled":true,"tcpPortRanges":["8001","8001"],"tcpPortRange":[{"from":"8001","to":"8001"}],"doubleEncrypt":false,"configSpace":"DEFAULT","bypassType":"NEVER","healthCheckType":"DEFAULT","icmpAccessType":"PING","isCnameEnabled":true,"ipAnchored":true,"bypassOnReauth":false,"inspectTrafficWithZia":false,"healthReporting":"ON_ACCESS","useInDrMode":false,"tcpKeepAlive":"0","selectConnectorCloseToApp":false,"matchStyle":"EXCLUSIVE","isIncompleteDRConfig":false,"adpEnabled":false,"fqdnDnsCheck":false,"microtenantName":"Default","segmentGroupId":"216196257331370167","segmentGroupName":"Example100"},{"modifiedTime":"1710806704","creationTime":"1710806704","modifiedBy":"216196257331282070","id":"216196257331372677","domainNames":["crm.example.com"],"name":"itest-appsegment","enabled":true,"passiveHealthEnabled":true,"tcpPortRanges":["80","80"],"tcpPortRange":[{"from":"80","to":"80"}],"doubleEncrypt":false,"configSpace":"DEFAULT","bypassType":"NEVER","healthCheckType":"DEFAULT","icmpAccessType":"NONE","isCnameEnabled":true,"ipAnchored":false,"bypassOnReauth":false,"inspectTrafficWithZia":false,"healthReporting":"ON_ACCESS","useInDrMode":false,"tcpKeepAlive":"0","selectConnectorCloseToApp":false,"matchStyle":"EXCLUSIVE","isIncompleteDRConfig":false,"adpEnabled":false,"fqdnDnsCheck":false,"microtenantName":"Default","segmentGroupId":"216196257331372676","segmentGroupName":"itest
+        app group"}]}'
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; upgrade-insecure-requests
+      Content-Type:
+      - application/json;charset=utf-8
+      Date:
+      - Tue, 19 Mar 2024 00:05:14 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=07ie7jvuKndDSi61xqcsW8VV8/XIaZb/JVVmfZoFwCRYQjzP2P9L2H7jFE4bbx0+RaVTCY1JuWrPMifwXL8jpvYx1SZrVDypF7VB/0FHNZu+Z8pvdYuXlsy9rOFn;
+        Expires=Tue, 26 Mar 2024 00:05:11 GMT; Path=/
+      - AWSALBCORS=07ie7jvuKndDSi61xqcsW8VV8/XIaZb/JVVmfZoFwCRYQjzP2P9L2H7jFE4bbx0+RaVTCY1JuWrPMifwXL8jpvYx1SZrVDypF7VB/0FHNZu+Z8pvdYuXlsy9rOFn;
+        Expires=Tue, 26 Mar 2024 00:05:11 GMT; Path=/; SameSite=None; Secure
+      - AWSALB=E2VUNycvxLDRaOd5ZyKyS8ueVdiIZbyDu0yA3cGS9uj+QpN37+vbeFwrEReIypbdii1Oh+DBE6A4mBSaeKkkDhbRq3y9S6rseYqY7InIocXhJSz60ZvtWLKAWVl2;
+        Expires=Tue, 26 Mar 2024 00:05:14 GMT; Path=/, AWSALBCORS=E2VUNycvxLDRaOd5ZyKyS8ueVdiIZbyDu0yA3cGS9uj+QpN37+vbeFwrEReIypbdii1Oh+DBE6A4mBSaeKkkDhbRq3y9S6rseYqY7InIocXhJSz60ZvtWLKAWVl2;
+        Expires=Tue, 26 Mar 2024 00:05:14 GMT; Path=/; SameSite=None; Secure, JSESSIONIDCORS=node0kp1myreiy75o1eglqynefpegj6466263.node0;
+        Path=/; Secure; HttpOnly; SameSite=Lax
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '0'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.7 Darwin/23.3.0
+    method: DELETE
+    uri: https://config.private.zscaler.com/mgmtconfig/v1/admin/customers/216196257331281920/application/216196257331372677?forceDelete=true
+  response:
+    body:
+      string: ''
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; upgrade-insecure-requests
+      Date:
+      - Tue, 19 Mar 2024 00:05:15 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=WY2W00/ACY0rSoyi12UejOzRNiod1NOzPuYHvz3O59r4xQRm2gzBnsjl5SuNYIDndXgFmz+7hQqFqDywSDCWbibaa5hkBnz34IXZMEbapGfQxNNc3OWIfZUkDxCy;
+        Expires=Tue, 26 Mar 2024 00:05:15 GMT; Path=/
+      - AWSALBCORS=WY2W00/ACY0rSoyi12UejOzRNiod1NOzPuYHvz3O59r4xQRm2gzBnsjl5SuNYIDndXgFmz+7hQqFqDywSDCWbibaa5hkBnz34IXZMEbapGfQxNNc3OWIfZUkDxCy;
+        Expires=Tue, 26 Mar 2024 00:05:15 GMT; Path=/; SameSite=None; Secure
+      - AWSALB=KDOU4HwgBkJpYoUV5oxEmZmMTUxWUxS/UCxX7aYICsSWHgnAxfZUBE/gP03wWGRpyTpFVqyQ5u/RzsCPmwX7ZbRFLHjy48iYoWPdGvylQAZd34I37Z1wF6Ve7xr4;
+        Expires=Tue, 26 Mar 2024 00:05:15 GMT; Path=/, AWSALBCORS=KDOU4HwgBkJpYoUV5oxEmZmMTUxWUxS/UCxX7aYICsSWHgnAxfZUBE/gP03wWGRpyTpFVqyQ5u/RzsCPmwX7ZbRFLHjy48iYoWPdGvylQAZd34I37Z1wF6Ve7xr4;
+        Expires=Tue, 26 Mar 2024 00:05:15 GMT; Path=/; SameSite=None; Secure, JSESSIONIDCORS=node0qlid8ewv0e61dlebo26hij8n6466304.node0;
+        Path=/; Secure; HttpOnly; SameSite=Lax
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains; preload
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 204
+      message: No Content
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '0'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.7 Darwin/23.3.0
+    method: DELETE
+    uri: https://config.private.zscaler.com/mgmtconfig/v1/admin/customers/216196257331281920/segmentGroup/216196257331372676
+  response:
+    body:
+      string: ''
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; upgrade-insecure-requests
+      Date:
+      - Tue, 19 Mar 2024 00:05:17 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=vZ4yLL3dbrbQWsLQnMAbCIdi8HaBqhkLBBySFBC3hA8wtRr6UnlC/XsIDDzjhhDHLtpxkq8fxqvPj8KbV5FlwPC5QW5muaD4YZcEmSxDsczBUKX/LkDq+lC5wkwe;
+        Expires=Tue, 26 Mar 2024 00:05:16 GMT; Path=/
+      - AWSALBCORS=vZ4yLL3dbrbQWsLQnMAbCIdi8HaBqhkLBBySFBC3hA8wtRr6UnlC/XsIDDzjhhDHLtpxkq8fxqvPj8KbV5FlwPC5QW5muaD4YZcEmSxDsczBUKX/LkDq+lC5wkwe;
+        Expires=Tue, 26 Mar 2024 00:05:16 GMT; Path=/; SameSite=None; Secure
+      - AWSALB=Hhp51Cjvp9DS2ZFg1mHjUOsi91Ykqfp1EFNEsP8pW2r08rhDif4DPbsXXz3faoILvbtmDrZpBomD/EoZaOrfFAiM6ABkOZ944tBN32M3fy2KEUAzJx6QajupGYRK;
+        Expires=Tue, 26 Mar 2024 00:05:17 GMT; Path=/, AWSALBCORS=Hhp51Cjvp9DS2ZFg1mHjUOsi91Ykqfp1EFNEsP8pW2r08rhDif4DPbsXXz3faoILvbtmDrZpBomD/EoZaOrfFAiM6ABkOZ944tBN32M3fy2KEUAzJx6QajupGYRK;
+        Expires=Tue, 26 Mar 2024 00:05:17 GMT; Path=/; SameSite=None; Secure, JSESSIONIDCORS=node0kt2jdtb817bscd3nzpn4l1w6467562.node0;
+        Path=/; Secure; HttpOnly; SameSite=Lax
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains; preload
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 204
+      message: No Content
+version: 1

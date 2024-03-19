@@ -212,7 +212,7 @@ class ZPAClientHelper(ZPAClient):
             try:
                 # If the token is None or expired, fetch a new token
                 if is_token_expired(self.access_token):
-                    self.logger.warning("The provided or fetched token was already expired. Refreshing...")
+                    logger.warning("The provided or fetched token was already expired. Refreshing...")
                     self.refreshToken()
                 resp = requests.request(method, url, json=json, headers=headers_with_user_agent, timeout=self.timeout)
                 dump_response(
