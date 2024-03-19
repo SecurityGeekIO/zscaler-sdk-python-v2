@@ -212,17 +212,11 @@ class ZPAClientHelper(ZPAClient):
             try:
                 # If the token is None or expired, fetch a new token
                 if is_token_expired(self.access_token):
-                    logger.warning("The provided or fetched token was already expired. Refreshing...")
+                    self.logger.warning("The provided or fetched token was already expired. Refreshing...")
                     self.refreshToken()
                 resp = requests.request(method, url, json=json, headers=headers_with_user_agent, timeout=self.timeout)
                 dump_response(
-                    logger=logger,
-                    url=url,
-                    params=params,
-                    method=method,
-                    resp=resp,
-                    request_uuid=request_uuid,
-                    start_time=start_time,
+                    logger=logger, url=url, params=params, method=method, resp=resp, request_uuid=request_uuid, start_time=start_time
                 )
                 if resp.status_code == 429:  # HTTP Status code 429 indicates "Too Many Requests"
                     sleep_time = int(
@@ -342,7 +336,7 @@ class ZPAClientHelper(ZPAClient):
             url_params = f"?page={page}&pagesize={data_per_page}"
             if params:
                 url_params += "&" + "&".join(f"{key}={value}" for key, value in params.items())
-            
+
             required_url = f"{path}{url_params}"
             should_wait, delay = self.rate_limiter.wait("GET")
             if should_wait:

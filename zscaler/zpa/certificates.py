@@ -162,8 +162,7 @@ class CertificatesAPI:
             >>> ba_certificate = zpa.certificates.get_certificate('99999')
 
         """
-        response = self.rest.delete(f"certificate/{certificate_id}")
-        return response.status_code
+        return self._get(f"certificate/{certificate_id}")
 
     def get_enrolment(self, certificate_id: str) -> Box:
         """
@@ -209,3 +208,4 @@ class CertificatesAPI:
         """
         list, _ = self.rest.get_paginated_data(path="/enrollmentCert", data_key_name="list", **kwargs, api_version="v2")
         return list
+

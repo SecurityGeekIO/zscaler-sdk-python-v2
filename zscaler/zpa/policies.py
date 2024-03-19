@@ -19,6 +19,7 @@ from box import Box, BoxList
 from requests import Response
 from zscaler.utils import add_id_groups, convert_keys, snake_to_camel
 from zscaler.zpa.client import ZPAClient
+import functools
 
 
 class PolicySetsAPI:
@@ -206,7 +207,9 @@ class PolicySetsAPI:
                 f"Incorrect policy type provided: {policy_type}\n "
                 f"Policy type must be 'access', 'timeout', 'client_forwarding' or 'siem'."
             )
-        list, _ = self.rest.get_paginated_data(path=f"policySet/rules/policyType/{mapped_policy_type}", data_key_name="list", **kwargs)
+        list, _ = self.rest.get_paginated_data(
+            path=f"policySet/rules/policyType/{mapped_policy_type}", data_key_name="list", **kwargs
+        )
         return list
 
     def delete_rule(self, policy_type: str, rule_id: str) -> int:
@@ -381,7 +384,6 @@ class PolicySetsAPI:
             # Handle error response
             raise Exception(f"API call failed with status {status_code}: {response.json()}")
         return response
-
 
     def add_client_forwarding_rule(self, name: str, action: str, **kwargs) -> Box:
         """
@@ -715,7 +717,6 @@ class PolicySetsAPI:
         if not isinstance(resp, Response):
             return self.get_rule(policy_type, rule_id)
 
-
     def reorder_rule(self, policy_type: str, rule_id: str, rule_order: str) -> Box:
         """
         Change the order of an existing policy rule.
@@ -751,16 +752,30 @@ class PolicySetsAPI:
         if resp == 204:
             return self.get_rule(policy_type, rule_id)
 
-    # Implement Bulk Reorder capability to resource: resource_zpa_policy_access_rule_reorder. It must be backwards compatible with the single reorder approach
-    def bulkReorderRule(self, policy_type: str, rule_id: str, rule_order: str) -> Box:
+    def sort_key(self, rules_orders: dict[str, int]):
+        def key(a, b):
+            if a.id in rules_orders and b.id in rules_orders:
+                if rules_orders[a.id] < rules_orders[b.id]:
+                    return -1
+                return 1
+            if a.id in rules_orders:
+                return -1
+            elif b.id in rules_orders:
+                return 1
+
+            if a.rule_order < b.rule_order:
+                return -1
+            return 1
+
+        return key
+
+    def bulk_reorder_rules(self, policy_type: str, rules_orders: dict[str, int]) -> Box:
         """
-        Change the order of an existing policy rule.
+        Bulk change the order of policy rules.
 
         Args:
-            rule_id (str):
-                The unique id of the rule that will be reordered.
-            rule_order (str):
-                The new order for the rule.
+            rules_orders (dict(rule_id=>order)):
+                A map of rule IDs and orders
             policy_type (str):
                 The policy type. Accepted values are:
 
@@ -768,21 +783,21 @@ class PolicySetsAPI:
                  |  ``timeout``
                  |  ``client_forwarding``
 
-        Returns:
-             :obj:`Box`: The updated policy rule resource record.
-
-        Examples:
-            Updates the order for an existing policy rule:
-
-            >>> zpa.policies.reorder_rule(policy_type='access',
-            ...    rule_id='88888',
-            ...    rule_order='2')
-
         """
         # Get policy id for specified policy type
-        policy_id = self.get_policy(policy_type).id
+        policy_set = self.get_policy(policy_type).id
+        all = self.list_rules(policy_type)
+        all.sort(key=functools.cmp_to_key(self.sort_key(rules_orders=rules_orders)))
+        orderedRules = [r.id for r in all]
 
-        resp = self._put(f"policySet/{policy_id}/rule/{rule_id}/reorder/{rule_order}").status_code
+        # Construct the URL pathx
+        path = f"policySet/{policy_set}/reorder"
 
-        if resp == 204:
-            return self.get_rule(policy_type, rule_id)
+        # Create a new PUT request
+        resp = self.rest.put(path, json=orderedRules)
+        if resp.status_code <= 299:
+            # Return the updated rule information
+            return None
+        else:
+            # Handle the case when the request fails (modify as needed)
+            return resp
