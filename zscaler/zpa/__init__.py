@@ -13,6 +13,7 @@ from zscaler.errors.http_error import ZscalerAPIError, HTTPError
 from zscaler.exceptions.exceptions import ZscalerAPIException, HTTPException
 from zscaler.cache.zscaler_cache import ZscalerCache
 from zscaler.constants import ZPA_BASE_URLS
+from zscaler.logger import setup_logging
 from zscaler.ratelimiter.ratelimiter import RateLimiter
 from zscaler.user_agent import UserAgent
 from zscaler.utils import (
@@ -50,8 +51,8 @@ from zscaler.zpa.service_edges import ServiceEdgesAPI
 from zscaler.zpa.trusted_networks import TrustedNetworksAPI
 
 # Setup the logger
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+setup_logging(logger_name="zscaler-sdk-python")
+logger = logging.getLogger("zscaler-sdk-python")
 
 
 class ZPAClientHelper(ZPAClient):
@@ -342,7 +343,7 @@ class ZPAClientHelper(ZPAClient):
             url_params = f"?page={page}&pagesize={data_per_page}"
             if params:
                 url_params += "&" + "&".join(f"{key}={value}" for key, value in params.items())
-            
+
             required_url = f"{path}{url_params}"
             should_wait, delay = self.rate_limiter.wait("GET")
             if should_wait:
