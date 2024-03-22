@@ -245,7 +245,7 @@ class ZIAClientHelper(ZIAClient):
             try:
                 # If the token is None or expired, fetch a new token
                 if self.is_session_expired():
-                    self.logger.warning("The provided sesion expired. Refreshing...")
+                    logger.warning("The provided sesion expired. Refreshing...")
                     self.authenticate()
                 resp = requests.request(
                     method=method,
