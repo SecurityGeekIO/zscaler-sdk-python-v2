@@ -21,6 +21,7 @@ import random
 import re
 import time
 from typing import Any, Dict, List, Optional
+from urllib.parse import urlencode
 
 from box import Box, BoxList
 from requests import Response
@@ -410,10 +411,18 @@ def dump_request(logger, url: str, method: str, json, params, headers, request_u
         "uuid": str(request_uuid),
         "request_headers": jsonp.dumps(request_headers_filtered),
     }
-
+    log_lines = []
+    request_body = ""
     if body:
-        request_data["request_body"] = jsonp.dumps(json)
-    logger.info("Request details: %s", jsonp.dumps(request_data))
+        request_body = jsonp.dumps(json)
+    log_lines.append(f"\n---[ ZSCALER SDK REQUEST | ID:{request_uuid} ]-------------------------------")
+    log_lines.append(f"{method} {url}")
+    for key,value in  headers.items():
+        log_lines.append(f"{key}: {value}")
+    if body and request_body!="" and request_body != "null":
+        log_lines.append(f"\n{request_body}")
+    log_lines.append("--------------------------------------------------------------------")
+    logger.info('\n'.join(log_lines))
 
 
 def dump_response(logger, url: str, method: str, resp, params, request_uuid: str, start_time, from_cache: bool = None):
@@ -424,17 +433,20 @@ def dump_response(logger, url: str, method: str, resp, params, request_uuid: str
     duration_ms = duration_seconds * 1000
     # Convert the headers to a regular dictionary
     response_headers_dict = dict(resp.headers)
-    # Log the response details after receiving the response
-    response_data = {
-        "url": url,
-        "method": method,
-        "response_body": resp.text,
-        "params": jsonp.dumps(params),
-        "duration": f"{duration_ms:.2f}ms",
-        "response_headers": jsonp.dumps(response_headers_dict),
-        "uuid": str(request_uuid),
-    }
+    full_url = url + '?' + urlencode(params)
+    log_lines = []
+    response_body = ""
+    if resp.text:
+        response_body = resp.text
+    
     if from_cache:
-        logger.info("Response details from cache: %s", jsonp.dumps(response_data))
+        log_lines.append(f"\n---[ ZSCALER SDK RESPONSE | ID:{request_uuid} | FROM CACHE ]-------------------------------")
     else:
-        logger.info("Response details: %s", jsonp.dumps(response_data))
+        log_lines.append(f"\n---[ ZSCALER SDK RESPONSE | ID:{request_uuid} ]-------------------------------")
+    log_lines.append(f"{method} {full_url}")
+    for key,value in  response_headers_dict.items():
+        log_lines.append(f"{key}: {value}")
+    if  response_body and response_body!="" and response_body != "null":
+        log_lines.append(f"\n{response_body}")
+    log_lines.append("--------------------------------------------------------------------")
+    logger.info('\n'.join(log_lines))
