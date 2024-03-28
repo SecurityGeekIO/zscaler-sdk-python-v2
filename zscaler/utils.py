@@ -433,16 +433,18 @@ def dump_response(logger, url: str, method: str, resp, params, request_uuid: str
     duration_ms = duration_seconds * 1000
     # Convert the headers to a regular dictionary
     response_headers_dict = dict(resp.headers)
-    full_url = url + '?' + urlencode(params)
+    full_url = url
+    if params:
+        full_url+= '?' + urlencode(params)
     log_lines = []
     response_body = ""
     if resp.text:
         response_body = resp.text
     
     if from_cache:
-        log_lines.append(f"\n---[ ZSCALER SDK RESPONSE | ID:{request_uuid} | FROM CACHE ]-------------------------------")
+        log_lines.append(f"\n---[ ZSCALER SDK RESPONSE | ID:{request_uuid} | FROM CACHE | DURATION:{duration_ms}ms ]-------------------------------")
     else:
-        log_lines.append(f"\n---[ ZSCALER SDK RESPONSE | ID:{request_uuid} ]-------------------------------")
+        log_lines.append(f"\n---[ ZSCALER SDK RESPONSE | ID:{request_uuid} | DURATION:{duration_ms}ms ]-------------------------------")
     log_lines.append(f"{method} {full_url}")
     for key,value in  response_headers_dict.items():
         log_lines.append(f"{key}: {value}")
