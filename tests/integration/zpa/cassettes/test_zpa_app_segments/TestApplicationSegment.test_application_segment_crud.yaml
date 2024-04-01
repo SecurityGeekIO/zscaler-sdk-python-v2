@@ -1,0 +1,507 @@
+interactions:
+- request:
+    body: client_id=dummy_client_id&client_secret=dummy_client_secret
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '151'
+      Content-Type:
+      - application/x-www-form-urlencoded
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.8 Darwin/23.4.0
+    method: POST
+    uri: https://config.private.zscaler.com/signin
+  response:
+    body:
+      string: "{\n  \"token_type\" : \"Bearer\",\n  \"access_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTIwMzc4Mzd9.-KKVfYZLLJOjZKagcFZ16GERyFFce83ZX5AzDu98Xgo\",\n
+        \ \"expires_in\" : \"3600\"\n}"
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 01 Apr 2024 06:03:57 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=Afe/8GMXHEhC2chlNoa2xtdvqWBBxnKKYprlZuUivHsdKk26ElU1oHtNOPKigzGW8v1fkkIeLdKEQohffRF/9bVQepmjNoMPQYRPqBGXGtEtV6FwQslwgfhUDWyi;
+        Expires=Mon, 08 Apr 2024 06:03:57 GMT; Path=/
+      - AWSALBCORS=Afe/8GMXHEhC2chlNoa2xtdvqWBBxnKKYprlZuUivHsdKk26ElU1oHtNOPKigzGW8v1fkkIeLdKEQohffRF/9bVQepmjNoMPQYRPqBGXGtEtV6FwQslwgfhUDWyi;
+        Expires=Mon, 08 Apr 2024 06:03:57 GMT; Path=/; SameSite=None; Secure
+      Strict-Transport-Security:
+      - max-age=63072000 ; includeSubDomains ; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"name": "itest app group", "enabled": true}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '44'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.8 Darwin/23.4.0
+    method: POST
+    uri: https://config.private.zscaler.com/mgmtconfig/v1/admin/customers/216199618143191040/segmentGroup
+  response:
+    body:
+      string: '{"id":"216199618143334335","modifiedTime":"1711951437","creationTime":"1711951437","modifiedBy":"216199618143191053","name":"itest
+        app group","enabled":true,"configSpace":"DEFAULT","tcpKeepAliveEnabled":"0"}'
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; upgrade-insecure-requests
+      Content-Type:
+      - application/json;charset=utf-8
+      Date:
+      - Mon, 01 Apr 2024 06:03:57 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=+EzJrWgxVJr2b26JayXwRkeSZ7uiDPcRfP9+r29t82EhH9wDlZ1eBJsfJ1FcSvPm3Z9vMa8wJychM+JffIS5WsI3ap8KblTkwi0gUzDKAzrWRZ8H+JrrIKQbVhho;
+        Expires=Mon, 08 Apr 2024 06:03:57 GMT; Path=/
+      - AWSALBCORS=+EzJrWgxVJr2b26JayXwRkeSZ7uiDPcRfP9+r29t82EhH9wDlZ1eBJsfJ1FcSvPm3Z9vMa8wJychM+JffIS5WsI3ap8KblTkwi0gUzDKAzrWRZ8H+JrrIKQbVhho;
+        Expires=Mon, 08 Apr 2024 06:03:57 GMT; Path=/; SameSite=None; Secure
+      - AWSALB=VTBLFFLvx5IkVVvZzbdb3F3ca0x8jrdaLjsolkZl6RdoA3fM5Gm0zj3emaWJwS5Z7cHvP/kBpgXckbaMIpgtqb+09qBnNKrBa/rkxNZwlzdCM3KkgtmcKXU26Wiq;
+        Expires=Mon, 08 Apr 2024 06:03:57 GMT; Path=/, AWSALBCORS=VTBLFFLvx5IkVVvZzbdb3F3ca0x8jrdaLjsolkZl6RdoA3fM5Gm0zj3emaWJwS5Z7cHvP/kBpgXckbaMIpgtqb+09qBnNKrBa/rkxNZwlzdCM3KkgtmcKXU26Wiq;
+        Expires=Mon, 08 Apr 2024 06:03:57 GMT; Path=/; SameSite=None; Secure, JSESSIONIDCORS=node0cma2puhn12ny1us60yocr72nd1924630.node0;
+        Path=/; Secure; HttpOnly; SameSite=Lax
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 201
+      message: Created
+- request:
+    body: '{"name": "itest-appsegment", "domainNames": ["crm.example.com"], "tcpPortRanges":
+      ["80", "80"], "udpPortRanges": null, "segmentGroupId": "216199618143334335",
+      "serverGroups": []}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '178'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.8 Darwin/23.4.0
+    method: POST
+    uri: https://config.private.zscaler.com/mgmtconfig/v1/admin/customers/216199618143191040/application
+  response:
+    body:
+      string: '{"id":"216199618143334336","domainNames":["crm.example.com"],"name":"itest-appsegment","tcpPortRanges":["80","80"],"doubleEncrypt":false,"configSpace":"DEFAULT","bypassType":"NEVER","healthCheckType":"DEFAULT","icmpAccessType":"NONE","isCnameEnabled":true,"ipAnchored":false,"bypassOnReauth":false,"inspectTrafficWithZia":false,"tcpKeepAlive":"0","matchStyle":"EXCLUSIVE","isIncompleteDRConfig":false,"adpEnabled":false,"autoAppProtectEnabled":false,"fqdnDnsCheck":false,"segmentGroupId":"216199618143334335"}'
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; upgrade-insecure-requests
+      Content-Type:
+      - application/json;charset=utf-8
+      Date:
+      - Mon, 01 Apr 2024 06:03:58 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=m+b4A+sbDAveEvWIo5gaKhbxMzrYVxrrZfxDDuv9NmszAdN02MzjzzXeBVXMTjTq69LSwObJn3i5eZ8F3A5xKwlpdkUmFnzS6D6fDmp5TGrq6D+4+IwX7fR3Jzwj;
+        Expires=Mon, 08 Apr 2024 06:03:58 GMT; Path=/
+      - AWSALBCORS=m+b4A+sbDAveEvWIo5gaKhbxMzrYVxrrZfxDDuv9NmszAdN02MzjzzXeBVXMTjTq69LSwObJn3i5eZ8F3A5xKwlpdkUmFnzS6D6fDmp5TGrq6D+4+IwX7fR3Jzwj;
+        Expires=Mon, 08 Apr 2024 06:03:58 GMT; Path=/; SameSite=None; Secure
+      - AWSALB=PKxL5lQgJL6YDIoe/ODLHMT1hfawV0senE9u8AMYXsY3vatZJq294h+xATmuGdXkvWLl77XQWhPjaMA5zZqTRGUVLg24DW1orYA8Y3GK0z1fyf8bLsDzALWlX8ZA;
+        Expires=Mon, 08 Apr 2024 06:03:58 GMT; Path=/, AWSALBCORS=PKxL5lQgJL6YDIoe/ODLHMT1hfawV0senE9u8AMYXsY3vatZJq294h+xATmuGdXkvWLl77XQWhPjaMA5zZqTRGUVLg24DW1orYA8Y3GK0z1fyf8bLsDzALWlX8ZA;
+        Expires=Mon, 08 Apr 2024 06:03:58 GMT; Path=/; SameSite=None; Secure, JSESSIONIDCORS=node0103i8wcrkor3ny15o0xb8e6ti1925567.node0;
+        Path=/; Secure; HttpOnly; SameSite=Lax
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 201
+      message: Created
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.8 Darwin/23.4.0
+    method: GET
+    uri: https://config.private.zscaler.com/mgmtconfig/v1/admin/customers/216199618143191040/application/216199618143334336
+  response:
+    body:
+      string: '{"modifiedTime":"1711951438","creationTime":"1711951438","modifiedBy":"216199618143191053","id":"216199618143334336","domainNames":["crm.example.com"],"name":"itest-appsegment","enabled":true,"passiveHealthEnabled":true,"tcpPortRanges":["80","80"],"tcpPortRange":[{"from":"80","to":"80"}],"doubleEncrypt":false,"configSpace":"DEFAULT","bypassType":"NEVER","healthCheckType":"DEFAULT","icmpAccessType":"NONE","isCnameEnabled":true,"ipAnchored":false,"bypassOnReauth":false,"inspectTrafficWithZia":false,"healthReporting":"ON_ACCESS","useInDrMode":false,"tcpKeepAlive":"0","selectConnectorCloseToApp":false,"matchStyle":"EXCLUSIVE","isIncompleteDRConfig":false,"adpEnabled":false,"autoAppProtectEnabled":false,"fqdnDnsCheck":false,"microtenantName":"Default","segmentGroupId":"216199618143334335","segmentGroupName":"itest
+        app group"}'
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; upgrade-insecure-requests
+      Content-Type:
+      - application/json;charset=utf-8
+      Date:
+      - Mon, 01 Apr 2024 06:03:58 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=W0tN8yLKqWC/0WAco/bgNmGHvVp9bYl4EfqEgQR9AmqimAFo5ZbeT44toqw6F42sK5iP8VfuRyIqfVLv8wjlIvGffmdlfbHFrp+P+1QqzqBjKkzZW3l1BepQ8pvJ;
+        Expires=Mon, 08 Apr 2024 06:03:58 GMT; Path=/
+      - AWSALBCORS=W0tN8yLKqWC/0WAco/bgNmGHvVp9bYl4EfqEgQR9AmqimAFo5ZbeT44toqw6F42sK5iP8VfuRyIqfVLv8wjlIvGffmdlfbHFrp+P+1QqzqBjKkzZW3l1BepQ8pvJ;
+        Expires=Mon, 08 Apr 2024 06:03:58 GMT; Path=/; SameSite=None; Secure
+      - AWSALB=vbIDsxGgs1SkQx6MiRCc38knwm7DHNwMee+PBmhypQgK0HZs4gV5wE2W3PoIRCBYjHwCmGNJ3RCmvrWjB6wyBZh95u05oEBK8M5SgzvK/XNydQD1K2y232dv19C9;
+        Expires=Mon, 08 Apr 2024 06:03:58 GMT; Path=/, AWSALBCORS=vbIDsxGgs1SkQx6MiRCc38knwm7DHNwMee+PBmhypQgK0HZs4gV5wE2W3PoIRCBYjHwCmGNJ3RCmvrWjB6wyBZh95u05oEBK8M5SgzvK/XNydQD1K2y232dv19C9;
+        Expires=Mon, 08 Apr 2024 06:03:58 GMT; Path=/; SameSite=None; Secure, JSESSIONIDCORS=node0h2trvfx3tiddzw4qesrboh8r1925077.node0;
+        Path=/; Secure; HttpOnly; SameSite=Lax
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.8 Darwin/23.4.0
+    method: GET
+    uri: https://config.private.zscaler.com/mgmtconfig/v1/admin/customers/216199618143191040/application?page=1&pagesize=500
+  response:
+    body:
+      string: '{"totalPages":"1","totalCount":"0","list":[{"modifiedTime":"1711634027","creationTime":"1710801310","modifiedBy":"216199618143191053","id":"216199618143331388","domainNames":["server1.acme.com"],"name":"Example","description":"Example","serverGroups":[{"id":"216199618143326742","modifiedTime":"1709857837","creationTime":"1709857357","modifiedBy":"216199618143191041","name":"Microtenant0","enabled":true,"description":"Microtenant0","configSpace":"DEFAULT","dynamicDiscovery":true}],"enabled":true,"passiveHealthEnabled":true,"tcpPortRanges":["8080","8080"],"tcpPortRange":[{"from":"8080","to":"8080"}],"doubleEncrypt":false,"configSpace":"DEFAULT","bypassType":"NEVER","healthCheckType":"DEFAULT","icmpAccessType":"NONE","isCnameEnabled":true,"ipAnchored":false,"bypassOnReauth":false,"inspectTrafficWithZia":false,"healthReporting":"ON_ACCESS","useInDrMode":false,"tcpKeepAlive":"0","selectConnectorCloseToApp":false,"matchStyle":"EXCLUSIVE","isIncompleteDRConfig":false,"adpEnabled":false,"autoAppProtectEnabled":false,"fqdnDnsCheck":false,"microtenantName":"Default"},{"modifiedTime":"1711951438","creationTime":"1711951438","modifiedBy":"216199618143191053","id":"216199618143334336","domainNames":["crm.example.com"],"name":"itest-appsegment","enabled":true,"passiveHealthEnabled":true,"tcpPortRanges":["80","80"],"tcpPortRange":[{"from":"80","to":"80"}],"doubleEncrypt":false,"configSpace":"DEFAULT","bypassType":"NEVER","healthCheckType":"DEFAULT","icmpAccessType":"NONE","isCnameEnabled":true,"ipAnchored":false,"bypassOnReauth":false,"inspectTrafficWithZia":false,"healthReporting":"ON_ACCESS","useInDrMode":false,"tcpKeepAlive":"0","selectConnectorCloseToApp":false,"matchStyle":"EXCLUSIVE","isIncompleteDRConfig":false,"adpEnabled":false,"autoAppProtectEnabled":false,"fqdnDnsCheck":false,"microtenantName":"Default","segmentGroupId":"216199618143334335","segmentGroupName":"itest
+        app group"}]}'
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; upgrade-insecure-requests
+      Content-Type:
+      - application/json;charset=utf-8
+      Date:
+      - Mon, 01 Apr 2024 06:03:58 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=gY00qzh9rd9kTKvJs25vlJ1gYsKWX/4LL4oJ3dhJxjTQd2b+WocS4AmveVPZs1KEtb+SRww3v36XGpwtG0ZIJA+2PsQP5bLk4wBRNoFwb8/hgVHIfRmHBNJOxkDj;
+        Expires=Mon, 08 Apr 2024 06:03:58 GMT; Path=/
+      - AWSALBCORS=gY00qzh9rd9kTKvJs25vlJ1gYsKWX/4LL4oJ3dhJxjTQd2b+WocS4AmveVPZs1KEtb+SRww3v36XGpwtG0ZIJA+2PsQP5bLk4wBRNoFwb8/hgVHIfRmHBNJOxkDj;
+        Expires=Mon, 08 Apr 2024 06:03:58 GMT; Path=/; SameSite=None; Secure
+      - AWSALB=WEnXqpfCCOb3KN0eUTTzbmSc8K94CGgc6ZS0g+eXraZnM1uEAfmzBsLCaPOnxAV4wSjrpTFhqNv+PzbkcfUP6znYz45djL8QNhtHrtrRnfFI7kLUDK0WcniS9Ngj;
+        Expires=Mon, 08 Apr 2024 06:03:58 GMT; Path=/, AWSALBCORS=WEnXqpfCCOb3KN0eUTTzbmSc8K94CGgc6ZS0g+eXraZnM1uEAfmzBsLCaPOnxAV4wSjrpTFhqNv+PzbkcfUP6znYz45djL8QNhtHrtrRnfFI7kLUDK0WcniS9Ngj;
+        Expires=Mon, 08 Apr 2024 06:03:58 GMT; Path=/; SameSite=None; Secure, JSESSIONIDCORS=node016v4k7q4bnnunqd0fxaq60ou31925078.node0;
+        Path=/; Secure; HttpOnly; SameSite=Lax
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.8 Darwin/23.4.0
+    method: GET
+    uri: https://config.private.zscaler.com/mgmtconfig/v1/admin/customers/216199618143191040/application?page=1&pagesize=500
+  response:
+    body:
+      string: '{"totalPages":"1","totalCount":"0","list":[{"modifiedTime":"1711634027","creationTime":"1710801310","modifiedBy":"216199618143191053","id":"216199618143331388","domainNames":["server1.acme.com"],"name":"Example","description":"Example","serverGroups":[{"id":"216199618143326742","modifiedTime":"1709857837","creationTime":"1709857357","modifiedBy":"216199618143191041","name":"Microtenant0","enabled":true,"description":"Microtenant0","configSpace":"DEFAULT","dynamicDiscovery":true}],"enabled":true,"passiveHealthEnabled":true,"tcpPortRanges":["8080","8080"],"tcpPortRange":[{"from":"8080","to":"8080"}],"doubleEncrypt":false,"configSpace":"DEFAULT","bypassType":"NEVER","healthCheckType":"DEFAULT","icmpAccessType":"NONE","isCnameEnabled":true,"ipAnchored":false,"bypassOnReauth":false,"inspectTrafficWithZia":false,"healthReporting":"ON_ACCESS","useInDrMode":false,"tcpKeepAlive":"0","selectConnectorCloseToApp":false,"matchStyle":"EXCLUSIVE","isIncompleteDRConfig":false,"adpEnabled":false,"autoAppProtectEnabled":false,"fqdnDnsCheck":false,"microtenantName":"Default"},{"modifiedTime":"1711951438","creationTime":"1711951438","modifiedBy":"216199618143191053","id":"216199618143334336","domainNames":["crm.example.com"],"name":"itest-appsegment","enabled":true,"passiveHealthEnabled":true,"tcpPortRanges":["80","80"],"tcpPortRange":[{"from":"80","to":"80"}],"doubleEncrypt":false,"configSpace":"DEFAULT","bypassType":"NEVER","healthCheckType":"DEFAULT","icmpAccessType":"NONE","isCnameEnabled":true,"ipAnchored":false,"bypassOnReauth":false,"inspectTrafficWithZia":false,"healthReporting":"ON_ACCESS","useInDrMode":false,"tcpKeepAlive":"0","selectConnectorCloseToApp":false,"matchStyle":"EXCLUSIVE","isIncompleteDRConfig":false,"adpEnabled":false,"autoAppProtectEnabled":false,"fqdnDnsCheck":false,"microtenantName":"Default","segmentGroupId":"216199618143334335","segmentGroupName":"itest
+        app group"}]}'
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; upgrade-insecure-requests
+      Content-Type:
+      - application/json;charset=utf-8
+      Date:
+      - Mon, 01 Apr 2024 06:03:59 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=rB/OZZaNTh3G6QJ6RXzuJ9SRhCf3+o/9zt2AHxIFPIh8NKGFMip8NWmjkHFMLS68Ghz+l8ViX68+50HjOaVwV/nV2eE3LBqA5JDtZy2oRDWTcs4/O+dv6MthASEW;
+        Expires=Mon, 08 Apr 2024 06:03:59 GMT; Path=/
+      - AWSALBCORS=rB/OZZaNTh3G6QJ6RXzuJ9SRhCf3+o/9zt2AHxIFPIh8NKGFMip8NWmjkHFMLS68Ghz+l8ViX68+50HjOaVwV/nV2eE3LBqA5JDtZy2oRDWTcs4/O+dv6MthASEW;
+        Expires=Mon, 08 Apr 2024 06:03:59 GMT; Path=/; SameSite=None; Secure
+      - AWSALB=RJWLelPwFH/5enplJOAbdip6uVvPFMq0b6B3iVZyfWAbaL9Bo3+jKAfOQyiq25J4DXaXbGl15cYM1HkrHQrZdkljAxQv2LXd3z2sxZYXylrpxrDDxqYgx7k7qKr3;
+        Expires=Mon, 08 Apr 2024 06:03:59 GMT; Path=/, AWSALBCORS=RJWLelPwFH/5enplJOAbdip6uVvPFMq0b6B3iVZyfWAbaL9Bo3+jKAfOQyiq25J4DXaXbGl15cYM1HkrHQrZdkljAxQv2LXd3z2sxZYXylrpxrDDxqYgx7k7qKr3;
+        Expires=Mon, 08 Apr 2024 06:03:59 GMT; Path=/; SameSite=None; Secure, JSESSIONIDCORS=node01py7w8euev7igsx54kze6djsq1927396.node0;
+        Path=/; Secure; HttpOnly; SameSite=Lax
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '0'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.8 Darwin/23.4.0
+    method: DELETE
+    uri: https://config.private.zscaler.com/mgmtconfig/v1/admin/customers/216199618143191040/application/216199618143334336?forceDelete=true
+  response:
+    body:
+      string: ''
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; upgrade-insecure-requests
+      Date:
+      - Mon, 01 Apr 2024 06:03:59 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=dX9dzXuvLud2+MstU623gB6cln5si2XPcrFXm2Jt7LdYz2uKvEJB/a70FW6YMVc2KIuUIKpmdc5nIGsMvlnF8rtCAdYvZ56mf9Z11tT0Bl2XMyOr3p8R83M+2vLW;
+        Expires=Mon, 08 Apr 2024 06:03:59 GMT; Path=/
+      - AWSALBCORS=dX9dzXuvLud2+MstU623gB6cln5si2XPcrFXm2Jt7LdYz2uKvEJB/a70FW6YMVc2KIuUIKpmdc5nIGsMvlnF8rtCAdYvZ56mf9Z11tT0Bl2XMyOr3p8R83M+2vLW;
+        Expires=Mon, 08 Apr 2024 06:03:59 GMT; Path=/; SameSite=None; Secure
+      - AWSALB=Ln89lxj3b+N7V8PXmEp+2Zv4kndro9ipr3aYWCfcTFWkiP3FtIrenk/oicZJ59TRrFjikRuwYW3k5Lc+adNC2QElTIb4tVFKCICsufx2bu/aMyoDNhDiw65RVw62;
+        Expires=Mon, 08 Apr 2024 06:03:59 GMT; Path=/, AWSALBCORS=Ln89lxj3b+N7V8PXmEp+2Zv4kndro9ipr3aYWCfcTFWkiP3FtIrenk/oicZJ59TRrFjikRuwYW3k5Lc+adNC2QElTIb4tVFKCICsufx2bu/aMyoDNhDiw65RVw62;
+        Expires=Mon, 08 Apr 2024 06:03:59 GMT; Path=/; SameSite=None; Secure, JSESSIONIDCORS=node011j1g0nlnmn6510zemnzngpjdj1927397.node0;
+        Path=/; Secure; HttpOnly; SameSite=Lax
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains; preload
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 204
+      message: No Content
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '0'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.8 Darwin/23.4.0
+    method: DELETE
+    uri: https://config.private.zscaler.com/mgmtconfig/v1/admin/customers/216199618143191040/segmentGroup/216199618143334335
+  response:
+    body:
+      string: ''
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; upgrade-insecure-requests
+      Date:
+      - Mon, 01 Apr 2024 06:04:00 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=MEu1nwgBA5uQUuJgRK7E6wbSrxg3yKWT3cTp+IhUAjV2uxS4AxIDJ7bXBi+y3fgkdJzvUNAjKuQEqR+MG0i/lWeiKpym8G372gxQDe/w+qOlsv0prIAiN8wYXKjK;
+        Expires=Mon, 08 Apr 2024 06:03:59 GMT; Path=/
+      - AWSALBCORS=MEu1nwgBA5uQUuJgRK7E6wbSrxg3yKWT3cTp+IhUAjV2uxS4AxIDJ7bXBi+y3fgkdJzvUNAjKuQEqR+MG0i/lWeiKpym8G372gxQDe/w+qOlsv0prIAiN8wYXKjK;
+        Expires=Mon, 08 Apr 2024 06:03:59 GMT; Path=/; SameSite=None; Secure
+      - AWSALB=mN64Dykr+FaNiUXSrY4q+DoDkBqMEmYGzsGGiwvNqSJHwLj60FPUWfLoQ0o5FWZiRK8voBM9hOy6JgoalPCJfaxkujv+Xs8HxlKkyn9NHeVvXZOe+OBFgdaJS523;
+        Expires=Mon, 08 Apr 2024 06:03:59 GMT; Path=/, AWSALBCORS=mN64Dykr+FaNiUXSrY4q+DoDkBqMEmYGzsGGiwvNqSJHwLj60FPUWfLoQ0o5FWZiRK8voBM9hOy6JgoalPCJfaxkujv+Xs8HxlKkyn9NHeVvXZOe+OBFgdaJS523;
+        Expires=Mon, 08 Apr 2024 06:03:59 GMT; Path=/; SameSite=None; Secure, JSESSIONIDCORS=node017e5lag4rnlwnj0o7cm64xucy1927399.node0;
+        Path=/; Secure; HttpOnly; SameSite=Lax
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains; preload
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 204
+      message: No Content
+version: 1

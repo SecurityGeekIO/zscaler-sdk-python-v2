@@ -1,0 +1,270 @@
+interactions:
+- request:
+    body: client_id=dummy_client_id&client_secret=dummy_client_secret
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '151'
+      Content-Type:
+      - application/x-www-form-urlencoded
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.8 Darwin/23.4.0
+    method: POST
+    uri: https://config.private.zscaler.com/signin
+  response:
+    body:
+      string: "{\n  \"token_type\" : \"Bearer\",\n  \"access_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTIwMzc4MjZ9.6UMmim3bMGEyyCikO_WQavemqYlBed_K4OGn-5XNcsQ\",\n
+        \ \"expires_in\" : \"3600\"\n}"
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 01 Apr 2024 06:03:46 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=VKCC7jKG1RP2H+++kLTis/65sSLyt75V8cqevG5+HCsun9Wol4mb2uzMix5nLpQaJ8wdrbgCgJcHb45+XrTtXxOljQHxs1IwCUJYimpBw25jNLOxG3yDW2XPFyPM;
+        Expires=Mon, 08 Apr 2024 06:03:46 GMT; Path=/
+      - AWSALBCORS=VKCC7jKG1RP2H+++kLTis/65sSLyt75V8cqevG5+HCsun9Wol4mb2uzMix5nLpQaJ8wdrbgCgJcHb45+XrTtXxOljQHxs1IwCUJYimpBw25jNLOxG3yDW2XPFyPM;
+        Expires=Mon, 08 Apr 2024 06:03:46 GMT; Path=/; SameSite=None; Secure
+      Strict-Transport-Security:
+      - max-age=63072000 ; includeSubDomains ; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.8 Darwin/23.4.0
+    method: GET
+    uri: https://config.private.zscaler.com/mgmtconfig/v2/admin/customers/216199618143191040/posture?page=1&pagesize=500
+  response:
+    body:
+      string: '{"totalPages":"1","totalCount":"0","list":[{"id":"216199618143191254","modifiedTime":"1652337552","creationTime":"1652337552","modifiedBy":"72057594037928115","name":"CrowdStrike_ZPA_Pre-ZTA
+        (zscalertwo.net)","postureUdid":"e2538bb9-af91-49bc-98ea-e90bbe048203","applyToMachineTunnelEnabled":false,"crlCheckEnabled":false,"nonExportablePrivateKeyEnabled":false,"zscalerCloud":"zscalertwo"},{"id":"216199618143262947","modifiedTime":"1698038743","creationTime":"1698038743","modifiedBy":"72057594037928115","name":"CrowdStrike    ZPAZTA40
+        (zscalertwo.net)","postureUdid":"c760064b-54ff-4312-8374-07cfc61e09d7","applyToMachineTunnelEnabled":false,"crlCheckEnabled":false,"nonExportablePrivateKeyEnabled":false,"zscalerCloud":"zscalertwo"},{"id":"216199618143262950","modifiedTime":"1698038797","creationTime":"1698038797","modifiedBy":"72057594037928115","name":"CrowdStrike   ZPA   ZTA
+        40 (zscalertwo.net)","postureUdid":"891e5c07-fc46-4839-9bc3-afd6797418b5","applyToMachineTunnelEnabled":false,"crlCheckEnabled":false,"nonExportablePrivateKeyEnabled":false,"zscalerCloud":"zscalertwo"},{"id":"216199618143262946","modifiedTime":"1698038724","creationTime":"1698038724","modifiedBy":"72057594037928115","name":"CrowdStrike   ZPAZTA   40
+        (zscalertwo.net)","postureUdid":"0a7fbf10-71a8-4f55-b682-35fe6466ae82","applyToMachineTunnelEnabled":false,"crlCheckEnabled":false,"nonExportablePrivateKeyEnabled":false,"zscalerCloud":"zscalertwo"},{"id":"216199618143262949","modifiedTime":"1698038780","creationTime":"1698038780","modifiedBy":"72057594037928115","name":"CrowdStrike  ZPA
+        ZTA   40 (zscalertwo.net)","postureUdid":"3f0aa5dd-e936-4796-bbaa-4f2549cae500","applyToMachineTunnelEnabled":false,"crlCheckEnabled":false,"nonExportablePrivateKeyEnabled":false,"zscalerCloud":"zscalertwo"},{"id":"216199618143262948","modifiedTime":"1698038760","creationTime":"1698038760","modifiedBy":"72057594037928115","name":"CrowdStrike  ZPAZTA
+        40 (zscalertwo.net)","postureUdid":"b65b9b37-fdcd-4182-b2d0-23c292a16186","applyToMachineTunnelEnabled":false,"crlCheckEnabled":false,"nonExportablePrivateKeyEnabled":false,"zscalerCloud":"zscalertwo"},{"id":"216199618143262945","modifiedTime":"1698038705","creationTime":"1698038705","modifiedBy":"72057594037928115","name":"CrowdStrike  ZPAZTA  40
+        (zscalertwo.net)","postureUdid":"dcfcc224-8a83-4e70-be68-c3c5a9049c49","applyToMachineTunnelEnabled":false,"crlCheckEnabled":false,"nonExportablePrivateKeyEnabled":false,"zscalerCloud":"zscalertwo"},{"id":"216199618143262944","modifiedTime":"1698038686","creationTime":"1698038686","modifiedBy":"72057594037928115","name":"CrowdStrike
+        ZPA ZTA 40 (zscalertwo.net)","postureUdid":"6d65c54d-717a-4afc-9139-6418639c6fea","applyToMachineTunnelEnabled":false,"crlCheckEnabled":false,"nonExportablePrivateKeyEnabled":false,"zscalerCloud":"zscalertwo"},{"id":"216199618143191255","modifiedTime":"1652337582","creationTime":"1652337582","modifiedBy":"72057594037928115","name":"CrowdStrike_ZPA_ZTA_40
+        (zscalertwo.net)","postureUdid":"b481613d-7b9b-4a25-b526-4699b73e79d7","applyToMachineTunnelEnabled":false,"crlCheckEnabled":false,"nonExportablePrivateKeyEnabled":false,"zscalerCloud":"zscalertwo"},{"id":"216199618143191256","modifiedTime":"1652337610","creationTime":"1652337610","modifiedBy":"72057594037928115","name":"CrowdStrike_ZPA_ZTA_80
+        (zscalertwo.net)","postureUdid":"ccc887be-c9b5-42ba-a298-f3660beb8538","applyToMachineTunnelEnabled":false,"crlCheckEnabled":false,"nonExportablePrivateKeyEnabled":false,"zscalerCloud":"zscalertwo"}]}'
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; upgrade-insecure-requests
+      Content-Type:
+      - application/json;charset=utf-8
+      Date:
+      - Mon, 01 Apr 2024 06:03:47 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=Q3UVve8wF4gb0OrXKl0KOgbZp/Mp4sfWHmF64zcBMhq5yX6zlLSgiPzQrWJKtEw91DvpA12lmApNabgAf1ZL9OArSvk4fpAcIQIPGJwwaNHil0uBS6u8NvrTvVMQ;
+        Expires=Mon, 08 Apr 2024 06:03:47 GMT; Path=/
+      - AWSALBCORS=Q3UVve8wF4gb0OrXKl0KOgbZp/Mp4sfWHmF64zcBMhq5yX6zlLSgiPzQrWJKtEw91DvpA12lmApNabgAf1ZL9OArSvk4fpAcIQIPGJwwaNHil0uBS6u8NvrTvVMQ;
+        Expires=Mon, 08 Apr 2024 06:03:47 GMT; Path=/; SameSite=None; Secure
+      - AWSALB=X7T+kKTNLxSIwute3Kv47wphtOzwA2Tl7WAUfgokZAjpf+8IteLpz/018GWvTyelDHX+n42gVG7hZN6QYTBiBKOXavOyZpjb6a/F2nhCN8dQkxZ4lSMfUzrlFVuO;
+        Expires=Mon, 08 Apr 2024 06:03:47 GMT; Path=/, AWSALBCORS=X7T+kKTNLxSIwute3Kv47wphtOzwA2Tl7WAUfgokZAjpf+8IteLpz/018GWvTyelDHX+n42gVG7hZN6QYTBiBKOXavOyZpjb6a/F2nhCN8dQkxZ4lSMfUzrlFVuO;
+        Expires=Mon, 08 Apr 2024 06:03:47 GMT; Path=/; SameSite=None; Secure, JSESSIONIDCORS=node0zlc86yxt4qrlh02jcb33w4c01925031.node0;
+        Path=/; Secure; HttpOnly; SameSite=Lax
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.8 Darwin/23.4.0
+    method: GET
+    uri: https://config.private.zscaler.com/mgmtconfig/v1/admin/customers/216199618143191040/posture/216199618143191254
+  response:
+    body:
+      string: '{"id":"216199618143191254","modifiedTime":"1652337552","creationTime":"1652337552","modifiedBy":"72057594037928115","name":"CrowdStrike_ZPA_Pre-ZTA
+        (zscalertwo.net)","postureUdid":"e2538bb9-af91-49bc-98ea-e90bbe048203","applyToMachineTunnelEnabled":false,"crlCheckEnabled":false,"nonExportablePrivateKeyEnabled":false,"zscalerCloud":"zscalertwo"}'
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; upgrade-insecure-requests
+      Content-Type:
+      - application/json;charset=utf-8
+      Date:
+      - Mon, 01 Apr 2024 06:03:47 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=WXAjTWPWiQPHi6i8BRtz2/QQQDtrQNdFyZIrPYxKWR5ITa2W4w+R4jIuN9wwJC5uPI6Bb/wUN53HmsE+ionRLlWP4wYQTaLl2+bqXttCdQAitTd++F9X6dc7uMQK;
+        Expires=Mon, 08 Apr 2024 06:03:47 GMT; Path=/
+      - AWSALBCORS=WXAjTWPWiQPHi6i8BRtz2/QQQDtrQNdFyZIrPYxKWR5ITa2W4w+R4jIuN9wwJC5uPI6Bb/wUN53HmsE+ionRLlWP4wYQTaLl2+bqXttCdQAitTd++F9X6dc7uMQK;
+        Expires=Mon, 08 Apr 2024 06:03:47 GMT; Path=/; SameSite=None; Secure
+      - AWSALB=F3vUOFSRCmAReVKPnNYn9j4oNaDe6sxDqUgGt5CCgE41IceS8pzGk/Nub6sJl0QJEsKWfVm+hxc1dlWc8K/XtjEyUCqnmPnvUSmO2DqGANQ/MeY24WJ5IwWu/GHi;
+        Expires=Mon, 08 Apr 2024 06:03:47 GMT; Path=/, AWSALBCORS=F3vUOFSRCmAReVKPnNYn9j4oNaDe6sxDqUgGt5CCgE41IceS8pzGk/Nub6sJl0QJEsKWfVm+hxc1dlWc8K/XtjEyUCqnmPnvUSmO2DqGANQ/MeY24WJ5IwWu/GHi;
+        Expires=Mon, 08 Apr 2024 06:03:47 GMT; Path=/; SameSite=None; Secure, JSESSIONIDCORS=node057fzxwzhp8867j6pat8zersm1925033.node0;
+        Path=/; Secure; HttpOnly; SameSite=Lax
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.8 Darwin/23.4.0
+    method: GET
+    uri: https://config.private.zscaler.com/mgmtconfig/v2/admin/customers/216199618143191040/posture?page=1&pagesize=500
+  response:
+    body:
+      string: '{"totalPages":"1","totalCount":"0","list":[{"id":"216199618143191254","modifiedTime":"1652337552","creationTime":"1652337552","modifiedBy":"72057594037928115","name":"CrowdStrike_ZPA_Pre-ZTA
+        (zscalertwo.net)","postureUdid":"e2538bb9-af91-49bc-98ea-e90bbe048203","applyToMachineTunnelEnabled":false,"crlCheckEnabled":false,"nonExportablePrivateKeyEnabled":false,"zscalerCloud":"zscalertwo"},{"id":"216199618143262947","modifiedTime":"1698038743","creationTime":"1698038743","modifiedBy":"72057594037928115","name":"CrowdStrike    ZPAZTA40
+        (zscalertwo.net)","postureUdid":"c760064b-54ff-4312-8374-07cfc61e09d7","applyToMachineTunnelEnabled":false,"crlCheckEnabled":false,"nonExportablePrivateKeyEnabled":false,"zscalerCloud":"zscalertwo"},{"id":"216199618143262950","modifiedTime":"1698038797","creationTime":"1698038797","modifiedBy":"72057594037928115","name":"CrowdStrike   ZPA   ZTA
+        40 (zscalertwo.net)","postureUdid":"891e5c07-fc46-4839-9bc3-afd6797418b5","applyToMachineTunnelEnabled":false,"crlCheckEnabled":false,"nonExportablePrivateKeyEnabled":false,"zscalerCloud":"zscalertwo"},{"id":"216199618143262946","modifiedTime":"1698038724","creationTime":"1698038724","modifiedBy":"72057594037928115","name":"CrowdStrike   ZPAZTA   40
+        (zscalertwo.net)","postureUdid":"0a7fbf10-71a8-4f55-b682-35fe6466ae82","applyToMachineTunnelEnabled":false,"crlCheckEnabled":false,"nonExportablePrivateKeyEnabled":false,"zscalerCloud":"zscalertwo"},{"id":"216199618143262949","modifiedTime":"1698038780","creationTime":"1698038780","modifiedBy":"72057594037928115","name":"CrowdStrike  ZPA
+        ZTA   40 (zscalertwo.net)","postureUdid":"3f0aa5dd-e936-4796-bbaa-4f2549cae500","applyToMachineTunnelEnabled":false,"crlCheckEnabled":false,"nonExportablePrivateKeyEnabled":false,"zscalerCloud":"zscalertwo"},{"id":"216199618143262948","modifiedTime":"1698038760","creationTime":"1698038760","modifiedBy":"72057594037928115","name":"CrowdStrike  ZPAZTA
+        40 (zscalertwo.net)","postureUdid":"b65b9b37-fdcd-4182-b2d0-23c292a16186","applyToMachineTunnelEnabled":false,"crlCheckEnabled":false,"nonExportablePrivateKeyEnabled":false,"zscalerCloud":"zscalertwo"},{"id":"216199618143262945","modifiedTime":"1698038705","creationTime":"1698038705","modifiedBy":"72057594037928115","name":"CrowdStrike  ZPAZTA  40
+        (zscalertwo.net)","postureUdid":"dcfcc224-8a83-4e70-be68-c3c5a9049c49","applyToMachineTunnelEnabled":false,"crlCheckEnabled":false,"nonExportablePrivateKeyEnabled":false,"zscalerCloud":"zscalertwo"},{"id":"216199618143262944","modifiedTime":"1698038686","creationTime":"1698038686","modifiedBy":"72057594037928115","name":"CrowdStrike
+        ZPA ZTA 40 (zscalertwo.net)","postureUdid":"6d65c54d-717a-4afc-9139-6418639c6fea","applyToMachineTunnelEnabled":false,"crlCheckEnabled":false,"nonExportablePrivateKeyEnabled":false,"zscalerCloud":"zscalertwo"},{"id":"216199618143191255","modifiedTime":"1652337582","creationTime":"1652337582","modifiedBy":"72057594037928115","name":"CrowdStrike_ZPA_ZTA_40
+        (zscalertwo.net)","postureUdid":"b481613d-7b9b-4a25-b526-4699b73e79d7","applyToMachineTunnelEnabled":false,"crlCheckEnabled":false,"nonExportablePrivateKeyEnabled":false,"zscalerCloud":"zscalertwo"},{"id":"216199618143191256","modifiedTime":"1652337610","creationTime":"1652337610","modifiedBy":"72057594037928115","name":"CrowdStrike_ZPA_ZTA_80
+        (zscalertwo.net)","postureUdid":"ccc887be-c9b5-42ba-a298-f3660beb8538","applyToMachineTunnelEnabled":false,"crlCheckEnabled":false,"nonExportablePrivateKeyEnabled":false,"zscalerCloud":"zscalertwo"}]}'
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; upgrade-insecure-requests
+      Content-Type:
+      - application/json;charset=utf-8
+      Date:
+      - Mon, 01 Apr 2024 06:03:47 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=Bs4CkCJgCOQsM6eOfMAuRPfvMKW2V9QcyVYrvzfp2TbD/X1DDgvsqPBccH/rbKOW0oTgQjvwKmdKUFOtq+fE4bxyN13uSRZLoef2sWMrSkZz7sTCALYvCM+iWNHy;
+        Expires=Mon, 08 Apr 2024 06:03:47 GMT; Path=/
+      - AWSALBCORS=Bs4CkCJgCOQsM6eOfMAuRPfvMKW2V9QcyVYrvzfp2TbD/X1DDgvsqPBccH/rbKOW0oTgQjvwKmdKUFOtq+fE4bxyN13uSRZLoef2sWMrSkZz7sTCALYvCM+iWNHy;
+        Expires=Mon, 08 Apr 2024 06:03:47 GMT; Path=/; SameSite=None; Secure
+      - AWSALB=fkI1x2FSdzNBgqyE5euiPY5/vSmElMes+tHGn3/8BGzqU7YK+sDiUm7+PMGG55jfCq2h+wBAN6XEzVFMZrJhaLc0uAQipHsymh5qJc+bCJkcXn3wZoNEB+Fktk1H;
+        Expires=Mon, 08 Apr 2024 06:03:47 GMT; Path=/, AWSALBCORS=fkI1x2FSdzNBgqyE5euiPY5/vSmElMes+tHGn3/8BGzqU7YK+sDiUm7+PMGG55jfCq2h+wBAN6XEzVFMZrJhaLc0uAQipHsymh5qJc+bCJkcXn3wZoNEB+Fktk1H;
+        Expires=Mon, 08 Apr 2024 06:03:47 GMT; Path=/; SameSite=None; Secure, JSESSIONIDCORS=node0v337dt3if4lvj9eqjwzuhwsa1925526.node0;
+        Path=/; Secure; HttpOnly; SameSite=Lax
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 200
+      message: OK
+version: 1

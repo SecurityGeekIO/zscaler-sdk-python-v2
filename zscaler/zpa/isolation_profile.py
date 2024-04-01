@@ -15,9 +15,7 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 
-from box import Box, BoxList
-from requests import Response
-
+from box import BoxList
 from zscaler.zpa.client import ZPAClient
 
 
@@ -47,34 +45,28 @@ class IsolationProfileAPI:
             ...    pprint(isolation_profiles)
 
         """
-        list, _ = self.rest.get_paginated_data(path="/isolation/profiles", data_key_name="list", **kwargs)
+        list, _ = self.rest.get_paginated_data(
+            path="/isolation/profiles", data_key_name="list", **kwargs
+        )
         return list
 
     def get_profile_by_name(self, name):
+        """
+        Returns information on the specified isolation profile by name.
+        """
         profiles = self.list_profiles()
         for profile in profiles:
             if profile.get("name") == name:
                 return profile
         return None
 
-    def get_profile(self, profile_id: str) -> Box:
+    def get_profile_by_id(self, profile_id):
         """
-        Returns information on the specified isolation profile.
-
-        Args:
-            profile_id (str):
-                The unique identifier for the isolation profile.
-
-        Returns:
-            :obj:`Box`: The resource record for the isolation profile.
-
-        Examples:
-            >>> pprint(zpa.isolation_profiles.get_profile('99999'))
-
+        Returns information on the specified isolation profile by ID.
         """
-        response = self.rest.get("/isolation/profiles/%s" % (profile_id))
-        if isinstance(response, Response):
-            status_code = response.status_code
-            if status_code != 200:
-                return None
-        return response
+        profiles = self.list_profiles()
+        for profile in profiles:
+            # Ensure both IDs are compared as strings
+            if str(profile.get("id")) == str(profile_id):
+                return profile
+        return None

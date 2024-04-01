@@ -1,0 +1,257 @@
+interactions:
+- request:
+    body: client_id=dummy_client_id&client_secret=dummy_client_secret
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '151'
+      Content-Type:
+      - application/x-www-form-urlencoded
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.8 Darwin/23.4.0
+    method: POST
+    uri: https://config.private.zscaler.com/signin
+  response:
+    body:
+      string: "{\n  \"token_type\" : \"Bearer\",\n  \"access_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTIwMzQ3MzZ9.FThlOPXylLrLKQdZ5BlYZ0q0mcO2lLqJ72l54KAixHE\",\n
+        \ \"expires_in\" : \"3600\"\n}"
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 01 Apr 2024 05:12:16 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=4TOqaFCGSRrYc8LZSXGDo49eSpaBcmp8cICO1Ucgf7E7UMMlVz5Bwb1JHBviQewluDe8bFdUn6ncHIX3T1ukCT1/UJ6PGqD5VDUVal5cVyF0pEcAijX9LL/CLLvE;
+        Expires=Mon, 08 Apr 2024 05:12:16 GMT; Path=/
+      - AWSALBCORS=4TOqaFCGSRrYc8LZSXGDo49eSpaBcmp8cICO1Ucgf7E7UMMlVz5Bwb1JHBviQewluDe8bFdUn6ncHIX3T1ukCT1/UJ6PGqD5VDUVal5cVyF0pEcAijX9LL/CLLvE;
+        Expires=Mon, 08 Apr 2024 05:12:16 GMT; Path=/; SameSite=None; Secure
+      Strict-Transport-Security:
+      - max-age=63072000 ; includeSubDomains ; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.8 Darwin/23.4.0
+    method: GET
+    uri: https://config.private.zscaler.com/mgmtconfig/v1/admin/customers/216199618143191040/machineGroup?page=1&pagesize=500
+  response:
+    body:
+      string: '{"totalPages":"1","totalCount":"9","list":[{"id":"216199618143191078","creationTime":"1651558329","modifiedBy":"216199618143191056","name":"BD-MGR01","enabled":true,"description":"BD-MGR01"},{"id":"216199618143191079","creationTime":"1651558354","modifiedBy":"216199618143191056","name":"BD-MGR02","enabled":true,"description":"BD-MGR02"},{"id":"216199618143260849","modifiedTime":"1696546721","creationTime":"1696546721","modifiedBy":"216199618143191041","name":"BD
+        MGR 03","enabled":true,"description":"BD MGR 03"},{"id":"216199618143260851","modifiedTime":"1696546759","creationTime":"1696546759","modifiedBy":"216199618143191041","name":"BD  MGR  04","enabled":true,"description":"BD  MGR  04"},{"id":"216199618143260852","modifiedTime":"1696546804","creationTime":"1696546804","modifiedBy":"216199618143191041","name":"BD   MGR   05","enabled":true,"description":"BD   MGR   05"},{"id":"216199618143260856","modifiedTime":"1696546841","creationTime":"1696546841","modifiedBy":"216199618143191041","name":"BD    MGR06","enabled":true,"description":"BD    MGR06"},{"id":"216199618143260858","modifiedTime":"1696546879","creationTime":"1696546879","modifiedBy":"216199618143191041","name":"BD  MGR
+        07","enabled":true,"description":"BD  MGR 07"},{"id":"216199618143260865","modifiedTime":"1696546934","creationTime":"1696546934","modifiedBy":"216199618143191041","name":"BD  M
+        GR   08","enabled":true,"description":"BD  M GR   08"},{"id":"216199618143260861","modifiedTime":"1696548507","creationTime":"1696546906","modifiedBy":"216199618143191041","name":"BD   M   GR
+        09","enabled":true,"description":"BD   M   GR 09"}]}'
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; upgrade-insecure-requests
+      Content-Type:
+      - application/json;charset=utf-8
+      Date:
+      - Mon, 01 Apr 2024 05:12:17 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=RsgBbY/6A6PTB6pb7LlKKMhO48V2JQjUCX96uw8klg1/ysSGKNdD7Fn7O/2Iq4PFneKBU93jssG61A0qL9Crj9/E2YkD+upyLqMjmdVkL7SZrZVGCEf9tL+8191c;
+        Expires=Mon, 08 Apr 2024 05:12:17 GMT; Path=/
+      - AWSALBCORS=RsgBbY/6A6PTB6pb7LlKKMhO48V2JQjUCX96uw8klg1/ysSGKNdD7Fn7O/2Iq4PFneKBU93jssG61A0qL9Crj9/E2YkD+upyLqMjmdVkL7SZrZVGCEf9tL+8191c;
+        Expires=Mon, 08 Apr 2024 05:12:17 GMT; Path=/; SameSite=None; Secure
+      - AWSALB=5GG8b5xxGETZCVMsI0vVoc9rqyLX8SR/Okq0mdEVKO1IySp/tvsl8eurFmHrRgUD8xU9x9t+VmJzajjGgHsIpbhbweUSGuMb1GtZKtYV1GtuqMx+T/XD3r9DPiji;
+        Expires=Mon, 08 Apr 2024 05:12:17 GMT; Path=/, AWSALBCORS=5GG8b5xxGETZCVMsI0vVoc9rqyLX8SR/Okq0mdEVKO1IySp/tvsl8eurFmHrRgUD8xU9x9t+VmJzajjGgHsIpbhbweUSGuMb1GtZKtYV1GtuqMx+T/XD3r9DPiji;
+        Expires=Mon, 08 Apr 2024 05:12:17 GMT; Path=/; SameSite=None; Secure, JSESSIONIDCORS=node0pyi370krvp941hkz59kzu6q9x1912992.node0;
+        Path=/; Secure; HttpOnly; SameSite=Lax
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.8 Darwin/23.4.0
+    method: GET
+    uri: https://config.private.zscaler.com/mgmtconfig/v1/admin/customers/216199618143191040/machineGroup/216199618143191078
+  response:
+    body:
+      string: '{"id":"216199618143191078","creationTime":"1651558329","modifiedBy":"216199618143191056","name":"BD-MGR01","enabled":true,"description":"BD-MGR01"}'
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; upgrade-insecure-requests
+      Content-Type:
+      - application/json;charset=utf-8
+      Date:
+      - Mon, 01 Apr 2024 05:12:17 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=pnZBwFuezO617X0clkUqy5F9jp6//i4DiPvJoUexbdFyvNSeh8qJZ/43pqUGKvpnd0qudCGdKRCxYPU0195+BZ6HDZLkMh1W+UvselHvmeIxIdgqkAMNEL5SKn0r;
+        Expires=Mon, 08 Apr 2024 05:12:17 GMT; Path=/
+      - AWSALBCORS=pnZBwFuezO617X0clkUqy5F9jp6//i4DiPvJoUexbdFyvNSeh8qJZ/43pqUGKvpnd0qudCGdKRCxYPU0195+BZ6HDZLkMh1W+UvselHvmeIxIdgqkAMNEL5SKn0r;
+        Expires=Mon, 08 Apr 2024 05:12:17 GMT; Path=/; SameSite=None; Secure
+      - AWSALB=/X6ei71E8pYF3lkEbpg7ck1JeGHkNo47w+EtEwu3kbuERawky+bFW8TcP7MkHxmSmEjMpW2csabAlgP2xodwDB1DlQRyAyCrvhQPZGrC6FsSQXvpJxBsDpt6DkcC;
+        Expires=Mon, 08 Apr 2024 05:12:17 GMT; Path=/, AWSALBCORS=/X6ei71E8pYF3lkEbpg7ck1JeGHkNo47w+EtEwu3kbuERawky+bFW8TcP7MkHxmSmEjMpW2csabAlgP2xodwDB1DlQRyAyCrvhQPZGrC6FsSQXvpJxBsDpt6DkcC;
+        Expires=Mon, 08 Apr 2024 05:12:17 GMT; Path=/; SameSite=None; Secure, JSESSIONIDCORS=node0ch5quniha70ipg3szg01z9jy1912995.node0;
+        Path=/; Secure; HttpOnly; SameSite=Lax
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.8 Darwin/23.4.0
+    method: GET
+    uri: https://config.private.zscaler.com/mgmtconfig/v1/admin/customers/216199618143191040/machineGroup?page=1&pagesize=500
+  response:
+    body:
+      string: '{"totalPages":"1","totalCount":"9","list":[{"id":"216199618143191078","creationTime":"1651558329","modifiedBy":"216199618143191056","name":"BD-MGR01","enabled":true,"description":"BD-MGR01"},{"id":"216199618143191079","creationTime":"1651558354","modifiedBy":"216199618143191056","name":"BD-MGR02","enabled":true,"description":"BD-MGR02"},{"id":"216199618143260849","modifiedTime":"1696546721","creationTime":"1696546721","modifiedBy":"216199618143191041","name":"BD
+        MGR 03","enabled":true,"description":"BD MGR 03"},{"id":"216199618143260851","modifiedTime":"1696546759","creationTime":"1696546759","modifiedBy":"216199618143191041","name":"BD  MGR  04","enabled":true,"description":"BD  MGR  04"},{"id":"216199618143260852","modifiedTime":"1696546804","creationTime":"1696546804","modifiedBy":"216199618143191041","name":"BD   MGR   05","enabled":true,"description":"BD   MGR   05"},{"id":"216199618143260856","modifiedTime":"1696546841","creationTime":"1696546841","modifiedBy":"216199618143191041","name":"BD    MGR06","enabled":true,"description":"BD    MGR06"},{"id":"216199618143260858","modifiedTime":"1696546879","creationTime":"1696546879","modifiedBy":"216199618143191041","name":"BD  MGR
+        07","enabled":true,"description":"BD  MGR 07"},{"id":"216199618143260865","modifiedTime":"1696546934","creationTime":"1696546934","modifiedBy":"216199618143191041","name":"BD  M
+        GR   08","enabled":true,"description":"BD  M GR   08"},{"id":"216199618143260861","modifiedTime":"1696548507","creationTime":"1696546906","modifiedBy":"216199618143191041","name":"BD   M   GR
+        09","enabled":true,"description":"BD   M   GR 09"}]}'
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; upgrade-insecure-requests
+      Content-Type:
+      - application/json;charset=utf-8
+      Date:
+      - Mon, 01 Apr 2024 05:12:17 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=mVUt1EXZ9GMhPY5oSFd85gXXd2s6qSzIXaxvHT3m2enBBMah+p9g5mw43MZmMffHdN/uhFtmJIbJKbh15VKCiV32wdh07iryuwbLU13PNLr3DRwWZSO/hqnBbJEP;
+        Expires=Mon, 08 Apr 2024 05:12:17 GMT; Path=/
+      - AWSALBCORS=mVUt1EXZ9GMhPY5oSFd85gXXd2s6qSzIXaxvHT3m2enBBMah+p9g5mw43MZmMffHdN/uhFtmJIbJKbh15VKCiV32wdh07iryuwbLU13PNLr3DRwWZSO/hqnBbJEP;
+        Expires=Mon, 08 Apr 2024 05:12:17 GMT; Path=/; SameSite=None; Secure
+      - AWSALB=KNavLgssiXZo0TgPP5HFX2+kxuIVeoowmbNNmYbDqEe3OBbjJsbCVHnbjTS4kGPxPsSWS2LVDXcCP6RlxbaQi4CD53l+lqQ+KyUhyt+w4By3BuShDv8aZWazodJy;
+        Expires=Mon, 08 Apr 2024 05:12:17 GMT; Path=/, AWSALBCORS=KNavLgssiXZo0TgPP5HFX2+kxuIVeoowmbNNmYbDqEe3OBbjJsbCVHnbjTS4kGPxPsSWS2LVDXcCP6RlxbaQi4CD53l+lqQ+KyUhyt+w4By3BuShDv8aZWazodJy;
+        Expires=Mon, 08 Apr 2024 05:12:17 GMT; Path=/; SameSite=None; Secure, JSESSIONIDCORS=node0eb7zxumkhdw9zvxa3opb9oa41912455.node0;
+        Path=/; Secure; HttpOnly; SameSite=Lax
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 200
+      message: OK
+version: 1

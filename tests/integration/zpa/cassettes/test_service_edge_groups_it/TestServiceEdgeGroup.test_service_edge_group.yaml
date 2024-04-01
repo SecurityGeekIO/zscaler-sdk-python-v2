@@ -1,0 +1,676 @@
+interactions:
+- request:
+    body: client_id=dummy_client_id&client_secret=dummy_client_secret
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '151'
+      Content-Type:
+      - application/x-www-form-urlencoded
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.8 Darwin/23.4.0
+    method: POST
+    uri: https://config.private.zscaler.com/signin
+  response:
+    body:
+      string: "{\n  \"token_type\" : \"Bearer\",\n  \"access_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTIwMzc4MzJ9.ObS9b1GK_-pNKfxBgTygAyrcWKORVUAt-FyuDgYel2g\",\n
+        \ \"expires_in\" : \"3600\"\n}"
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 01 Apr 2024 06:03:52 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=A3OjFiLUzg7Ec4kMJRvwQsGmDY5FBmE6Q2C4I8EszxtRtFlcThsKXEItzHw2yXyDfSElvDNxN3DdATG8JUgnTmj9InFzM3Dq9/5SNrMH4dD+dwwDM+VRqbvIZdma;
+        Expires=Mon, 08 Apr 2024 06:03:51 GMT; Path=/
+      - AWSALBCORS=A3OjFiLUzg7Ec4kMJRvwQsGmDY5FBmE6Q2C4I8EszxtRtFlcThsKXEItzHw2yXyDfSElvDNxN3DdATG8JUgnTmj9InFzM3Dq9/5SNrMH4dD+dwwDM+VRqbvIZdma;
+        Expires=Mon, 08 Apr 2024 06:03:51 GMT; Path=/; SameSite=None; Secure
+      Strict-Transport-Security:
+      - max-age=63072000 ; includeSubDomains ; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"name": "tests-service-edge-group", "latitude": "37.3382082", "longitude":
+      "-121.8863286", "location": "San Jose, CA, USA", "description": "tests-service-edge-group
+      description", "enabled": true, "upgradeDay": "SUNDAY", "upgradeTimeInSecs":
+      "66600", "overrideVersionProfile": true, "versionProfileId": "0", "versionProfileName":
+      "Default", "isPublic": "TRUE"}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '360'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.8 Darwin/23.4.0
+    method: POST
+    uri: https://config.private.zscaler.com/mgmtconfig/v1/admin/customers/216199618143191040/serviceEdgeGroup
+  response:
+    body:
+      string: '{"id":"216199618143334334","modifiedTime":"1711951432","creationTime":"1711951432","modifiedBy":"216199618143191053","name":"tests-service-edge-group","enabled":true,"description":"tests-service-edge-group
+        description","versionProfileId":"0","overrideVersionProfile":true,"versionProfileName":"Default","upgradeTimeInSecs":"66600","upgradeDay":"SUNDAY","isPublic":"TRUE","location":"San
+        Jose, CA, USA","latitude":"37.3382082","longitude":"-121.8863286","cityCountry":"San
+        Jose, US","countryCode":"US","useInDrMode":false,"graceDistanceEnabled":false}'
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; upgrade-insecure-requests
+      Content-Type:
+      - application/json;charset=utf-8
+      Date:
+      - Mon, 01 Apr 2024 06:03:52 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=qXEJFOyetr794cOAhtlKF62V4yrl0YoeroJHLXnQXhLJ7NbG6J/C7qyWfuJSmXLWsHZAma53NP9pdKsS+J24CB95UqdybK9viHaRhfCwARXKCNIgmhb9RKG1H0QS;
+        Expires=Mon, 08 Apr 2024 06:03:52 GMT; Path=/
+      - AWSALBCORS=qXEJFOyetr794cOAhtlKF62V4yrl0YoeroJHLXnQXhLJ7NbG6J/C7qyWfuJSmXLWsHZAma53NP9pdKsS+J24CB95UqdybK9viHaRhfCwARXKCNIgmhb9RKG1H0QS;
+        Expires=Mon, 08 Apr 2024 06:03:52 GMT; Path=/; SameSite=None; Secure
+      - AWSALB=PTsAxnUCqJGoKUOhfwUhdn7bFTCBf7SADPUqZynVAsJ2OuaKX9b0bEY/p2+ktSymZs6i5igeBgRBwDl2OG6Zb2Nu/OsW2akcJbErpQ+Z5yxd5ZJIB0dMQzszeaJD;
+        Expires=Mon, 08 Apr 2024 06:03:52 GMT; Path=/, AWSALBCORS=PTsAxnUCqJGoKUOhfwUhdn7bFTCBf7SADPUqZynVAsJ2OuaKX9b0bEY/p2+ktSymZs6i5igeBgRBwDl2OG6Zb2Nu/OsW2akcJbErpQ+Z5yxd5ZJIB0dMQzszeaJD;
+        Expires=Mon, 08 Apr 2024 06:03:52 GMT; Path=/; SameSite=None; Secure, JSESSIONIDCORS=node0t0jeujrh7mg91neb0hw1znb8y1925545.node0;
+        Path=/; Secure; HttpOnly; SameSite=Lax
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 201
+      message: Created
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.8 Darwin/23.4.0
+    method: GET
+    uri: https://config.private.zscaler.com/mgmtconfig/v1/admin/customers/216199618143191040/serviceEdgeGroup/216199618143334334
+  response:
+    body:
+      string: '{"id":"216199618143334334","modifiedTime":"1711951432","creationTime":"1711951432","modifiedBy":"216199618143191053","name":"tests-service-edge-group","enabled":true,"description":"tests-service-edge-group
+        description","versionProfileId":"0","overrideVersionProfile":true,"versionProfileName":"Default","versionProfileVisibilityScope":"ALL","upgradeTimeInSecs":"66600","upgradeDay":"SUNDAY","isPublic":"TRUE","location":"San
+        Jose, CA, USA","latitude":"37.3382082","longitude":"-121.8863286","cityCountry":"San
+        Jose, US","countryCode":"US","useInDrMode":false,"graceDistanceEnabled":false,"microtenantName":"Default"}'
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; upgrade-insecure-requests
+      Content-Type:
+      - application/json;charset=utf-8
+      Date:
+      - Mon, 01 Apr 2024 06:03:53 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=sUv4Lo5Z80KPk7KbqaKufgsixxRLZcCfjsbeovpbC1y5ovSHckv0HCTzLlm2RgYHvp6R8Naqia14MuhDNCeTlmPXPrJDqqWyxWVlzLVrmYaf3qcP7qWeTw5byi7E;
+        Expires=Mon, 08 Apr 2024 06:03:53 GMT; Path=/
+      - AWSALBCORS=sUv4Lo5Z80KPk7KbqaKufgsixxRLZcCfjsbeovpbC1y5ovSHckv0HCTzLlm2RgYHvp6R8Naqia14MuhDNCeTlmPXPrJDqqWyxWVlzLVrmYaf3qcP7qWeTw5byi7E;
+        Expires=Mon, 08 Apr 2024 06:03:53 GMT; Path=/; SameSite=None; Secure
+      - AWSALB=pBLLdpcgUSmUpC+GjqzKAjq7FkKuH1fkyKkqpkTyCMAFHtogEjWhuWI9j6LFESisve386dUIEtSe2kIKbL7YP3/YElys7WTh72GCAHQWNLWEP8VbYrutrr5vmnWm;
+        Expires=Mon, 08 Apr 2024 06:03:53 GMT; Path=/, AWSALBCORS=pBLLdpcgUSmUpC+GjqzKAjq7FkKuH1fkyKkqpkTyCMAFHtogEjWhuWI9j6LFESisve386dUIEtSe2kIKbL7YP3/YElys7WTh72GCAHQWNLWEP8VbYrutrr5vmnWm;
+        Expires=Mon, 08 Apr 2024 06:03:53 GMT; Path=/; SameSite=None; Secure, JSESSIONIDCORS=node0ob5p69j5ix541xf08odu3hffq1925549.node0;
+        Path=/; Secure; HttpOnly; SameSite=Lax
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.8 Darwin/23.4.0
+    method: GET
+    uri: https://config.private.zscaler.com/mgmtconfig/v1/admin/customers/216199618143191040/serviceEdgeGroup/216199618143334334
+  response:
+    body:
+      string: '{"id":"216199618143334334","modifiedTime":"1711951432","creationTime":"1711951432","modifiedBy":"216199618143191053","name":"tests-service-edge-group","enabled":true,"description":"tests-service-edge-group
+        description","versionProfileId":"0","overrideVersionProfile":true,"versionProfileName":"Default","versionProfileVisibilityScope":"ALL","upgradeTimeInSecs":"66600","upgradeDay":"SUNDAY","isPublic":"TRUE","location":"San
+        Jose, CA, USA","latitude":"37.3382082","longitude":"-121.8863286","cityCountry":"San
+        Jose, US","countryCode":"US","useInDrMode":false,"graceDistanceEnabled":false,"microtenantName":"Default"}'
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; upgrade-insecure-requests
+      Content-Type:
+      - application/json;charset=utf-8
+      Date:
+      - Mon, 01 Apr 2024 06:03:53 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=VTzTEX2HcP8LTNgNiXYcDS0BHuEpvny/0MlDc8n43cSMXbtPPn1Y0Z4l40u3jakhPDmFr3FNbC0G21cQ1IQmllBKkZjU0KRKUtKSUY5evRZI67qa97m9n4TS2aVj;
+        Expires=Mon, 08 Apr 2024 06:03:53 GMT; Path=/
+      - AWSALBCORS=VTzTEX2HcP8LTNgNiXYcDS0BHuEpvny/0MlDc8n43cSMXbtPPn1Y0Z4l40u3jakhPDmFr3FNbC0G21cQ1IQmllBKkZjU0KRKUtKSUY5evRZI67qa97m9n4TS2aVj;
+        Expires=Mon, 08 Apr 2024 06:03:53 GMT; Path=/; SameSite=None; Secure
+      - AWSALB=w/V2AxkkAnQT2y58iuw737Jf9qy4R4XUoJvyGIsZdV6Esq0gaYeS+u8wsp0Pa5IIIcKUnl9Xpq9jwWV8PPHhHo12mPPw2yg3Dlcduqa0xx1wUma1gjxJWpctDzRh;
+        Expires=Mon, 08 Apr 2024 06:03:53 GMT; Path=/, AWSALBCORS=w/V2AxkkAnQT2y58iuw737Jf9qy4R4XUoJvyGIsZdV6Esq0gaYeS+u8wsp0Pa5IIIcKUnl9Xpq9jwWV8PPHhHo12mPPw2yg3Dlcduqa0xx1wUma1gjxJWpctDzRh;
+        Expires=Mon, 08 Apr 2024 06:03:53 GMT; Path=/; SameSite=None; Secure, JSESSIONIDCORS=node01dpazywmd206d1trtxbx5y3bki1925056.node0;
+        Path=/; Secure; HttpOnly; SameSite=Lax
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"id": "216199618143334334", "modifiedTime": "1711951432", "creationTime":
+      "1711951432", "modifiedBy": "216199618143191053", "name": "tests-service-edge-group
+      Updated", "enabled": true, "description": "tests-service-edge-group description",
+      "versionProfileId": "0", "overrideVersionProfile": true, "versionProfileName":
+      "Default", "versionProfileVisibilityScope": "ALL", "upgradeTimeInSecs": "66600",
+      "upgradeDay": "SUNDAY", "isPublic": "TRUE", "location": "San Jose, CA, USA",
+      "latitude": "37.3382082", "longitude": "-121.8863286", "cityCountry": "San Jose,
+      US", "countryCode": "US", "useInDrMode": false, "graceDistanceEnabled": false,
+      "microtenantName": "Default"}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '667'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.8 Darwin/23.4.0
+    method: PUT
+    uri: https://config.private.zscaler.com/mgmtconfig/v1/admin/customers/216199618143191040/serviceEdgeGroup/216199618143334334
+  response:
+    body:
+      string: ''
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; upgrade-insecure-requests
+      Date:
+      - Mon, 01 Apr 2024 06:03:53 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=10tzLAlesp8YLI4GvRq/9SXNNaKfNGnrc2nH4fnzpweYaNGLXLRjx79i+/uVCFDQSRAZoZcLZmFt97XRywPP8fngbujwHY3QhW5Y+iv6M/laEAFatxZA9dJjqV0t;
+        Expires=Mon, 08 Apr 2024 06:03:53 GMT; Path=/
+      - AWSALBCORS=10tzLAlesp8YLI4GvRq/9SXNNaKfNGnrc2nH4fnzpweYaNGLXLRjx79i+/uVCFDQSRAZoZcLZmFt97XRywPP8fngbujwHY3QhW5Y+iv6M/laEAFatxZA9dJjqV0t;
+        Expires=Mon, 08 Apr 2024 06:03:53 GMT; Path=/; SameSite=None; Secure
+      - AWSALB=C7hgpGqFjfCkUBq06tNrXPlxTasHSoZa2ckIV2CBiIJXjaf5+AAus+0y+8cpCuzAzAUtNY+jABQLq9ag5g311GalMwYh8xBZy2AqNjrrWPx1LuH6CMFBhvdhyn9b;
+        Expires=Mon, 08 Apr 2024 06:03:53 GMT; Path=/, AWSALBCORS=C7hgpGqFjfCkUBq06tNrXPlxTasHSoZa2ckIV2CBiIJXjaf5+AAus+0y+8cpCuzAzAUtNY+jABQLq9ag5g311GalMwYh8xBZy2AqNjrrWPx1LuH6CMFBhvdhyn9b;
+        Expires=Mon, 08 Apr 2024 06:03:53 GMT; Path=/; SameSite=None; Secure, JSESSIONIDCORS=node01rshwjnki6obrnz9leyefm08q1925057.node0;
+        Path=/; Secure; HttpOnly; SameSite=Lax
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains; preload
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 204
+      message: No Content
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.8 Darwin/23.4.0
+    method: GET
+    uri: https://config.private.zscaler.com/mgmtconfig/v1/admin/customers/216199618143191040/serviceEdgeGroup/216199618143334334
+  response:
+    body:
+      string: '{"id":"216199618143334334","modifiedTime":"1711951433","creationTime":"1711951432","modifiedBy":"216199618143191053","name":"tests-service-edge-group
+        Updated","enabled":true,"description":"tests-service-edge-group description","versionProfileId":"0","overrideVersionProfile":true,"versionProfileName":"Default","versionProfileVisibilityScope":"ALL","upgradeTimeInSecs":"66600","upgradeDay":"SUNDAY","isPublic":"TRUE","location":"San
+        Jose, CA, USA","latitude":"37.3382082","longitude":"-121.8863286","cityCountry":"San
+        Jose, US","countryCode":"US","useInDrMode":false,"graceDistanceEnabled":false,"microtenantName":"Default"}'
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; upgrade-insecure-requests
+      Content-Type:
+      - application/json;charset=utf-8
+      Date:
+      - Mon, 01 Apr 2024 06:03:54 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=nqrCl3QJTNETmRz/0GeftcVvB+dhP4RhbMRhofCGXf5o2q1a2hhu7kfTCYPMjLOIthudRepxyr3+Kzj4L8Vnq3p8XxV9RwEEyH3IgRCN7HbGuNCoWewNEMtpGR2X;
+        Expires=Mon, 08 Apr 2024 06:03:54 GMT; Path=/
+      - AWSALBCORS=nqrCl3QJTNETmRz/0GeftcVvB+dhP4RhbMRhofCGXf5o2q1a2hhu7kfTCYPMjLOIthudRepxyr3+Kzj4L8Vnq3p8XxV9RwEEyH3IgRCN7HbGuNCoWewNEMtpGR2X;
+        Expires=Mon, 08 Apr 2024 06:03:54 GMT; Path=/; SameSite=None; Secure
+      - AWSALB=VJetwR61U32xGCorpm31eUlYsuNS3+KmkMXhdqYNEYYnfFlTWVAH4V2YigIVbfl8mkawqwqLpz7ki4Gtt05LmaMme65nYLiDZ5R8rxWlp9F++/R9hDxVe6Q4Y3gd;
+        Expires=Mon, 08 Apr 2024 06:03:54 GMT; Path=/, AWSALBCORS=VJetwR61U32xGCorpm31eUlYsuNS3+KmkMXhdqYNEYYnfFlTWVAH4V2YigIVbfl8mkawqwqLpz7ki4Gtt05LmaMme65nYLiDZ5R8rxWlp9F++/R9hDxVe6Q4Y3gd;
+        Expires=Mon, 08 Apr 2024 06:03:54 GMT; Path=/; SameSite=None; Secure, JSESSIONIDCORS=node01kjogjx92ztylzw802xjp58io1924616.node0;
+        Path=/; Secure; HttpOnly; SameSite=Lax
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.8 Darwin/23.4.0
+    method: GET
+    uri: https://config.private.zscaler.com/mgmtconfig/v1/admin/customers/216199618143191040/serviceEdgeGroup/216199618143334334
+  response:
+    body:
+      string: '{"id":"216199618143334334","modifiedTime":"1711951433","creationTime":"1711951432","modifiedBy":"216199618143191053","name":"tests-service-edge-group
+        Updated","enabled":true,"description":"tests-service-edge-group description","versionProfileId":"0","overrideVersionProfile":true,"versionProfileName":"Default","versionProfileVisibilityScope":"ALL","upgradeTimeInSecs":"66600","upgradeDay":"SUNDAY","isPublic":"TRUE","location":"San
+        Jose, CA, USA","latitude":"37.3382082","longitude":"-121.8863286","cityCountry":"San
+        Jose, US","countryCode":"US","useInDrMode":false,"graceDistanceEnabled":false,"microtenantName":"Default"}'
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; upgrade-insecure-requests
+      Content-Type:
+      - application/json;charset=utf-8
+      Date:
+      - Mon, 01 Apr 2024 06:03:54 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=NSpUaZRae7vnTAc0f7PRU/Nd1iTpzsgmim5svSrLcBm8G4HlYDo+hjwnvR2mcMzxIj4u8R7M3He4sUAfdoCi/0DUQFobk+peV5rNPWGI5DP78mhUDdm8WzS8y/in;
+        Expires=Mon, 08 Apr 2024 06:03:54 GMT; Path=/
+      - AWSALBCORS=NSpUaZRae7vnTAc0f7PRU/Nd1iTpzsgmim5svSrLcBm8G4HlYDo+hjwnvR2mcMzxIj4u8R7M3He4sUAfdoCi/0DUQFobk+peV5rNPWGI5DP78mhUDdm8WzS8y/in;
+        Expires=Mon, 08 Apr 2024 06:03:54 GMT; Path=/; SameSite=None; Secure
+      - AWSALB=3sBwNBl4xr1SPQ95t2cLJjfeGJXd9PwrgJSfKYaA1NC77zosdpeL625R3dxLcn3sP9SjT7WPFpaNyS3dSXubFzVwBxA3aHXi6Sf4zFr8g6RumPh5Maalz41blf1h;
+        Expires=Mon, 08 Apr 2024 06:03:54 GMT; Path=/, AWSALBCORS=3sBwNBl4xr1SPQ95t2cLJjfeGJXd9PwrgJSfKYaA1NC77zosdpeL625R3dxLcn3sP9SjT7WPFpaNyS3dSXubFzVwBxA3aHXi6Sf4zFr8g6RumPh5Maalz41blf1h;
+        Expires=Mon, 08 Apr 2024 06:03:54 GMT; Path=/; SameSite=None; Secure, JSESSIONIDCORS=node018kqh2xjr8dgb1eoj4curkt9or1925551.node0;
+        Path=/; Secure; HttpOnly; SameSite=Lax
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.8 Darwin/23.4.0
+    method: GET
+    uri: https://config.private.zscaler.com/mgmtconfig/v1/admin/customers/216199618143191040/serviceEdgeGroup?page=1&pagesize=500
+  response:
+    body:
+      string: '{"totalPages":"1","totalCount":"4","list":[{"id":"216199618143330404","modifiedTime":"1710354136","creationTime":"1710354136","modifiedBy":"216199618143191041","name":"Example01","enabled":true,"description":"Example01","versionProfileId":"2","overrideVersionProfile":true,"versionProfileName":"New
+        Release","versionProfileVisibilityScope":"ALL","upgradeTimeInSecs":"25200","upgradeDay":"MONDAY","isPublic":"TRUE","location":"San
+        Jose, CA, USA","latitude":"37.33874","longitude":"-121.8852525","cityCountry":"San
+        Jose, US","countryCode":"US","useInDrMode":false,"graceDistanceEnabled":false,"graceDistanceValueUnit":"MILES","microtenantName":"Default"},{"id":"216199618143334095","modifiedTime":"1711788144","creationTime":"1711788144","modifiedBy":"216199618143191053","name":"tests-gewclnaenq","enabled":true,"description":"A
+        description for tests-gewclnaenq","versionProfileId":"0","overrideVersionProfile":true,"versionProfileName":"Default","versionProfileVisibilityScope":"ALL","upgradeTimeInSecs":"66600","upgradeDay":"SUNDAY","isPublic":"TRUE","location":"San
+        Jose, CA, USA","latitude":"37.3382082","longitude":"-121.8863286","cityCountry":"San
+        Jose, US","countryCode":"US","useInDrMode":false,"graceDistanceEnabled":false,"microtenantName":"Default"},{"id":"216199618143334063","modifiedTime":"1711782922","creationTime":"1711782922","modifiedBy":"216199618143191053","name":"tests-pktsdyiujp","enabled":true,"description":"A
+        description for tests-pktsdyiujp","versionProfileId":"0","overrideVersionProfile":true,"versionProfileName":"Default","versionProfileVisibilityScope":"ALL","upgradeTimeInSecs":"66600","upgradeDay":"SUNDAY","isPublic":"TRUE","location":"San
+        Jose, CA, USA","latitude":"37.3382082","longitude":"-121.8863286","cityCountry":"San
+        Jose, US","countryCode":"US","useInDrMode":false,"graceDistanceEnabled":false,"microtenantName":"Default"},{"id":"216199618143334334","modifiedTime":"1711951433","creationTime":"1711951432","modifiedBy":"216199618143191053","name":"tests-service-edge-group
+        Updated","enabled":true,"description":"tests-service-edge-group description","versionProfileId":"0","overrideVersionProfile":true,"versionProfileName":"Default","versionProfileVisibilityScope":"ALL","upgradeTimeInSecs":"66600","upgradeDay":"SUNDAY","isPublic":"TRUE","location":"San
+        Jose, CA, USA","latitude":"37.3382082","longitude":"-121.8863286","cityCountry":"San
+        Jose, US","countryCode":"US","useInDrMode":false,"graceDistanceEnabled":false,"microtenantName":"Default"}]}'
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; upgrade-insecure-requests
+      Content-Type:
+      - application/json;charset=utf-8
+      Date:
+      - Mon, 01 Apr 2024 06:03:54 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=ozThyomUq7CvvPf5yAd2bFNeWfjucmyQ1pNwafCj+wEvMHZ/EaFE7ks7WjKBcmNFdsKUl+Kg/qfV9o4y03g1gOLE9VLJz//xV5lpodLjR4u+RxDvkM31Hae4IskD;
+        Expires=Mon, 08 Apr 2024 06:03:54 GMT; Path=/
+      - AWSALBCORS=ozThyomUq7CvvPf5yAd2bFNeWfjucmyQ1pNwafCj+wEvMHZ/EaFE7ks7WjKBcmNFdsKUl+Kg/qfV9o4y03g1gOLE9VLJz//xV5lpodLjR4u+RxDvkM31Hae4IskD;
+        Expires=Mon, 08 Apr 2024 06:03:54 GMT; Path=/; SameSite=None; Secure
+      - AWSALB=sn5jzYVOVMgpwwoNur7/mejjuuZF3Tvafr83uW/Jbk+uqlVDvmwBkk3pUYH13Z1yMHwxEribgawt79FhRkc8Qtmt8WuoFeVY4RyYv3pHWPmjJBn2lDUhE6x2LOhm;
+        Expires=Mon, 08 Apr 2024 06:03:54 GMT; Path=/, AWSALBCORS=sn5jzYVOVMgpwwoNur7/mejjuuZF3Tvafr83uW/Jbk+uqlVDvmwBkk3pUYH13Z1yMHwxEribgawt79FhRkc8Qtmt8WuoFeVY4RyYv3pHWPmjJBn2lDUhE6x2LOhm;
+        Expires=Mon, 08 Apr 2024 06:03:54 GMT; Path=/; SameSite=None; Secure, JSESSIONIDCORS=node010tkoayt61ixi1qrje8yq5o88g1927375.node0;
+        Path=/; Secure; HttpOnly; SameSite=Lax
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.8 Darwin/23.4.0
+    method: GET
+    uri: https://config.private.zscaler.com/mgmtconfig/v1/admin/customers/216199618143191040/serviceEdgeGroup?page=1&pagesize=500
+  response:
+    body:
+      string: '{"totalPages":"1","totalCount":"4","list":[{"id":"216199618143330404","modifiedTime":"1710354136","creationTime":"1710354136","modifiedBy":"216199618143191041","name":"Example01","enabled":true,"description":"Example01","versionProfileId":"2","overrideVersionProfile":true,"versionProfileName":"New
+        Release","versionProfileVisibilityScope":"ALL","upgradeTimeInSecs":"25200","upgradeDay":"MONDAY","isPublic":"TRUE","location":"San
+        Jose, CA, USA","latitude":"37.33874","longitude":"-121.8852525","cityCountry":"San
+        Jose, US","countryCode":"US","useInDrMode":false,"graceDistanceEnabled":false,"graceDistanceValueUnit":"MILES","microtenantName":"Default"},{"id":"216199618143334095","modifiedTime":"1711788144","creationTime":"1711788144","modifiedBy":"216199618143191053","name":"tests-gewclnaenq","enabled":true,"description":"A
+        description for tests-gewclnaenq","versionProfileId":"0","overrideVersionProfile":true,"versionProfileName":"Default","versionProfileVisibilityScope":"ALL","upgradeTimeInSecs":"66600","upgradeDay":"SUNDAY","isPublic":"TRUE","location":"San
+        Jose, CA, USA","latitude":"37.3382082","longitude":"-121.8863286","cityCountry":"San
+        Jose, US","countryCode":"US","useInDrMode":false,"graceDistanceEnabled":false,"microtenantName":"Default"},{"id":"216199618143334063","modifiedTime":"1711782922","creationTime":"1711782922","modifiedBy":"216199618143191053","name":"tests-pktsdyiujp","enabled":true,"description":"A
+        description for tests-pktsdyiujp","versionProfileId":"0","overrideVersionProfile":true,"versionProfileName":"Default","versionProfileVisibilityScope":"ALL","upgradeTimeInSecs":"66600","upgradeDay":"SUNDAY","isPublic":"TRUE","location":"San
+        Jose, CA, USA","latitude":"37.3382082","longitude":"-121.8863286","cityCountry":"San
+        Jose, US","countryCode":"US","useInDrMode":false,"graceDistanceEnabled":false,"microtenantName":"Default"},{"id":"216199618143334334","modifiedTime":"1711951433","creationTime":"1711951432","modifiedBy":"216199618143191053","name":"tests-service-edge-group
+        Updated","enabled":true,"description":"tests-service-edge-group description","versionProfileId":"0","overrideVersionProfile":true,"versionProfileName":"Default","versionProfileVisibilityScope":"ALL","upgradeTimeInSecs":"66600","upgradeDay":"SUNDAY","isPublic":"TRUE","location":"San
+        Jose, CA, USA","latitude":"37.3382082","longitude":"-121.8863286","cityCountry":"San
+        Jose, US","countryCode":"US","useInDrMode":false,"graceDistanceEnabled":false,"microtenantName":"Default"}]}'
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; upgrade-insecure-requests
+      Content-Type:
+      - application/json;charset=utf-8
+      Date:
+      - Mon, 01 Apr 2024 06:03:55 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=XRg8T9CmvlyHvB1UP7UhWcGz0pkOn6YC9O1ChnrQoLBRYERo/ZZ7Mshibzu4Ze1eHiGdQHd2y0fPDtCjfv3kr0yLxv5BOFz8MD/tEUnLZhxDo60zCXOUivh1s160;
+        Expires=Mon, 08 Apr 2024 06:03:54 GMT; Path=/
+      - AWSALBCORS=XRg8T9CmvlyHvB1UP7UhWcGz0pkOn6YC9O1ChnrQoLBRYERo/ZZ7Mshibzu4Ze1eHiGdQHd2y0fPDtCjfv3kr0yLxv5BOFz8MD/tEUnLZhxDo60zCXOUivh1s160;
+        Expires=Mon, 08 Apr 2024 06:03:54 GMT; Path=/; SameSite=None; Secure
+      - AWSALB=gSRXaVPaNg3kFs3RGV845O1kUK6BsuqrjA+EalDJtbK5owtjpuaLQZWq9S3vvg9mKg6ucc7FEPjjMfWCFS7VyTc1hwZHVuXGvYDacnWE239kKXwJ6+lh86dLD2Y0;
+        Expires=Mon, 08 Apr 2024 06:03:54 GMT; Path=/, AWSALBCORS=gSRXaVPaNg3kFs3RGV845O1kUK6BsuqrjA+EalDJtbK5owtjpuaLQZWq9S3vvg9mKg6ucc7FEPjjMfWCFS7VyTc1hwZHVuXGvYDacnWE239kKXwJ6+lh86dLD2Y0;
+        Expires=Mon, 08 Apr 2024 06:03:54 GMT; Path=/; SameSite=None; Secure, JSESSIONIDCORS=node01tzicaugalhms175j4w4wmg1i91925059.node0;
+        Path=/; Secure; HttpOnly; SameSite=Lax
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '0'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.8 Darwin/23.4.0
+    method: DELETE
+    uri: https://config.private.zscaler.com/mgmtconfig/v1/admin/customers/216199618143191040/serviceEdgeGroup/216199618143334334
+  response:
+    body:
+      string: ''
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; upgrade-insecure-requests
+      Date:
+      - Mon, 01 Apr 2024 06:03:55 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=0eeTIiI4ml0qht2OcubRzXzbBUhLOAXUFs3SrKswFzYF4ta18jRkITHafnbjYnBc6WZCT6sD6FSi7/D27bu41XeOEp26173akdCdyoFgrKJaLZEttlO3Xqqvcwlw;
+        Expires=Mon, 08 Apr 2024 06:03:55 GMT; Path=/
+      - AWSALBCORS=0eeTIiI4ml0qht2OcubRzXzbBUhLOAXUFs3SrKswFzYF4ta18jRkITHafnbjYnBc6WZCT6sD6FSi7/D27bu41XeOEp26173akdCdyoFgrKJaLZEttlO3Xqqvcwlw;
+        Expires=Mon, 08 Apr 2024 06:03:55 GMT; Path=/; SameSite=None; Secure
+      - AWSALB=Psa6Dp4sGnxGQOOUuXwwJG+kfFoAsI5Lyo28x4d8z2EzQLlwEe8PISUiA9Mtt7sWDL404NEuwFTBsV7oJyLDl2uVqIai0BiCtmtWkz25pleiY3PywegtFsTQfvOl;
+        Expires=Mon, 08 Apr 2024 06:03:55 GMT; Path=/, AWSALBCORS=Psa6Dp4sGnxGQOOUuXwwJG+kfFoAsI5Lyo28x4d8z2EzQLlwEe8PISUiA9Mtt7sWDL404NEuwFTBsV7oJyLDl2uVqIai0BiCtmtWkz25pleiY3PywegtFsTQfvOl;
+        Expires=Mon, 08 Apr 2024 06:03:55 GMT; Path=/; SameSite=None; Secure, JSESSIONIDCORS=node01ia89y9fge9de1f6j3uk4dcsg1925554.node0;
+        Path=/; Secure; HttpOnly; SameSite=Lax
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains; preload
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 204
+      message: No Content
+version: 1

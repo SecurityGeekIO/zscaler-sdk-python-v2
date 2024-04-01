@@ -1,0 +1,255 @@
+interactions:
+- request:
+    body: client_id=dummy_client_id&client_secret=dummy_client_secret
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '151'
+      Content-Type:
+      - application/x-www-form-urlencoded
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.8 Darwin/23.4.0
+    method: POST
+    uri: https://config.private.zscaler.com/signin
+  response:
+    body:
+      string: "{\n  \"token_type\" : \"Bearer\",\n  \"access_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTIwMzkxNTd9.QXy__dLdwGANhodSC-IJmpXQf5YB3PcbkponMBYbFqw\",\n
+        \ \"expires_in\" : \"3600\"\n}"
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 01 Apr 2024 06:25:57 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=cwYhlIJBngMQTYccO2IeDDkS227j/g+z5C+6SperAb5yOMe2hKzgqg30m2nttqPbHRRm7ZsktxKBT9JILOCR6I/NYdu2nm11IANq46y3CfTqblTT87PWIBz/hHbl;
+        Expires=Mon, 08 Apr 2024 06:25:56 GMT; Path=/
+      - AWSALBCORS=cwYhlIJBngMQTYccO2IeDDkS227j/g+z5C+6SperAb5yOMe2hKzgqg30m2nttqPbHRRm7ZsktxKBT9JILOCR6I/NYdu2nm11IANq46y3CfTqblTT87PWIBz/hHbl;
+        Expires=Mon, 08 Apr 2024 06:25:56 GMT; Path=/; SameSite=None; Secure
+      Strict-Transport-Security:
+      - max-age=63072000 ; includeSubDomains ; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.8 Darwin/23.4.0
+    method: GET
+    uri: https://config.private.zscaler.com/mgmtconfig/v1/admin/customers/216199618143191040/isolation/profiles?page=1&pagesize=500
+  response:
+    body:
+      string: '{"totalPages":"1","totalCount":"5","list":[{"id":"216199618143263278","creationTime":"1698089410","modifiedBy":"216199618143191041","name":"BD   SA   Profile","description":"BD   SA   Profile","enabled":true,"isolationTenantId":"8ba47504-e249-4f34-a9ca-6a8fd0a3c322","isolationProfileId":"3d2d253c-2cf0-4a59-97c8-423a4001a851","isolationUrl":"https://redirect.isolation.zscaler.com/tenant/d374ac83d089/profile/3d2d253c-2cf0-4a59-97c8-423a4001a851/zpa/render"},{"id":"216199618143263277","creationTime":"1698089392","modifiedBy":"216199618143191041","name":"BD  SA
+        Profile","description":"BD  SA Profile","enabled":true,"isolationTenantId":"8ba47504-e249-4f34-a9ca-6a8fd0a3c322","isolationProfileId":"7a8941cb-2509-41dc-87a3-565b057ff472","isolationUrl":"https://redirect.isolation.zscaler.com/tenant/d374ac83d089/profile/7a8941cb-2509-41dc-87a3-565b057ff472/zpa/render"},{"id":"216199618143263279","creationTime":"1698089430","modifiedBy":"216199618143191041","name":"BD
+        SA Profile","description":"BD SA Profile","enabled":true,"isolationTenantId":"8ba47504-e249-4f34-a9ca-6a8fd0a3c322","isolationProfileId":"430d804b-a2dd-4857-994c-e12b7ba25f1a","isolationUrl":"https://redirect.isolation.zscaler.com/tenant/d374ac83d089/profile/430d804b-a2dd-4857-994c-e12b7ba25f1a/zpa/render"},{"id":"216199618143212401","modifiedTime":"1683812808","creationTime":"1675813407","modifiedBy":"72057594037929825","name":"BD_SA_Profile1","description":"BD_SA_Profile1","enabled":true,"isolationTenantId":"8ba47504-e249-4f34-a9ca-6a8fd0a3c322","isolationProfileId":"fdeffec0-9f76-4f42-a39b-9233a1cc09c8","isolationUrl":"https://redirect.isolation.zscaler.com/tenant/d374ac83d089/profile/fdeffec0-9f76-4f42-a39b-9233a1cc09c8/zpa/render"},{"id":"216199618143212402","modifiedTime":"1683812810","creationTime":"1675813502","modifiedBy":"72057594037929825","name":"BD_SA_Profile2","description":"BD_SA_Profile2","enabled":true,"isolationTenantId":"8ba47504-e249-4f34-a9ca-6a8fd0a3c322","isolationProfileId":"ab1e6748-adb5-4b49-b711-1ad4f51bf535","isolationUrl":"https://redirect.isolation.zscaler.com/tenant/d374ac83d089/profile/ab1e6748-adb5-4b49-b711-1ad4f51bf535/zpa/render"}]}'
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; upgrade-insecure-requests
+      Content-Type:
+      - application/json;charset=utf-8
+      Date:
+      - Mon, 01 Apr 2024 06:25:57 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=U/n6x7nM9TLxTWegIA1JZPqqtLBQ8BcHN52CYNgde1z2Wyi7gAGSIQX4Thq71a3TMzzcV8vv4gyjdIcIk1MbFxEpmxAzmRNTg0webrGTDj2EK1t8tv/RSjNfDUHC;
+        Expires=Mon, 08 Apr 2024 06:25:57 GMT; Path=/
+      - AWSALBCORS=U/n6x7nM9TLxTWegIA1JZPqqtLBQ8BcHN52CYNgde1z2Wyi7gAGSIQX4Thq71a3TMzzcV8vv4gyjdIcIk1MbFxEpmxAzmRNTg0webrGTDj2EK1t8tv/RSjNfDUHC;
+        Expires=Mon, 08 Apr 2024 06:25:57 GMT; Path=/; SameSite=None; Secure
+      - AWSALB=CW/K1Ov02rhMdPe6+XJXr9aWF7MOnSfhK5xkatoHYLZTPk7XCbsAt77G/t9twTppcS604CFW2dXqaJnaViESgapT6B+QVtr4KM5pNYwJqCF+OJxiXQQwHfDp9tsW;
+        Expires=Mon, 08 Apr 2024 06:25:57 GMT; Path=/, AWSALBCORS=CW/K1Ov02rhMdPe6+XJXr9aWF7MOnSfhK5xkatoHYLZTPk7XCbsAt77G/t9twTppcS604CFW2dXqaJnaViESgapT6B+QVtr4KM5pNYwJqCF+OJxiXQQwHfDp9tsW;
+        Expires=Mon, 08 Apr 2024 06:25:57 GMT; Path=/; SameSite=None; Secure, JSESSIONIDCORS=node05f84phha77vo62z8g5ojcf381930266.node0;
+        Path=/; Secure; HttpOnly; SameSite=Lax
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.8 Darwin/23.4.0
+    method: GET
+    uri: https://config.private.zscaler.com/mgmtconfig/v1/admin/customers/216199618143191040/isolation/profiles?page=1&pagesize=500
+  response:
+    body:
+      string: '{"totalPages":"1","totalCount":"5","list":[{"id":"216199618143263278","creationTime":"1698089410","modifiedBy":"216199618143191041","name":"BD   SA   Profile","description":"BD   SA   Profile","enabled":true,"isolationTenantId":"8ba47504-e249-4f34-a9ca-6a8fd0a3c322","isolationProfileId":"3d2d253c-2cf0-4a59-97c8-423a4001a851","isolationUrl":"https://redirect.isolation.zscaler.com/tenant/d374ac83d089/profile/3d2d253c-2cf0-4a59-97c8-423a4001a851/zpa/render"},{"id":"216199618143263277","creationTime":"1698089392","modifiedBy":"216199618143191041","name":"BD  SA
+        Profile","description":"BD  SA Profile","enabled":true,"isolationTenantId":"8ba47504-e249-4f34-a9ca-6a8fd0a3c322","isolationProfileId":"7a8941cb-2509-41dc-87a3-565b057ff472","isolationUrl":"https://redirect.isolation.zscaler.com/tenant/d374ac83d089/profile/7a8941cb-2509-41dc-87a3-565b057ff472/zpa/render"},{"id":"216199618143263279","creationTime":"1698089430","modifiedBy":"216199618143191041","name":"BD
+        SA Profile","description":"BD SA Profile","enabled":true,"isolationTenantId":"8ba47504-e249-4f34-a9ca-6a8fd0a3c322","isolationProfileId":"430d804b-a2dd-4857-994c-e12b7ba25f1a","isolationUrl":"https://redirect.isolation.zscaler.com/tenant/d374ac83d089/profile/430d804b-a2dd-4857-994c-e12b7ba25f1a/zpa/render"},{"id":"216199618143212401","modifiedTime":"1683812808","creationTime":"1675813407","modifiedBy":"72057594037929825","name":"BD_SA_Profile1","description":"BD_SA_Profile1","enabled":true,"isolationTenantId":"8ba47504-e249-4f34-a9ca-6a8fd0a3c322","isolationProfileId":"fdeffec0-9f76-4f42-a39b-9233a1cc09c8","isolationUrl":"https://redirect.isolation.zscaler.com/tenant/d374ac83d089/profile/fdeffec0-9f76-4f42-a39b-9233a1cc09c8/zpa/render"},{"id":"216199618143212402","modifiedTime":"1683812810","creationTime":"1675813502","modifiedBy":"72057594037929825","name":"BD_SA_Profile2","description":"BD_SA_Profile2","enabled":true,"isolationTenantId":"8ba47504-e249-4f34-a9ca-6a8fd0a3c322","isolationProfileId":"ab1e6748-adb5-4b49-b711-1ad4f51bf535","isolationUrl":"https://redirect.isolation.zscaler.com/tenant/d374ac83d089/profile/ab1e6748-adb5-4b49-b711-1ad4f51bf535/zpa/render"}]}'
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; upgrade-insecure-requests
+      Content-Type:
+      - application/json;charset=utf-8
+      Date:
+      - Mon, 01 Apr 2024 06:25:58 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=uikiul5DDB5+pgKiRtCaDZ2wzqgOliF/4KGq/n9K2ibu40hnpqyVoDuIALlDZN2u+rKUnoo/7GinBpHjTzK56B8S605Os4Ggsjpm9HTnZF8HYqzTqzaFI4j/VGbV;
+        Expires=Mon, 08 Apr 2024 06:25:58 GMT; Path=/
+      - AWSALBCORS=uikiul5DDB5+pgKiRtCaDZ2wzqgOliF/4KGq/n9K2ibu40hnpqyVoDuIALlDZN2u+rKUnoo/7GinBpHjTzK56B8S605Os4Ggsjpm9HTnZF8HYqzTqzaFI4j/VGbV;
+        Expires=Mon, 08 Apr 2024 06:25:58 GMT; Path=/; SameSite=None; Secure
+      - AWSALB=OVpHWMG2n89/fa9bid7B3ZpbCpGLBkaZpX7R4wIarP9BtdrJxRuYAW9QkLD9KNP/OmImj/v22XHuydeGYtwKR8xRH0mgSoK+Ex+EqjBJeXbUJoJB9B+RBjB5M2Dl;
+        Expires=Mon, 08 Apr 2024 06:25:58 GMT; Path=/, AWSALBCORS=OVpHWMG2n89/fa9bid7B3ZpbCpGLBkaZpX7R4wIarP9BtdrJxRuYAW9QkLD9KNP/OmImj/v22XHuydeGYtwKR8xRH0mgSoK+Ex+EqjBJeXbUJoJB9B+RBjB5M2Dl;
+        Expires=Mon, 08 Apr 2024 06:25:58 GMT; Path=/; SameSite=None; Secure, JSESSIONIDCORS=node01k5nl7g9ciqb6hcstyv5x08t91930708.node0;
+        Path=/; Secure; HttpOnly; SameSite=Lax
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.8 Darwin/23.4.0
+    method: GET
+    uri: https://config.private.zscaler.com/mgmtconfig/v1/admin/customers/216199618143191040/isolation/profiles?page=1&pagesize=500
+  response:
+    body:
+      string: '{"totalPages":"1","totalCount":"5","list":[{"id":"216199618143263278","creationTime":"1698089410","modifiedBy":"216199618143191041","name":"BD   SA   Profile","description":"BD   SA   Profile","enabled":true,"isolationTenantId":"8ba47504-e249-4f34-a9ca-6a8fd0a3c322","isolationProfileId":"3d2d253c-2cf0-4a59-97c8-423a4001a851","isolationUrl":"https://redirect.isolation.zscaler.com/tenant/d374ac83d089/profile/3d2d253c-2cf0-4a59-97c8-423a4001a851/zpa/render"},{"id":"216199618143263277","creationTime":"1698089392","modifiedBy":"216199618143191041","name":"BD  SA
+        Profile","description":"BD  SA Profile","enabled":true,"isolationTenantId":"8ba47504-e249-4f34-a9ca-6a8fd0a3c322","isolationProfileId":"7a8941cb-2509-41dc-87a3-565b057ff472","isolationUrl":"https://redirect.isolation.zscaler.com/tenant/d374ac83d089/profile/7a8941cb-2509-41dc-87a3-565b057ff472/zpa/render"},{"id":"216199618143263279","creationTime":"1698089430","modifiedBy":"216199618143191041","name":"BD
+        SA Profile","description":"BD SA Profile","enabled":true,"isolationTenantId":"8ba47504-e249-4f34-a9ca-6a8fd0a3c322","isolationProfileId":"430d804b-a2dd-4857-994c-e12b7ba25f1a","isolationUrl":"https://redirect.isolation.zscaler.com/tenant/d374ac83d089/profile/430d804b-a2dd-4857-994c-e12b7ba25f1a/zpa/render"},{"id":"216199618143212401","modifiedTime":"1683812808","creationTime":"1675813407","modifiedBy":"72057594037929825","name":"BD_SA_Profile1","description":"BD_SA_Profile1","enabled":true,"isolationTenantId":"8ba47504-e249-4f34-a9ca-6a8fd0a3c322","isolationProfileId":"fdeffec0-9f76-4f42-a39b-9233a1cc09c8","isolationUrl":"https://redirect.isolation.zscaler.com/tenant/d374ac83d089/profile/fdeffec0-9f76-4f42-a39b-9233a1cc09c8/zpa/render"},{"id":"216199618143212402","modifiedTime":"1683812810","creationTime":"1675813502","modifiedBy":"72057594037929825","name":"BD_SA_Profile2","description":"BD_SA_Profile2","enabled":true,"isolationTenantId":"8ba47504-e249-4f34-a9ca-6a8fd0a3c322","isolationProfileId":"ab1e6748-adb5-4b49-b711-1ad4f51bf535","isolationUrl":"https://redirect.isolation.zscaler.com/tenant/d374ac83d089/profile/ab1e6748-adb5-4b49-b711-1ad4f51bf535/zpa/render"}]}'
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; upgrade-insecure-requests
+      Content-Type:
+      - application/json;charset=utf-8
+      Date:
+      - Mon, 01 Apr 2024 06:25:58 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=FFwHRAbT+YHXyoep1E0wl4PhWLt+Bv50xXO3K9QXJ8gZwOzsuEB5/dcysFy6WI8daiQmQ9+jfRlPYYgkR7stiJmhsWFkYEu501IVZnmPwp7UNud2L/TgxeLUpifD;
+        Expires=Mon, 08 Apr 2024 06:25:58 GMT; Path=/
+      - AWSALBCORS=FFwHRAbT+YHXyoep1E0wl4PhWLt+Bv50xXO3K9QXJ8gZwOzsuEB5/dcysFy6WI8daiQmQ9+jfRlPYYgkR7stiJmhsWFkYEu501IVZnmPwp7UNud2L/TgxeLUpifD;
+        Expires=Mon, 08 Apr 2024 06:25:58 GMT; Path=/; SameSite=None; Secure
+      - AWSALB=X4dHDdlGBPE+SK4FDAhmW71CZIvI9h/8MSuYGvx0xMSr7wK3vnDtd5hHfjatyZMXIcIaSQKTGLdPrZvXgZCcrW7nB4crlzu8nmUFDozwBk0trDucCGLMRU0wgDVN;
+        Expires=Mon, 08 Apr 2024 06:25:58 GMT; Path=/, AWSALBCORS=X4dHDdlGBPE+SK4FDAhmW71CZIvI9h/8MSuYGvx0xMSr7wK3vnDtd5hHfjatyZMXIcIaSQKTGLdPrZvXgZCcrW7nB4crlzu8nmUFDozwBk0trDucCGLMRU0wgDVN;
+        Expires=Mon, 08 Apr 2024 06:25:58 GMT; Path=/; SameSite=None; Secure, JSESSIONIDCORS=node01jngv30pkhmvnw7d0t1ftk4m41933027.node0;
+        Path=/; Secure; HttpOnly; SameSite=Lax
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 200
+      message: OK
+version: 1

@@ -1,0 +1,687 @@
+interactions:
+- request:
+    body: client_id=dummy_client_id&client_secret=dummy_client_secret
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '151'
+      Content-Type:
+      - application/x-www-form-urlencoded
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.8 Darwin/23.4.0
+    method: POST
+    uri: https://config.private.zscaler.com/signin
+  response:
+    body:
+      string: "{\n  \"token_type\" : \"Bearer\",\n  \"access_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTIwMzc4MTd9.DnpkkwTfCiLNScrC869jvJTjL_AgNWFQnKLYVgQAUMQ\",\n
+        \ \"expires_in\" : \"3600\"\n}"
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 01 Apr 2024 06:03:37 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=+YfHn7vIbd2YvSj9jCx0Zelshi0nen/mP6k2umkqQ11r4sM0o9fOmFajetpN2r4djs5hA+JB0sKv89G79LSRzI/BIGg+lEjFdZFXxxIDabaKilv1YnCh1HJpvoJR;
+        Expires=Mon, 08 Apr 2024 06:03:36 GMT; Path=/
+      - AWSALBCORS=+YfHn7vIbd2YvSj9jCx0Zelshi0nen/mP6k2umkqQ11r4sM0o9fOmFajetpN2r4djs5hA+JB0sKv89G79LSRzI/BIGg+lEjFdZFXxxIDabaKilv1YnCh1HJpvoJR;
+        Expires=Mon, 08 Apr 2024 06:03:36 GMT; Path=/; SameSite=None; Secure
+      Strict-Transport-Security:
+      - max-age=63072000 ; includeSubDomains ; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"name": "tests-app-connector-group", "latitude": "37.3382082", "location":
+      "San Jose, CA, USA", "longitude": "-121.8863286", "description": "tests-app-connector-group
+      description", "enabled": true, "upgradeDay": "SUNDAY", "upgradeTimeInSecs":
+      "66600", "overrideVersionProfile": true, "versionProfileId": "0", "versionProfileName":
+      "Default", "dnsQueryType": "IPV4_IPV6", "praEnabled": true, "tcpQuickAckApp":
+      true, "tcpQuickAckAssistant": true, "tcpQuickAckReadAssistant": true}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '479'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.8 Darwin/23.4.0
+    method: POST
+    uri: https://config.private.zscaler.com/mgmtconfig/v1/admin/customers/216199618143191040/appConnectorGroup
+  response:
+    body:
+      string: '{"id":"216199618143334331","modifiedTime":"1711951417","creationTime":"1711951417","modifiedBy":"216199618143191053","name":"tests-app-connector-group","enabled":true,"description":"tests-app-connector-group
+        description","versionProfileId":"0","overrideVersionProfile":true,"versionProfileName":"Default","upgradeTimeInSecs":"66600","upgradeDay":"SUNDAY","location":"San
+        Jose, CA, USA","latitude":"37.3382082","longitude":"-121.8863286","dnsQueryType":"IPV4_IPV6","cityCountry":"San
+        Jose, US","countryCode":"US","tcpQuickAckApp":true,"tcpQuickAckAssistant":true,"tcpQuickAckReadAssistant":true,"praEnabled":true,"useInDrMode":false,"wafDisabled":false,"lssAppConnectorGroup":false}'
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; upgrade-insecure-requests
+      Content-Type:
+      - application/json;charset=utf-8
+      Date:
+      - Mon, 01 Apr 2024 06:03:37 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=kO4Ea7qTM9EHwB0IxfgFe3Cv3TXdc1Madnz9AS0SpCp3uM8NIGbvamoSQcljEoGhD/3Qv3EXxSlBmQGd9zgojO0N6zleb0cyh+QY5dvJUx0healO8Upzyw40JvNG;
+        Expires=Mon, 08 Apr 2024 06:03:37 GMT; Path=/
+      - AWSALBCORS=kO4Ea7qTM9EHwB0IxfgFe3Cv3TXdc1Madnz9AS0SpCp3uM8NIGbvamoSQcljEoGhD/3Qv3EXxSlBmQGd9zgojO0N6zleb0cyh+QY5dvJUx0healO8Upzyw40JvNG;
+        Expires=Mon, 08 Apr 2024 06:03:37 GMT; Path=/; SameSite=None; Secure
+      - AWSALB=3Di1se7u5l+kI1uqytpJjkW8u/tz5KzPwZfpiukJqrT2R8THlXwchcp/u1RIYMujnrqSYShApU7yNy42LqmVzrPgcPmfRbqEatKp4hNRYrO9ylLKJMdwKo4NsFTs;
+        Expires=Mon, 08 Apr 2024 06:03:37 GMT; Path=/, AWSALBCORS=3Di1se7u5l+kI1uqytpJjkW8u/tz5KzPwZfpiukJqrT2R8THlXwchcp/u1RIYMujnrqSYShApU7yNy42LqmVzrPgcPmfRbqEatKp4hNRYrO9ylLKJMdwKo4NsFTs;
+        Expires=Mon, 08 Apr 2024 06:03:37 GMT; Path=/; SameSite=None; Secure, JSESSIONIDCORS=node01srcltscqpfqhmn3yvy4hfbq81925476.node0;
+        Path=/; Secure; HttpOnly; SameSite=Lax
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 201
+      message: Created
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.8 Darwin/23.4.0
+    method: GET
+    uri: https://config.private.zscaler.com/mgmtconfig/v1/admin/customers/216199618143191040/appConnectorGroup/216199618143334331
+  response:
+    body:
+      string: '{"id":"216199618143334331","modifiedTime":"1711951417","creationTime":"1711951417","modifiedBy":"216199618143191053","name":"tests-app-connector-group","enabled":true,"description":"tests-app-connector-group
+        description","versionProfileId":"0","overrideVersionProfile":true,"versionProfileName":"Default","versionProfileVisibilityScope":"ALL","upgradeTimeInSecs":"66600","upgradeDay":"SUNDAY","location":"San
+        Jose, CA, USA","latitude":"37.3382082","longitude":"-121.8863286","dnsQueryType":"IPV4_IPV6","cityCountry":"San
+        Jose, US","countryCode":"US","tcpQuickAckApp":true,"tcpQuickAckAssistant":true,"tcpQuickAckReadAssistant":true,"praEnabled":true,"useInDrMode":false,"wafDisabled":false,"microtenantName":"Default","lssAppConnectorGroup":false}'
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; upgrade-insecure-requests
+      Content-Type:
+      - application/json;charset=utf-8
+      Date:
+      - Mon, 01 Apr 2024 06:03:38 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=lxhD0XWr32WjBRlZGcSoYMK4IIW02M5P/NZuJT800UjvrwgZn0X0SXJl+IoTIDXrRfYAPlvmFJ3hddgia6gwYR3Wr1GAydm0/W/+slLta0OKu+x8C9D4ircqhqy7;
+        Expires=Mon, 08 Apr 2024 06:03:38 GMT; Path=/
+      - AWSALBCORS=lxhD0XWr32WjBRlZGcSoYMK4IIW02M5P/NZuJT800UjvrwgZn0X0SXJl+IoTIDXrRfYAPlvmFJ3hddgia6gwYR3Wr1GAydm0/W/+slLta0OKu+x8C9D4ircqhqy7;
+        Expires=Mon, 08 Apr 2024 06:03:38 GMT; Path=/; SameSite=None; Secure
+      - AWSALB=nDWxtWQ6QUrsss+Exz0VA3qXZNNIVcyZo7X3CNVmzHDxmYrut0HsEQBJjBUrsm+sBS+vcs/AOszldi2WmihwZ4kQedDawplJlnPB1Siauww5v0T6aEth06+rUxG5;
+        Expires=Mon, 08 Apr 2024 06:03:38 GMT; Path=/, AWSALBCORS=nDWxtWQ6QUrsss+Exz0VA3qXZNNIVcyZo7X3CNVmzHDxmYrut0HsEQBJjBUrsm+sBS+vcs/AOszldi2WmihwZ4kQedDawplJlnPB1Siauww5v0T6aEth06+rUxG5;
+        Expires=Mon, 08 Apr 2024 06:03:38 GMT; Path=/; SameSite=None; Secure, JSESSIONIDCORS=node01i7rztpgl1l26kr0x2neu9kp1927311.node0;
+        Path=/; Secure; HttpOnly; SameSite=Lax
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.8 Darwin/23.4.0
+    method: GET
+    uri: https://config.private.zscaler.com/mgmtconfig/v1/admin/customers/216199618143191040/appConnectorGroup/216199618143334331
+  response:
+    body:
+      string: '{"id":"216199618143334331","modifiedTime":"1711951417","creationTime":"1711951417","modifiedBy":"216199618143191053","name":"tests-app-connector-group","enabled":true,"description":"tests-app-connector-group
+        description","versionProfileId":"0","overrideVersionProfile":true,"versionProfileName":"Default","versionProfileVisibilityScope":"ALL","upgradeTimeInSecs":"66600","upgradeDay":"SUNDAY","location":"San
+        Jose, CA, USA","latitude":"37.3382082","longitude":"-121.8863286","dnsQueryType":"IPV4_IPV6","cityCountry":"San
+        Jose, US","countryCode":"US","tcpQuickAckApp":true,"tcpQuickAckAssistant":true,"tcpQuickAckReadAssistant":true,"praEnabled":true,"useInDrMode":false,"wafDisabled":false,"microtenantName":"Default","lssAppConnectorGroup":false}'
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; upgrade-insecure-requests
+      Content-Type:
+      - application/json;charset=utf-8
+      Date:
+      - Mon, 01 Apr 2024 06:03:38 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=i9LeslXGmh48Qni5oRd334cK47i87YMq/kiWkhrdYFSTUP1W8kkyz58MQXaXgc1FWhgtL1ytO/xS3jnWOsop3VQB0XBcbUEOuRjB742d6YdtDqgp5LfoSEktnBX1;
+        Expires=Mon, 08 Apr 2024 06:03:38 GMT; Path=/
+      - AWSALBCORS=i9LeslXGmh48Qni5oRd334cK47i87YMq/kiWkhrdYFSTUP1W8kkyz58MQXaXgc1FWhgtL1ytO/xS3jnWOsop3VQB0XBcbUEOuRjB742d6YdtDqgp5LfoSEktnBX1;
+        Expires=Mon, 08 Apr 2024 06:03:38 GMT; Path=/; SameSite=None; Secure
+      - AWSALB=g7LGvOTDpyRy9udnZv7Yt64+6xT3DCBnGA2nswY9oW7Hx8vvWzQV7SYoyuLXCyL8O7Np3cJTFikHQ1/eVVWOuMPfXPPqIneOjTLA5BgkJTpucOhjjtRNGFDCi3sz;
+        Expires=Mon, 08 Apr 2024 06:03:38 GMT; Path=/, AWSALBCORS=g7LGvOTDpyRy9udnZv7Yt64+6xT3DCBnGA2nswY9oW7Hx8vvWzQV7SYoyuLXCyL8O7Np3cJTFikHQ1/eVVWOuMPfXPPqIneOjTLA5BgkJTpucOhjjtRNGFDCi3sz;
+        Expires=Mon, 08 Apr 2024 06:03:38 GMT; Path=/; SameSite=None; Secure, JSESSIONIDCORS=node0ddjllouj8trgq16uaor24kbp1924559.node0;
+        Path=/; Secure; HttpOnly; SameSite=Lax
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"id": "216199618143334331", "modifiedTime": "1711951417", "creationTime":
+      "1711951417", "modifiedBy": "216199618143191053", "name": "tests-app-connector-group
+      Updated", "enabled": true, "description": "tests-app-connector-group description",
+      "versionProfileId": "0", "overrideVersionProfile": true, "versionProfileName":
+      "Default", "versionProfileVisibilityScope": "ALL", "upgradeTimeInSecs": "66600",
+      "upgradeDay": "SUNDAY", "location": "San Jose, CA, USA", "latitude": "37.3382082",
+      "longitude": "-121.8863286", "dnsQueryType": "IPV4_IPV6", "cityCountry": "San
+      Jose, US", "countryCode": "US", "tcpQuickAckApp": true, "tcpQuickAckAssistant":
+      true, "tcpQuickAckReadAssistant": true, "praEnabled": true, "useInDrMode": false,
+      "wafDisabled": false, "microtenantName": "Default", "lssAppConnectorGroup":
+      false}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '808'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.8 Darwin/23.4.0
+    method: PUT
+    uri: https://config.private.zscaler.com/mgmtconfig/v1/admin/customers/216199618143191040/appConnectorGroup/216199618143334331
+  response:
+    body:
+      string: ''
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; upgrade-insecure-requests
+      Date:
+      - Mon, 01 Apr 2024 06:03:38 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=aJWlM5xC1NcdMPbkSlm/LfIncctNDpKymunUR0ZktS/Yi9Bn9++3tG3L98IOskDLtm7Tx1jGBEOHBc0Vhl7aD5v+eF6abZ2HIpah8eh0l9eBh808GcxRmUAfNnv3;
+        Expires=Mon, 08 Apr 2024 06:03:38 GMT; Path=/
+      - AWSALBCORS=aJWlM5xC1NcdMPbkSlm/LfIncctNDpKymunUR0ZktS/Yi9Bn9++3tG3L98IOskDLtm7Tx1jGBEOHBc0Vhl7aD5v+eF6abZ2HIpah8eh0l9eBh808GcxRmUAfNnv3;
+        Expires=Mon, 08 Apr 2024 06:03:38 GMT; Path=/; SameSite=None; Secure
+      - AWSALB=xPlrJdR+xUxajM8xopGSyTQFeK1YW+q7Ad0S1BxAVcNElzbF/8IRjvH22uNl15uzcHKhak9WvIE1R5xxzU2ylbnizPhRGjHWrs4mHGhe0n0BAss+QLHwKkwcCpKj;
+        Expires=Mon, 08 Apr 2024 06:03:38 GMT; Path=/, AWSALBCORS=xPlrJdR+xUxajM8xopGSyTQFeK1YW+q7Ad0S1BxAVcNElzbF/8IRjvH22uNl15uzcHKhak9WvIE1R5xxzU2ylbnizPhRGjHWrs4mHGhe0n0BAss+QLHwKkwcCpKj;
+        Expires=Mon, 08 Apr 2024 06:03:38 GMT; Path=/; SameSite=None; Secure, JSESSIONIDCORS=node010qaegkic0opswzx18pzqz0xq1925480.node0;
+        Path=/; Secure; HttpOnly; SameSite=Lax
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains; preload
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 204
+      message: No Content
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.8 Darwin/23.4.0
+    method: GET
+    uri: https://config.private.zscaler.com/mgmtconfig/v1/admin/customers/216199618143191040/appConnectorGroup/216199618143334331
+  response:
+    body:
+      string: '{"id":"216199618143334331","modifiedTime":"1711951418","creationTime":"1711951417","modifiedBy":"216199618143191053","name":"tests-app-connector-group
+        Updated","enabled":true,"description":"tests-app-connector-group description","versionProfileId":"0","overrideVersionProfile":true,"versionProfileName":"Default","versionProfileVisibilityScope":"ALL","upgradeTimeInSecs":"66600","upgradeDay":"SUNDAY","location":"San
+        Jose, CA, USA","latitude":"37.3382082","longitude":"-121.8863286","dnsQueryType":"IPV4_IPV6","cityCountry":"San
+        Jose, US","countryCode":"US","tcpQuickAckApp":true,"tcpQuickAckAssistant":true,"tcpQuickAckReadAssistant":true,"praEnabled":true,"useInDrMode":false,"wafDisabled":false,"microtenantName":"Default","lssAppConnectorGroup":false}'
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; upgrade-insecure-requests
+      Content-Type:
+      - application/json;charset=utf-8
+      Date:
+      - Mon, 01 Apr 2024 06:03:39 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=FNi0ogGUOZOD7snrjcFgLUTsveDz3xgvqPdRz3DZuSMSBSakgSGEApjnZlpOHAU12n/q4IXUgT7B8kmGVVNGB3ChXoY7Z2O1q8vGmZqqbwSxifyJm/rsm1z5rBQ2;
+        Expires=Mon, 08 Apr 2024 06:03:39 GMT; Path=/
+      - AWSALBCORS=FNi0ogGUOZOD7snrjcFgLUTsveDz3xgvqPdRz3DZuSMSBSakgSGEApjnZlpOHAU12n/q4IXUgT7B8kmGVVNGB3ChXoY7Z2O1q8vGmZqqbwSxifyJm/rsm1z5rBQ2;
+        Expires=Mon, 08 Apr 2024 06:03:39 GMT; Path=/; SameSite=None; Secure
+      - AWSALB=4Jp8VJMN1E3y+qLz/+NQhcv+udzBHrHgvrQSA6XrZHJ8b509dfzmWYR0NeglWSJQbDq2Ie/WJReB6qVVs5BadbJCD5IAhrx6NTqN1ua84aFCvA1lHm3ENpF6bPdD;
+        Expires=Mon, 08 Apr 2024 06:03:39 GMT; Path=/, AWSALBCORS=4Jp8VJMN1E3y+qLz/+NQhcv+udzBHrHgvrQSA6XrZHJ8b509dfzmWYR0NeglWSJQbDq2Ie/WJReB6qVVs5BadbJCD5IAhrx6NTqN1ua84aFCvA1lHm3ENpF6bPdD;
+        Expires=Mon, 08 Apr 2024 06:03:39 GMT; Path=/; SameSite=None; Secure, JSESSIONIDCORS=node01t1l1dj8t0m2i14r4hgcs0ywpa1925482.node0;
+        Path=/; Secure; HttpOnly; SameSite=Lax
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.8 Darwin/23.4.0
+    method: GET
+    uri: https://config.private.zscaler.com/mgmtconfig/v1/admin/customers/216199618143191040/appConnectorGroup/216199618143334331
+  response:
+    body:
+      string: '{"id":"216199618143334331","modifiedTime":"1711951418","creationTime":"1711951417","modifiedBy":"216199618143191053","name":"tests-app-connector-group
+        Updated","enabled":true,"description":"tests-app-connector-group description","versionProfileId":"0","overrideVersionProfile":true,"versionProfileName":"Default","versionProfileVisibilityScope":"ALL","upgradeTimeInSecs":"66600","upgradeDay":"SUNDAY","location":"San
+        Jose, CA, USA","latitude":"37.3382082","longitude":"-121.8863286","dnsQueryType":"IPV4_IPV6","cityCountry":"San
+        Jose, US","countryCode":"US","tcpQuickAckApp":true,"tcpQuickAckAssistant":true,"tcpQuickAckReadAssistant":true,"praEnabled":true,"useInDrMode":false,"wafDisabled":false,"microtenantName":"Default","lssAppConnectorGroup":false}'
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; upgrade-insecure-requests
+      Content-Type:
+      - application/json;charset=utf-8
+      Date:
+      - Mon, 01 Apr 2024 06:03:39 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=nnbjYOoigkyfxib5B2GF0ba5Q6f1JViMk872kSIrgtLgs9126YSs6nOWC7R7OtvMtrUCxU2GErdIb0820sL+6ozPmoWeG58CsixeqDNPQrgkp415sO15ottP3hhv;
+        Expires=Mon, 08 Apr 2024 06:03:39 GMT; Path=/
+      - AWSALBCORS=nnbjYOoigkyfxib5B2GF0ba5Q6f1JViMk872kSIrgtLgs9126YSs6nOWC7R7OtvMtrUCxU2GErdIb0820sL+6ozPmoWeG58CsixeqDNPQrgkp415sO15ottP3hhv;
+        Expires=Mon, 08 Apr 2024 06:03:39 GMT; Path=/; SameSite=None; Secure
+      - AWSALB=d226dZvrZLI1adBCEWTTNUH/RxJszB4CQgYe3KZT2PwhbssFMchzFajif3YrNTb0HqhbX1R7WQBDYsANtmKIDoadFgcnE6uGex44QqRGLdZ/vcWQZlQAGXZhwOg5;
+        Expires=Mon, 08 Apr 2024 06:03:39 GMT; Path=/, AWSALBCORS=d226dZvrZLI1adBCEWTTNUH/RxJszB4CQgYe3KZT2PwhbssFMchzFajif3YrNTb0HqhbX1R7WQBDYsANtmKIDoadFgcnE6uGex44QqRGLdZ/vcWQZlQAGXZhwOg5;
+        Expires=Mon, 08 Apr 2024 06:03:39 GMT; Path=/; SameSite=None; Secure, JSESSIONIDCORS=node0auvhey5vge9w1vokw4mg9ws5q1924562.node0;
+        Path=/; Secure; HttpOnly; SameSite=Lax
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.8 Darwin/23.4.0
+    method: GET
+    uri: https://config.private.zscaler.com/mgmtconfig/v1/admin/customers/216199618143191040/appConnectorGroup?page=1&pagesize=500
+  response:
+    body:
+      string: '{"totalPages":"1","totalCount":"6","list":[{"id":"216199618143326712","modifiedTime":"1709856735","creationTime":"1709856735","modifiedBy":"216199618143191041","name":"Example100","enabled":true,"description":"Example100","versionProfileId":"0","overrideVersionProfile":false,"versionProfileName":"Default","versionProfileVisibilityScope":"ALL","upgradeTimeInSecs":"28800","upgradeDay":"MONDAY","location":"San
+        Jose, CA, USA","latitude":"37.33874","longitude":"-121.8852525","dnsQueryType":"IPV4_IPV6","cityCountry":"San
+        Jose, US","countryCode":"US","tcpQuickAckApp":false,"tcpQuickAckAssistant":false,"tcpQuickAckReadAssistant":false,"praEnabled":false,"useInDrMode":false,"wafDisabled":false,"microtenantName":"Default","lssAppConnectorGroup":false},{"id":"216199618143333816","modifiedTime":"1711702390","creationTime":"1711702390","modifiedBy":"216199618143191053","name":"New
+        Connector Group","enabled":true,"versionProfileId":"0","overrideVersionProfile":false,"versionProfileName":"Default","versionProfileVisibilityScope":"ALL","upgradeTimeInSecs":"66600","upgradeDay":"SUNDAY","location":"Location","latitude":"49.246292","longitude":"-123.116226","dnsQueryType":"IPV4_IPV6","cityCountry":"Vancouver,
+        CA","countryCode":"CA","tcpQuickAckApp":false,"tcpQuickAckAssistant":false,"tcpQuickAckReadAssistant":false,"praEnabled":false,"useInDrMode":false,"wafDisabled":false,"microtenantName":"Default","lssAppConnectorGroup":false},{"id":"216199618143277035","modifiedTime":"1705942296","creationTime":"1701409324","modifiedBy":"216199618143191041","name":"SIPA_App_Connector_Group01","enabled":true,"description":"DO
+        NOT DELETE - USED FOR INTEGRATION TESTS","versionProfileId":"0","overrideVersionProfile":true,"versionProfileName":"Default","versionProfileVisibilityScope":"ALL","upgradeTimeInSecs":"28800","upgradeDay":"MONDAY","location":"San
+        Jose, CA, USA","latitude":"37.33874","longitude":"-121.8852525","dnsQueryType":"IPV4","cityCountry":"San
+        Jose, US","countryCode":"US","tcpQuickAckApp":false,"tcpQuickAckAssistant":false,"tcpQuickAckReadAssistant":false,"praEnabled":true,"useInDrMode":false,"wafDisabled":false,"microtenantName":"Default","lssAppConnectorGroup":false},{"id":"216199618143334331","modifiedTime":"1711951418","creationTime":"1711951417","modifiedBy":"216199618143191053","name":"tests-app-connector-group
+        Updated","enabled":true,"description":"tests-app-connector-group description","versionProfileId":"0","overrideVersionProfile":true,"versionProfileName":"Default","versionProfileVisibilityScope":"ALL","upgradeTimeInSecs":"66600","upgradeDay":"SUNDAY","location":"San
+        Jose, CA, USA","latitude":"37.3382082","longitude":"-121.8863286","dnsQueryType":"IPV4_IPV6","cityCountry":"San
+        Jose, US","countryCode":"US","tcpQuickAckApp":true,"tcpQuickAckAssistant":true,"tcpQuickAckReadAssistant":true,"praEnabled":true,"useInDrMode":false,"wafDisabled":false,"microtenantName":"Default","lssAppConnectorGroup":false},{"id":"216199618143334092","modifiedTime":"1711788138","creationTime":"1711788138","modifiedBy":"216199618143191053","name":"tests-fljddiebfv","enabled":true,"description":"A
+        description for tests-fljddiebfv","versionProfileId":"0","overrideVersionProfile":true,"versionProfileName":"Default","versionProfileVisibilityScope":"ALL","upgradeTimeInSecs":"66600","upgradeDay":"SUNDAY","location":"San
+        Jose, CA, USA","latitude":"37.3382082","longitude":"-121.8863286","dnsQueryType":"IPV4_IPV6","cityCountry":"San
+        Jose, US","countryCode":"US","tcpQuickAckApp":true,"tcpQuickAckAssistant":true,"tcpQuickAckReadAssistant":true,"praEnabled":false,"useInDrMode":false,"wafDisabled":false,"microtenantName":"Default","lssAppConnectorGroup":false},{"id":"216199618143334060","modifiedTime":"1711782906","creationTime":"1711782906","modifiedBy":"216199618143191053","name":"tests-lcpdotjaup","enabled":true,"description":"A
+        description for tests-lcpdotjaup","versionProfileId":"0","overrideVersionProfile":true,"versionProfileName":"Default","versionProfileVisibilityScope":"ALL","upgradeTimeInSecs":"66600","upgradeDay":"SUNDAY","location":"San
+        Jose, CA, USA","latitude":"37.3382082","longitude":"-121.8863286","dnsQueryType":"IPV4_IPV6","cityCountry":"San
+        Jose, US","countryCode":"US","tcpQuickAckApp":true,"tcpQuickAckAssistant":true,"tcpQuickAckReadAssistant":true,"praEnabled":false,"useInDrMode":false,"wafDisabled":false,"microtenantName":"Default","lssAppConnectorGroup":false}]}'
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; upgrade-insecure-requests
+      Content-Type:
+      - application/json;charset=utf-8
+      Date:
+      - Mon, 01 Apr 2024 06:03:39 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=p3/EBIF6Cn3fyrO6ViH8UShv6OdKbEZSuyuYI9dfx8tfs1wPKEQMsKsmLWci+kAQT5jTnOzurOiyoI6I6M7SSutUF8QEXnAlpqGMBA61g9MYiLps9JGB2sVdr5Ul;
+        Expires=Mon, 08 Apr 2024 06:03:39 GMT; Path=/
+      - AWSALBCORS=p3/EBIF6Cn3fyrO6ViH8UShv6OdKbEZSuyuYI9dfx8tfs1wPKEQMsKsmLWci+kAQT5jTnOzurOiyoI6I6M7SSutUF8QEXnAlpqGMBA61g9MYiLps9JGB2sVdr5Ul;
+        Expires=Mon, 08 Apr 2024 06:03:39 GMT; Path=/; SameSite=None; Secure
+      - AWSALB=1v05JCgs7JnX4XJmDv/y7LaQ5CtwBet85rfDCuKZLtQSCHjOxI3M65oGBD4c0csvoB7Gyk232DtmDhaRGhF5qTRj16YCoDJ6G5+3YHBJ31kDRio0R0Ju/KvklSYL;
+        Expires=Mon, 08 Apr 2024 06:03:39 GMT; Path=/, AWSALBCORS=1v05JCgs7JnX4XJmDv/y7LaQ5CtwBet85rfDCuKZLtQSCHjOxI3M65oGBD4c0csvoB7Gyk232DtmDhaRGhF5qTRj16YCoDJ6G5+3YHBJ31kDRio0R0Ju/KvklSYL;
+        Expires=Mon, 08 Apr 2024 06:03:39 GMT; Path=/; SameSite=None; Secure, JSESSIONIDCORS=node01jh7qo123b5tz1i0ilot200e0h1927315.node0;
+        Path=/; Secure; HttpOnly; SameSite=Lax
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.8 Darwin/23.4.0
+    method: GET
+    uri: https://config.private.zscaler.com/mgmtconfig/v1/admin/customers/216199618143191040/appConnectorGroup?page=1&pagesize=500
+  response:
+    body:
+      string: '{"totalPages":"1","totalCount":"6","list":[{"id":"216199618143326712","modifiedTime":"1709856735","creationTime":"1709856735","modifiedBy":"216199618143191041","name":"Example100","enabled":true,"description":"Example100","versionProfileId":"0","overrideVersionProfile":false,"versionProfileName":"Default","versionProfileVisibilityScope":"ALL","upgradeTimeInSecs":"28800","upgradeDay":"MONDAY","location":"San
+        Jose, CA, USA","latitude":"37.33874","longitude":"-121.8852525","dnsQueryType":"IPV4_IPV6","cityCountry":"San
+        Jose, US","countryCode":"US","tcpQuickAckApp":false,"tcpQuickAckAssistant":false,"tcpQuickAckReadAssistant":false,"praEnabled":false,"useInDrMode":false,"wafDisabled":false,"microtenantName":"Default","lssAppConnectorGroup":false},{"id":"216199618143333816","modifiedTime":"1711702390","creationTime":"1711702390","modifiedBy":"216199618143191053","name":"New
+        Connector Group","enabled":true,"versionProfileId":"0","overrideVersionProfile":false,"versionProfileName":"Default","versionProfileVisibilityScope":"ALL","upgradeTimeInSecs":"66600","upgradeDay":"SUNDAY","location":"Location","latitude":"49.246292","longitude":"-123.116226","dnsQueryType":"IPV4_IPV6","cityCountry":"Vancouver,
+        CA","countryCode":"CA","tcpQuickAckApp":false,"tcpQuickAckAssistant":false,"tcpQuickAckReadAssistant":false,"praEnabled":false,"useInDrMode":false,"wafDisabled":false,"microtenantName":"Default","lssAppConnectorGroup":false},{"id":"216199618143277035","modifiedTime":"1705942296","creationTime":"1701409324","modifiedBy":"216199618143191041","name":"SIPA_App_Connector_Group01","enabled":true,"description":"DO
+        NOT DELETE - USED FOR INTEGRATION TESTS","versionProfileId":"0","overrideVersionProfile":true,"versionProfileName":"Default","versionProfileVisibilityScope":"ALL","upgradeTimeInSecs":"28800","upgradeDay":"MONDAY","location":"San
+        Jose, CA, USA","latitude":"37.33874","longitude":"-121.8852525","dnsQueryType":"IPV4","cityCountry":"San
+        Jose, US","countryCode":"US","tcpQuickAckApp":false,"tcpQuickAckAssistant":false,"tcpQuickAckReadAssistant":false,"praEnabled":true,"useInDrMode":false,"wafDisabled":false,"microtenantName":"Default","lssAppConnectorGroup":false},{"id":"216199618143334331","modifiedTime":"1711951418","creationTime":"1711951417","modifiedBy":"216199618143191053","name":"tests-app-connector-group
+        Updated","enabled":true,"description":"tests-app-connector-group description","versionProfileId":"0","overrideVersionProfile":true,"versionProfileName":"Default","versionProfileVisibilityScope":"ALL","upgradeTimeInSecs":"66600","upgradeDay":"SUNDAY","location":"San
+        Jose, CA, USA","latitude":"37.3382082","longitude":"-121.8863286","dnsQueryType":"IPV4_IPV6","cityCountry":"San
+        Jose, US","countryCode":"US","tcpQuickAckApp":true,"tcpQuickAckAssistant":true,"tcpQuickAckReadAssistant":true,"praEnabled":true,"useInDrMode":false,"wafDisabled":false,"microtenantName":"Default","lssAppConnectorGroup":false},{"id":"216199618143334092","modifiedTime":"1711788138","creationTime":"1711788138","modifiedBy":"216199618143191053","name":"tests-fljddiebfv","enabled":true,"description":"A
+        description for tests-fljddiebfv","versionProfileId":"0","overrideVersionProfile":true,"versionProfileName":"Default","versionProfileVisibilityScope":"ALL","upgradeTimeInSecs":"66600","upgradeDay":"SUNDAY","location":"San
+        Jose, CA, USA","latitude":"37.3382082","longitude":"-121.8863286","dnsQueryType":"IPV4_IPV6","cityCountry":"San
+        Jose, US","countryCode":"US","tcpQuickAckApp":true,"tcpQuickAckAssistant":true,"tcpQuickAckReadAssistant":true,"praEnabled":false,"useInDrMode":false,"wafDisabled":false,"microtenantName":"Default","lssAppConnectorGroup":false},{"id":"216199618143334060","modifiedTime":"1711782906","creationTime":"1711782906","modifiedBy":"216199618143191053","name":"tests-lcpdotjaup","enabled":true,"description":"A
+        description for tests-lcpdotjaup","versionProfileId":"0","overrideVersionProfile":true,"versionProfileName":"Default","versionProfileVisibilityScope":"ALL","upgradeTimeInSecs":"66600","upgradeDay":"SUNDAY","location":"San
+        Jose, CA, USA","latitude":"37.3382082","longitude":"-121.8863286","dnsQueryType":"IPV4_IPV6","cityCountry":"San
+        Jose, US","countryCode":"US","tcpQuickAckApp":true,"tcpQuickAckAssistant":true,"tcpQuickAckReadAssistant":true,"praEnabled":false,"useInDrMode":false,"wafDisabled":false,"microtenantName":"Default","lssAppConnectorGroup":false}]}'
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; upgrade-insecure-requests
+      Content-Type:
+      - application/json;charset=utf-8
+      Date:
+      - Mon, 01 Apr 2024 06:03:40 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=Srvp604iLehi2X/O0uAT27j0pWRE9EFVZNCCTnoF8KrlaiDJxG94enB4GWGTVWS+moDEhjPHbx0BhhPyeR3RVy9fa6mqeTLfYu1mTorIWZH+7TEQMzvBKyGaXkew;
+        Expires=Mon, 08 Apr 2024 06:03:40 GMT; Path=/
+      - AWSALBCORS=Srvp604iLehi2X/O0uAT27j0pWRE9EFVZNCCTnoF8KrlaiDJxG94enB4GWGTVWS+moDEhjPHbx0BhhPyeR3RVy9fa6mqeTLfYu1mTorIWZH+7TEQMzvBKyGaXkew;
+        Expires=Mon, 08 Apr 2024 06:03:40 GMT; Path=/; SameSite=None; Secure
+      - AWSALB=Z5xozCVeWlZE4pgMxf51sQboJ4UrYd/bEWNAJkRNCrXgI/HpS7nDdBWU5rIBanbOhWxUBH6nNzYQ0KxhFTpel4gw8OEn3LuIAy267qi/raK++aPjgSaYFbl+l/6p;
+        Expires=Mon, 08 Apr 2024 06:03:40 GMT; Path=/, AWSALBCORS=Z5xozCVeWlZE4pgMxf51sQboJ4UrYd/bEWNAJkRNCrXgI/HpS7nDdBWU5rIBanbOhWxUBH6nNzYQ0KxhFTpel4gw8OEn3LuIAy267qi/raK++aPjgSaYFbl+l/6p;
+        Expires=Mon, 08 Apr 2024 06:03:40 GMT; Path=/; SameSite=None; Secure, JSESSIONIDCORS=node01x6hm3fl87inb46mydq0ysngi1927316.node0;
+        Path=/; Secure; HttpOnly; SameSite=Lax
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Bearer dummy_token
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '0'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - zscaler-sdk-python/1.0.0 python/3.11.8 Darwin/23.4.0
+    method: DELETE
+    uri: https://config.private.zscaler.com/mgmtconfig/v1/admin/customers/216199618143191040/appConnectorGroup/216199618143334331
+  response:
+    body:
+      string: ''
+    headers:
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Security-Policy:
+      - default-src 'none'; upgrade-insecure-requests
+      Date:
+      - Mon, 01 Apr 2024 06:03:40 GMT
+      Expires:
+      - Thu, 01 Jan 1970 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Set-Cookie:
+      - AWSALB=iO7j0iBqDhNl1ltPuoT8VEQyOuFTPKpzr8ACnhD+1Z71c4IFxh3UzRdMJ87ZMQzg0rKt0PHowHAdxUqugpfZNzt/7j1dDgZ8GdgoMqPe6ZDUQmSeYW8o9XKDE35O;
+        Expires=Mon, 08 Apr 2024 06:03:40 GMT; Path=/
+      - AWSALBCORS=iO7j0iBqDhNl1ltPuoT8VEQyOuFTPKpzr8ACnhD+1Z71c4IFxh3UzRdMJ87ZMQzg0rKt0PHowHAdxUqugpfZNzt/7j1dDgZ8GdgoMqPe6ZDUQmSeYW8o9XKDE35O;
+        Expires=Mon, 08 Apr 2024 06:03:40 GMT; Path=/; SameSite=None; Secure
+      - AWSALB=dMJrJrSj04Fsx3MfdHNHc3Yw872yj/TPQQe4H3g/ls3BsBcnRqxA545t1XnkGWO3p2AgB2CUk7GepZCn10HKQZMYmcko30Uwn3OCtN0R0Rr8PYZ1Ga0IWxCD0Rn+;
+        Expires=Mon, 08 Apr 2024 06:03:40 GMT; Path=/, AWSALBCORS=dMJrJrSj04Fsx3MfdHNHc3Yw872yj/TPQQe4H3g/ls3BsBcnRqxA545t1XnkGWO3p2AgB2CUk7GepZCn10HKQZMYmcko30Uwn3OCtN0R0Rr8PYZ1Ga0IWxCD0Rn+;
+        Expires=Mon, 08 Apr 2024 06:03:40 GMT; Path=/; SameSite=None; Secure, JSESSIONIDCORS=node01cczxb8pai5yf127rvoeasj58d1927317.node0;
+        Path=/; Secure; HttpOnly; SameSite=Lax
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains; preload
+      Vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - '0'
+    status:
+      code: 204
+      message: No Content
+version: 1
