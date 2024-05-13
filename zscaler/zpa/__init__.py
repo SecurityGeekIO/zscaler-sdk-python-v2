@@ -12,7 +12,7 @@ from zscaler.cache.no_op_cache import NoOpCache
 from zscaler.errors.http_error import ZscalerAPIError, HTTPError
 from zscaler.exceptions.exceptions import ZscalerAPIException, HTTPException
 from zscaler.cache.zscaler_cache import ZscalerCache
-from zscaler.constants import ZPA_BASE_URLS
+from zscaler.constants import DEV_AUTH_URL, ZPA_BASE_URLS
 from zscaler.ratelimiter.ratelimiter import RateLimiter
 from zscaler.user_agent import UserAgent
 from zscaler.utils import (
@@ -148,7 +148,7 @@ class ZPAClientHelper(ZPAClient):
     @retry_with_backoff(retries=5)
     def login(self):
         """Log in to the ZPA API and set the access token for subsequent requests."""
-        data = urllib.parse.urlencode({"client_id": self.client_id, "client_secret": self.client_secret})
+        params = {"client_id": self.client_id, "client_secret": self.client_secret}
         headers = {
             "Content-Type": "application/x-www-form-urlencoded",
             "Accept": "application/json",
@@ -156,6 +156,10 @@ class ZPAClientHelper(ZPAClient):
         }
         try:
             url = f"{self.baseurl}/signin"
+            if self.cloud == "DEV":
+                url = DEV_AUTH_URL
+                params["grant_type"] = "CLIENT_CREDENTIALS"
+            data = urllib.parse.urlencode(params)
             resp = requests.post(url, data=data, headers=headers, timeout=self.timeout)
             # Avoid logging all data from the response, focus on the status and a summary instead
             logger.info("Login attempt with status: %d", resp.status_code)
