@@ -1,4 +1,5 @@
 import json
+
 from zscaler.errors.error import Error
 
 
@@ -9,6 +10,7 @@ class HTTPError(Error):
         self.response_headers = response_details.headers
         self.stack = ""
         self.message = f"HTTP {self.status} {response_body}"
+
 
 class ZscalerAPIError(Error):
     def __init__(self, url, response, response_body):

@@ -1,53 +1,77 @@
 [tool.poetry]
 name = "zscaler-sdk-python"
-version = "1.0.0"
-description = "Framework for interacting with Zscaler Cloud via API"
-authors = ["Zscaler Technology Alliances <zscaler-partner-labs@z-bd.com>"]
+version = "0.1.8"
+description = "Official Python SDK for the Zscaler Products (Beta)"
+authors = ["Zscaler, Inc. <devrel@zscaler.com>"]
 license = "MIT"
-keywords = ["zscaler", "zpa", "zia", "zscaler-sdk-python"]
 readme = "README.md"
-documentation = "https://zscaler-sdk-python.readthedocs.io/"
 homepage = "https://github.com/zscaler/zscaler-sdk-python"
 repository = "https://github.com/zscaler/zscaler-sdk-python"
-packages = [
-    { include = "zscaler/*" }
-]
+documentation = "https://zscaler-sdk-python.readthedocs.io"
+keywords = ["zscaler", "sdk", "zpa", "zia", "zdx", "zcc", "zcon"]
 classifiers = [
-    "Environment :: Console",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "Intended Audience :: Information Technology",
-    "Intended Audience :: System Administrators",
     "License :: OSI Approved :: MIT License",
-    "Natural Language :: English",
-    "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Operating System :: OS Independent",
     "Topic :: Security",
     "Topic :: Software Development :: Libraries :: Python Modules", ]
-include = [
-    "LICENSE",
+packages = [
+    { include = "zscaler" }
 ]
 
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/zscaler/zscaler-sdk-python/issues"
 
 [tool.poetry.dependencies]
-python = "^3.8"
-python-box = "7.0.1"
+python = ">=3.8,<4.0"
+arrow = "*"
+certifi = "*"
+charset-normalizer = "*"
+idna = "*"
+python-box = "^7.1.1"
+python-dateutil = "*"
+requests = "*"
+responses = "*"
+restfly = "*"
+six = "*"
+urllib3 = "*"
+flatdict = "*"
+pyyaml = "*"
+xmltodict = "*"
+yarl = "*"
+pycryptodomex = "*"
+aenum = "*"
+pydash = "*"
+flake8 = "*"
+pytz = "*"
+black = "^24.4.1"
+cryptography = "^3.4"
 
 [tool.poetry.dev-dependencies]
-python = "^3.8"
-python-box = "7.0.1"
-sphinx = "7.0.1"
-furo = "2023.5.20"
-pytest = ">=7.3.2"
-requests = ">=2.31.0"
-pre-commit = ">=3.3.3"
-responses = ">=0.23.1"
-toml = ">=0.10.2"
-urllib3 = "2.0.6"
+black = "*"
+pytest = "*"
+pytest-asyncio = "*"
+pytest-mock = "*"
+pytest-recording = "*"
+pytest-cov = "*"
+pyfakefs = "*"
+isort = "*"
+wheel = "*"
+sphinx = "*"
+sphinx-autobuild = "*"
+sphinx_rtd_theme = "*"
+
+[tool.poetry.extras]
+dev = ["black", "pytest", "pytest-asyncio", "pytest-mock", "pytest-recording", "pytest-cov", "pyfakefs", "aenum", "isort", "wheel", "pydash"]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
 
 [tool.black]
 line-length = 127

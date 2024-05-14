@@ -17,6 +17,7 @@
 
 from box import Box, BoxList
 from requests import Response
+
 from zscaler.utils import snake_to_camel
 from zscaler.zpa.client import ZPAClient
 
@@ -41,18 +42,17 @@ class ProvisioningKeyAPI:
 
         Args:
             key_type (str): The type of provisioning key, accepted values are:
-
                 ``connector`` and ``service_edge``.
             **kwargs: Optional keyword args.
 
         Keyword Args:
-            **max_items (int, optional):
+            max_items (int, optional):
                 The maximum number of items to request before stopping iteration.
-            **max_pages (int, optional):
+            max_pages (int, optional):
                 The maximum number of pages to request before stopping iteration.
-            **pagesize (int, optional):
+            pagesize (int, optional):
                 Specifies the page size. The default size is 20, but the maximum size is 500.
-            **search (str, optional):
+            search (str, optional):
                 The search string used to match against features and fields.
 
         Returns:
@@ -70,7 +70,10 @@ class ProvisioningKeyAPI:
             ...    print(key)
 
         """
-        list, _ = self.rest.get_paginated_data(path=f"/associationType/{simplify_key_type(key_type)}/provisioningKey", data_key_name="list", **kwargs)
+        list, _ = self.rest.get_paginated_data(
+            path=f"/associationType/{simplify_key_type(key_type)}/provisioningKey",
+            **kwargs,
+        )
         return list
 
     def get_provisioning_key(self, key_id: str, key_type: str) -> Box:
@@ -162,7 +165,10 @@ class ProvisioningKeyAPI:
         for key, value in kwargs.items():
             payload[snake_to_camel(key)] = value
 
-        response = self.rest.post(f"associationType/{simplify_key_type(key_type)}/provisioningKey", json=payload)
+        response = self.rest.post(
+            f"associationType/{simplify_key_type(key_type)}/provisioningKey",
+            json=payload,
+        )
         if isinstance(response, Response):
             # this is only true when the creation failed (status code is not 2xx)
             status_code = response.status_code
@@ -215,7 +221,14 @@ class ProvisioningKeyAPI:
         for key, value in kwargs.items():
             payload[snake_to_camel(key)] = value
 
-        resp = self.rest.put(f"associationType/{simplify_key_type(key_type)}/provisioningKey/{key_id}", json=payload).status_code
+        resp = self.rest.put(
+            f"associationType/{simplify_key_type(key_type)}/provisioningKey/{key_id}",
+            json=payload,
+        ).status_code
+
+        # Return the object if it was updated successfully
+        if not isinstance(resp, Response):
+            return self.get_provisioning_key(key_id, key_type=key_type)
 
         # Return the object if it was updated successfully
         if not isinstance(resp, Response):

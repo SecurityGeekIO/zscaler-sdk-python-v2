@@ -19,25 +19,43 @@ class ZPAClient:
     def __init__():
         pass
 
-    def get(self, path: str, json=None, params=None, fail_safe: bool = False, api_version: str = None):
+    def get(
+        self,
+        path: str,
+        json=None,
+        params=None,
+        fail_safe: bool = False,
+        api_version: str = None,
+    ):
         """
         Send a GET request to the ZPA API.
         Parameters:
         - path (str): API endpoint path.
         - json (str): the request body.
         - params (dict): the query params
-        - api_version (str): the api version, availbale values: v1, v2, userconfig_v1, cbiconfig_v1
+        - api_version (str): the api version, availbale values: v1, v2, v2_lss, userconfig_v1, cbiconfig_v1
         """
         pass
 
     def get_paginated_data(
         self,
-        path: str = None,
+        path=None,
         params=None,
-        data_key_name: str = None,
-        data_per_page: int = 500,
         expected_status_code=200,
         api_version: str = None,
+        search=None,
+        search_field="name",
+        max_pages=None,
+        max_items=None,
+        sort_order=None,
+        sort_by=None,
+        sort_dir=None,
+        start_time=None,
+        end_time=None,
+        idp_group_id=None,
+        scim_user_id=None,
+        page=None,
+        pagesize=20,
     ):
         """
         Send a GET request to the ZPA API to fetch all pages of a resources.
@@ -46,7 +64,7 @@ class ZPAClient:
         - data_key_name (str): list field key.
         - data_per_page: the page size
         - params (dict): the query params
-        - api_version (str): the api version, availbale values: v1, v2, userconfig_v1 or cbiconfig
+        - api_version (str): the api version, availbale values: v1, v2, v2_lss, userconfig_v1 or cbiconfig
         """
         pass
 
@@ -68,7 +86,7 @@ class ZPAClient:
         - path (str): API endpoint path.
         - json (str): the request body.
         - params (dict): the query params
-        - api_version (str): the api version, availbale values: v1, v2, userconfig_v1 or cbiconfig
+        - api_version (str): the api version, availbale values: v1, v2, v2_lss, userconfig_v1 or cbiconfig
         """
         pass
 
@@ -79,7 +97,7 @@ class ZPAClient:
         - path (str): API endpoint path.
         - json (str): the request body.
         - params (dict): the query params
-        - api_version (str): the api version, availbale values: v1, v2, userconfig_v1 or cbiconfig
+        - api_version (str): the api version, availbale values: v1, v2, v2_lss, userconfig_v1 or cbiconfig
         """
         pass
 
@@ -90,6 +108,6 @@ class ZPAClient:
         - path (str): API endpoint path.
         - json (str): the request body.
         - params (dict): the query params
-        - api_version (str): the api version, availbale values: v1, v2, userconfig_v1 or cbiconfig
+        - api_version (str): the api version, availbale values: v1, v2, v2_lss, userconfig_v1 or cbiconfig
         """
         pass

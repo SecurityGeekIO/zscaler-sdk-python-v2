@@ -1,5 +1,6 @@
 from zscaler.errors.error import Error
 
+
 # ZPA API Errors
 class ZPAAPIError(Error):
     def __init__(self, url, response_details, response_body):
@@ -15,5 +16,6 @@ class ZPAAPIError(Error):
         self.stack = ""
 
         self.message = f"ZPA HTTP {self.status} {self.error_id} " f"{self.reason}\nParameters: {params_string}"
+
 
 # ZIA API Errors

@@ -14,15 +14,21 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+import argparse
 import base64
+import datetime
+import json
 import json as jsonp
 import logging
 import random
 import re
 import time
-from typing import Any, Dict, List, Optional
+from typing import Dict, Optional
+from urllib.parse import urlencode
 
+import pytz
 from box import Box, BoxList
+from dateutil import parser
 from requests import Response
 from restfly import APIIterator
 
@@ -75,6 +81,8 @@ def snake_to_camel(name: str):
         "surrogate_ip": "surrogateIP",
         "surrogate_ip_enforced_for_known_browsers": "surrogateIPEnforcedForKnownBrowsers",
         "is_incomplete_dr_config": "isIncompleteDRConfig",
+        "email_ids": "emailIds",
+        "page_size": "pageSize",
     }
     return edge_cases.get(name, name[0].lower() + name.title()[1:].replace("_", ""))
 
@@ -97,6 +105,8 @@ def chunker(lst, n):
 
 # Recursive function to convert all keys and nested keys from snake case
 # to camel case.
+
+
 def convert_keys(data):
     if isinstance(data, (list, BoxList)):
         return [convert_keys(inner_dict) for inner_dict in data]
@@ -134,13 +144,6 @@ def add_id_groups(id_groups: list, kwargs: dict, payload: dict):
     for entry in id_groups:
         if kwargs.get(entry[0]):
             payload[entry[1]] = [{"id": param_id} for param_id in kwargs.pop(entry[0])]
-    return
-
-def transform_common_id_fields(id_groups: list, kwargs: dict, payload: dict):
-    for entry in id_groups:
-        if kwargs.get(entry[0]):
-            # Ensure each ID is treated as an integer before adding it to the payload
-            payload[entry[1]] = [{"id": int(param_id)} for param_id in kwargs.pop(entry[0])]
     return
 
 
@@ -268,25 +271,10 @@ def pick_version_profile(kwargs: list, payload: list):
             payload["versionProfileId"] = 2
 
 
-def remove_cloud_suffix(str_name: str) -> str:
-    """
-    Removes appended cloud name (e.g. "(zscalerthree.net)") from the string.
-
-    Args:
-        str_name (str): The string from which to remove the cloud name.
-
-    Returns:
-        str: The string without the cloud name.
-    """
-    reg = re.compile(r"(.*)\s+\([a-zA-Z0-9\-_\.]*\)\s*$")
-    res = reg.sub(r"\1", str_name)
-    return res.strip()
-
-
 class Iterator(APIIterator):
     """Iterator class."""
 
-    page_size = 500
+    page_size = 100
 
     def __init__(self, api, path: str = "", **kw):
         """Initialize Iterator class."""
@@ -319,6 +307,21 @@ class Iterator(APIIterator):
             # standard 1 sec rate limit on the API endpoints with pagination so
             # we are going to include it here.
             time.sleep(1)
+
+
+def remove_cloud_suffix(str_name: str) -> str:
+    """
+    Removes appended cloud name (e.g. "(zscalerthree.net)") from the string.
+
+    Args:
+        str_name (str): The string from which to remove the cloud name.
+
+    Returns:
+        str: The string without the cloud name.
+    """
+    reg = re.compile(r"(.*)\s+\([a-zA-Z0-9\-_\.]*\)\s*$")
+    res = reg.sub(r"\1", str_name)
+    return res.strip()
 
 
 def should_retry(status_code):
@@ -399,6 +402,86 @@ def is_token_expired(token_string):
         return True
 
 
+def str2bool(v):
+    if isinstance(v, bool):
+        return v
+    if v.lower() in ("yes", "true", "t", "y", "1"):
+        return True
+    elif v.lower() in ("no", "false", "f", "n", "0"):
+        return False
+    else:
+        raise argparse.ArgumentTypeError("Boolean value expected.")
+
+
+def is_valid_ssh_key(private_key: str) -> bool:
+    """
+    Validate SSH private key format.
+    """
+    # Basic pattern matching to check for RSA/ECDSA (OpenSSH/PEM) key headers
+    ssh_key_patterns = [
+        r"-----BEGIN OPENSSH PRIVATE KEY-----",
+        r"-----BEGIN RSA PRIVATE KEY-----",
+        r"-----BEGIN EC PRIVATE KEY-----",
+    ]
+    return any(re.search(pattern, private_key) for pattern in ssh_key_patterns)
+
+
+def validate_and_convert_times(start_time_str, end_time_str, time_zone_str):
+    """
+    Validates and converts provided time strings to epoch.
+    Validates the time zone against IANA Time Zone database.
+    Ensures start time is not more than 1 hour in the past and within 1 year range of end time.
+
+    Args:
+        start_time_str (str): Start time in RFC1123Z or RFC1123 format.
+        end_time_str (str): End time in RFC1123Z or RFC1123 format.
+        time_zone_str (str): IANA Time Zone database string.
+
+    Returns:
+        tuple: Converted start and end times in epoch format.
+
+    Raises:
+        ValueError: If any validation fails.
+    """
+    # Validate time zone
+    if time_zone_str not in pytz.all_timezones:
+        raise ValueError(f"Invalid time zone: {time_zone_str}")
+
+    # Convert times
+    try:
+        start_time = parser.parse(start_time_str)
+        end_time = parser.parse(end_time_str)
+    except ValueError as e:
+        raise ValueError(f"Time parsing error: {e}")
+
+    # Handle timezone conversion
+    tz = pytz.timezone(time_zone_str)
+    if start_time.tzinfo is not None:
+        start_time = start_time.astimezone(tz)
+    else:
+        start_time = tz.localize(start_time)
+
+    if end_time.tzinfo is not None:
+        end_time = end_time.astimezone(tz)
+    else:
+        end_time = tz.localize(end_time)
+
+    # Ensure start time is not more than 1 hour in the past
+    now_in_tz = datetime.datetime.now(tz)
+    if start_time < (now_in_tz - datetime.timedelta(hours=1)):
+        raise ValueError("Start time cannot be more than 1 hour in the past.")
+
+    # Ensure start time is within a one year range of end time
+    if end_time > (start_time + datetime.timedelta(days=365)):
+        raise ValueError("Start time and end time range cannot exceed 1 year.")
+
+    # Convert to epoch
+    start_epoch = int(start_time.timestamp())
+    end_epoch = int(end_time.timestamp())
+
+    return start_epoch, end_epoch
+
+
 def dump_request(logger, url: str, method: str, json, params, headers, request_uuid: str, body=True):
     request_headers_filtered = {key: value for key, value in headers.items() if key != "Authorization"}
     # Log the request details before sending the request
@@ -409,13 +492,30 @@ def dump_request(logger, url: str, method: str, json, params, headers, request_u
         "uuid": str(request_uuid),
         "request_headers": jsonp.dumps(request_headers_filtered),
     }
-
+    log_lines = []
+    request_body = ""
     if body:
-        request_data["request_body"] = jsonp.dumps(json)
-    logger.info("Request details: %s", jsonp.dumps(request_data))
+        request_body = jsonp.dumps(json)
+    log_lines.append(f"\n---[ ZSCALER SDK REQUEST | ID:{request_uuid} ]-------------------------------")
+    log_lines.append(f"{method} {url}")
+    for key, value in headers.items():
+        log_lines.append(f"{key}: {value}")
+    if body and request_body != "" and request_body != "null":
+        log_lines.append(f"\n{request_body}")
+    log_lines.append("--------------------------------------------------------------------")
+    logger.info("\n".join(log_lines))
 
 
-def dump_response(logger, url: str, method: str, resp, params, request_uuid: str, start_time, from_cache: bool = None):
+def dump_response(
+    logger,
+    url: str,
+    method: str,
+    resp,
+    params,
+    request_uuid: str,
+    start_time,
+    from_cache: bool = None,
+):
     # Calculate the duration in seconds
     end_time = time.time()
     duration_seconds = end_time - start_time
@@ -423,17 +523,24 @@ def dump_response(logger, url: str, method: str, resp, params, request_uuid: str
     duration_ms = duration_seconds * 1000
     # Convert the headers to a regular dictionary
     response_headers_dict = dict(resp.headers)
-    # Log the response details after receiving the response
-    response_data = {
-        "url": url,
-        "method": method,
-        "response_body": resp.text,
-        "params": jsonp.dumps(params),
-        "duration": f"{duration_ms:.2f}ms",
-        "response_headers": jsonp.dumps(response_headers_dict),
-        "uuid": str(request_uuid),
-    }
+    full_url = url
+    if params:
+        full_url += "?" + urlencode(params)
+    log_lines = []
+    response_body = ""
+    if resp.text:
+        response_body = resp.text
+
     if from_cache:
-        logger.info("Response details from cache: %s", jsonp.dumps(response_data))
+        log_lines.append(
+            f"\n---[ ZSCALER SDK RESPONSE | ID:{request_uuid} | " f"FROM CACHE | DURATION:{duration_ms}ms ]" + "-" * 31
+        )
     else:
-        logger.info("Response details: %s", jsonp.dumps(response_data))
+        log_lines.append(f"\n---[ ZSCALER SDK RESPONSE | ID:{request_uuid} | " f"DURATION:{duration_ms}ms ]" + "-" * 46)
+    log_lines.append(f"{method} {full_url}")
+    for key, value in response_headers_dict.items():
+        log_lines.append(f"{key}: {value}")
+    if response_body and response_body != "" and response_body != "null":
+        log_lines.append(f"\n{response_body}")
+    log_lines.append("-" * 68)
+    logger.info("\n".join(log_lines))

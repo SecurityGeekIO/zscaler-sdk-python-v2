@@ -15,9 +15,10 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 
+import requests
 from box import Box, BoxList
 from requests import Response
-import requests
+
 from zscaler.utils import convert_keys, keys_exists, snake_to_camel
 from zscaler.zpa.client import ZPAClient
 
@@ -47,20 +48,20 @@ class LSSConfigControllerAPI:
             conditions (list): List of condition tuples.
 
         Returns:
-            :obj:`dict`: Dictionary containing the LSS Log Receiver Policy conditions template.
+            :obj:`list`: List containing the LSS Log Receiver Policy conditions template.
 
         """
 
         template = []
 
         for condition in conditions:
-            # Template for SAML Policy Rule objects
-            if isinstance(condition, tuple) and len(condition) == 2 and condition[0] == "saml":
-                operand = {"operands": [{"objectType": "SAML", "entryValues": []}]}
-                for item in condition[1]:
+            # Template for SAML, SCIM, and SCIM_GROUP Policy Rule objects
+            if condition[0] in ["saml", "scim", "scim_group"]:
+                operand = {"operands": [{"objectType": condition[0].upper(), "entryValues": []}]}
+                for entry in condition[1]:
                     entry_values = {
-                        "lhs": item[0],
-                        "rhs": item[1],
+                        "lhs": entry[0],
+                        "rhs": entry[1],
                     }
                     operand["operands"][0]["entryValues"].append(entry_values)
             # Template for client_type Policy Rule objects
@@ -87,41 +88,40 @@ class LSSConfigControllerAPI:
 
         return template
 
-    def get_client_types(self) -> Box:
+    def get_client_types(self, client_type=None) -> Box:
         """
-        Returns all available LSS Client Types.
+        Returns all available LSS Client Types or a specific Client Type if specified.
 
-        Client Types are used when creating LSS Receiver configs. ZPA uses an internal code for Client Types, e.g.
-        ``zpn_client_type_ip_anchoring`` is the Client Type for a ZIA Service Edge. zscaler-sdk-python inverts the key/value so
-        that you can perform a lookup using a human-readable name in your code (e.g. ``cloud_connector``).
+        Client Types are used when creating LSS Receiver configs.
+        ZPA uses an internal code for Client Types, e.g.
+        `zpn_client_type_ip_anchoring` is the Client Type for a ZIA Service Edge.
+        The zscaler-sdk-python inverts the key/value so
+        that you can perform a lookup using a human-readable name in your code (e.g. `cloud_connector`).
+
+        Args:
+            client_type_name (str, optional): The human-readable name of the client type to filter for.
 
         Returns:
-            :obj:`Box`: Dictionary containing all LSS Client Types with human-readable name as the key.
+            :obj:`Box`: Dictionary containing all or a specific LSS Client Type with human-readable name as the key.
 
         Examples:
             Print all LSS Client Types:
-
             >>> print(zpa.lss.get_client_types())
 
+            Print only the 'web_browser' Client Type:
+            >>> print(zpa.lss.get_client_types('web_browser'))
         """
-        # ZPA returns a dictionary of client types but the keys are the internal ZPA codes, which our users probably
-        # won't know. This method reverses the dictionary, converts the 'normalised' Client Type name to snake_case
-        # before returning it so that a lookup can be easily performed using the Client Type name in plain english.
-        #
-        # Example before:
-        # {'zpn_client_type_exporter': 'Web Browser'}
-        # Example after:
-        # {'web_browser': 'zpn_client_type_exporter'}
-
-        response = requests.get(f"{self.v2_admin_url}/clientTypes", headers=self.rest.headers)
-
+        response = self.rest.send("GET", "clientTypes", api_version="v2_lss")
         if response.status_code == 200:
-            return response.json()
+            client_types = response.json()
+            reverse_map = {v.lower().replace(" ", "_"): k for k, v in client_types.items()}
+            box = Box(reverse_map)
+
+            if client_type and client_type in box:
+                return Box({client_type: box[client_type]})
+            return box
         else:
             response.raise_for_status()
-
-        reverse_map = {v.lower().replace(" ", "_"): k for k, v in response.items()}
-        return Box(reverse_map)
 
     def list_configs(self, **kwargs) -> BoxList:
         """
@@ -146,62 +146,64 @@ class LSSConfigControllerAPI:
             >>> for lss_config in zpa.lss.list_configs():
             ...    print(config)
         """
-        list, _ = self.rest.get_paginated_data(path="/lssConfig", data_key_name="list", **kwargs, api_version="v2")
+        list, _ = self.rest.get_paginated_data(path="/lssConfig", **kwargs, api_version="v2")
         return list
 
-    def get_config(self, lss_id: str) -> Box:
+    def get_config(self, lss_config_id: str) -> Box:
         """
         Returns information on the specified LSS Receiver config.
 
         Args:
-            lss_id (str):
+            lss_config_id (str):
                 The unique identifier for the LSS Receiver config.
 
         Returns:
-            :obj:`Box`: The resource record for the LSS Receiver config.
+            :obj:`Box`: The resource record for the LSS Receiver config in a Box object for easy attribute access.
 
         Examples:
             Print information on the specified LSS Receiver config.
 
             >>> print(zpa.lss.get_config('99999'))
-
         """
-        response = self.rest.get("/lssConfig/%s" % (lss_id), api_version="v2")
-        if isinstance(response, Response):
-            status_code = response.status_code
-            if status_code != 200:
-                return None
-        return response
+        # Perform the GET request
+        return self.rest.get(f"lssConfig/{lss_config_id}", api_version="v2")
 
-
-    def get_log_formats(self) -> Box:
+    def get_log_formats(self, log_type=None) -> Box:
         """
-        Returns all available pre-configured LSS Log Formats.
+        Returns all available pre-configured LSS Log Formats or a specific log format if specified.
 
-        LSS Log Formats are provided as either CSV, JSON or TSV. LSS Log Format values can be used when
+        LSS Log Formats are provided as either CSV, JSON, or TSV. The values can be used when
         creating or updating LSS Log Receiver configs.
+
+        Args:
+            log_type_name (str, optional): The name of the log type to retrieve (e.g., 'zpn_ast_comprehensive_stats').
 
         Returns:
             :obj:`Box`: Dictionary containing pre-configured LSS Log Formats.
 
         Examples:
-            >>> for item in zpa.lss.get_log_formats():
-            ...    print(item)
-
+            >>> print(zpa.lss.get_log_formats())
+            >>> print(zpa.lss.get_log_formats('zpn_ast_comprehensive_stats'))
         """
-        response = requests.get(f"{self.v2_admin_url}/logType/formats", headers=self.rest.headers)
-
+        response = self.rest.send("GET", "lssConfig/logType/formats", api_version="v2")
         if response.status_code == 200:
-            return response.json()
+            formats = response.json()
+            if log_type:
+                # Filter and return only the requested log type
+                specific_format = formats.get(log_type, None)
+                if specific_format:
+                    return Box({log_type: specific_format})
+                else:
+                    return Box()  # or raise an Exception if preferred
+            else:
+                # Return all formats
+                return Box(formats)
         else:
             response.raise_for_status()
 
     def get_status_codes(self, log_type: str = "all") -> Box:
         """
-        Returns a list of LSS Session Status Codes.
-
-        The LSS Session Status codes are used to filter the messages received by LSS. LSS Session Status Codes can be
-        used when adding or updating the filters for an LSS Log Receiver.
+        Returns a list of LSS Session Status Codes filtered by log type.
 
         Args:
             log_type (str):
@@ -230,27 +232,23 @@ class LSSConfigControllerAPI:
             ...    print(item)
 
         """
-        path = "/statusCodes"
-        if log_type != "all":
-            if log_type in [
-                "user_activity",
-                "user_status",
-                "private_svc_edge_status",
-                "app_connector_status",
-            ]:
-                path = f"{path}/{self.source_log_map[log_type]}"
+        full_url = f"{self.v2_admin_url}/statusCodes"
+        response = requests.get(full_url, headers=self.rest.headers)
+        response.raise_for_status()
+        all_status_codes = response.json()
+
+        if log_type == "all":
+            return Box(all_status_codes)
+        else:
+            filtered_status_codes = {}
+            log_type_key = self.source_log_map.get(log_type)
+            if log_type_key:
+                for code, details in all_status_codes.items():
+                    if log_type_key in details.get("log_types", []):
+                        filtered_status_codes[code] = details
+                return Box(filtered_status_codes)
             else:
                 raise ValueError("Incorrect log_type provided.")
-
-        full_url = f"{self.v2_admin_url}{path}"
-        response = requests.get(full_url, headers=self.rest.headers)
-
-        if response.status_code == 200:
-            # Assuming that the response is a JSON object that needs to be converted to a Box
-            response_data = Box(response.json())
-            return response_data if log_type == "all" else response_data[log_type]
-        else:
-            response.raise_for_status()
 
     def add_lss_config(
         self,
@@ -406,7 +404,7 @@ class LSSConfigControllerAPI:
         for key, value in kwargs.items():
             payload[snake_to_camel(key)] = value
 
-        response = self.rest.post(f"/lssConfig", api_version="v2", json=payload)
+        response = self.rest.post("/lssConfig", api_version="v2", json=payload)
         if isinstance(response, Response):
             # this is only true when the creation failed (status code is not 2xx)
             status_code = response.status_code
@@ -475,7 +473,7 @@ class LSSConfigControllerAPI:
 
             .. code-block:: python
 
-                zpa.lss.update_config(
+                zpa.lss.update_lss_config(
                     name="user_status_to_siem",
                     policy_rules=[
                         ("idp", ["idp_id"]),
@@ -508,7 +506,7 @@ class LSSConfigControllerAPI:
             if keys_exists(payload, "policyRuleResource", "name"):
                 policy_name = payload["policyRuleResource"]["name"]
             else:
-                policy_name = "SIEM_POLICY"
+                policy_name = "placeholder"
             payload["policyRuleResource"] = {
                 "conditions": self._create_policy(kwargs.pop("policy_rules")),
                 "name": kwargs.pop("policy_name", policy_name),
@@ -518,19 +516,20 @@ class LSSConfigControllerAPI:
         for key, value in kwargs.items():
             payload[snake_to_camel(key)] = value
 
-        resp = self.rest.put(f"/lssConfig/{lss_config_id}", api_version="v2", json=payload).status_code
-
-        # Return the object if it was updated successfully
-        if not isinstance(resp, Response):
+        # Send the update request to the API
+        resp = self.rest.put(f"/lssConfig/{lss_config_id}", api_version="v2", json=payload)
+        if resp.status_code == 204:
+            # Fetch and return the updated configuration as no content is returned with a 204 response
             return self.get_config(lss_config_id)
+        else:
+            raise Exception("Failed to update LSS Config, status code: {}".format(resp.status_code))
 
-
-    def delete_lss_config(self, lss_id: str) -> int:
+    def delete_lss_config(self, lss_config_id: str) -> int:
         """
         Delete the specified LSS Receiver Config.
 
         Args:
-            lss_id (str): The unique identifier for the LSS Receiver Config to be deleted.
+            lss_config_id (str): The unique identifier for the LSS Receiver Config to be deleted.
 
         Returns:
             :obj:`int`:
@@ -539,8 +538,7 @@ class LSSConfigControllerAPI:
         Examples:
             Delete an LSS Receiver config.
 
-            >>> zpa.lss.delete_config('99999')
+            >>> zpa.lss.delete_lss_config('99999')
 
         """
-        return self.rest.delete(f"/lssConfig/{lss_id}", api_version="v2").status_code
-
+        return self.rest.delete(f"/lssConfig/{lss_config_id}", api_version="v2").status_code

@@ -17,13 +17,62 @@
 
 from box import Box, BoxList
 from requests import Response
+
 from zscaler.utils import snake_to_camel
 from zscaler.zia import ZIAClient
 
-class DLPAPI:
 
+class DLPAPI:
     def __init__(self, client: ZIAClient):
         self.rest = client
+
+    def list_dicts(self, query: str = None) -> BoxList:
+        """
+        Returns a list of all custom and predefined ZIA DLP Dictionaries.
+
+        Args:
+            query (str): A search string used to match against a DLP dictionary's name or description attributes.
+
+        Returns:
+            :obj:`BoxList`: A list containing ZIA DLP Dictionaries.
+
+        Examples:
+            Print all dictionaries
+
+            >>> for dictionary in zia.dlp.list_dicts():
+            ...    pprint(dictionary)
+
+            Print dictionaries that match the name or description 'GDPR'
+
+            >>> pprint(zia.dlp.list_dicts('GDPR'))
+
+        """
+        payload = {"search": query}
+        list = self.rest.get(path="/dlpDictionaries", params=payload)
+        if isinstance(list, Response):
+            return None
+        return list
+
+    def get_dict(self, dict_id: str) -> Box:
+        """
+        Returns the DLP Dictionary that matches the specified DLP Dictionary id.
+
+        Args:
+            dict_id (str): The unique id for the DLP Dictionary.
+
+        Returns:
+            :obj:`Box`: The ZIA DLP Dictionary resource record.
+
+        Examples:
+            >>> pprint(zia.dlp.get_dict('3'))
+
+        """
+        response = self.rest.get("/dlpDictionaries/%s" % (dict_id))
+        if isinstance(response, Response):
+            status_code = response.status_code
+            if status_code != 200:
+                return None
+        return response
 
     def add_dict(self, name: str, custom_phrase_match_type: str, dictionary_type: str, **kwargs) -> Box:
         """
@@ -97,7 +146,7 @@ class DLPAPI:
         payload = {
             "name": name,
             "customPhraseMatchType": custom_phrase_match_type,
-            "dictionaryType": dictionary_type
+            "dictionaryType": dictionary_type,
         }
 
         # Process additional keyword arguments
@@ -172,7 +221,7 @@ class DLPAPI:
             "id": dict_id,
             "name": existing_dict.get("name"),
             "customPhraseMatchType": existing_dict.get("customPhraseMatchType"),
-            "dictionaryType": existing_dict.get("dictionaryType")
+            "dictionaryType": existing_dict.get("dictionaryType"),
         }
 
         # Process additional keyword arguments
@@ -183,58 +232,11 @@ class DLPAPI:
 
         response = self.rest.put(f"/dlpDictionaries/{dict_id}", json=payload)
         if isinstance(response, Response):
-            # Handle non-successful status codes
             status_code = response.status_code
             raise Exception(f"API call failed with status {status_code}: {response.json()}")
 
         # Return the updated object
         return self.get_dict(dict_id)
-
-    def list_dicts(self, query: str = None) -> BoxList:
-        """
-        Returns a list of all custom and predefined ZIA DLP Dictionaries.
-
-        Args:
-            query (str): A search string used to match against a DLP dictionary's name or description attributes.
-
-        Returns:
-            :obj:`BoxList`: A list containing ZIA DLP Dictionaries.
-
-        Examples:
-            Print all dictionaries
-
-            >>> for dictionary in zia.dlp.list_dicts():
-            ...    pprint(dictionary)
-
-            Print dictionaries that match the name or description 'GDPR'
-
-            >>> pprint(zia.dlp.list_dicts('GDPR'))
-
-        """
-        payload = {"search": query}
-        list = self.rest.get(path="/dlpDictionaries", params=payload)
-        if isinstance(list, Response):
-            return None
-        return list
-
-    def get_dict(self, dict_id: str) -> Box:
-        """
-        Returns the DLP Dictionary that matches the specified DLP Dictionary id.
-
-        Args:
-            dict_id (str): The unique id for the DLP Dictionary.
-
-        Returns:
-            :obj:`Box`: The ZIA DLP Dictionary resource record.
-
-        Examples:
-            >>> pprint(zia.dlp.get_dict('3'))
-
-        """
-        response = self.rest.get("/dlpDictionaries/%s" % (dict_id))
-        if isinstance(response, Response):
-            return None
-        return response
 
     def delete_dict(self, dict_id: str) -> int:
         """
@@ -276,7 +278,13 @@ class DLPAPI:
         return response
 
     # TODO: implement the remaining
-    def add_dlp_engine(self, name: str, engine_expression=None, custom_dlp_engine=None, description=None) -> Box:
+    def add_dlp_engine(
+        self,
+        name: str,
+        engine_expression=None,
+        custom_dlp_engine=None,
+        description=None,
+    ) -> Box:
         """
         Adds a new dlp engine.
         ...
@@ -317,12 +325,11 @@ class DLPAPI:
         Keyword Args:
             name (str): The order of the rule, defaults to adding rule to bottom of list.
             description (str): The admin rank of the rule.
-            engine_expression (str, optional):
-                The logical expression that defines a DLP engine by combining DLP dictionaries using logical operators, namely All (AND), Any (OR), Exclude (NOT), and Sum (the total number of content matches).
-            custom_dlp_engine (bool, optional):
-                Indicates whether this is a custom DLP engine. If this value is set to true, the engine is custom.
-            description (str, optional):
-                The DLP engine description.
+            engine_expression (str, optional): The logical expression defining a DLP engine by
+                combining DLP dictionaries using logical operators: All (AND), Any (OR), Exclude (NOT),
+                and Sum (total number of content matches).
+            custom_dlp_engine (bool, optional): If true, indicates a custom DLP engine.
+            description (str, optional): The DLP engine description.
 
         Returns:
             :obj:`Box`: The updated dlp engine resource record.
@@ -331,34 +338,29 @@ class DLPAPI:
             Update the dlp engine:
 
             >>> zia.dlp.add_dlp_engine(name='new_dlp_engine',
-            ...    description='TT#1965432122'
-                   engine_expression="((D63.S > 1))"
-                   custom_dlp_engine=False)
+            ...    description='TT#1965432122',
+            ...    engine_expression="((D63.S > 1))",
+            ...    custom_dlp_engine=False)
 
             Update a rule to enable custom dlp engine:
 
             >>> zia.dlp.add_dlp_engine('976597',
             ...    custom_dlp_engine=True,
-                   engine_expression="((D63.S > 1))"
+            ...    engine_expression="((D63.S > 1))",
             ...    description="TT#1965232866")
 
         """
-
         # Set payload to value of existing record
         payload = {snake_to_camel(k): v for k, v in self.get_dlp_engines(engine_id).items()}
 
         # Add optional parameters to payload
         for key, value in kwargs.items():
-            if key in self._key_id_list:
-                payload[snake_to_camel(key)] = []
-                for item in value:
-                    payload[snake_to_camel(key)].append({"id": item})
-            else:
-                payload[snake_to_camel(key)] = value
+            payload[snake_to_camel(key)] = value
 
-        response = self.rest.put("/dlpEngines/%s" % (engine_id), json=payload)
-        if not isinstance(response, Response):
-            return self.get_dlp_engines(engine_id)
+        response = self.rest.put(f"/dlpEngines/{engine_id}", json=payload)
+        if isinstance(response, Response) and response.status_code != 200:
+            raise Exception(f"API call failed with status {response.status_code}: {response.json()}")
+        return self.get_dlp_engines(engine_id)
 
     def delete_dlp_engine(self, engine_id: str) -> int:
         """
@@ -423,7 +425,7 @@ class DLPAPI:
         return response
 
     def get_dlp_engine_by_name(self, name):
-        engines = self.get_dlp_engines()
+        engines = self.list_dlp_engines()
         for engine in engines:
             if engine.get("name") == name:
                 return engine
@@ -450,11 +452,15 @@ class DLPAPI:
             >>> pprint(zia.dlp.list_dlp_icap_servers('ZS_ICAP'))
 
         """
-        payload = {"search": query}
-        list = self.rest.get(path="/icapServers", params=payload)
-        if isinstance(list, Response):
+        response = self.rest.get("/icapServers")
+        if isinstance(response, Response):
             return None
-        return list
+        return response
+        # payload = {"search": query}
+        # list = self.rest.get(path="/icapServers", params=payload)
+        # if isinstance(list, Response):
+        #     return None
+        # return list
 
     def get_dlp_icap_servers(self, icap_server_id: str) -> Box:
         """
@@ -475,6 +481,13 @@ class DLPAPI:
             return None
         return response
 
+    def get_dlp_icap_by_name(self, name):
+        icaps = self.list_dlp_icap_servers()
+        for icap in icaps:
+            if icap.get("name") == name:
+                return icap
+        return None
+
     def list_dlp_incident_receiver(self, query: str = None) -> BoxList:
         """
         Returns the list of ZIA DLP Incident Receiver.
@@ -488,19 +501,18 @@ class DLPAPI:
         Examples:
             Print all incident receivers
 
-            >>> for dlp incident receiver in zia.dlp.list_dlp_incident_receiver():
-            ...    pprint(receiver)
+            >>> for receiver in zia.dlp.list_dlp_incident_receiver():
+            ...    pprint(dlp)
 
             Print Incident Receiver that match the name or description 'ZS_INC_RECEIVER_01'
 
             >>> pprint(zia.dlp.list_dlp_incident_receiver('ZS_INC_RECEIVER_01'))
 
         """
-        payload = {"search": query}
-        list = self.rest.get(path="/incidentReceiverServers", params=payload)
-        if isinstance(list, Response):
+        response = self.rest.get("/incidentReceiverServers")
+        if isinstance(response, Response):
             return None
-        return list
+        return response
 
     def get_dlp_incident_receiver(self, receiver_id: str) -> Box:
         """
@@ -520,6 +532,26 @@ class DLPAPI:
         if isinstance(response, Response):
             return None
         return response
+
+    def get_dlp_incident_receiver_by_name(self, name):
+        """
+        Retrieves a specific DLP Incident Receiver by its name.
+
+        Args:
+            name (str): The name of the dlp incident receiver to retrieve.
+
+        Returns:
+            :obj:`Box`: The incident receiver if found, otherwise None.
+
+        Examples:
+            >>> receiver = zia.dlp.get_dlp_incident_receiver_by_name('ZS_INC_RECEIVER_01')
+            ...    pprint(receiver)
+        """
+        receivers = self.list_dlp_incident_receiver()
+        for receiver in receivers:
+            if receiver.get("name") == name:
+                return receiver
+        return None
 
     def list_dlp_idm_profiles(self, query: str = None) -> BoxList:
         """
@@ -567,6 +599,13 @@ class DLPAPI:
             return None
         return response
 
+    def get_dlp_idm_profile_by_name(self, profile_name):
+        profiles = self.list_dlp_idm_profiles()
+        for profile in profiles:
+            if profile.get("profile_name") == profile_name:
+                return profile
+        return None
+
     def list_dlp_templates(self, query: str = None) -> BoxList:
         """
         Returns the list of ZIA DLP Notification Templates.
@@ -612,7 +651,6 @@ class DLPAPI:
         if isinstance(response, Response):
             return None
         return response
-
 
     def add_dlp_template(self, name: str, subject: str, **kwargs) -> Box:
         """
@@ -715,7 +753,6 @@ class DLPAPI:
 
         # Return the updated object
         return self.get_dlp_templates(template_id)
-
 
     def delete_dlp_template(self, template_id: str) -> int:
         """

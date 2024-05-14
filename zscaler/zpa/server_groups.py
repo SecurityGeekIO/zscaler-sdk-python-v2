@@ -16,6 +16,7 @@
 
 from box import Box, BoxList
 from requests import Response
+
 from zscaler.utils import add_id_groups, snake_to_camel
 from zscaler.zpa.client import ZPAClient
 
@@ -52,7 +53,7 @@ class ServerGroupsAPI:
             ...    pprint(server_group)
 
         """
-        list, _ = self.rest.get_paginated_data(path="/serverGroup", data_key_name="list", **kwargs, api_version="v1")
+        list, _ = self.rest.get_paginated_data(path="/serverGroup", **kwargs, api_version="v1")
         return list
 
     def get_group(self, group_id: str) -> Box:
@@ -70,7 +71,6 @@ class ServerGroupsAPI:
             >>> pprint(zpa.server_groups.get_group('99999'))
 
         """
-
         return self.rest.get(f"serverGroup/{group_id}")
 
     def get_server_group_by_name(self, name):
@@ -79,7 +79,6 @@ class ServerGroupsAPI:
             if group.get("name") == name:
                 return group
         return None
-
 
     def add_group(self, app_connector_group_ids: list, name: str, **kwargs) -> Box:
         """
@@ -180,7 +179,6 @@ class ServerGroupsAPI:
             ...    dynamic_discovery=True)
 
         """
-
         # Set payload to value of existing record
         payload = {snake_to_camel(k): v for k, v in self.get_group(group_id).items()}
 
@@ -191,11 +189,8 @@ class ServerGroupsAPI:
             payload[snake_to_camel(key)] = value
 
         resp = self.rest.put(f"serverGroup/{group_id}", json=payload).status_code
-
-        # Return the object if it was updated successfully
         if not isinstance(resp, Response):
             return self.get_group(group_id)
-
 
     def delete_group(self, group_id: str) -> int:
         """

@@ -17,12 +17,12 @@
 
 from box import Box, BoxList
 from requests import Response
+
+from zscaler.utils import Iterator, convert_keys, snake_to_camel
 from zscaler.zia import ZIAClient
-from zscaler.utils import convert_keys, snake_to_camel
 
 
 class TrafficForwardingAPI:
-
     def __init__(self, client: ZIAClient):
         self.rest = client
 
@@ -58,8 +58,7 @@ class TrafficForwardingAPI:
             ...    print(tunnel)
 
         """
-        list, _ = self.rest.get_paginated_data(path="/greTunnels", data_key_name="list", **kwargs)
-        return list
+        return BoxList(Iterator(self.rest, "greTunnels", **kwargs))
 
     def get_gre_tunnel(self, tunnel_id: str) -> Box:
         """
@@ -97,40 +96,170 @@ class TrafficForwardingAPI:
             >>> gre_tunnel_ranges = zia.traffic.list_gre_ranges()
 
         """
-        # payload = {snake_to_camel(key): value for key, value in kwargs.items()}
+        payload = {snake_to_camel(key): value for key, value in kwargs.items()}
 
-        valid_params = ["internalIpRange", "staticIp", "limit"]
-        query_params = {k: v for k, v in kwargs.items() if k in valid_params and v is not None}
-
-        response = self.rest.get("greTunnels/availableInternalIpRanges", params=query_params)
+        response = self.rest.get("greTunnels/availableInternalIpRanges", params=payload)
         if isinstance(response, Response):
             return None
         return response
 
-    def list_region_geo_coordinates(self, **kwargs):
+    def list_vips_recommended(self, source_ip: str, **kwargs) -> BoxList:
         """
-        Returns a list of regions based on geographic coordinates.
+        Returns a list of recommended virtual IP addresses (VIPs) based on parameters.
+
+        Args:
+            source_ip (str):
+                The source IP address.
+            **kwargs:
+                Optional keywords args.
 
         Keyword Args:
-            **latitude (float, optional):
-                Latitude to search for.
-            **longitude (float, optional):
-                Longitude to search for.
+            routable_ip (bool):
+                The routable IP address. Default: True.
+            within_country_only (bool):
+                Search within country only. Default: False.
+            include_private_service_edge (bool):
+                Include ZIA Private Service Edge VIPs. Default: True.
+            include_current_vips (bool):
+                Include currently assigned VIPs. Default: True.
+            latitude (str):
+                Latitude coordinate of GRE tunnel source.
+            longitude (str):
+                Longitude coordinate of GRE tunnel source.
+            geo_override (bool):
+                Override the geographic coordinates. Default: False.
 
         Returns:
-            The raw response from the API.
+            :obj:`BoxList`: List of VIP resource records.
 
         Examples:
-            >>> regions = zia.traffic.list_region_geo_coordinates(latitude=41.0, longitude=117.0)
-            >>> print(regions)
+            Return recommended VIPs for a given source IP:
+
+            >>> for vip in zia.traffic.list_vips_recommende(source_ip='203.0.113.30'):
+            ...    pprint(vip)
 
         """
+        payload = {"sourceIp": source_ip}
 
-        valid_params = ["latitude", "longitude"]
-        query_params = {k: v for k, v in kwargs.items() if k in valid_params and v is not None}
+        # Add optional parameters to payload
+        for key, value in kwargs.items():
+            payload[snake_to_camel(key)] = value
 
-        response = self.rest.get("region/byGeoCoordinates", params=query_params)
+        response = self.rest.get("vips/recommendedList", params=payload, **kwargs)
+        if isinstance(response, Response):
+            return None
         return response
+
+    def get_closest_diverse_vip_ids(self, ip_address: str) -> tuple:
+        """
+        Returns the closest diverse Zscaler destination VIPs for a given IP address.
+
+        Args:
+            ip_address (str):
+                The IP address used for locating the closest diverse VIPs.
+
+        Returns:
+            :obj:`tuple`: Tuple containing the preferred and secondary VIP IDs.
+
+        Examples:
+            >>> closest_vips = zia.traffic.get_closest_diverse_vip_ids('203.0.113.20')
+
+        """
+        vips_list = self.list_vips_recommended(source_ip=ip_address)
+        preferred_vip = vips_list[0]  # First entry is closest vip
+
+        # Generator to find the next closest vip not in the same city as our preferred
+        secondary_vip = next((vip for vip in vips_list if vip.city != preferred_vip.city))
+        recommended_vips = (preferred_vip.id, secondary_vip.id)
+
+        return recommended_vips
+
+    def list_vip_group_by_dc(self, source_ip: str, **kwargs) -> BoxList:
+        """
+        Returns a list of recommended GRE tunnel (VIPs) grouped by data center.
+
+        Args:
+            source_ip (str):
+                The source IP address.
+            **kwargs:
+                Optional keywords args.
+
+        Keyword Args:
+            routable_ip (bool):
+                The routable IP address. Default: True.
+            within_country_only (bool):
+                Search within country only. Default: False.
+            include_private_service_edge (bool):
+                Include ZIA Private Service Edge VIPs. Default: True.
+            include_current_vips (bool):
+                Include currently assigned VIPs. Default: True.
+            latitude (str):
+                Latitude coordinate of GRE tunnel source.
+            longitude (str):
+                Longitude coordinate of GRE tunnel source.
+            geo_override (bool):
+                Override the geographic coordinates. Default: False.
+        Returns:
+            :obj:`BoxList`: List of VIP resource records.
+
+        Examples:
+            Return recommended VIPs for a given source IP:
+
+            >>> for vip in zia.vips.list_vip_group_by_dc(source_ip='203.0.113.30'):
+            ...    pprint(vip)
+
+        """
+        params = {"sourceIp": source_ip}
+
+        for key, value in kwargs.items():
+            params[snake_to_camel(key)] = value
+        response = self.rest.get("/vips/groupByDatacenter", params=params)
+        if response is not None:
+            return response
+        else:
+            print("Failed to fetch VIP groups by data center. No response or error received.")
+            return BoxList([])
+
+    def list_vips(self, **kwargs) -> BoxList:
+        """
+        Returns a list of virtual IP addresses (VIPs) available in the Zscaler cloud.
+
+        Keyword Args:
+            **dc (str, optional):
+                Filter based on data center.
+            **include (str, optional):
+                Include all, private, or public VIPs in the list. Available choices are `all`, `private`, `public`.
+                Defaults to `public`.
+            **max_items (int, optional):
+                The maximum number of items to request before stopping iteration.
+            **max_pages (int, optional):
+                The maximum number of pages to request before stopping iteration.
+            **page_size (int, optional):
+                Specifies the page size. The default size is 100, but the maximum size is 1000.
+            **region (str, optional):
+                Filter based on region.
+
+        Returns:
+            :obj:`BoxList`: List of VIP resource records.
+
+        Examples:
+            List VIPs using default settings:
+
+            >>> for vip in zia.vips.list_vips():
+            ...    pprint(vip)
+
+            List VIPs, limiting to a maximum of 10 items:
+
+            >>> for vip in zia.vips.list_vips(max_items=10):
+            ...    print(vip)
+
+            List VIPs, returning 200 items per page for a maximum of 2 pages:
+
+            >>> for vip in zia.traffic.list_vips(page_size=200, max_pages=2):
+            ...    print(vip)
+
+        """
+        return BoxList(Iterator(self.rest, "vips", **kwargs))
 
     def add_gre_tunnel(
         self,
@@ -186,14 +315,15 @@ class TrafficForwardingAPI:
         """
 
         # If primary/secondary VIPs not provided, add the closest diverse VIPs
-        # Extract IDs from list if provided as such
-        primary_vip_id = primary_dest_vip_id[0] if isinstance(primary_dest_vip_id, list) else primary_dest_vip_id
-        secondary_vip_id = secondary_dest_vip_id[0] if isinstance(secondary_dest_vip_id, list) else secondary_dest_vip_id
+        if primary_dest_vip_id is None and secondary_dest_vip_id is None:
+            recommended_vips = self.get_closest_diverse_vip_ids(source_ip)
+            primary_dest_vip_id = recommended_vips[0]
+            secondary_dest_vip_id = recommended_vips[1]
 
         payload = {
             "sourceIp": source_ip,
-            "primaryDestVip": {"id": primary_vip_id},
-            "secondaryDestVip": {"id": secondary_vip_id},
+            "primaryDestVip": {"id": primary_dest_vip_id},
+            "secondaryDestVip": {"id": secondary_dest_vip_id},
         }
 
         # Add optional parameters to payload
@@ -210,7 +340,7 @@ class TrafficForwardingAPI:
 
     def update_gre_tunnel(
         self,
-        tunnel_id: int,
+        tunnel_id: str,
         source_ip: str = None,
         primary_dest_vip_id: str = None,
         secondary_dest_vip_id: str = None,
@@ -218,48 +348,33 @@ class TrafficForwardingAPI:
     ) -> Box:
         """
         Update an existing GRE tunnel.
-
-        Args:
-            tunnel_id (int): Unique identifier of the GRE tunnel to be updated.
-            source_ip (str): The source IP address of the GRE tunnel.
-            primary_dest_vip_id (str): The unique identifier for the primary destination VIP of the GRE tunnel.
-            secondary_dest_vip_id (str): The unique identifier for the secondary destination VIP of the GRE tunnel.
-
-        Keyword Args:
-            Additional parameters such as 'comment', 'ip_unnumbered', etc.
-
-        Returns:
-            Box: Updated GRE tunnel object.
         """
 
         if tunnel_id is None:
             raise ValueError("tunnel_id is a required parameter for updating a GRE tunnel.")
 
-        # Extract IDs from list if provided as such
-        primary_vip_id = primary_dest_vip_id[0] if isinstance(primary_dest_vip_id, list) else primary_dest_vip_id
-        secondary_vip_id = secondary_dest_vip_id[0] if isinstance(secondary_dest_vip_id, list) else secondary_dest_vip_id
+        # Determine VIPs based on source_ip if not provided
+        if primary_dest_vip_id is None or secondary_dest_vip_id is None:
+            recommended_vips = self.get_closest_diverse_vip_ids(source_ip)
+            primary_dest_vip_id = primary_dest_vip_id or recommended_vips[0]
+            secondary_dest_vip_id = secondary_dest_vip_id or recommended_vips[1]
 
-        payload = {}
-        if source_ip:
-            payload["sourceIp"] = source_ip
-        if primary_vip_id:
-            payload["primaryDestVip"] = {"id": primary_vip_id}
-        if secondary_vip_id:
-            payload["secondaryDestVip"] = {"id": secondary_vip_id}
+        payload = {
+            "sourceIp": source_ip,
+            "primaryDestVip": {"id": primary_dest_vip_id},
+            "secondaryDestVip": {"id": secondary_dest_vip_id},
+        }
 
-        # Add additional optional parameters
+        # Include additional optional parameters
         for key, value in kwargs.items():
             payload[snake_to_camel(key)] = value
 
         response = self.rest.put(f"greTunnels/{tunnel_id}", json=payload)
-
         if isinstance(response, Response) and not response.ok:
             # Handle error response
             raise Exception(f"API call failed with status {response.status_code}: {response.json()}")
-
         # Return the updated object
         return self.get_gre_tunnel(tunnel_id)
-
 
     def delete_gre_tunnel(self, tunnel_id: str) -> int:
         """
@@ -392,26 +507,30 @@ class TrafficForwardingAPI:
             raise Exception(f"API call failed with status {status_code}: {response.json()}")
         return response
 
-    def check_static_ip(self, ip_address: str) -> int:
+    def check_static_ip(self, ip_address: str) -> bool:
         """
         Validates if a static IP object is correct.
 
         Args:
-            ip_address (str):
-                The static IP address
+            ip_address (str): The static IP address
 
         Returns:
-            :obj:`int`: 200 if the static IP provided is valid.
+            :obj:`bool`: True if the static IP provided is valid, False otherwise.
 
         Examples:
             >>> zia.traffic.check_static_ip(ip_address='203.0.113.11')
-
         """
         payload = {
             "ipAddress": ip_address,
         }
+        response = self.rest.post("staticIP/validate", json=payload)
 
-        return self.rest.post("staticIP/validate", json=payload).status_code
+        # Check if the status code is 200 and the response body text is "SUCCESS"
+        if response.status_code == 200 and response.text.strip().upper() == "SUCCESS":
+            return True
+        else:
+            # Optionally, you could log response.text or response.status_code here for debugging
+            return False
 
     def update_static_ip(self, static_ip_id: str, **kwargs) -> Box:
         """
@@ -507,13 +626,24 @@ class TrafficForwardingAPI:
 
         Returns:
             :obj:`BoxList`: List containing the VPN credential resource records.
+
+        Examples:
+            List VPN credentials using default settings:
+
+            >>> for credential in zia.traffic.list_vpn_credentials:
+            ...    pprint(credential)
+
+            List VPN credentials, limiting to a maximum of 10 items:
+
+            >>> for credential in zia.traffic.list_vpn_credentials(max_items=10):
+            ...    print(credential)
+
+            List VPN credentials, returning 200 items per page for a maximum of 2 pages:
+
+            >>> for credential in zia.traffic.list_vpn_credentials(page_size=200, max_pages=2):
+            ...    print(credential)
         """
-        valid_params = ["search", "type", "include_only_without_location", "location_id", "managedBy"]
-        query_params = {k: v for k, v in kwargs.items() if k in valid_params and v is not None}
-
-        response = self.rest.get("vpnCredentials", params=query_params)
-        return response
-
+        return BoxList(Iterator(self.rest, "vpnCredentials", **kwargs))
 
     def add_vpn_credential(self, authentication_type: str, pre_shared_key: str = None, **kwargs) -> Box:
         """
@@ -528,7 +658,7 @@ class TrafficForwardingAPI:
 
                 Only ``IP`` and ``UFQDN`` supported via API.
             pre_shared_key (str, optional):
-                Pre-shared key. This is a required field for UFQDN and IP auth type. If not provided, a random one will be generated.
+                This field is required for UFQDN and IP auth type. If not provided a random one will be generated.
 
         Keyword Args:
             ip_address (str):
@@ -544,10 +674,6 @@ class TrafficForwardingAPI:
         Returns:
             :obj:`Box`: The newly created VPN credential resource record.
         """
-
-        # Generate a random PSK if not provided
-        if not pre_shared_key:
-            pre_shared_key = self.randomize_psk()
 
         payload = {
             "type": authentication_type,
@@ -569,7 +695,6 @@ class TrafficForwardingAPI:
             # Handle error response
             raise Exception(f"API call failed with status {status_code}: {response.json()}")
         return response
-
 
     def bulk_delete_vpn_credentials(self, credential_ids: list) -> int:
         """

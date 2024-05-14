@@ -1,7 +1,8 @@
-from zscaler.cache.cache import Cache
 import logging
 import time
-from urllib.parse import urlparse, urlencode, parse_qs
+from urllib.parse import urlparse
+
+from zscaler.cache.cache import Cache
 
 logger = logging.getLogger("zscaler-sdk-python")
 
@@ -78,7 +79,11 @@ class ZscalerCache(Cache):
             now = self._get_current_time()
 
             # Add new entry to cache with timers
-            self._store[key] = {"value": value, "tti": now + self._time_to_idle, "ttl": now + self._time_to_live}
+            self._store[key] = {
+                "value": value,
+                "tti": now + self._time_to_idle,
+                "ttl": now + self._time_to_live,
+            }
             logger.info(f'Added to cache value for key "{key}".')
             logger.debug(f"Cached value for key {key}: {value}.")
         # Update cache

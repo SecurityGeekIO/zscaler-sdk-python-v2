@@ -16,11 +16,11 @@
 
 
 from box import BoxList
+
 from zscaler.zia import ZIAClient
 
 
 class SecurityPolicyAPI:
-
     def __init__(self, client: ZIAClient):
         self.rest = client
 
@@ -39,7 +39,7 @@ class SecurityPolicyAPI:
         response = self.rest.get("security")
 
         # ZIA removes the whitelistUrls key from the JSON response when it's empty.
-        if "whitelist_urls" in self._get("security"):
+        if "whitelist_urls" in self.rest.get("security"):
             return response.whitelist_urls
         else:
             return BoxList()  # Return empty list so other methods in this class don't break
@@ -202,8 +202,11 @@ class SecurityPolicyAPI:
         """
 
         payload = {"blacklistUrls": []}
-
-        return self.rest.put("security/advanced", json=payload, box=False).status_code
+        try:
+            self.rest.put("security/advanced", json=payload)
+            return "Blacklist successfully erased."
+        except Exception as e:
+            return f"An error occurred: {str(e)}"
 
     def delete_urls_from_blacklist(self, url_list: list) -> int:
         """

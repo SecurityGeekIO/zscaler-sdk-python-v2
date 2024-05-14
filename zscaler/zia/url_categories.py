@@ -19,13 +19,12 @@ import time
 
 from box import Box, BoxList
 from requests import Response
-from zscaler.zia import ZIAClient
 
 from zscaler.utils import chunker, convert_keys, snake_to_camel
+from zscaler.zia import ZIAClient
 
 
 class URLCategoriesAPI:
-
     def __init__(self, client: ZIAClient):
         self.rest = client
 
@@ -45,8 +44,6 @@ class URLCategoriesAPI:
 
         """
 
-        # ZIA limits each API call to 100 URLs at a rate of 1 API call per second. zscaler-sdk-python simplifies this by allowing
-        # users to submit any number of URLs and handle the chunking of the API calls on their behalf.
         if len(urls) > 100:
             results = BoxList()
             for chunk in chunker(urls, 100):
@@ -87,6 +84,13 @@ class URLCategoriesAPI:
         }
 
         return self.rest.get("urlCategories", params=payload)
+
+    def get_category_by_name(self, name):
+        categories = self.list_categories()
+        for category in categories:
+            if category.get("configured_name") == name:
+                return category
+        return None
 
     def get_quota(self) -> Box:
         """

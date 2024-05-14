@@ -17,11 +17,12 @@
 
 from box import Box, BoxList
 from requests import Response
-from zscaler.utils import snake_to_camel
 
+from zscaler.utils import Iterator, snake_to_camel
 from zscaler.zia import ZIAClient
-class LocationsAPI:
 
+
+class LocationsAPI:
     def __init__(self, client: ZIAClient):
         self.rest = client
 
@@ -65,10 +66,7 @@ class LocationsAPI:
             ...    print(location)
 
         """
-        response = self.rest.get("/locations")
-        if isinstance(response, Response):
-            return None
-        return response
+        return BoxList(Iterator(self.rest, "locations", **kwargs))
 
     def get_location(self, location_id: str = None, location_name: str = None) -> Box:
         """
@@ -260,7 +258,14 @@ class LocationsAPI:
             ...    pprint(sub_location)
 
         """
-        return self.rest.get(f"locations/{location_id}/sublocations", max_pages=1, **kwargs)
+        return BoxList(
+            Iterator(
+                self.rest,
+                f"locations/{location_id}/sublocations",
+                max_pages=1,
+                **kwargs,
+            )
+        )
 
     def list_locations_lite(self, **kwargs) -> BoxList:
         """
@@ -300,7 +305,7 @@ class LocationsAPI:
             ...    print(location)
 
         """
-        return self.rest.get("locations/lite", **kwargs)
+        return BoxList(Iterator(self.rest, "locations/lite", **kwargs))
 
     def update_location(self, location_id: str, **kwargs) -> Box:
         """
@@ -566,3 +571,75 @@ class LocationsAPI:
         """
         params = {"page": page, "pageSize": page_size, "search": group_name}
         return self.rest.get("locations/groups/lite", json=params)
+
+    def list_region_geo_coordinates(self, latitude: int, longitude: int) -> Box:
+        """
+        Retrieves the geographical data of the region or city that is located in the specified latitude and longitude
+        coordinates. The geographical data includes the city name, state, country, geographical ID of the city and
+        state, etc.
+
+        Args:
+            latitude (int): The latitude of the location.
+            longitude (int): The longitude of the location.
+
+        Returns:
+            :obj:`Box`: The geographical data of the region or city that is located in the specified coordinates.
+
+        Examples:
+            Get the geographical data of the region or city that is located in the specified coordinates::
+
+                print(zia.locations.get_geo_by_coordinates(37.3860517, -122.0838511))
+
+        """
+        payload = {"latitude": latitude, "longitude": longitude}
+        return self.rest.get("region/byGeoCoordinates", params=payload)
+
+    def get_geo_by_ip(self, ip: str) -> Box:
+        """
+        Retrieves the geographical data of the region or city that is located in the specified IP address. The
+        geographical data includes the city name, state, country, geographical ID of the city and state, etc.
+
+        Args:
+            ip (str): The IP address of the location.
+
+        Returns:
+            :obj:`Box`: The geographical data of the region or city that is located in the specified IP address.
+
+        Examples:
+            Get the geographical data of the region or city that is located in the specified IP address::
+
+                print(zia.locations.get_geo_by_ip("8.8.8.8")
+        """
+        return self.rest.get(f"region/byIPAddress/{ip}")
+
+    def list_cities_by_name(self, **kwargs) -> BoxList:
+        """
+        Retrieves the list of cities (along with their geographical data) that match the prefix search. The geographical
+        data includes the latitude and longitude coordinates of the city, geographical ID of the city and state,
+        country, postal code, etc.
+
+        Args:
+            **kwargs: Optional keyword arguments including 'prefix', 'page', and 'page_size'.
+
+        Keyword Args:
+            prefix (str): The prefix string to search for cities.
+            page (int): The page number of the results.
+            page_size (int): The number of results per page.
+
+        Returns:
+            :obj:`BoxList`: The list of cities (along with their geographical data) that match the prefix search.
+
+        Examples:
+            Get the list of cities (along with their geographical data) that match the prefix search::
+
+                for city in zia.locations.list_cities_by_name(prefix="San Jose"):
+                    print(city)
+
+        Notes:
+            Very broad or generic search terms may return a large number of results which can take a long time to be
+            returned. Ensure you narrow your search result as much as possible to avoid this.
+
+        """
+        return BoxList(Iterator(self.rest, "region/search", **kwargs))
+        # data, _ = self.rest.get_paginated_data(path="region/search", params=kwargs)
+        # return BoxList([Box(city) for city in data])

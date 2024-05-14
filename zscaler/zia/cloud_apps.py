@@ -14,9 +14,8 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-from zscaler.zia import ZIAClient
-
 from zscaler.utils import convert_keys
+from zscaler.zia import ZIAClient
 
 
 class CloudAppsAPI:
@@ -70,7 +69,11 @@ class CloudAppsAPI:
 
         """
         # Mapping for user-friendly sanction state values to API-expected values
-        sanction_state_mapping = {"sanctioned": "SANCTIONED", "unsanctioned": "UN_SANCTIONED", "any": "ANY"}
+        sanction_state_mapping = {
+            "sanctioned": "SANCTIONED",
+            "unsanctioned": "UN_SANCTIONED",
+            "any": "ANY",
+        }
 
         # Convert user-friendly sanction state to ZIA API-expected value
         api_sanction_state = sanction_state_mapping.get(sanction_state.lower())

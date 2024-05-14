@@ -16,11 +16,11 @@
 
 
 from box import Box
+
 from zscaler.zia import ZIAClient
 
 
 class SSLInspectionAPI:
-
     def __init__(self, client: ZIAClient):
         self.rest = client
 
@@ -37,7 +37,7 @@ class SSLInspectionAPI:
             >>> csr = zia.ssl.get_csr()
 
         """
-        return self._get("sslSettings/downloadcsr").text
+        return self.rest.get("sslSettings/downloadcsr").text
 
     def get_intermediate_ca(self) -> Box:
         """
@@ -50,7 +50,7 @@ class SSLInspectionAPI:
             >>> pprint(zia.ssl.get_intermediate_ca())
 
         """
-        return self._get("sslSettings/showcert")
+        return self.rest.get("sslSettings/showcert")
 
     def generate_csr(
         self,
@@ -106,7 +106,7 @@ class SSLInspectionAPI:
             "signatureAlgorithm": signature,
         }
 
-        return self._post("sslSettings/generatecsr", json=payload, box=False).status_code
+        return self.rest.post("sslSettings/generatecsr", json=payload, box=False).status_code
 
     def upload_int_ca_cert(self, cert: tuple) -> int:
         """
@@ -130,7 +130,7 @@ class SSLInspectionAPI:
 
         payload = {"fileUpload": cert}
 
-        return self._post("sslSettings/uploadcert/text", files=payload, box=False).status_code
+        return self.rest.post("sslSettings/uploadcert/text", files=payload, box=False).status_code
 
     def upload_int_ca_chain(self, cert: tuple) -> int:
         """
@@ -156,7 +156,7 @@ class SSLInspectionAPI:
 
         payload = {"fileUpload": cert}
 
-        return self._post("sslSettings/uploadcertchain/text", files=payload, box=False).status_code
+        return self.rest.post("sslSettings/uploadcertchain/text", files=payload, box=False).status_code
 
     def delete_int_chain(self) -> int:
         """
@@ -166,4 +166,4 @@ class SSLInspectionAPI:
             :obj:`int`: The status code for the operation.
 
         """
-        return self._delete("sslSettings/certchain", box=False).status_code
+        return self.rest.delete("sslSettings/certchain", box=False).status_code

@@ -1,39 +1,41 @@
-import re
-import logging
-import json
-import os
-import time
 import datetime
+import logging
+import os
+import re
+import time
 import uuid
 from time import sleep
+
 import requests
 from box import Box, BoxList
+
 from zscaler import __version__
 from zscaler.cache.no_op_cache import NoOpCache
-from zscaler.errors.http_error import ZscalerAPIError, HTTPError
-from zscaler.exceptions.exceptions import ZscalerAPIException, HTTPException
 from zscaler.cache.zscaler_cache import ZscalerCache
-from zscaler.utils import obfuscate_api_key
-from zscaler.user_agent import UserAgent
+from zscaler.errors.http_error import HTTPError, ZscalerAPIError
+from zscaler.exceptions.exceptions import HTTPException, ZscalerAPIException
+from zscaler.logger import setup_logging
 from zscaler.ratelimiter.ratelimiter import RateLimiter
+from zscaler.user_agent import UserAgent
 from zscaler.utils import (
     convert_keys_to_snake,
-    format_json_response,
-    retry_with_backoff,
     dump_request,
     dump_response,
+    format_json_response,
+    obfuscate_api_key,
+    retry_with_backoff,
 )
-
 from zscaler.zia.client import ZIAClient
+from zscaler.zia.activate import ActivationAPI
 from zscaler.zia.admin_and_role_management import AdminAndRoleManagementAPI
 from zscaler.zia.apptotal import AppTotalAPI
 from zscaler.zia.audit_logs import AuditLogsAPI
 from zscaler.zia.authentication_settings import AuthenticationSettingsAPI
-from zscaler.zia.activate import ActivationAPI
-from zscaler.zia.device import DeviceAPI
+from zscaler.zia.device_management import DeviceManagementAPI
 from zscaler.zia.dlp import DLPAPI
 from zscaler.zia.firewall import FirewallPolicyAPI
 from zscaler.zia.forwarding_control import ForwardingControlAPI
+from zscaler.zia.isolation_profile import IsolationProfileAPI
 from zscaler.zia.labels import RuleLabelsAPI
 from zscaler.zia.locations import LocationsAPI
 from zscaler.zia.sandbox import CloudSandboxAPI
@@ -43,19 +45,16 @@ from zscaler.zia.traffic import TrafficForwardingAPI
 from zscaler.zia.url_categories import URLCategoriesAPI
 from zscaler.zia.url_filtering import URLFilteringAPI
 from zscaler.zia.users import UserManagementAPI
-from zscaler.zia.vips import DataCenterVIPSAPI
 from zscaler.zia.web_dlp import WebDLPAPI
-from zscaler.zia.zpa_gateway import ZPAGatewayAPI
-from zscaler.zia.isolation_profile import IsolationProfileAPI
 from zscaler.zia.workload_groups import WorkloadGroupsAPI
+from zscaler.zia.zpa_gateway import ZPAGatewayAPI
 
 # Setup the logger
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+setup_logging(logger_name="zscaler-sdk-python")
+logger = logging.getLogger("zscaler-sdk-python")
 
 
 class ZIAClientHelper(ZIAClient):
-
     """
     A Controller to access Endpoints in the Zscaler Internet Access (ZIA) API.
 
@@ -101,7 +100,7 @@ class ZIAClientHelper(ZIAClient):
         self.env_cloud = cloud or kw.get("cloud") or os.getenv(f"{self._env_base}_CLOUD")
         if not self.env_cloud:
             raise ValueError(
-                f"The cloud environment must be set via the 'cloud' argument or the {self._env_base}_CLOUD environment variable."
+                f"Cloud environment must be set via the 'cloud' argument or the {self._env_base}_CLOUD environment variable."
             )
 
         # URL construction
@@ -190,7 +189,11 @@ class ZIAClientHelper(ZIAClient):
             "timestamp": api_obf["timestamp"],
         }
         resp = requests.request(
-            "POST", self.url + "/authenticatedSession", json=payload, headers=self.headers, timeout=self.timeout
+            "POST",
+            self.url + "/authenticatedSession",
+            json=payload,
+            headers=self.headers,
+            timeout=self.timeout,
         )
         if resp.status_code > 299:
             return resp
@@ -198,6 +201,26 @@ class ZIAClientHelper(ZIAClient):
         self.session_id = self.extractJSessionIDFromHeaders(resp.headers)
         self.auth_details = resp.json()
         return resp
+
+    def deauthenticate(self):
+        """
+        Ends the ZIA authentication session.
+        """
+        logout_url = self.url + "/authenticatedSession"
+
+        headers = self.headers.copy()
+        headers.update({"Cookie": f"JSESSIONID={self.session_id}"})
+
+        try:
+            response = requests.delete(logout_url, headers=headers, timeout=self.timeout)
+            if response.status_code == 204:
+                self.session_id = None
+                self.auth_details = None
+                return True
+            else:
+                return False
+        except requests.RequestException as e:
+            return False
 
     def send(self, method, path, json=None, params=None, data=None, headers=None):
         """
@@ -223,7 +246,16 @@ class ZIAClientHelper(ZIAClient):
         request_uuid = uuid.uuid4()
         if headers is not None:
             headers_with_user_agent.update(headers)
-        dump_request(logger, url, method, json, params, headers_with_user_agent, request_uuid, body=not is_sandbox)
+        dump_request(
+            logger,
+            url,
+            method,
+            json,
+            params,
+            headers_with_user_agent,
+            request_uuid,
+            body=not is_sandbox,
+        )
         # Check cache before sending request
         cache_key = self.cache.create_key(url, params)
         if method == "GET" and self.cache.contains(cache_key):
@@ -245,7 +277,7 @@ class ZIAClientHelper(ZIAClient):
             try:
                 # If the token is None or expired, fetch a new token
                 if self.is_session_expired():
-                    self.logger.warning("The provided sesion expired. Refreshing...")
+                    logger.warning("The provided sesion expired. Refreshing...")
                     self.authenticate()
                 resp = requests.request(
                     method=method,
@@ -363,7 +395,7 @@ class ZIAClientHelper(ZIAClient):
         "EMPTY_RESULTS": "No results found for page {page}.",
     }
 
-    def get_paginated_data(self, path=None, params = None, data_key_name=None, data_per_page=500, expected_status_code=200):
+    def get_paginated_data(self, path=None, data_key_name=None, data_per_page=5, expected_status_code=200):
         """
         Fetch paginated data from the ZIA API.
         ...
@@ -378,12 +410,7 @@ class ZIAClientHelper(ZIAClient):
         error_message = None
 
         while True:
-            # Construct the URL with parameters
-            url_params = f"?page={page}&pagesize={data_per_page}"
-            if params:
-                url_params += "&" + "&".join(f"{key}={value}" for key, value in params.items())
-
-            required_url = f"{path}{url_params}"
+            required_url = f"{path}"
             should_wait, delay = self.rate_limiter.wait("GET")
             if should_wait:
                 time.sleep(delay)
@@ -392,6 +419,7 @@ class ZIAClientHelper(ZIAClient):
             response = self.send(
                 method="GET",
                 path=required_url,
+                params={"page": page, "pageSize": data_per_page},
             )
 
             if response.status_code != expected_status_code:
@@ -448,9 +476,9 @@ class ZIAClientHelper(ZIAClient):
         return AuditLogsAPI(self)
 
     @property
-    def config(self):
+    def activate(self):
         """
-        The interface object for the :ref:`ZIA Activation interface <zia-config>`.
+        The interface object for the :ref:`ZIA Activation interface <zia-activate>`.
 
         """
         return ActivationAPI(self)
@@ -475,7 +503,7 @@ class ZIAClientHelper(ZIAClient):
     @property
     def forwarding_control(self):
         """
-        The interface object for the :ref:`ZIA Forwarding Control Policies interface <zia-forwarding>`.
+        The interface object for the :ref:`ZIA Forwarding Control Policies interface <zia-forwarding_control>`.
 
         """
         return ForwardingControlAPI(self)
@@ -489,12 +517,12 @@ class ZIAClientHelper(ZIAClient):
         return RuleLabelsAPI(self)
 
     @property
-    def device(self):
+    def device_management(self):
         """
-        The interface object for the :ref:`ZIA device interface <zia-device>`.
+        The interface object for the :ref:`ZIA device interface <zia-device_management>`.
 
         """
-        return DeviceAPI(self)
+        return DeviceManagementAPI(self)
 
     @property
     def locations(self):
@@ -523,7 +551,7 @@ class ZIAClientHelper(ZIAClient):
     @property
     def authentication_settings(self):
         """
-        The interface object for the :ref:`ZIA Authentication Security Settings interface <zia-auth-settings>`.
+        The interface object for the :ref:`ZIA Authentication Security Settings interface <zia-authentication_settings>`.
 
         """
         return AuthenticationSettingsAPI(self)
@@ -569,17 +597,9 @@ class ZIAClientHelper(ZIAClient):
         return UserManagementAPI(self)
 
     @property
-    def vips(self):
-        """
-        The interface object for the :ref:`ZIA Data Center VIPs interface <zia-vips>`.
-
-        """
-        return DataCenterVIPSAPI(self)
-
-    @property
     def web_dlp(self):
         """
-        The interface object for the :ref: `ZIA Data-Loss-Prevention Web DLP Rules`.
+        The interface object for the :ref:`ZIA Web DLP interface <zia-web_dlp>`.
 
         """
         return WebDLPAPI(self)
@@ -587,7 +607,7 @@ class ZIAClientHelper(ZIAClient):
     @property
     def zpa_gateway(self):
         """
-        The interface object for the :ref: `ZIA Data-Loss-Prevention Web DLP Rules`.
+        The interface object for the :ref:`ZPA Gateway <zia-zpa_gateway>`.
 
         """
         return ZPAGatewayAPI(self)
@@ -595,7 +615,7 @@ class ZIAClientHelper(ZIAClient):
     @property
     def isolation_profile(self):
         """
-        The interface object for the :ref: `ZIA Cloud Browser Isolation Profile`.
+        The interface object for the :ref:`ZIA Cloud Browser Isolation Profile <zia-isolation_profile>`.
 
         """
         return IsolationProfileAPI(self)
@@ -603,9 +623,7 @@ class ZIAClientHelper(ZIAClient):
     @property
     def workload_groups(self):
         """
-        The interface object for the :ref: `ZIA Workload Groups`.
+        The interface object for the :ref:`ZIA Workload Groups <zia-workload_groups>`.
 
         """
         return WorkloadGroupsAPI(self)
-
-

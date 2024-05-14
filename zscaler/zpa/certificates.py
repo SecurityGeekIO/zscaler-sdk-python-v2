@@ -34,13 +34,13 @@ class CertificatesAPI:
             **kwargs: Optional keyword args.
 
         Keyword Args:
-            **max_items (int, optional):
+            max_items (int, optional):
                 The maximum number of items to request before stopping iteration.
-            **max_pages (int, optional):
+            max_pages (int, optional):
                 The maximum number of pages to request before stopping iteration.
-            **pagesize (int, optional):
+            pagesize (int, optional):
                 Specifies the page size. The default size is 20, but the maximum size is 500.
-            **search (str, optional):
+            search (str, optional):
                 The search string used to match against features and fields.
 
         Returns:
@@ -51,7 +51,11 @@ class CertificatesAPI:
             ...    print(cert)
 
         """
-        list, _ = self.rest.get_paginated_data(path="/clientlessCertificate/issued", data_key_name="list", **kwargs, api_version="v2")
+        list, _ = self.rest.get_paginated_data(
+            path="/clientlessCertificate/issued",
+            **kwargs,
+            api_version="v2",
+        )
         return list
 
     def list_all_certificates(self, **kwargs) -> BoxList:
@@ -79,34 +83,39 @@ class CertificatesAPI:
             ...    print(cert)
 
         """
-        list, _ = self.rest.get_paginated_data(path="/certificate", data_key_name="list", **kwargs, api_version="v1")
+        list, _ = self.rest.get_paginated_data(path="/certificate", **kwargs, api_version="v1")
         return list
+
+    def get_certificate_by_name(self, name):
+        certs = self.list_all_certificates()
+        for cert in certs:
+            if cert.get("name") == name:
+                return cert
+        return None
 
     def add_certificate(self, name: str, cert_blob: str, **kwargs) -> Box:
         """
         Add a new Certificate.
 
         Args:
-            name (str):
-                The name of the certificate.
-            cert_blob (str):
-                The content of the certificate.The certificateBlob field must be in string format and must include the certificate and the private key (in PEM format) in the JSON payload
-            **kwargs:
-                Optional keyword args.
+            name (str): The name of the certificate.
+            cert_blob (str): The content of the certificate. Must include the certificate and private key (in PEM format).
+            **kwargs: Optional keyword args.
 
         Keyword Args:
-            description (str):
-                The description of the certificate.
+            description (str): The description of the certificate.
 
         Returns:
             :obj:`Box`: The resource record for the newly created server.
 
         Examples:
-            Create a certificate with the minimum required parameters:
+            Create a certificate with minimum required parameters:
 
             >>> zpa.servers.add_server(
             ...   name='myserver.example',
-            ...   cert_blob="-----BEGIN CERTIFICATE-----\nMIIFNzCCBIHNIHIO==\n-----END CERTIFICATE-----",'
+            ...   cert_blob=("-----BEGIN CERTIFICATE-----\\n"
+            ...              "MIIFNzCCBIHNIHIO==\\n"
+            ...              "-----END CERTIFICATE-----"),
             )
 
         """
@@ -162,7 +171,9 @@ class CertificatesAPI:
             >>> ba_certificate = zpa.certificates.get_certificate('99999')
 
         """
-        return self._get(f"certificate/{certificate_id}")
+        response = self.rest.delete("/certificate/%s" % (certificate_id))
+        return response.status_code
+        # return self.rest.get(f"certificate/{certificate_id}")
 
     def get_enrolment(self, certificate_id: str) -> Box:
         """
@@ -178,8 +189,12 @@ class CertificatesAPI:
             enrolment_cert = zpa.certificates.get_enrolment('99999999')
 
         """
-        response = self.rest.get("/enrollmentCert/%s?%s" % (certificate_id))
-        return response.status_code
+        response = self.rest.get("/enrollmentCert/%s" % (certificate_id))
+        if isinstance(response, Response):
+            status_code = response.status_code
+            if status_code != 200:
+                return None
+        return response
 
     def list_enrolment(self, **kwargs) -> BoxList:
         """
@@ -206,6 +221,12 @@ class CertificatesAPI:
             ...    print(cert)
 
         """
-        list, _ = self.rest.get_paginated_data(path="/enrollmentCert", data_key_name="list", **kwargs, api_version="v2")
+        list, _ = self.rest.get_paginated_data(path="/enrollmentCert", **kwargs, api_version="v2")
         return list
 
+    def get_enrolment_cert_by_name(self, name):
+        certs = self.list_enrolment()
+        for cert in certs:
+            if cert.get("name") == name:
+                return cert
+        return None

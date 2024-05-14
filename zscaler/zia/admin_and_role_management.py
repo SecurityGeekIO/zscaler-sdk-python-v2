@@ -14,44 +14,41 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-
 from box import Box, BoxList
 from requests import Response
 
 from zscaler.utils import Iterator, snake_to_camel
 from zscaler.zia import ZIAClient
 
-class AdminAndRoleManagementAPI:
 
+class AdminAndRoleManagementAPI:
     def __init__(self, client: ZIAClient):
         self.rest = client
 
-    def list_users(self, query: str = None) -> BoxList:
+    def list_users(self, **kwargs) -> BoxList:
         """
         Returns a list of admin users.
 
         Keyword Args:
-            **include_auditor_users (bool, optional):
+            include_auditor_users (bool, optional):
                 Include or exclude auditor user information in the list.
-            **include_admin_users (bool, optional):
+            include_admin_users (bool, optional):
                 Include or exclude admin user information in the list. (default: True)
-            **search (str, optional):
+            search (str, optional):
                 The search string used to partially match against an admin/auditor user's Login ID or Name.
-            **page (int, optional):
+            page (int, optional):
                 Specifies the page offset.
-            **page_size (int, optional):
+            page_size (int, optional):
                 Specifies the page size. The default size is 100, but the maximum size is 1000.
 
         Returns:
-            :obj:`BoxList`: The admin_users resource record.
+            list: The admin_users resource records.
 
         Examples:
-            >>> users = zia.admin_and_role_management.list_users(search='login_name')
+            >>> users = zia.admin_and_role_management.list_users('admin@example.com')
 
         """
-        payload = {"search": query}
-        return self.rest.get("adminUsers", params=payload)
-
+        return BoxList(Iterator(self.rest, "adminUsers", **kwargs))
 
     def get_user(self, user_id: str) -> Box:
         """
@@ -118,14 +115,14 @@ class AdminAndRoleManagementAPI:
                 >>> admin_user = zia.admin_and_role_management.add_user(
                 ...    name="Jim Bob",
                 ...    login_name="jim@example.com",
-                ...    password="hunter2",
+                ...    password="*********",
                 ...    email="jim@example.com")
 
             Add an admin user with a department admin scope:
                 >>> admin_user = zia.admin_and_role_management.add_user(
                 ...    name="Jane Bob",
                 ...    login_name="jane@example.com",
-                ...    password="hunter3",
+                ...    password="*********",
                 ...    email="jane@example.com,
                 ...    admin_scope="department",
                 ...    scope_ids = ['376542', '245688'])
@@ -134,7 +131,7 @@ class AdminAndRoleManagementAPI:
                 >>> auditor_user = zia.admin_and_role_management.add_user(
                 ...    name="Head Bob",
                 ...    login_name="head@example.com",
-                ...    password="hunter4",
+                ...    password="*********",
                 ...    email="head@example.com,
                 ...    is_auditor=True)
 
@@ -282,7 +279,7 @@ class AdminAndRoleManagementAPI:
             >>> zia.admin_role_management.delete_admin_user('99272455')
 
         """
-        response = self.rest.delete(f"/adminUsers/%s" % (user_id))
+        response = self.rest.delete("/adminUsers/%s" % (user_id))
         return response.status_code
 
     def list_roles(self, **kwargs) -> BoxList:
@@ -323,3 +320,17 @@ class AdminAndRoleManagementAPI:
         """
         admin_role = next(user for user in self.list_roles() if user.id == int(role_id))
         return admin_role
+
+    def get_roles_by_name(self, name):
+        roles = self.list_roles()
+        for role in roles:
+            if role.get("name") == name:
+                return role
+        return None
+
+    def get_roles_by_id(self, role_id):
+        roles = self.list_roles()
+        for role in roles:
+            if role.get("id") == role_id:
+                return role
+        return None

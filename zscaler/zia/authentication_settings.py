@@ -16,11 +16,11 @@
 
 
 from box import BoxList
+
 from zscaler.zia import ZIAClient
 
 
 class AuthenticationSettingsAPI:
-
     def __init__(self, client: ZIAClient):
         self.rest = client
 
@@ -90,5 +90,5 @@ class AuthenticationSettingsAPI:
         resp = self.rest.post("authSettings/exemptedUrls?action=REMOVE_FROM_LIST", json=payload)
 
         # Return the updated exemption list if the removal was successful.
-        if resp == 204:
+        if resp == 200:
             return self.get_exempted_urls()

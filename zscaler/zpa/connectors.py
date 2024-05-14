@@ -17,7 +17,7 @@
 
 from box import Box, BoxList
 from requests import Response
-
+import os
 from zscaler.utils import add_id_groups, pick_version_profile, snake_to_camel
 from zscaler.zpa.client import ZPAClient
 
@@ -58,7 +58,7 @@ class AppConnectorControllerAPI:
             ...    print(connector)
 
         """
-        list, _ = self.rest.get_paginated_data(path=f"/connector", data_key_name="list", **kwargs, api_version="v1")
+        list, _ = self.rest.get_paginated_data(path="/connector", **kwargs, api_version="v1")
         return list
 
     def get_connector(self, connector_id: str) -> Box:
@@ -75,7 +75,7 @@ class AppConnectorControllerAPI:
             >>> app_connector = zpa.connectors.get_connector('99999')
 
         """
-        response = self.rest.get(f"/connector/%s" % (connector_id))
+        response = self.rest.get("/connector/%s" % (connector_id))
         if isinstance(response, Response):
             status_code = response.status_code
             if status_code != 200:
@@ -123,7 +123,7 @@ class AppConnectorControllerAPI:
         for key, value in kwargs.items():
             payload[snake_to_camel(key)] = value
 
-        resp = self.rest.put(f"/connector/%s" % (connector_id),json=payload).status_code
+        resp = self.rest.put("/connector/%s" % (connector_id), json=payload).status_code
         if not isinstance(resp, Response):
             return self.get_connector(connector_id)
 
@@ -181,7 +181,7 @@ class AppConnectorControllerAPI:
             >>> connector_groups = zpa.connectors.list_connector_groups()
 
         """
-        list, _ = self.rest.get_paginated_data(path="/appConnectorGroup", data_key_name="list", **kwargs, api_version="v1")
+        list, _ = self.rest.get_paginated_data(path="/appConnectorGroup", **kwargs, api_version="v1")
         return list
 
     def get_connector_group(self, group_id: str) -> Box:
@@ -200,7 +200,7 @@ class AppConnectorControllerAPI:
             >>> connector_group = zpa.connectors.get_connector_group('99999')
 
         """
-        response = self.rest.get(f"/appConnectorGroup/%s" % (group_id))
+        response = self.rest.get("/appConnectorGroup/%s" % (group_id))
         if isinstance(response, Response):
             status_code = response.status_code
             if status_code != 200:
@@ -208,7 +208,7 @@ class AppConnectorControllerAPI:
         return response
 
     def get_connector_group_by_name(self, name):
-        groups = self.list_groups()
+        groups = self.list_connector_groups()
         for group in groups:
             if group.get("name") == name:
                 return group
@@ -290,7 +290,6 @@ class AppConnectorControllerAPI:
             # Handle error response
             raise Exception(f"API call failed with status {status_code}: {response.json()}")
         return response
-
 
     def update_connector_group(self, group_id: str, **kwargs) -> Box:
         """
@@ -382,55 +381,71 @@ class AppConnectorControllerAPI:
         """
         return self.rest.delete(f"appConnectorGroup/{group_id}").status_code
 
-
-    def get_connector_schedule(self, **kwargs) -> Box:
+    def get_connector_schedule(self, customer_id=None) -> Box:
         """
-        Returns configured App Connector Schedule frequency
+        Returns the configured App Connector Schedule frequency.
+
         Args:
-            id (str): The unique identifier for the App Connector auto deletion configuration for a customer. This field is only required for the PUT request to update the frequency of the App Connector Settings.
-            customer_id (str): The unique identifier of the ZPA tenant.
-            delete_disabled (bool): Indicates if the App Connectors are included for deletion if they are in a disconnected state based on frequencyInterval and frequency values.
-            enabled (bool): Indicates if the setting for deleting App Connectors is enabled or disabled.
-            frequency (str): The scheduled frequency at which the disconnected App Connectors are deleted.
-            frequency_interval (str): The interval for the configured frequency value. The minimum supported value is 5.
+            id (str): Unique identifier for the App Connector auto deletion config.
+                Required for the PUT request to update the App Connector Settings frequency.
+            customer_id (str): Unique identifier of the ZPA tenant.
+            delete_disabled (bool): If true, includes App Connectors for deletion if
+                they are disconnected, based on frequencyInterval and frequency values.
+            enabled (bool): If true, the deletion of App Connectors setting is enabled.
+            frequency (str): Frequency at which disconnected App Connectors are deleted.
+            frequency_interval (str): Interval for the frequency value, minimum is 5.
 
         Returns:
             :obj:`Box`: The Auto Delete frequency of the App Connector for the specified customer.
 
         Examples:
             >>> pprint(zpa.connectors.get_connector_schedule)
-
         """
 
-        response = self.rest.get("/assistantSchedule")
+        # Fetch customer_id from environment if not provided
+        if customer_id is None:
+            customer_id = os.getenv("ZPA_CUSTOMER_ID")
+
+        if not customer_id:
+            raise ValueError(
+                "customer_id is required either as a function argument or as an environment variable ZPA_CUSTOMER_ID"
+            )
+
+        response = self.rest.get("/connectorSchedule")
         if isinstance(response, Response):
             return None
         return response
 
     def add_connector_schedule(self, frequency, interval, disabled, **kwargs) -> Box:
         """
-        Configure a App Connector schedule frequency to delete the in activve connectors with configured frequency.
+        Configure an App Connector schedule frequency to delete inactive connectors based on
+        the configured frequency.
 
         Args:
-            name (str):
-            customer_id (str): The unique identifier of the ZPA tenant.
-            delete_disabled (bool): Indicates if the App Connectors are included for deletion if they are in a disconnected state based on frequencyInterval and frequency values.
-            enabled (bool): Indicates if the setting for deleting App Connectors is enabled or disabled.
-            frequency (str): The scheduled frequency at which the disconnected App Connectors are deleted.
-            frequency_interval (str): The interval for the configured frequency value. The minimum supported value is 5.
+            frequency (str): Frequency at which disconnected App Connectors are deleted.
+            interval (str): Interval for the frequency value, minimum supported is 5.
+            disabled (bool): If true, includes connectors for deletion if disconnected.
+            **kwargs: Optional keyword arguments.
 
         Keyword Args:
-            description (str):
-                Additional information about the Connector Schedule.
+            name (str): Name of the schedule.
+            customer_id (str): Unique identifier of the ZPA tenant.
+            delete_disabled (bool): Includes App Connectors for deletion if they are
+                disconnected, based on frequency and interval values.
+            enabled (bool): Enables or disables the deletion setting for App Connectors.
+            description (str): Additional information about the Connector Schedule.
 
         Returns:
-            :obj:`Box`: The Auto Delete frequency of the App Connector for the specified customer.
+            :obj:`Box`: Auto Delete frequency of the App Connector for the specified customer.
 
         Examples:
-
-            >>> schedule = zpa.connectors.add_connector_schedule()
-
-
+            >>> schedule = zpa.connectors.add_connector_schedule(
+            ...    frequency='weekly',
+            ...    interval='5',
+            ...    disabled=False,
+            ...    name='Weekly Deletion',
+            ...    description='Deletes disconnected connectors weekly.'
+            )
         """
         payload = {
             "frequency": frequency,
@@ -442,53 +457,56 @@ class AppConnectorControllerAPI:
         for key, value in kwargs.items():
             payload[snake_to_camel(key)] = value
 
-        response = self.rest.post("assistantSchedule", json=payload)
+        response = self.rest.post("connectorSchedule", json=payload)
         if isinstance(response, Response):
-            # this is only true when the creation failed (status code is not 2xx)
             status_code = response.status_code
-            # Handle error response
-            raise Exception(f"API call failed with status {status_code}: {response.json()}")
+            if status_code >= 400:  # Check if status code indicates an error
+                raise Exception(f"API call failed with status {status_code}: {response.json()}")
         return response
 
-    def update_schedule(self, scheduler_id: str, **kwargs) -> bool:
-            """
-        Updates App Connector schedule frequency to delete the inactive connectors with configured frequency.
+    def update_connector_schedule(self, scheduler_id: str, **kwargs) -> bool:
+        """
+        Updates App Connector schedule frequency to delete the inactive connectors based on
+        the configured frequency.
 
         Args:
-            scheduler_id (str): The unique identifier for the scheduler.
-            customer_id (str): The unique identifier of the ZPA tenant.
-            delete_disabled (bool): Indicates if the App Connectors are included for deletion if they are in a disconnected state based on frequencyInterval and frequency values.
-            enabled (bool): Indicates if the setting for deleting App Connectors is enabled or disabled.
-            frequency (str): The scheduled frequency at which the disconnected App Connectors are deleted.
-            frequency_interval (str): The interval for the configured frequency value. The minimum supported value is 5.
-                Supported values are: 5, 7, 14, 30, 60, 90
+            scheduler_id (str): Unique identifier for the scheduler.
+            customer_id (str): Unique identifier of the ZPA tenant.
+            delete_disabled (bool): Include App Connectors for deletion if disconnected,
+                based on frequencyInterval and frequency values.
+            enabled (bool): Enable or disable deletion of App Connectors.
+            frequency (str): Frequency at which disconnected App Connectors are deleted.
+            frequency_interval (str): Interval for the frequency value, minimum is 5.
+                Supported: 5, 7, 14, 30, 60, 90.
 
         Keyword Args:
             description (str): Additional information about the Connector Schedule.
 
         Returns:
-            bool: True if the update was successful, False otherwise.
+            bool: True if update was successful, False otherwise.
 
         Examples:
             Updating connector schedule:
 
             >>> result = zpa.connectors.update_schedule('10', frequency_interval='10')
             >>> print(result)  # True if successful, False otherwise
-
         """
-            # Get the current schedule
-            current_schedule = self.get_connector_schedule(scheduler_id=scheduler_id)
+        # Get the current schedule by customer ID
+        customer_id = kwargs.get("customer_id")
+        if not customer_id:
+            raise ValueError("customer_id must be provided as a keyword argument.")
 
-            # Update the schedule with provided arguments
-            for key, value in kwargs.items():
-                # Check for customer_id and convert it to int if it's a string
-                if key == 'customer_id':
-                    value = int(value) if isinstance(value, str) and value.isdigit() else value
+        current_schedule = self.get_connector_schedule(customer_id=customer_id)
 
-                current_schedule[snake_to_camel(key)] = value
+        if not current_schedule:
+            raise ValueError("No existing schedule found for the provided customer ID.")
 
-            # Send the updated schedule to the server
-            response = self.rest.put(f"assistantSchedule/{scheduler_id}", json=current_schedule)
+        # Update the schedule with provided arguments
+        for key, value in kwargs.items():
+            current_schedule[snake_to_camel(key)] = value
 
-            # Return True if the update was successful (204 No Content), False otherwise
-            return response.status_code == 204
+        # Send the updated schedule to the server
+        response = self.rest.put(f"connectorSchedule/{scheduler_id}", json=current_schedule.to_dict())
+
+        # Return True if the update was successful (204 No Content), False otherwise
+        return response.status_code == 204

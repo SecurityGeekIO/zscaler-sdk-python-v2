@@ -46,7 +46,7 @@ class AppServersAPI:
         Examples:
             >>> servers = zpa.servers.list_servers()
         """
-        list, _ = self.rest.get_paginated_data(path="/server", data_key_name="list", **kwargs, api_version="v1")
+        list, _ = self.rest.get_paginated_data(path="/server", **kwargs, api_version="v1")
         return list
 
     def get_server(self, server_id: str) -> Box:
@@ -196,4 +196,3 @@ class AppServersAPI:
 
         """
         return self.rest.delete(f"server/{server_id}").status_code
-

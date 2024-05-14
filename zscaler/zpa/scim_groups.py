@@ -16,6 +16,7 @@
 
 
 from box import Box, BoxList
+import time
 from zscaler.zpa.client import ZPAClient
 
 
@@ -23,7 +24,7 @@ class SCIMGroupsAPI:
     def __init__(self, client: ZPAClient):
         self.rest = client
 
-    def list_groups(self, idp_id: str, sort_by: str = "name", sort_order: str = "DESC", **kwargs) -> BoxList:
+    def list_groups(self, idp_id: str, **kwargs) -> BoxList:
         """
         Returns a list of all configured SCIM groups for the specified IdP.
 
@@ -33,7 +34,7 @@ class SCIMGroupsAPI:
             sort_by (str):
                 The field name to sort by, supported values: id, name, creationTime or modifiedTime (default to name)
             sort_order (str):
-                The sort order, values: ASC or DESC (default DESC)
+                The sort order, values: ASC or DSC (default DSC)
 
 
         Keyword Args:
@@ -67,12 +68,10 @@ class SCIMGroupsAPI:
             ...    pprint(scim_group)
 
         """
-        params = {}
-        if sort_order != "" and sort_by != "":
-            params["sortBy"] = sort_by
-            params["sortOrder"] = sort_order
         list, _ = self.rest.get_paginated_data(
-            path=f"/scimgroup/idpId/{idp_id}", params=params, data_key_name="list", **kwargs, api_version="userconfig_v1"
+            path=f"/scimgroup/idpId/{idp_id}",
+            **kwargs,
+            api_version="userconfig_v1",
         )
         return list
 
@@ -86,10 +85,6 @@ class SCIMGroupsAPI:
             **kwargs:
                 Optional keyword args.
 
-        Keyword Args:
-            all_entries (bool):
-                Return all SCIM groups including the deleted ones if ``True``. Defaults to ``False``.
-
         Returns:
             :obj:`dict`: The resource record for the SCIM group.
 
@@ -97,35 +92,5 @@ class SCIMGroupsAPI:
             >>> pprint(zpa.scim_groups.get_group('99999'))
 
         """
-        list, _ = self.rest.get(path=f"/scimgroup/{group_id}", data_key_name="list", **kwargs, api_version="userconfig_v1")
-        return list
-
-    def search_group(self, idp_id: str, group_name: str, **kwargs) -> dict:
-        """
-        Searches and returns the SCIM group with the specified name for the given IdP.
-        """
-        page_size = kwargs.get("pagesize", 500)  # Adjust the page size as needed
-
-        # Calculate the total pages using a synchronous call
-        total_pages = 1
-        page_number = 1
-
-        # Loop over each page to search for the group
-        while True:
-            page = self._get_page(idp_id, page_number, group_name, page_size)
-            total_pages = int(page.get("total_pages", "0"))
-            for group in page.get("list", []):
-                if group.get("name") == group_name:
-                    return group  # Return the found group immediately
-            if page_number >= total_pages:
-                break
-            page_number = page_number + 1
-        return None  # Return None if the group wasn't found
-
-    def _get_page(self, idp_id, page_number, search, page_size):
-        params = {"page": page_number, "search": search, "pagesize": page_size, "sortBy": "name", "sortOrder": "DESC"}
-        page = self.rest.get(path=f"/scimgroup/idpId/{idp_id}", params=params, api_version="userconfig_v1")
-        return page
-
-
-# SCIM Group - Implement new search parameters sortBy and sortOrder with ASC being the default; however, the user should have the ability to set DSC as a search criteria as well. SortBy name must. be the default option
+        response = self.rest.get(f"/scimgroup/{group_id}", **kwargs, api_version="userconfig_v1")
+        return response

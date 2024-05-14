@@ -1,44 +1,47 @@
-import json
 import logging
 import os
 import time
 import urllib.parse
-from time import sleep
 import uuid
+from time import sleep
+
 import requests
 from box import BoxList
 
+from zscaler import __version__
 from zscaler.cache.no_op_cache import NoOpCache
-from zscaler.errors.http_error import ZscalerAPIError, HTTPError
-from zscaler.exceptions.exceptions import ZscalerAPIException, HTTPException
 from zscaler.cache.zscaler_cache import ZscalerCache
 from zscaler.constants import ZPA_BASE_URLS
+from zscaler.errors.http_error import HTTPError, ZscalerAPIError
+from zscaler.exceptions.exceptions import HTTPException, ZscalerAPIException
+from zscaler.logger import setup_logging
 from zscaler.ratelimiter.ratelimiter import RateLimiter
 from zscaler.user_agent import UserAgent
 from zscaler.utils import (
     convert_keys_to_snake,
+    dump_request,
+    dump_response,
     format_json_response,
     is_token_expired,
     retry_with_backoff,
-    dump_request,
-    dump_response,
+    snake_to_camel,
 )
-from zscaler.zpa.client import ZPAClient
 from zscaler.zpa.app_segments import ApplicationSegmentAPI
 from zscaler.zpa.app_segments_inspection import AppSegmentsInspectionAPI
 from zscaler.zpa.app_segments_pra import AppSegmentsPRAAPI
 from zscaler.zpa.certificates import CertificatesAPI
-from zscaler.zpa.client_types import ClientTypesAPI
+from zscaler.zpa.client import ZPAClient
 from zscaler.zpa.cloud_connector_groups import CloudConnectorGroupsAPI
 from zscaler.zpa.connectors import AppConnectorControllerAPI
+from zscaler.zpa.emergency_access import EmergencyAccessAPI
 from zscaler.zpa.idp import IDPControllerAPI
 from zscaler.zpa.inspection import InspectionControllerAPI
-from zscaler.zpa.isolation_profile import IsolationProfileAPI
+from zscaler.zpa.isolation import IsolationAPI
 from zscaler.zpa.lss import LSSConfigControllerAPI
 from zscaler.zpa.machine_groups import MachineGroupsAPI
-from zscaler.zpa.platforms import PlatformsAPI
 from zscaler.zpa.policies import PolicySetsAPI
-from zscaler.zpa.posture_profile import PostureProfilesAPI
+from zscaler.zpa.posture_profiles import PostureProfilesAPI
+from zscaler.zpa.privileged_remote_access import PrivilegedRemoteAccessAPI
 from zscaler.zpa.provisioning import ProvisioningKeyAPI
 from zscaler.zpa.saml_attributes import SAMLAttributesAPI
 from zscaler.zpa.scim_attributes import ScimAttributeHeaderAPI
@@ -50,46 +53,45 @@ from zscaler.zpa.service_edges import ServiceEdgesAPI
 from zscaler.zpa.trusted_networks import TrustedNetworksAPI
 
 # Setup the logger
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+setup_logging(logger_name="zscaler-sdk-python")
+logger = logging.getLogger("zscaler-sdk-python")
 
 
 class ZPAClientHelper(ZPAClient):
-    """
-    Client helper for ZPA operations.
+    """A Controller to access Endpoints in the Zscaler Private Access (ZPA) API.
+
+    The ZPA object stores the session token and simplifies access to API interfaces within ZPA.
 
     Attributes:
-    - client_id (str): The client ID.
-    - client_secret (str): The client secret.
-    - customer_id (str): The customer ID.
-    - cloud (str): The cloud endpoint to be used.
-    - timeout (int): Request timeout duration in seconds.
-    - cache (object): Cache object to be used.
-    - baseurl (str): Base URL for API requests.
-    - access_token (str): Access token for API requests.
-    - headers (dict): Headers for API requests.
+        client_id (str): The ZPA API client ID generated from the ZPA console.
+        client_secret (str): The ZPA API client secret generated from the ZPA console.
+        customer_id (str): The ZPA tenant ID found in the Administration > Company menu in the ZPA console.
+        cloud (str): The Zscaler cloud for your tenancy, accepted values are:
+
+            * ``production``
+            * ``beta``
+            * ``gov``
+            * ``govus``
+            * ``zpatwo``
     """
 
-    def __init__(self, client_id, client_secret, customer_id, cloud, timeout=240, cache=None, fail_safe=False):
-        """
-        Initialize ZPAClientHelper.
-
-        Parameters:
-        - client_id (str): The client ID.
-        - client_secret (str): The client secret.
-        - customer_id (str): The customer ID.
-        - cloud (str): The cloud endpoint to be used.
-        - cache (object, optional): Cache object. Defaults to None.
-        - fail_safe (bool, optional): Log an error and continue on failure. Defaults to False.
-        """
-
+    def __init__(
+        self,
+        client_id,
+        client_secret,
+        customer_id,
+        cloud,
+        timeout=240,
+        cache=None,
+        fail_safe=False,
+    ):
         # Initialize rate limiter
         # You may want to adjust these parameters as per your rate limit configuration
         self.rate_limiter = RateLimiter(
-            get_limit=10,  # Adjust as per actual limit
-            post_put_delete_limit=5,  # Adjust as per actual limit
-            get_freq=1,  # Adjust as per actual frequency (in seconds)
-            post_put_delete_freq=1,  # Adjust as per actual frequency (in seconds)
+            get_limit=20,  # Adjusted to allow 20 GET requests per 10 seconds
+            post_put_delete_limit=10,  # Adjusted to allow 10 POST/PUT/DELETE requests per 10 seconds
+            get_freq=10,  # Adjust frequency to 10 seconds
+            post_put_delete_freq=10,  # Adjust frequency to 10 seconds
         )
 
         # Validate cloud value
@@ -112,6 +114,7 @@ class ZPAClientHelper(ZPAClient):
         self.url = f"{self.baseurl}/mgmtconfig/v1/admin/customers/{customer_id}"
         self.user_config_url = f"{self.baseurl}/userconfig/v1/customers/{customer_id}"
         self.v2_url = f"{self.baseurl}/mgmtconfig/v2/admin/customers/{customer_id}"
+        self.v2_lss_url = f"{self.baseurl}/mgmtconfig/v2/admin/lssConfig/customers/{customer_id}"
         self.cbi_url = f"{self.baseurl}/cbiconfig/cbi/api/customers/{customer_id}"
         self.fail_safe = fail_safe
         # Cache setup
@@ -180,8 +183,12 @@ class ZPAClientHelper(ZPAClient):
             api = self.url
         elif api_version == "v2":
             api = self.v2_url
+        elif api_version == "v2_lss":
+            api = self.v2_lss_url
         elif api_version == "userconfig_v1":
             api = self.user_config_url
+        elif api_version == "cbiconfig_v1":
+            api = self.cbi_url
 
         url = f"{api}/{path.lstrip('/')}"
         start_time = time.time()
@@ -212,9 +219,15 @@ class ZPAClientHelper(ZPAClient):
             try:
                 # If the token is None or expired, fetch a new token
                 if is_token_expired(self.access_token):
-                    self.logger.warning("The provided or fetched token was already expired. Refreshing...")
+                    logger.warning("The provided or fetched token was already expired. Refreshing...")
                     self.refreshToken()
-                resp = requests.request(method, url, json=json, headers=headers_with_user_agent, timeout=self.timeout)
+                resp = requests.request(
+                    method,
+                    url,
+                    json=json,
+                    headers=headers_with_user_agent,
+                    timeout=self.timeout,
+                )
                 dump_response(
                     logger=logger,
                     url=url,
@@ -315,67 +328,144 @@ class ZPAClientHelper(ZPAClient):
             time.sleep(delay)
         return self.send("DELETE", path, json, params, api_version=api_version)
 
-    ERROR_MESSAGES = {
-        "UNEXPECTED_STATUS": "Unexpected status code {status_code} received for page {page}.",
-        "MISSING_DATA_KEY": "The key '{data_key_name}' was not found in the response for page {page}.",
-        "EMPTY_RESULTS": "No results found for page {page}.",
-    }
-
     def get_paginated_data(
-        self, path=None, params=None, data_key_name=None, data_per_page=500, expected_status_code=200, api_version: str = None
+        self,
+        path=None,
+        params=None,
+        expected_status_code=200,
+        api_version: str = None,
+        search=None,
+        search_field="name",
+        max_pages=None,
+        max_items=None,
+        sort_order=None,
+        sort_by=None,
+        sort_dir=None,
+        start_time=None,
+        end_time=None,
+        idp_group_id=None,
+        scim_user_id=None,
+        page=None,
+        pagesize=20,
     ):
         """
-        Fetch paginated data from the ZPA API.
-        ...
+        Fetches paginated data from the ZPA API based on specified parameters and handles various types of API pagination.
+
+        Args:
+            path (str): The API endpoint path to send requests to.
+            params (dict): Initial set of query parameters for the API request.
+            expected_status_code (int): The expected HTTP status code for a successful request. Defaults to 200.
+            api_version (str): Specifies the version of the API to be used. Helps in routing within the API service.
+            search (str): Search query to filter the results based on specific conditions.
+            search_field (str): The field name against which to search the query. Default is "name".
+            max_pages (int): The maximum number of pages to fetch. If None, fetches all available pages.
+            max_items (int): The maximum number of items to fetch across all pages. Stops fetching once reached.
+            sort_order (str): Specifies the order of sorting (e.g., 'ASC' or 'DSC').
+            sort_by (str): Specifies the field name by which the results should be sorted.
+            sort_dir (str): Specifies the direction of sorting. Supported values: ASC, DESC.
+            start_time (str): The start of a time range for filtering data based on modification time.
+            end_time (str): The end of a time range for filtering data based on modification time.
+            idp_group_id (str): Identifier for a specific IDP group, used for fetching data related to that group.
+            scim_user_id (str): Identifier for a specific SCIM user, used for fetching data related to that user.
+            page (int): Specific page number to fetch. Overrides automatic pagination.
+            pagesize (int): Number of items per page, default is 20 as per API specification, maximum is 500.
 
         Returns:
-        - list: List of fetched items.
-        - str: Error message, if any occurred.
+            tuple: A tuple containing:
+                - BoxList: A list of fetched items wrapped in a BoxList for easy access.
+                - str: An error message if any occurred during the data fetching process.
+
+        Raises:
+            Logs errors and warnings through the configured logger when requests fail or if no data is found.
         """
+        logger = logging.getLogger(__name__)
 
-        page = 1
+        ERROR_MESSAGES = {
+            "UNEXPECTED_STATUS": "Unexpected status code {status_code} received for page {page}.",
+            "MISSING_DATA_KEY": "The key 'list' was not found in the response for page {page}.",
+            "EMPTY_RESULTS": "No results found for all requested pages.",
+        }
+
+        if params is None:
+            params = {}
+
+        if (page is not None or pagesize != 20) and (max_pages is not None or max_items is not None):
+            raise ValueError(
+                "Do not mix 'page' or 'pagesize' with 'max_pages' or 'max_items'. Choose either set of parameters."
+            )
+
+        params["pagesize"] = min(pagesize, 500)  # Apply maximum constraint and handle default
+
+        if page:
+            params["page"] = page
+
+        if search:
+            api_search_field = snake_to_camel(search_field)
+            params["search"] = f"{api_search_field} EQ {search}"
+        if sort_order:
+            params["sortOrder"] = sort_order
+        if sort_by:
+            params["sortBy"] = sort_by
+        if sort_dir:
+            params["sortdir"] = sort_dir
+        if start_time and end_time:
+            params["startTime"] = start_time
+            params["endTime"] = end_time
+        if idp_group_id:
+            params["idpGroupId"] = idp_group_id
+        if scim_user_id:
+            params["scimUserId"] = scim_user_id
+
+        total_collected = 0
         ret_data = []
-        error_message = None
 
-        while True:
-            # Construct the URL with parameters
-            url_params = f"?page={page}&pagesize={data_per_page}"
-            if params:
-                url_params += "&" + "&".join(f"{key}={value}" for key, value in params.items())
-            
-            required_url = f"{path}{url_params}"
-            should_wait, delay = self.rate_limiter.wait("GET")
-            if should_wait:
-                time.sleep(delay)
+        try:
+            while True:
+                if max_pages is not None and (page is not None and page > max_pages):
+                    break
 
-            # Now proceed with sending the request
-            response = self.send("GET", required_url, api_version=api_version)
+                should_wait, delay = self.rate_limiter.wait("GET")
+                if should_wait:
+                    time.sleep(delay)
 
-            if response.status_code != expected_status_code:
-                error_message = self.ERROR_MESSAGES["UNEXPECTED_STATUS"].format(status_code=response.status_code, page=page)
-                logger.error(error_message)
-                break
+                url = f"{path}?{urllib.parse.urlencode(params)}"
+                response = self.send("GET", url, api_version=api_version)
 
-            data = response.json().get(data_key_name)
+                if response.status_code != expected_status_code:
+                    error_msg = ERROR_MESSAGES["UNEXPECTED_STATUS"].format(status_code=response.status_code, page=page)
+                    logger.error(error_msg)
+                    return BoxList([]), error_msg
 
-            if data is None:
-                error_message = self.ERROR_MESSAGES["MISSING_DATA_KEY"].format(data_key_name=data_key_name, page=page)
-                logger.error(error_message)
-                break
+                response_data = response.json()
+                data = response_data.get("list", [])
+                if not data and (page is None or page == 1):
+                    error_msg = ERROR_MESSAGES["EMPTY_RESULTS"]
+                    logger.warn(error_msg)
+                    return BoxList([]), error_msg
 
-            if not data:  # Checks for empty data
-                logger.info(self.ERROR_MESSAGES["EMPTY_RESULTS"].format(page=page))
-                break
+                data = convert_keys_to_snake(data)
+                ret_data.extend(data[: max_items - total_collected] if max_items is not None else data)
+                total_collected += len(data)
 
-            ret_data.extend(convert_keys_to_snake(data))
+                if max_items is not None and total_collected >= max_items:
+                    break
 
-            # Check for more pages
-            if response.json().get("totalPages") is None or int(response.json().get("totalPages")) <= page + 1:
-                break
+                nextPage = response_data.get("nextPage")
+                if not nextPage or (max_pages is not None and page >= max_pages):
+                    break
 
-            page += 1
+                page = nextPage if page is None else page + 1
+                params["page"] = page
 
-        return BoxList(ret_data), error_message
+        finally:
+            time.sleep(2)  # Ensure a delay between requests regardless of outcome
+
+        if not ret_data:
+            error_msg = ERROR_MESSAGES["EMPTY_RESULTS"]
+            logger.warn(error_msg)
+            return BoxList([]), error_msg
+
+        return BoxList(ret_data), None
 
     @property
     def app_segments(self):
@@ -410,28 +500,12 @@ class ZPAClientHelper(ZPAClient):
         return CertificatesAPI(self)
 
     @property
-    def platforms(self):
+    def isolation(self):
         """
-        The interface object for the :ref:`ZPA Access Policy platform interface <zpa-platforms>`.
+        The interface object for the :ref:`ZPA Isolation <zpa-isolation>`.
 
         """
-        return PlatformsAPI(self)
-
-    @property
-    def client_types(self):
-        """
-        The interface object for the :ref:`ZPA Access Policy client types interface <zpa-client_types>`.
-
-        """
-        return ClientTypesAPI(self)
-
-    @property
-    def isolation_profile(self):
-        """
-        The interface object for the :ref:`ZPA Isolation Profiles <zpa-isolation_profile>`.
-
-        """
-        return IsolationProfileAPI(self)
+        return IsolationAPI(self)
 
     @property
     def cloud_connector_groups(self):
@@ -448,6 +522,14 @@ class ZPAClientHelper(ZPAClient):
 
         """
         return AppConnectorControllerAPI(self)
+
+    @property
+    def emergency_access(self):
+        """
+        The interface object for the :ref:`ZPA Emergency Access interface <zpa-emergency_access>`.
+
+        """
+        return EmergencyAccessAPI(self)
 
     @property
     def idp(self):
@@ -496,6 +578,14 @@ class ZPAClientHelper(ZPAClient):
 
         """
         return PostureProfilesAPI(self)
+
+    @property
+    def privileged_remote_access(self):
+        """
+        The interface object for the :ref:`ZPA Privileged Remote Access interface <zpa-privileged_remote_access>`.
+
+        """
+        return PrivilegedRemoteAccessAPI(self)
 
     @property
     def provisioning(self):

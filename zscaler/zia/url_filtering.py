@@ -17,8 +17,14 @@
 
 from box import Box, BoxList
 from requests import Response
+
+from zscaler.utils import (
+    convert_keys,
+    recursive_snake_to_camel,
+    snake_to_camel,
+    transform_common_id_fields,
+)
 from zscaler.zia import ZIAClient
-from zscaler.utils import snake_to_camel, transform_common_id_fields, recursive_snake_to_camel, convert_keys
 
 
 class URLFilteringAPI:
@@ -82,7 +88,7 @@ class URLFilteringAPI:
         protocols: list,
         # override_users: list,
         # override_groups: list,
-        **kwargs
+        **kwargs,
     ) -> Box:
         """
         Adds a new URL Filtering Policy rule.
@@ -158,8 +164,8 @@ class URLFilteringAPI:
 
         """
         # Convert enabled to API format if present
-        if 'enabled' in kwargs:
-            kwargs['state'] = "ENABLED" if kwargs.pop('enabled') else "DISABLED"
+        if "enabled" in kwargs:
+            kwargs["state"] = "ENABLED" if kwargs.pop("enabled") else "DISABLED"
 
         # Initialize the payload with required parameters
         payload = {
@@ -265,8 +271,8 @@ class URLFilteringAPI:
         payload = convert_keys(self.get_rule(rule_id))
 
         # Convert enabled to API format if present in kwargs
-        if 'enabled' in kwargs:
-            kwargs['state'] = "ENABLED" if kwargs.pop('enabled') else "DISABLED"
+        if "enabled" in kwargs:
+            kwargs["state"] = "ENABLED" if kwargs.pop("enabled") else "DISABLED"
 
         # Transform ID fields in kwargs
         transform_common_id_fields(self.reformat_params, kwargs, payload)
