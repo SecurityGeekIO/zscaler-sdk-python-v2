@@ -157,8 +157,7 @@ class ZPAClientHelper(ZPAClient):
         try:
             url = f"{self.baseurl}/signin"
             if self.cloud == "DEV":
-                url = DEV_AUTH_URL
-                params["grant_type"] = "CLIENT_CREDENTIALS"
+                url = DEV_AUTH_URL+"?grant_type=CLIENT_CREDENTIALS"
             data = urllib.parse.urlencode(params)
             resp = requests.post(url, data=data, headers=headers, timeout=self.timeout)
             # Avoid logging all data from the response, focus on the status and a summary instead
