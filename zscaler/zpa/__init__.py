@@ -364,7 +364,6 @@ class ZPAClientHelper(ZPAClient):
             time.sleep(delay)
         return self.send("DELETE", path, json, params, api_version=api_version)
 
-
     def get_paginated_data(
         self,
         path=None,
@@ -384,7 +383,7 @@ class ZPAClientHelper(ZPAClient):
         scim_user_id=None,
         page=1,
         pagesize=20,
-        microtenant_id=None
+        microtenant_id=None,
     ):
         """
         Fetches paginated data from the ZPA API based on specified parameters and handles various types of API pagination.
@@ -433,7 +432,7 @@ class ZPAClientHelper(ZPAClient):
             )
 
         params["page"] = page  # Default to page 1 if not specified
-        params["pagesize"] = min(pagesize, 500)  # Apply maximum constraint and handle default
+        params["pageSize"] = min(pagesize, 500)  # Apply maximum constraint and handle default
 
         # Check for microtenantId in function arguments first, then environment variable
         if microtenant_id:
@@ -470,8 +469,7 @@ class ZPAClientHelper(ZPAClient):
                 if should_wait:
                     time.sleep(delay)
 
-                url = f"{path}?{urllib.parse.urlencode(params)}"
-                response = self.send("GET", url, api_version=api_version)
+                response = self.send("GET", path=path, params=params, api_version=api_version)
 
                 if response.status_code != expected_status_code:
                     error_msg = ERROR_MESSAGES["UNEXPECTED_STATUS"].format(status_code=response.status_code, page=page)
