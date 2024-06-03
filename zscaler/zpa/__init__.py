@@ -196,15 +196,15 @@ class ZPAClientHelper(ZPAClient):
         headers_with_user_agent = self.headers.copy()
         headers_with_user_agent["User-Agent"] = self.user_agent
         request_uuid = uuid.uuid4()
-        dump_request(logger, url, method, json, params, headers_with_user_agent, request_uuid)
-        cache_key = self.cache.create_key(url, params)
+        dump_request(logger, url, method, json, None, headers_with_user_agent, request_uuid)
+        cache_key = self.cache.create_key(url, None)
         if method == "GET" and self.cache.contains(cache_key):
             resp = self.cache.get(cache_key)
             dump_response(
                 logger=logger,
                 url=url,
                 method=method,
-                params=params,
+                params=None,
                 resp=resp,
                 request_uuid=request_uuid,
                 start_time=start_time,
@@ -224,14 +224,14 @@ class ZPAClientHelper(ZPAClient):
                     method,
                     url,
                     json=json,
-                    params=params,
+                    params=None,
                     headers=headers_with_user_agent,
                     timeout=self.timeout,
                 )
                 dump_response(
                     logger=logger,
                     url=url,
-                    params=params,
+                    params=None,
                     method=method,
                     resp=resp,
                     request_uuid=request_uuid,
