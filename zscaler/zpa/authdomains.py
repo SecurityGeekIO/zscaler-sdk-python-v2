@@ -14,22 +14,28 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-"""Official Python SDK for the Zscaler Products (Beta)
 
-Zscaler SDK Python is an SDK that provides a uniform and easy-to-use
-interface for each of the Zscaler product APIs.
+from box import Box
+from zscaler.zpa.client import ZPAClient
 
-Documentation available at https://zscaler-sdk-python.readthedocs.io
 
-"""
+class AuthDomainsAPI:
+    def __init__(self, client: ZPAClient):
+        self.rest = client
 
-__author__ = "Zscaler Inc"
-__email__ = "devrel@zscaler.com"
-__license__ = "MIT"
-__contributors__ = [
-    "William Guilherme",
-]
-__version__ = "0.5.1"
+    def get_auth_domains(self) -> Box:
+        """
+        Returns information on authentication domains.
 
-from zscaler.zia import ZIAClientHelper  # noqa
-from zscaler.zpa import ZPAClientHelper  # noqa
+        Args:
+            group_id (str):
+                The unique identifier for the authentication domains.
+
+        Returns:
+            :obj:`Box`: The resource record for the authentication domains.
+
+        Examples:
+            >>> pprint(zpa.authdomains.get_auth_domains())
+
+        """
+        return self.rest.get("authDomains")
