@@ -202,6 +202,13 @@ class ZIAClientHelper(ZIAClient):
         self.auth_details = resp.json()
         return resp
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        logger.debug("deauthenticating...")
+        self.deauthenticate()
+
     def deauthenticate(self):
         """
         Ends the ZIA authentication session.
