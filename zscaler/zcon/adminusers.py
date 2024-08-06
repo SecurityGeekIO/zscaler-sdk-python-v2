@@ -100,14 +100,14 @@ class AdminUsersService:
     def get_by_login_name(self, admin_users_login_name: str):
         admin_users = self.list_admins()
         for admin_user in admin_users:
-            if admin_user.login_name.lower() == admin_users_login_name.lower():
+            if admin_user.get("login_name", "").lower() == admin_users_login_name.lower():
                 return admin_user
         raise Exception(f"No admin user found with login name: {admin_users_login_name}")
 
     def get_by_username(self, admin_username: str):
         admin_users = self.list_admins()
         for admin_user in admin_users:
-            if admin_user.user_name.lower() == admin_username.lower():
+            if admin_user.get("user_name", "").lower() == admin_username.lower():
                 return admin_user
         raise Exception(f"No admin user found with username: {admin_username}")
 

@@ -38,7 +38,7 @@ class AdminRolesService:
         """
         response = self.list_roles()
         for r in response:
-            if r.id == admin_role_id:
+            if r.get("id") == admin_role_id:
                 return r
         raise Exception(f"Failed to get admin role by ID {admin_role_id}, not found")
 
@@ -47,7 +47,7 @@ class AdminRolesService:
         data = self._check_response(response)
         admin_roles = [role for role in data]
         for admin_role in admin_roles:
-            if admin_role.name.lower() == admin_role_name.lower():
+            if admin_role.get("name", "").lower() == admin_role_name.lower():
                 return admin_role
         raise Exception(f"No admin role found with name: {admin_role_name}")
 
@@ -66,7 +66,7 @@ class AdminRolesService:
         data = self._check_response(response)
         admin_roles = [role for role in data]
         for admin_role in admin_roles:
-            if admin_role.name.lower() == api_role.lower():
+            if admin_role.get("name", "").lower() == api_role.lower():
                 return admin_role
         raise Exception(f"No API role found with name: {api_role}")
 
@@ -89,7 +89,7 @@ class AdminRolesService:
         data = self._check_response(response)
         admin_roles = [role for role in data]
         for admin_role in admin_roles:
-            if admin_role.name.lower() == auditor_role.lower():
+            if admin_role.get("name", "").lower() == auditor_role.lower():
                 return admin_role
         raise Exception(f"No auditor role found with name: {auditor_role}")
 
@@ -108,7 +108,7 @@ class AdminRolesService:
         data = self._check_response(response)
         admin_roles = [role for role in data]
         for admin_role in admin_roles:
-            if admin_role.name.lower() == partner_role.lower():
+            if admin_role.get("name", "").lower() == partner_role.lower():
                 return admin_role
         raise Exception(f"No partner role found with name: {partner_role}")
 
