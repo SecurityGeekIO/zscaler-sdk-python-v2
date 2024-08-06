@@ -18,57 +18,6 @@ from requests import Response, utils
 from zscaler.utils import snake_to_camel, convert_keys
 from zscaler.zcon.client import ZCONClient
 
-class AdminRoles:
-    def __init__(
-        self,
-        id: int,
-        rank: Optional[int] = None,
-        name: Optional[str] = None,
-        policy_access: Optional[str] = None,
-        alerting_access: Optional[str] = None,
-        dashboard_access: Optional[str] = None,
-        report_access: Optional[str] = None,
-        analysis_access: Optional[str] = None,
-        username_access: Optional[str] = None,
-        admin_acct_access: Optional[str] = None,
-        device_info_access: Optional[str] = None,
-        is_auditor: Optional[bool] = None,
-        permissions: Optional[List[str]] = None,
-        is_non_editable: Optional[bool] = None,
-        logs_limit: Optional[str] = None,
-        role_type: Optional[str] = None,
-        feature_permissions: Optional[Dict[str, Any]] = None,
-        **kwargs,
-    ):
-        self.id = id
-        self.rank = rank
-        self.name = name
-        self.policy_access = policy_access
-        self.alerting_access = alerting_access
-        self.dashboard_access = dashboard_access
-        self.report_access = report_access
-        self.analysis_access = analysis_access
-        self.username_access = username_access
-        self.admin_acct_access = admin_acct_access
-        self.device_info_access = device_info_access
-        self.is_auditor = is_auditor
-        self.permissions = permissions
-        self.is_non_editable = is_non_editable
-        self.logs_limit = logs_limit
-        self.role_type = role_type
-        self.feature_permissions = feature_permissions
-
-        # Store any additional keyword arguments as attributes
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-
-    def to_api_payload(self):
-        payload = {}
-        for key, value in self.__dict__.items():
-            if value is not None:
-                payload[snake_to_camel(key)] = value
-        return payload
-
 
 class AdminRolesService:
     admin_roles_endpoint = "/adminRoles"
@@ -83,7 +32,7 @@ class AdminRolesService:
                 raise Exception(f"Request failed with status code: {status_code}")
         return response
 
-    def get_role(self, admin_role_id: int) -> Optional[AdminRoles]:
+    def get_role(self, admin_role_id: int):
         """
         getting: HTTP Status 405 - Method Not Allowed
         """
@@ -93,16 +42,16 @@ class AdminRolesService:
                 return r
         raise Exception(f"Failed to get admin role by ID {admin_role_id}, not found")
 
-    def get_by_name(self, admin_role_name: str) -> Optional[AdminRoles]:
+    def get_by_name(self, admin_role_name: str):
         response = self.client.get(self.admin_roles_endpoint)
         data = self._check_response(response)
-        admin_roles = [AdminRoles(**role) for role in data]
+        admin_roles = [role for role in data]
         for admin_role in admin_roles:
             if admin_role.name.lower() == admin_role_name.lower():
                 return admin_role
         raise Exception(f"No admin role found with name: {admin_role_name}")
 
-    def get_api_role(self, api_role: str, include_api_role: bool = True) -> Optional[AdminRoles]:
+    def get_api_role(self, api_role: str, include_api_role: bool = True):
         """
         Retrieves a specific admin role by name, optionally including API role information.
 
@@ -115,14 +64,13 @@ class AdminRolesService:
         """
         response = self.client.get(f"{self.admin_roles_endpoint}?includeApiRole={include_api_role}")
         data = self._check_response(response)
-        admin_roles = [AdminRoles(**role) for role in data]
+        admin_roles = [role for role in data]
         for admin_role in admin_roles:
             if admin_role.name.lower() == api_role.lower():
                 return admin_role
         raise Exception(f"No API role found with name: {api_role}")
 
-
-    def get_auditor_role(self, auditor_role: str, include_auditor_role: bool = True) -> Optional[AdminRoles]:
+    def get_auditor_role(self, auditor_role: str, include_auditor_role: bool = True):
         """
         Retrieves a specific admin role that includes or excludes auditor role information.
 
@@ -139,13 +87,13 @@ class AdminRolesService:
         """
         response = self.client.get(f"{self.admin_roles_endpoint}?includeAuditorRole={str(include_auditor_role).lower()}")
         data = self._check_response(response)
-        admin_roles = [AdminRoles(**role) for role in data]
+        admin_roles = [role for role in data]
         for admin_role in admin_roles:
             if admin_role.name.lower() == auditor_role.lower():
                 return admin_role
         raise Exception(f"No auditor role found with name: {auditor_role}")
 
-    def get_partner_role(self, partner_role: str, include_partner_role: bool = True) -> Optional[AdminRoles]:
+    def get_partner_role(self, partner_role: str, include_partner_role: bool = True):
         """
         Retrieves a specific admin role by name, optionally including partner role information.
 
@@ -158,7 +106,7 @@ class AdminRolesService:
         """
         response = self.client.get(f"{self.admin_roles_endpoint}?includePartnerRole={include_partner_role}")
         data = self._check_response(response)
-        admin_roles = [AdminRoles(**role) for role in data]
+        admin_roles = [role for role in data]
         for admin_role in admin_roles:
             if admin_role.name.lower() == partner_role.lower():
                 return admin_role
@@ -169,8 +117,8 @@ class AdminRolesService:
         include_auditor_role: bool = False,
         include_partner_role: bool = False,
         include_api_roles: bool = False,
-        ids: Optional[List[int]] = None
-    ) -> List[AdminRoles]:
+        ids: Optional[List[int]] = None,
+    ):
         """
         List all existing admin roles.
 
@@ -210,7 +158,7 @@ class AdminRolesService:
 
         response = self.client.get(self.admin_roles_endpoint, params=params)
         data = self._check_response(response)
-        return [AdminRoles(**role) for role in data]
+        return [role for role in data]
 
     def add_role(
         self,
@@ -220,7 +168,7 @@ class AdminRolesService:
         username_access: str = "NONE",
         dashboard_access: str = "NONE",
         **kwargs,
-    ) -> Optional[AdminRoles]:
+    ):
         """
         Create a new admin role.
 
@@ -299,9 +247,9 @@ class AdminRolesService:
 
         response = self.client.post(self.admin_roles_endpoint, json=payload)
         data = self._check_response(response)
-        return AdminRoles(**data)
+        return data
 
-    def update_role(self, role_id: int, admin_role: AdminRoles) -> Optional[AdminRoles]:
+    def update_role(self, role_id: int, **kwargs):
         """
         Update an existing admin role.
 
@@ -319,7 +267,10 @@ class AdminRolesService:
                 role.policy_access = "READ_ONLY"
                 updated_role = zcon.admin_roles.update_role(role.id, role)
         """
-        payload = admin_role.to_api_payload()
+        payload = {}
+        # Add optional parameters to payload
+        for key, value in kwargs.items():
+            payload[snake_to_camel(key)] = value
 
         if "feature_permissions" in payload:
             payload["feature_permissions"] = {k: v for k, v in payload["feature_permissions"].items()}
@@ -328,7 +279,7 @@ class AdminRolesService:
 
         response = self.client.put(f"{self.admin_roles_endpoint}/{role_id}", json=payload)
         data = self._check_response(response)
-        return AdminRoles(**data)
+        return data
 
     def delete(self, role_id: int) -> None:
         """
