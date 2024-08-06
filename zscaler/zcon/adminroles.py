@@ -25,7 +25,7 @@ class AdminRolesService:
     def __init__(self, client: ZCONClient):
         self.client = client
 
-    def _check_response(self, response: Response) -> Union[None, dict]:
+    def _check_response(self, response: Response):
         if isinstance(response, Response):
             status_code = response.status_code
             if status_code > 299:
