@@ -19,66 +19,6 @@ from zscaler.utils import snake_to_camel, convert_keys
 from zscaler.zcon.client import ZCONClient
 
 
-class AdminUsers:
-    def __init__(
-        self,
-        id: int,
-        login_name: Optional[str] = None,
-        user_name: Optional[str] = None,
-        email: Optional[str] = None,
-        comments: Optional[str] = None,
-        disabled: Optional[bool] = None,
-        password: Optional[str] = None,
-        pwd_last_modified_time: Optional[int] = None,
-        is_non_editable: Optional[bool] = None,
-        is_password_login_allowed: Optional[bool] = None,
-        is_password_expired: Optional[bool] = None,
-        is_auditor: Optional[bool] = None,
-        is_security_report_comm_enabled: Optional[bool] = None,
-        is_service_update_comm_enabled: Optional[bool] = None,
-        is_product_update_comm_enabled: Optional[bool] = None,
-        is_exec_mobile_app_enabled: Optional[bool] = None,
-        admin_scope_group_member_entities: Optional[List[Dict[str, Any]]] = None,
-        admin_scope_entities: Optional[List[Dict[str, Any]]] = None,
-        admin_scope_type: Optional[str] = None,
-        role: Optional[Dict[str, Any]] = None,
-        exec_mobile_app_tokens: Optional[List[Dict[str, Any]]] = None,
-        **kwargs,
-    ):
-        self.id = id
-        self.login_name = login_name
-        self.user_name = user_name
-        self.email = email
-        self.comments = comments
-        self.disabled = disabled
-        self.password = password
-        self.pwd_last_modified_time = pwd_last_modified_time
-        self.is_non_editable = is_non_editable
-        self.is_password_login_allowed = is_password_login_allowed
-        self.is_password_expired = is_password_expired
-        self.is_auditor = is_auditor
-        self.is_security_report_comm_enabled = is_security_report_comm_enabled
-        self.is_service_update_comm_enabled = is_service_update_comm_enabled
-        self.is_product_update_comm_enabled = is_product_update_comm_enabled
-        self.is_exec_mobile_app_enabled = is_exec_mobile_app_enabled
-        self.admin_scope_group_member_entities = admin_scope_group_member_entities
-        self.admin_scope_entities = admin_scope_entities
-        self.admin_scope_type = admin_scope_type
-        self.role = role
-        self.exec_mobile_app_tokens = exec_mobile_app_tokens
-
-        # Store any additional keyword arguments as attributes
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-
-    def to_api_payload(self):
-        payload = {}
-        for key, value in self.__dict__.items():
-            if value is not None:
-                payload[snake_to_camel(key)] = value
-        return payload
-
-
 class AdminUsersService:
     admin_users_endpoint = "/adminUsers"
 
@@ -96,8 +36,8 @@ class AdminUsersService:
         self,
         include_auditor_users: Optional[bool] = None,
         include_admin_users: Optional[bool] = None,
-        partner_type: Optional[str] = None
-    ) -> List[AdminUsers]:
+        partner_type: Optional[str] = None,
+    ):
         """
         List all existing admin users.
 
@@ -135,9 +75,9 @@ class AdminUsersService:
 
         response = self.client.get(self.admin_users_endpoint, params=params)
         data = self._check_response(response)
-        return [AdminUsers(**user) for user in data]
-    
-    def get_admin(self, admin_id: int) -> Optional[AdminUsers]:
+        return [user for user in data]
+
+    def get_admin(self, admin_id: int):
         """
         Get details for a specific admin user.
 
@@ -155,16 +95,16 @@ class AdminUsersService:
         """
         response = self.client.get(f"{self.admin_users_endpoint}/{admin_id}")
         data = self._check_response(response)
-        return AdminUsers(**data)
+        return data
 
-    def get_by_login_name(self, admin_users_login_name: str) -> Optional[AdminUsers]:
+    def get_by_login_name(self, admin_users_login_name: str):
         admin_users = self.list_admins()
         for admin_user in admin_users:
             if admin_user.login_name.lower() == admin_users_login_name.lower():
                 return admin_user
         raise Exception(f"No admin user found with login name: {admin_users_login_name}")
 
-    def get_by_username(self, admin_username: str) -> Optional[AdminUsers]:
+    def get_by_username(self, admin_username: str):
         admin_users = self.list_admins()
         for admin_user in admin_users:
             if admin_user.user_name.lower() == admin_username.lower():
@@ -179,7 +119,7 @@ class AdminUsersService:
         email: str,
         password: str,
         **kwargs,
-    ) -> Optional[AdminUsers]:
+    ):
         """
         Create a new admin user.
 
@@ -248,9 +188,18 @@ class AdminUsersService:
 
         response = self.client.post(self.admin_users_endpoint, json=payload)
         data = self._check_response(response)
-        return AdminUsers(**data)
+        return data
 
-    def update_admin(self, admin_id: int, admin_user: AdminUsers) -> Optional[AdminUsers]:
+    def update_admin(
+        self,
+        admin_id: int,
+        user_name: str,
+        login_name: str,
+        role: Union[str, Dict[str, Any]],
+        email: str,
+        password: str,
+        **kwargs,
+    ):
         """
         Update an existing admin user.
 
@@ -290,10 +239,20 @@ class AdminUsersService:
                     comments="Updated admin user",
                 )
         """
-        payload = admin_user.to_api_payload()
+        payload = {
+            "userName": user_name,
+            "loginName": login_name,
+            "role": role if isinstance(role, dict) else {"id": role, "name": role},
+            "email": email,
+            "password": password,
+        }
+
+        # Add optional parameters to payload
+        payload.update({snake_to_camel(k): v for k, v in kwargs.items() if v is not None})
+
         response = self.client.put(f"{self.admin_users_endpoint}/{admin_id}", json=convert_keys(payload))
         data = self._check_response(response)
-        return AdminUsers(**data)
+        return data
 
     def delete_admin(self, admin_id: int) -> None:
         """
