@@ -21,27 +21,6 @@ from zscaler.utils import snake_to_camel
 from zscaler.zcon.client import ZCONClient
 
 
-class ECAdminActivation:
-    def __init__(
-        self,
-        org_edit_status: Optional[str] = None,
-        org_last_activate_status: Optional[str] = None,
-        admin_status_map: Optional[Dict[str, Any]] = None,
-        admin_activate_status: Optional[str] = None,
-    ):
-        self.org_edit_status = org_edit_status
-        self.org_last_activate_status = org_last_activate_status
-        self.admin_status_map = admin_status_map
-        self.admin_activate_status = admin_activate_status
-
-    def to_api_payload(self):
-        payload = {}
-        for key, value in self.__dict__.items():
-            if value is not None:
-                payload[snake_to_camel(key)] = value
-        return payload
-
-
 class ActivationService:
     ec_admin_activate_status_endpoint = "/ecAdminActivateStatus"
     ec_admin_activate_endpoint = "/ecAdminActivateStatus/activate"
@@ -57,19 +36,41 @@ class ActivationService:
                 raise Exception(f"Request failed with status code: {status_code}")
         return response
 
-    def get_activation_status(self) -> Optional[ECAdminActivation]:
+    def get_activation_status(self):
         response = self.client.get(self.ec_admin_activate_status_endpoint)
         data = self._check_response(response)
-        return ECAdminActivation(**data)
+        return data
 
-    def update_activation_status(self, activation: ECAdminActivation) -> Optional[ECAdminActivation]:
-        payload = activation.to_api_payload()
+    def update_activation_status(
+        self,
+        org_edit_status: Optional[str] = None,
+        org_last_activate_status: Optional[str] = None,
+        admin_status_map: Optional[Dict[str, Any]] = None,
+        admin_activate_status: Optional[str] = None,
+    ):
+        payload = {
+            "orgEditStatus": org_edit_status,
+            "org_last_activateStatus": org_last_activate_status,
+            "adminStatusMap": admin_status_map,
+            "adminAtivateStatus": admin_activate_status,
+        }
         response = self.client.put(self.ec_admin_activate_endpoint, json=payload)
         data = self._check_response(response)
-        return ECAdminActivation(**data)
+        return data
 
-    def force_activation_status(self, activation: ECAdminActivation) -> Optional[ECAdminActivation]:
-        payload = activation.to_api_payload()
+    def force_activation_status(
+        self,
+        org_edit_status: Optional[str] = None,
+        org_last_activate_status: Optional[str] = None,
+        admin_status_map: Optional[Dict[str, Any]] = None,
+        admin_activate_status: Optional[str] = None,
+    ):
+        payload = {
+            "orgEditStatus": org_edit_status,
+            "org_last_activateStatus": org_last_activate_status,
+            "adminStatusMap": admin_status_map,
+            "adminAtivateStatus": admin_activate_status,
+        }
         response = self.client.put(self.ec_admin_force_activate_endpoint, json=payload)
         data = self._check_response(response)
-        return ECAdminActivation(**data)
+        return data
