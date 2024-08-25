@@ -80,7 +80,10 @@ def snake_to_camel(name: str):
         "name_l10n_tag": "nameL10nTag",
         "surrogate_ip": "surrogateIP",
         "surrogate_ip_enforced_for_known_browsers": "surrogateIPEnforcedForKnownBrowsers",
+        "ec_vms": "ecVMs",
         "is_incomplete_dr_config": "isIncompleteDRConfig",
+        "ipv6_enabled": "ipV6Enabled",
+        "valid_ssl_certificate": "validSSLCertificate",
         "email_ids": "emailIds",
         "page_size": "pageSize",
     }
@@ -93,6 +96,22 @@ def recursive_snake_to_camel(data):
         return {snake_to_camel(key): recursive_snake_to_camel(value) for key, value in data.items()}
     elif isinstance(data, list):
         return [recursive_snake_to_camel(item) for item in data]
+    else:
+        return data
+
+
+def convert_keys(data, direction="to_camel"):
+    converter = camel_to_snake if direction == "to_snake" else snake_to_camel
+
+    if isinstance(data, (list, BoxList)):
+        return [convert_keys(inner_dict, direction=direction) for inner_dict in data]
+    elif isinstance(data, (dict, Box)):
+        new_dict = {}
+        for k in data.keys():
+            v = data[k]
+            new_key = converter(k)
+            new_dict[new_key] = convert_keys(v, direction=direction) if isinstance(v, (dict, list)) else v
+        return new_dict
     else:
         return data
 
@@ -146,6 +165,7 @@ def add_id_groups(id_groups: list, kwargs: dict, payload: dict):
             payload[entry[1]] = [{"id": param_id} for param_id in kwargs.pop(entry[0])]
     return
 
+
 def transform_common_id_fields(id_groups: list, kwargs: dict, payload: dict):
     for entry in id_groups:
         key, payload_key = entry
@@ -161,6 +181,14 @@ def transform_common_id_fields(id_groups: list, kwargs: dict, payload: dict):
                 # Handle zpa_app_segments, zpa_application_segments, and zpa_application_segment_groups
                 if isinstance(value, list):
                     payload[payload_key] = [{"externalId": item["external_id"], "name": item["name"]} for item in value]
+            elif key == "cbi_profile":
+                # Special handling for cbi_profile
+                if isinstance(value, dict) and all(k in value for k in ["id", "name", "url"]):
+                    payload[payload_key] = {"id": value["id"], "name": value["name"], "url": value["url"]}
+            elif key == "cloud_app_risk_profile":
+                # Special handling for cloudAppRiskProfile
+                if isinstance(value, dict) and "id" in value:
+                    payload[payload_key] = {"id": value["id"]}
             else:
                 # General case for ID transformations
                 if isinstance(value, list):
@@ -321,6 +349,7 @@ class Iterator(APIIterator):
             # we are going to include it here.
             time.sleep(1)
 
+
 def calculate_epoch(hours: int):
     current_time = int(time.time())
     past_time = int(current_time - (hours * 3600))
@@ -361,6 +390,7 @@ def zdx_params(func):
 
     return wrapper
 
+
 class CommonFilters:
     def __init__(self, **kwargs):
         valid_params = {
@@ -375,7 +405,7 @@ class CommonFilters:
             "geo": None,
             "exclude_geo": None,
             "offset": None,
-            "limit": None
+            "limit": None,
         }
 
         for key, value in kwargs.items():
@@ -383,20 +413,25 @@ class CommonFilters:
                 setattr(self, key, value)
 
     def to_dict(self):
-        return {k: v for k, v in {
-            "from": getattr(self, "from_time", None),
-            "to": getattr(self, "to", None),
-            "score_bucket": getattr(self, "score_bucket", None),
-            "app_id": getattr(self, "app_id", None),
-            "loc": getattr(self, "loc", None),
-            "exclude_loc": getattr(self, "exclude_loc", None),
-            "dept": getattr(self, "dept", None),
-            "exclude_dept": getattr(self, "exclude_dept", None),
-            "geo": getattr(self, "geo", None),
-            "exclude_geo": getattr(self, "exclude_geo", None),
-            "offset": getattr(self, "offset", None),
-            "limit": getattr(self, "limit", None),
-        }.items() if v is not None}
+        return {
+            k: v
+            for k, v in {
+                "from": getattr(self, "from_time", None),
+                "to": getattr(self, "to", None),
+                "score_bucket": getattr(self, "score_bucket", None),
+                "app_id": getattr(self, "app_id", None),
+                "loc": getattr(self, "loc", None),
+                "exclude_loc": getattr(self, "exclude_loc", None),
+                "dept": getattr(self, "dept", None),
+                "exclude_dept": getattr(self, "exclude_dept", None),
+                "geo": getattr(self, "geo", None),
+                "exclude_geo": getattr(self, "exclude_geo", None),
+                "offset": getattr(self, "offset", None),
+                "limit": getattr(self, "limit", None),
+            }.items()
+            if v is not None
+        }
+
 
 class ZDXIterator:
     def __init__(self, client, endpoint, filters=None):
@@ -419,7 +454,9 @@ class ZDXIterator:
             if self.next_offset is None:
                 raise StopIteration
             if self.next_offset == self.previous_offset:
-                self.logger.warning(f"Detected repeated next_offset: {self.next_offset}, stopping iteration to avoid infinite loop.")
+                self.logger.warning(
+                    f"Detected repeated next_offset: {self.next_offset}, stopping iteration to avoid infinite loop."
+                )
                 raise StopIteration
             self.previous_offset = self.next_offset
             self._get_page()
@@ -432,7 +469,7 @@ class ZDXIterator:
     def _get_page(self):
         params = {**self.filters, "offset": self.next_offset} if self.next_offset else self.filters
         response = self.client.get(self.endpoint, params=params)
-        
+
         self.logger.debug(f"API response: {response}")
 
         if response is None:
@@ -444,7 +481,13 @@ class ZDXIterator:
             self.next_offset = None
         elif isinstance(response, dict):
             self.next_offset = response.get("next_offset")
-            self.page = response.get("alerts", []) or response.get("items", []) or response.get("devices", []) or response.get("probes", []) or response.get("software", [])
+            self.page = (
+                response.get("alerts", [])
+                or response.get("items", [])
+                or response.get("devices", [])
+                or response.get("probes", [])
+                or response.get("software", [])
+            )
         else:
             self.logger.error(f"Unexpected response type: {type(response)}")
             raise StopIteration
@@ -454,6 +497,7 @@ class ZDXIterator:
 
         self.total += len(self.page)
         self.page_count = 0
+
 
 # class ZDXIterator:
 #     def __init__(self, client, endpoint, filters=None):
@@ -484,7 +528,7 @@ class ZDXIterator:
 #     def _get_page(self):
 #         params = {**self.filters, "offset": self.next_offset} if self.next_offset else self.filters
 #         response = self.client.get(self.endpoint, params=params)
-        
+
 #         self.logger.debug(f"API response: {response}")
 
 #         if response is None:
@@ -508,7 +552,6 @@ class ZDXIterator:
 #         self.page_count = 0
 
 
-        
 def remove_cloud_suffix(str_name: str) -> str:
     """
     Removes appended cloud name (e.g. "(zscalerthree.net)") from the string.
@@ -681,6 +724,7 @@ def validate_and_convert_times(start_time_str, end_time_str, time_zone_str):
 
     return start_epoch, end_epoch
 
+
 # Maps ZCC numeric os_type and registration_type arguments to a human-readable string
 zcc_param_map = {
     "os": {
@@ -699,6 +743,7 @@ zcc_param_map = {
         "quarantined": 6,
     },
 }
+
 
 def dump_request(logger, url: str, method: str, json, params, headers, request_uuid: str, body=True):
     request_headers_filtered = {key: value for key, value in headers.items() if key != "Authorization"}

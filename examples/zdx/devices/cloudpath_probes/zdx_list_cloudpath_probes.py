@@ -29,6 +29,7 @@ import argparse
 from prettytable import PrettyTable
 from zscaler.zdx import ZDXClientHelper
 from zscaler.zdx.devices import DevicesAPI
+from box import BoxList
 
 
 def prompt_for_input(prompt_message, required=True):
@@ -57,6 +58,26 @@ def display_table(data, headers):
         return
 
     table = PrettyTable(headers)
+
+    # Set column alignments
+    table.align["Timestamp"] = "r"
+    table.align["Leg SRC"] = "l"
+    table.align["Leg DST"] = "l"
+    table.align["Num Hops"] = "r"
+    table.align["Latency"] = "r"
+    table.align["Loss"] = "r"
+    table.align["Num Unresp Hops"] = "r"
+    table.align["Tunnel Type"] = "r"
+    table.align["Hop IP"] = "l"
+    table.align["GW MAC"] = "l"
+    table.align["GW MAC Vendor"] = "l"
+    table.align["Pkt Sent"] = "r"
+    table.align["Pkt Rcvd"] = "r"
+    table.align["Latency Min"] = "r"
+    table.align["Latency Max"] = "r"
+    table.align["Latency Avg"] = "r"
+    table.align["Latency Diff"] = "r"
+
     for row in data:
         table.add_row(row)
     print(table)
@@ -65,15 +86,15 @@ def display_table(data, headers):
 def extract_probes_data(probes):
     extracted_data = []
     for probe in probes:
-        probe_id = probe.get('id')
-        name = probe.get('name')
-        num_probes = probe.get('num_probes')
-        avg_latencies = probe.get('avg_latencies', [])
+        probe_id = probe.get("id")
+        name = probe.get("name")
+        num_probes = probe.get("num_probes")
+        avg_latencies = probe.get("avg_latencies", [])
 
         for latency in avg_latencies:
-            leg_src = latency.get('leg_src')
-            leg_dst = latency.get('leg_dst')
-            latency_value = latency.get('latency')
+            leg_src = latency.get("leg_src")
+            leg_dst = latency.get("leg_dst")
+            latency_value = latency.get("latency")
             extracted_data.append([probe_id, name, num_probes, leg_src, leg_dst, latency_value])
     return extracted_data
 
@@ -81,38 +102,69 @@ def extract_probes_data(probes):
 def extract_probe_details(probes):
     extracted_data = []
     for probe in probes:
-        leg_src = probe.get('leg_src')
-        leg_dst = probe.get('leg_dst')
-        stats = probe.get('stats', [])
+        leg_src = probe.get("leg_src")
+        leg_dst = probe.get("leg_dst")
+        stats = probe.get("stats", [])
 
         for stat in stats:
-            metric = stat.get('metric')
-            unit = stat.get('unit')
-            datapoints = stat.get('datapoints', [])
+            metric = stat.get("metric")
+            unit = stat.get("unit")
+            datapoints = stat.get("datapoints", [])
 
             for datapoint in datapoints:
-                timestamp = datapoint.get('timestamp')
-                value = datapoint.get('value')
+                timestamp = datapoint.get("timestamp")
+                value = datapoint.get("value")
                 extracted_data.append([leg_src, leg_dst, metric, unit, timestamp, value])
     return extracted_data
 
 
 def extract_cloudpath_data(cloudpath_data):
     extracted_data = []
-    for leg in cloudpath_data.get('legs', []):
-        leg_src = leg.get('leg_src')
-        leg_dst = leg.get('leg_dst')
-        metrics = leg.get('metrics', [])
+    for data_point in cloudpath_data:
+        timestamp = data_point.get("timestamp")
+        cloudpath = data_point.get("cloudpath", [])
+        for path in cloudpath:
+            leg_src = path.get("src")
+            leg_dst = path.get("dst")
+            num_hops = path.get("num_hops")
+            latency = path.get("latency")
+            loss = path.get("loss")
+            num_unresp_hops = path.get("num_unresp_hops")
+            tunnel_type = path.get("tunnel_type")
+            hops = path.get("hops", [])
 
-        for metric in metrics:
-            metric_name = metric.get('metric_name')
-            unit = metric.get('unit')
-            datapoints = metric.get('datapoints', [])
+            for hop in hops:
+                hop_ip = hop.get("ip")
+                gw_mac = hop.get("gw_mac")
+                gw_mac_vendor = hop.get("gw_mac_vendor")
+                pkt_sent = hop.get("pkt_sent")
+                pkt_rcvd = hop.get("pkt_rcvd")
+                latency_min = hop.get("latency_min")
+                latency_max = hop.get("latency_max")
+                latency_avg = hop.get("latency_avg")
+                latency_diff = hop.get("latency_diff")
 
-            for datapoint in datapoints:
-                timestamp = datapoint.get('timestamp')
-                value = datapoint.get('value')
-                extracted_data.append([leg_src, leg_dst, metric_name, unit, timestamp, value])
+                extracted_data.append(
+                    [
+                        timestamp,
+                        leg_src,
+                        leg_dst,
+                        num_hops,
+                        latency,
+                        loss,
+                        num_unresp_hops,
+                        tunnel_type,
+                        hop_ip,
+                        gw_mac,
+                        gw_mac_vendor,
+                        pkt_sent,
+                        pkt_rcvd,
+                        latency_min,
+                        latency_max,
+                        latency_avg,
+                        latency_diff,
+                    ]
+                )
     return extracted_data
 
 
@@ -150,7 +202,7 @@ def main():
     kwargs = {
         "since": since,
     }
-    
+
     # Remove None values from kwargs
     kwargs = {k: v for k, v in kwargs.items() if v is not None}
 
@@ -159,7 +211,7 @@ def main():
         try:
             cloudpath_probes_iterator = devices_api.list_cloudpath_probes(device_id, app_id, **kwargs)
             cloudpath_probes = list(cloudpath_probes_iterator)
-            headers = ['ID', 'Name', 'Num Probes', 'Leg SRC', 'Leg DST', 'Latency']
+            headers = ["ID", "Name", "Num Probes", "Leg SRC", "Leg DST", "Latency"]
             data = extract_probes_data(cloudpath_probes)
             display_table(data, headers)
         except Exception as e:
@@ -171,8 +223,11 @@ def main():
         # Call the API to get cloudpath probe details
         try:
             cloudpath_probe = devices_api.get_cloudpath_probe(device_id, app_id, probe_id, **kwargs)
-            headers = ['Leg SRC', 'Leg DST', 'Metric', 'Unit', 'Timestamp', 'Value']
-            data = extract_probe_details([cloudpath_probe])
+            headers = ["Leg SRC", "Leg DST", "Metric", "Unit", "Timestamp", "Value"]
+            if isinstance(cloudpath_probe, BoxList):
+                data = extract_probe_details(cloudpath_probe)
+            else:
+                data = extract_probe_details([cloudpath_probe])
             display_table(data, headers)
         except Exception as e:
             print(f"An error occurred while fetching cloudpath probe details: {e}")
@@ -183,13 +238,35 @@ def main():
         # Call the API to get cloudpath data
         try:
             cloudpath_data = devices_api.get_cloudpath(device_id, app_id, probe_id, **kwargs)
-            headers = ['Leg SRC', 'Leg DST', 'Metric', 'Unit', 'Timestamp', 'Value']
-            data = extract_cloudpath_data(cloudpath_data)
+            headers = [
+                "Timestamp",
+                "Leg SRC",
+                "Leg DST",
+                "Num Hops",
+                "Latency",
+                "Loss",
+                "Num Unresp Hops",
+                "Tunnel Type",
+                "Hop IP",
+                "GW MAC",
+                "GW MAC Vendor",
+                "Pkt Sent",
+                "Pkt Rcvd",
+                "Latency Min",
+                "Latency Max",
+                "Latency Avg",
+                "Latency Diff",
+            ]
+            if isinstance(cloudpath_data, BoxList):
+                data = extract_cloudpath_data(cloudpath_data)
+            else:
+                data = extract_cloudpath_data([cloudpath_data])
             display_table(data, headers)
         except Exception as e:
             print(f"An error occurred while fetching cloudpath data: {e}")
     else:
         print("Invalid choice. Please enter 'a', 'b', or 'c'.")
+
 
 if __name__ == "__main__":
     main()

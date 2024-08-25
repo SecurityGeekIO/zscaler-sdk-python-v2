@@ -6,7 +6,102 @@ Release Notes
 Zscaler Python SDK Changelog
 ----------------------------
 
-0.50.1 (June, 20 2024)
+0.7.0 (July, 26 2024)
+----------------------
+
+Notes
+^^^^^
+
+- Python Versions: **v3.8, v3.9, v3.10, v3.11**
+
+Enhancements
+------------
+
+ZIA Cloud App Control Rules
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- `GET /webApplicationRules/{rule_type}` to Get the list of Web Application Rule by type (`#132 <https://github.com/zscaler/zscaler-sdk-python/pull/132>`_)
+- `GET /webApplicationRules/{rule_type}/{ruleId}` to Get a Web Application Rule by type and id (`#132 <https://github.com/zscaler/zscaler-sdk-python/pull/132>`_)
+- `POST /webApplicationRules/{rule_type}` to Adds a new Web Application rule (`#132 <https://github.com/zscaler/zscaler-sdk-python/pull/132>`_)
+- `PUT /webApplicationRules/{rule_type}/{ruleId}` to Update a new Web Application rule (`#132 <https://github.com/zscaler/zscaler-sdk-python/pull/132>`_)
+- `DELETE /webApplicationRules/{rule_type}/{ruleId}` to Delete a new Web Application rule (`#132 <https://github.com/zscaler/zscaler-sdk-python/pull/132>`_)
+
+ZIA URL Categories
+^^^^^^^^^^^^^^^^^^
+
+- Added `review_domains_post` function `POST /urlCategories/review/domains` to find matching entries present in existing custom URL categories. (`#132 <https://github.com/zscaler/zscaler-sdk-python/pull/132>`_)
+- Added `review_domains_put` function `PUT /urlCategories/review/domains` to Add the list of matching URLs fetched by POST /urlCategories/review/domains to the specified custom URL categories. (`#132 <https://github.com/zscaler/zscaler-sdk-python/pull/132>`_)
+- Added new attribute `urlCategories2` to `urlfilteringrules` package. See (`Zscaler Release Notes <https://help.zscaler.com/zia/release-upgrade-summary-2024#:~:text=Filtering%20Policy.-,Update%20to%20Cloud%20Service%20API,-The%20UrlFilteringRule%20model>`_)(`#132 <https://github.com/zscaler/zscaler-sdk-python/pull/132>`_)
+
+Data Loss Prevention
+^^^^^^^^^^^^^^^^^^^^
+
+- Added `list_dict_predefined_identifiers` function `GET /dlpDictionaries/{dictId}/predefinedIdentifiers` to retrieves the list of identifiers that are available for selection in the specified hierarchical DLP dictionary.(`#132 <https://github.com/zscaler/zscaler-sdk-python/pull/132>`_)
+- Added `validate_dlp_expression` function `GET /dlpEngines/validateDlpExpr` to Validates a DLP engine expression.(`#132 <https://github.com/zscaler/zscaler-sdk-python/pull/132>`_)
+- Added `list_edm_schemas` function `GET /dlpExactDataMatchSchemas` to retrieves a list of ZIA DLP Exact Data Match Schemas.(`#132 <https://github.com/zscaler/zscaler-sdk-python/pull/132>`_)
+- Added `list_edm_schema_lite` function `GET /dlpExactDataMatchSchemas` to retrieves a list of active EDM templates (or EDM schemas) and their criteria (or token details), only.(`#132 <https://github.com/zscaler/zscaler-sdk-python/pull/132>`_)
+
+0.6.2 (July, 19 2024)
+----------------------
+
+Notes
+^^^^^
+
+- Python Versions: **v3.8, v3.9, v3.10, v3.11**
+
+Bug Fixes
+^^^^^^^^^
+
+- Fixed ZPA Resources and ZIA is_expired method  (`#125 <https://github.com/zscaler/zscaler-sdk-python/pull/125>`_)
+
+0.6.1 (July, 4 2024)
+----------------------
+
+Notes
+^^^^^
+
+- Python Versions: **v3.8, v3.9, v3.10, v3.11**
+
+Bug Fixes
+^^^^^^^^^
+
+- Fixed ZPA Pagination pagesize parameter to the maximum supported of `500`  (`#118 <https://github.com/zscaler/zscaler-sdk-python/pull/118>`_)
+- Fixed ZIA Isolation Profile method misconfiguration (`#118 <https://github.com/zscaler/zscaler-sdk-python/pull/118>`_)
+
+Enhancements
+^^^^^^^^^^^^
+
+- Added the following new ZIA location management endpoints (`#118 <https://github.com/zscaler/zscaler-sdk-python/pull/118>`_)
+    - `locations/bulkDelete`
+    - `locations/groups/count`
+
+0.6.0 (June, 28 2024)
+----------------------
+
+Notes
+^^^^^
+
+- Python Versions: **v3.8, v3.9, v3.10, v3.11**
+
+Enhancements
+^^^^^^^^^^^^
+
+- Added ZDX Endpoints, Tests and Examples (`#116 <https://github.com/zscaler/zscaler-sdk-python/pull/116>`_)
+
+0.5.2 (June, 24 2024)
+----------------------
+
+Notes
+^^^^^
+
+- Python Versions: **v3.8, v3.9, v3.10, v3.11**
+
+Bug Fixes
+^^^^^^^^^
+
+- Added and Fixed ZIA integration tests. (`#113 <https://github.com/zscaler/zscaler-sdk-python/pull/113>`_)
+
+0.5.1 (June, 20 2024)
 ----------------------
 
 Notes
@@ -19,7 +114,7 @@ Bug Fixes
 
 - Added and Fixed ZIA integration tests. (`#112 <https://github.com/zscaler/zscaler-sdk-python/pull/112>`_)
 
-0.50.0 (June, 19 2024)
+0.5.0 (June, 19 2024)
 ----------------------
 
 Notes

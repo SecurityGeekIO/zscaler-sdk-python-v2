@@ -20,9 +20,11 @@ import time
 from pprint import pprint
 from tests.integration.zdx.conftest import MockZDXClient
 
+
 @pytest.fixture
 def fs():
     yield
+
 
 class TestDevices:
     """
@@ -323,7 +325,9 @@ class TestDevices:
             if not devices:
                 print("No devices found within the specified time range.")
             else:
-                device_id = devices[0].id
+                # Ensure that devices[0] is a Box object and not a list
+                device = devices[0]
+                device_id = device.get("id", None) if isinstance(device, dict) else device.id
                 print(f"Using device ID {device_id} to list deeptraces")
 
                 # List deeptraces to get a trace ID
@@ -333,7 +337,9 @@ class TestDevices:
                 if not deeptraces:
                     print("No deeptraces found within the specified time range.")
                 else:
-                    trace_id = deeptraces[0].id
+                    # Ensure that deeptraces[0] is a Box object and not a list
+                    deeptrace = deeptraces[0]
+                    trace_id = deeptrace.get("id", None) if isinstance(deeptrace, dict) else deeptrace.id
                     print(f"Using trace ID {trace_id} for get_deeptrace_webprobe_metrics test")
 
                     # Get deeptrace webprobe metrics using the retrieved device ID and trace ID
@@ -366,7 +372,9 @@ class TestDevices:
             if not devices:
                 print("No devices found within the specified time range.")
             else:
-                device_id = devices[0].id
+                # Ensure that devices[0] is a Box object and not a list
+                device = devices[0]
+                device_id = device.get("id", None) if isinstance(device, dict) else device.id
                 print(f"Using device ID {device_id} to list deeptraces")
 
                 # List deeptraces to get a trace ID
@@ -376,7 +384,9 @@ class TestDevices:
                 if not deeptraces:
                     print("No deeptraces found within the specified time range.")
                 else:
-                    trace_id = deeptraces[0].id
+                    # Ensure that deeptraces[0] is a Box object and not a list
+                    deeptrace = deeptraces[0]
+                    trace_id = deeptrace.get("id", None) if isinstance(deeptrace, dict) else deeptrace.id
                     print(f"Using trace ID {trace_id} for get_deeptrace_cloudpath_metrics test")
 
                     # Get deeptrace cloudpath metrics using the retrieved device ID and trace ID
@@ -409,7 +419,9 @@ class TestDevices:
             if not devices:
                 print("No devices found within the specified time range.")
             else:
-                device_id = devices[0].id
+                # Ensure that devices[0] is a Box object and not a list
+                device = devices[0]
+                device_id = device.get("id", None) if isinstance(device, dict) else device.id
                 print(f"Using device ID {device_id} to list deeptraces")
 
                 # List deeptraces to get a trace ID
@@ -419,7 +431,9 @@ class TestDevices:
                 if not deeptraces:
                     print("No deeptraces found within the specified time range.")
                 else:
-                    trace_id = deeptraces[0].id
+                    # Ensure that deeptraces[0] is a Box object and not a list
+                    deeptrace = deeptraces[0]
+                    trace_id = deeptrace.get("id", None) if isinstance(deeptrace, dict) else deeptrace.id
                     print(f"Using trace ID {trace_id} for get_deeptrace_health_metrics test")
 
                     # Get deeptrace health metrics using the retrieved device ID and trace ID
@@ -452,7 +466,9 @@ class TestDevices:
             if not devices:
                 print("No devices found within the specified time range.")
             else:
-                device_id = devices[0].id
+                # Ensure that devices[0] is a Box object and not a list
+                device = devices[0]
+                device_id = device.get("id", None) if isinstance(device, dict) else device.id
                 print(f"Using device ID {device_id} to list deeptraces")
 
                 # List deeptraces to get a trace ID
@@ -462,7 +478,9 @@ class TestDevices:
                 if not deeptraces:
                     print("No deeptraces found within the specified time range.")
                 else:
-                    trace_id = deeptraces[0].id
+                    # Ensure that deeptraces[0] is a Box object and not a list
+                    deeptrace = deeptraces[0]
+                    trace_id = deeptrace.get("id", None) if isinstance(deeptrace, dict) else deeptrace.id
                     print(f"Using trace ID {trace_id} for get_deeptrace_events test")
 
                     # Get deeptrace events using the retrieved device ID and trace ID
@@ -495,7 +513,9 @@ class TestDevices:
             if not devices:
                 print("No devices found within the specified time range.")
             else:
-                device_id = devices[0].id
+                # Ensure that devices[0] is a Box object and not a list
+                device = devices[0]
+                device_id = device.get("id", None) if isinstance(device, dict) else device.id
                 print(f"Using device ID {device_id} to list deeptraces")
 
                 # List deeptraces to get a trace ID
@@ -505,7 +525,9 @@ class TestDevices:
                 if not deeptraces:
                     print("No deeptraces found within the specified time range.")
                 else:
-                    trace_id = deeptraces[0].id
+                    # Ensure that deeptraces[0] is a Box object and not a list
+                    deeptrace = deeptraces[0]
+                    trace_id = deeptrace.get("id", None) if isinstance(deeptrace, dict) else deeptrace.id
                     print(f"Using trace ID {trace_id} for get_deeptrace_top_processes test")
 
                     # Get deeptrace top processes using the retrieved device ID and trace ID
