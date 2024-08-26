@@ -24,6 +24,7 @@ class ZCCClient:
         path: str,
         json=None,
         params=None,
+        stream=False,
     ):
         """
         Send a GET request to the ZCC API.
@@ -53,26 +54,6 @@ class ZCCClient:
         """
         pass
 
-    def put(self, path: str, json=None, params=None):
-        """
-        Send a PUT request to the ZCC API.
-        Parameters:
-        - path (str): API endpoint path.
-        - json (str): the request body.
-        - params (dict): the query params
-        """
-        pass
-
-    def patch(self, path: str, json=None, params=None):
-        """
-        Send a PATCH request to the ZCC API.
-        Parameters:
-        - path (str): API endpoint path.
-        - json (str): the request body.
-        - params (dict): the query params
-        """
-        pass
-
     def post(self, path: str, json=None, params=None):
         """
         Send a POST request to the ZCC API.
@@ -83,12 +64,3 @@ class ZCCClient:
         """
         pass
 
-    def delete(self, path: str, json=None, params=None):
-        """
-        Send a DELETE request to the ZCC API.
-        Parameters:
-        - path (str): API endpoint path.
-        - json (str): the request body.
-        - params (dict): the query params
-        """
-        pass
