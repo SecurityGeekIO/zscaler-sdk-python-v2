@@ -1,9 +1,0 @@
-# .pyup.yml
-update: all  # Update all dependencies or just security updates
-branch: main  # Base branch for pull requests
-schedule: "every day"  # Update schedule: "every day", "every week", etc.
-search: true  # Enable search for dependency files
-pin: true  # Keep versions pinned, good for ensuring no unexpected updates
-assignees:
-  - username  # GitHub username of the person to assign PRs to
-label: "dependency-update"  # Label to add to pull requests
