@@ -25,6 +25,8 @@ import re
 import time
 from typing import Dict, Optional
 from urllib.parse import urlencode
+from urllib.parse import urlsplit, urlunsplit
+from datetime import datetime as dt
 
 import pytz
 from box import Box, BoxList
@@ -32,7 +34,7 @@ from dateutil import parser
 from requests import Response
 from restfly import APIIterator
 
-from zscaler.constants import RETRYABLE_STATUS_CODES
+from zscaler.constants import RETRYABLE_STATUS_CODES, DATETIME_FORMAT, EPOCH_DAY, EPOCH_MONTH, EPOCH_YEAR
 
 logger = logging.getLogger("zscaler-sdk-python")
 
@@ -723,6 +725,53 @@ def validate_and_convert_times(start_time_str, end_time_str, time_zone_str):
     end_epoch = int(end_time.timestamp())
 
     return start_epoch, end_epoch
+
+
+def convert_date_time_to_seconds(date_time):
+    """
+    Takes in a date time string and returns the number of seconds
+    since the epoch (Unix timestamp).
+
+    Args:
+        date_time (str): Date time string in the datetime format
+
+    Returns:
+        float: Number of seconds since the epoch
+    """
+    dt_obj = dt.strptime(date_time, DATETIME_FORMAT)
+    return float((dt_obj - dt(EPOCH_YEAR, EPOCH_MONTH, EPOCH_DAY)).total_seconds())
+
+
+def format_url(base_string):
+    """
+    Turns multiline strings in generated clients into
+    simple one-line string
+
+    Args:
+        base_string (str): multiline URL
+
+    Returns:
+        str: single line URL
+    """
+    return "".join([line.strip() for line in base_string.splitlines()])
+
+
+def convert_absolute_url_into_relative_url(absolute_url):
+    """
+    Converts absolute url into relative url.
+
+    Args:
+        absolute_url (str): URL
+
+    Returns:
+        str: URL
+
+    Example:
+        >>> convert_absolute_url_into_relative_url('https://test.okta.com/api/v1/users')
+        '/api/v1/users'
+    """
+    url_parts = urlsplit(absolute_url)
+    return urlunsplit(("", "", url_parts[2], url_parts[3], url_parts[4]))
 
 
 # Maps ZCC numeric os_type and registration_type arguments to a human-readable string

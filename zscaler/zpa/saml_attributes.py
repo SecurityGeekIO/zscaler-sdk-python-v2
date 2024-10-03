@@ -1,55 +1,66 @@
-# -*- coding: utf-8 -*-
+"""
+Copyright (c) 2023, Zscaler Inc.
 
-# Copyright (c) 2023, Zscaler Inc.
-#
-# Permission to use, copy, modify, and/or distribute this software for any
-# purpose with or without fee is hereby granted, provided that the above
-# copyright notice and this permission notice appear in all copies.
-#
-# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+"""
+
+from zscaler.api_client import APIClient
+from zscaler.zpa.models.saml_attributes import SAMLAttribute
+from zscaler.api_response import get_paginated_data
+from zscaler.utils import format_url
 
 
-from box import Box, BoxList
+class SAMLAttributesAPI(APIClient):
+    """
+    A client object for the SAML Attribute resource.
+    """
 
-from zscaler.zpa.client import ZPAClient
+    def __init__(self):
+        super().__init__()
+        self._base_url = ""
 
-
-class SAMLAttributesAPI:
-    def __init__(self, client: ZPAClient):
-        self.rest = client
-
-    def list_attributes(self, **kwargs) -> BoxList:
+    def list_attributes(self, **kwargs) -> list:
         """
         Returns a list of all configured SAML attributes.
 
         Keyword Args:
-            **max_items (int):
-                The maximum number of items to request before stopping iteration.
-            **max_pages (int):
-                The maximum number of pages to request before stopping iteration.
-            **pagesize (int):
-                Specifies the page size. The default size is 20, but the maximum size is 500.
-            **search (str, optional):
-                The search string used to match against features and fields.
+            max_items (int): The maximum number of items to request before stopping iteration.
+            max_pages (int): The maximum number of pages to request before stopping iteration.
+            pagesize (int): Specifies the page size. The default size is 20, but the maximum size is 500.
+            search (str, optional): The search string used to match against features and fields.
+            **keep_empty_params (bool): Whether to include empty parameters in the query string.
 
         Returns:
-            :obj:`BoxList`: A list of all configured SAML attributes.
+            list: A list of SAMLAttribute instances.
 
         Examples:
             >>> for saml_attribute in zpa.saml_attributes.list_attributes():
             ...    pprint(saml_attribute)
-
         """
-        list, _ = self.rest.get_paginated_data(path="/samlAttribute", **kwargs, api_version="v2")
-        return list
+        api_url = format_url(f"{self._base_url}/samlAttribute", api_version="v2")
 
-    def list_attributes_by_idp(self, idp_id: str, **kwargs) -> BoxList:
+        # Fetch paginated data using get_paginated_data
+        list_data, error = get_paginated_data(
+            request_executor=self._request_executor, path=api_url, **kwargs
+        )
+
+        if error:
+            return None
+
+        # Convert the raw SAML attribute data into SAMLAttribute objects
+        return [SAMLAttribute(attr) for attr in list_data]
+
+    def list_attributes_by_idp(self, idp_id: str, **kwargs) -> list:
         """
         Returns a list of all configured SAML attributes for the specified IdP.
 
@@ -57,40 +68,144 @@ class SAMLAttributesAPI:
             idp_id (str): The unique id of the IdP to retrieve SAML attributes from.
 
         Keyword Args:
-            **max_items (int):
-                The maximum number of items to request before stopping iteration.
-            **max_pages (int):
-                The maximum number of pages to request before stopping iteration.
-            **pagesize (int):
-                Specifies the page size. The default size is 20, but the maximum size is 500.
-            **search (str, optional):
-                The search string used to match against features and fields.
+            max_items (int): The maximum number of items to request before stopping iteration.
+            max_pages (int): The maximum number of pages to request before stopping iteration.
+            pagesize (int): Specifies the page size. The default size is 20, but the maximum size is 500.
+            search (str, optional): The search string used to match against features and fields.
+            **keep_empty_params (bool): Whether to include empty parameters in the query string.
 
         Returns:
-            :obj:`BoxList`: A list of all configured SAML attributes for the specified IdP.
+            list: A list of SAMLAttribute instances.
 
         Examples:
             >>> for saml_attribute in zpa.saml_attributes.list_attributes_by_idp('99999'):
             ...    pprint(saml_attribute)
-
         """
-        path = f"/samlAttribute/idp/{idp_id}"  # Correctly format the path with the idp_id
-        list, _ = self.rest.get_paginated_data(path=path, **kwargs, api_version="v2")
-        return list
+        api_url = format_url(f"{self._base_url}/samlAttribute/idp/{idp_id}", api_version="v2")
 
-    def get_attribute(self, attribute_id: str) -> Box:
+        # Fetch paginated data using get_paginated_data
+        list_data, error = get_paginated_data(
+            request_executor=self._request_executor, path=api_url, **kwargs
+        )
+
+        if error:
+            return None
+
+        # Convert the raw SAML attribute data into SAMLAttribute objects
+        return [SAMLAttribute(attr) for attr in list_data]
+
+
+    def get_attribute(self, attribute_id: str, **kwargs) -> tuple:
         """
-        Returns information on the specified SAML attributes.
+        Returns information on the specified SAML attribute.
 
         Args:
-            attribute_id (str):
-                The unique identifier for the SAML attributes.
+            attribute_id (str): The unique identifier for the SAML attribute.
 
         Returns:
-            :obj:`dict`: The resource record for the SAML attributes.
+            tuple: A tuple containing the `SAMLAttribute` instance, response object, and error if any.
 
         Examples:
-            >>> pprint(zpa.saml_attributes.get_attribute('99999'))
-
+            >>> attribute, response, error = zpa.saml_attributes.get_attribute('99999')
+            >>> if attribute:
+            ...    pprint(attribute)
         """
-        return self.rest.get(f"samlAttribute/{attribute_id}")
+        http_method = "get".upper()
+        api_url = format_url(
+            f"""
+            {self._base_url}
+            /samlAttribute/{attribute_id}
+            """,
+            api_version="v1"
+        )
+
+        request, error = self._request_executor.create_request(http_method, api_url, {}, kwargs)
+        if error:
+            return (None, None, error)
+
+        response, error = self._request_executor.execute(request, SAMLAttribute)
+        if error:
+            return (None, response, error)
+
+        return (SAMLAttribute(response.get_body()), response, None)
+
+
+# from box import Box, BoxList
+
+# from zscaler.api_client import APIClient
+
+
+# class SAMLAttributesAPI(APIClient):
+#     # def __init__(self, client: ZPAClient):
+#     #     self.rest = client
+
+#     def list_attributes(self, **kwargs) -> BoxList:
+#         """
+#         Returns a list of all configured SAML attributes.
+
+#         Keyword Args:
+#             **max_items (int):
+#                 The maximum number of items to request before stopping iteration.
+#             **max_pages (int):
+#                 The maximum number of pages to request before stopping iteration.
+#             **pagesize (int):
+#                 Specifies the page size. The default size is 20, but the maximum size is 500.
+#             **search (str, optional):
+#                 The search string used to match against features and fields.
+
+#         Returns:
+#             :obj:`BoxList`: A list of all configured SAML attributes.
+
+#         Examples:
+#             >>> for saml_attribute in zpa.saml_attributes.list_attributes():
+#             ...    pprint(saml_attribute)
+
+#         """
+#         list, _ = self.rest.get_paginated_data(path="/samlAttribute", **kwargs, api_version="v2")
+#         return list
+
+#     def list_attributes_by_idp(self, idp_id: str, **kwargs) -> BoxList:
+#         """
+#         Returns a list of all configured SAML attributes for the specified IdP.
+
+#         Args:
+#             idp_id (str): The unique id of the IdP to retrieve SAML attributes from.
+
+#         Keyword Args:
+#             **max_items (int):
+#                 The maximum number of items to request before stopping iteration.
+#             **max_pages (int):
+#                 The maximum number of pages to request before stopping iteration.
+#             **pagesize (int):
+#                 Specifies the page size. The default size is 20, but the maximum size is 500.
+#             **search (str, optional):
+#                 The search string used to match against features and fields.
+
+#         Returns:
+#             :obj:`BoxList`: A list of all configured SAML attributes for the specified IdP.
+
+#         Examples:
+#             >>> for saml_attribute in zpa.saml_attributes.list_attributes_by_idp('99999'):
+#             ...    pprint(saml_attribute)
+
+#         """
+#         path = f"/samlAttribute/idp/{idp_id}"  # Correctly format the path with the idp_id
+#         list, _ = self.rest.get_paginated_data(path=path, **kwargs, api_version="v2")
+#         return list
+
+    # def get_attribute(self, attribute_id: str) -> Box:
+    #     """
+    #     Returns information on the specified SAML attributes.
+
+    #     Args:
+    #         attribute_id (str):
+    #             The unique identifier for the SAML attributes.
+
+    #     Returns:
+    #         :obj:`dict`: The resource record for the SAML attributes.
+
+    #     Examples:
+    #         >>> pprint(zpa.saml_attributes.get_attribute('99999'))
+
+    #     """
+    #     return self.rest.get(f"samlAttribute/{attribute_id}")

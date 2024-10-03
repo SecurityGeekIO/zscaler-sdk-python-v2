@@ -1,29 +1,35 @@
-# -*- coding: utf-8 -*-
+"""
+Copyright (c) 2023, Zscaler Inc.
 
-# Copyright (c) 2023, Zscaler Inc.
-#
-# Permission to use, copy, modify, and/or distribute this software for any
-# purpose with or without fee is hereby granted, provided that the above
-# copyright notice and this permission notice appear in all copies.
-#
-# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
 
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+"""
 
-from box import Box, BoxList
-from requests import Response
-
-from zscaler.utils import snake_to_camel
-from zscaler.zpa.client import ZPAClient
+from zscaler.api_client import APIClient
+from zscaler.zpa.models.provisioning_keys import ProvisioningKey
+from zscaler.utils import format_url, snake_to_camel
+from zscaler.api_response import get_paginated_data
 
 
 def simplify_key_type(key_type):
-    # Simplify the key type for our users
+    """
+    Simplifies the key type for the user. Accepted values are 'connector' and 'service_edge'.
+
+    Args:
+        key_type (str): The key type provided by the user.
+
+    Returns:
+        str: The simplified key type.
+    """
     if key_type == "connector":
         return "CONNECTOR_GRP"
     elif key_type == "service_edge":
@@ -32,11 +38,16 @@ def simplify_key_type(key_type):
         raise ValueError("Unexpected key type.")
 
 
-class ProvisioningKeyAPI:
-    def __init__(self, client: ZPAClient):
-        self.rest = client
+class ProvisioningKeyAPI(APIClient):
+    """
+    A client object for the Provisioning Keys resource.
+    """
 
-    def list_provisioning_keys(self, key_type: str, **kwargs) -> BoxList:
+    def __init__(self):
+        super().__init__()
+        self._base_url = ""
+
+    def list_provisioning_keys(self, key_type: str, **kwargs) -> list:
         """
         Returns a list of all configured provisioning keys that match the specified ``key_type``.
 
@@ -56,27 +67,33 @@ class ProvisioningKeyAPI:
                 The search string used to match against features and fields.
 
         Returns:
-            :obj:`BoxList`: A list containing the requested provisioning keys.
+            list: A list containing the requested provisioning keys.
 
         Examples:
-            List all App Connector provisioning keys.
+            List all App Connector provisioning keys:
 
             >>> for key in zpa.provisioning.list_provisioning_keys(key_type="connector"):
             ...    print(key)
 
-            List all Service Edge provisioning keys.
+            List all Service Edge provisioning keys:
 
             >>> for key in zpa.provisioning.list_provisioning_keys(key_type="service_edge"):
             ...    print(key)
-
         """
-        list, _ = self.rest.get_paginated_data(
-            path=f"/associationType/{simplify_key_type(key_type)}/provisioningKey",
-            **kwargs,
-        )
-        return list
+        api_url = format_url(f"{self._base_url}/associationType/{simplify_key_type(key_type)}/provisioningKey")
 
-    def get_provisioning_key(self, key_id: str, key_type: str, **kwargs) -> Box:
+        # Fetch paginated data using get_paginated_data
+        list_data, error = get_paginated_data(
+            request_executor=self._request_executor, path=api_url, **kwargs
+        )
+
+        if error:
+            return []
+
+        # Convert the raw provisioning key data into ProvisioningKey objects
+        return [ProvisioningKey(key) for key in list_data]
+
+    def get_provisioning_key(self, key_id: str, key_type: str, **kwargs) -> ProvisioningKey:
         """
         Returns information on the specified provisioning key.
 
@@ -110,20 +127,30 @@ class ProvisioningKeyAPI:
             ...    key_type="connector", microtenant_id="12345")
 
         """
+        http_method = "get".upper()
+        api_url = format_url(f"{self._base_url}/associationType/{simplify_key_type(key_type)}/provisioningKey/{key_id}")
+
         params = {}
         if "microtenant_id" in kwargs:
             params["microtenantId"] = kwargs.pop("microtenant_id")
-        return self.rest.get(f"associationType/{simplify_key_type(key_type)}/provisioningKey/{key_id}", params=params)
+
+        body = {}
+        headers = {}
+        form = {}
+
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, form, params=params)
+        if error:
+            return None, None, error
+
+        response, error = self._request_executor.execute(request)
+        if error:
+            return None, response, error
+
+        return ProvisioningKey(response.get_body()), response, None
 
     def add_provisioning_key(
-        self,
-        key_type: str,
-        name: str,
-        max_usage: str,
-        enrollment_cert_id: str,
-        component_id: str,
-        **kwargs,
-    ) -> Box:
+        self, key_type: str, name: str, max_usage: str, enrollment_cert_id: str, component_id: str, **kwargs
+    ) -> ProvisioningKey:
         """
         Adds a new provisioning key to ZPA.
 
@@ -166,6 +193,9 @@ class ProvisioningKeyAPI:
             ...    enabled=False)
 
         """
+        http_method = "post".upper()
+        api_url = format_url(f"{self._base_url}/associationType/{simplify_key_type(key_type)}/provisioningKey")
+
         payload = {
             "name": name,
             "maxUsage": max_usage,
@@ -173,22 +203,27 @@ class ProvisioningKeyAPI:
             "zcomponentId": component_id,
         }
 
-        # Add optional parameters to payload
         for key, value in kwargs.items():
             payload[snake_to_camel(key)] = value
 
         microtenant_id = kwargs.pop("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        response = self.rest.post(
-            f"associationType/{simplify_key_type(key_type)}/provisioningKey", json=payload, params=params
-        )
-        if isinstance(response, Response):
-            status_code = response.status_code
-            raise Exception(f"API call failed with status {status_code}: {response.json()}")
-        return response
+        body = payload
+        headers = {}
+        form = {}
 
-    def update_provisioning_key(self, key_id: str, key_type: str, **kwargs) -> Box:
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, form, params=params)
+        if error:
+            return None, None, error
+
+        response, error = self._request_executor.execute(request)
+        if error:
+            return None, response, error
+
+        return ProvisioningKey(response.get_body()), response, None
+
+    def update_provisioning_key(self, key_id: str, key_type: str, **kwargs) -> ProvisioningKey:
         """
         Updates the specified provisioning key.
 
@@ -226,23 +261,33 @@ class ProvisioningKeyAPI:
             ...    max_usage=10)
 
         """
+        http_method = "put".upper()
+        api_url = format_url(f"{self._base_url}/associationType/{simplify_key_type(key_type)}/provisioningKey/{key_id}")
 
-        # Get the provided provisioning key record
-        payload = {snake_to_camel(k): v for k, v in self.get_provisioning_key(key_id, key_type=key_type).items()}
+        existing_key, _, _ = self.get_provisioning_key(key_id, key_type)
 
-        # Add optional parameters to payload
+        # Update the payload with any changes
+        payload = existing_key.request_format()
+
         for key, value in kwargs.items():
             payload[snake_to_camel(key)] = value
 
         microtenant_id = kwargs.pop("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        resp = self.rest.put(
-            f"associationType/{simplify_key_type(key_type)}/provisioningKey/{key_id}", json=payload, params=params
-        ).status_code
+        body = payload
+        headers = {}
+        form = {}
 
-        if not isinstance(resp, Response):
-            return self.get_provisioning_key(key_id, key_type=key_type)
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, form, params=params)
+        if error:
+            return None, None, error
+
+        response, error = self._request_executor.execute(request)
+        if error:
+            return None, response, error
+
+        return ProvisioningKey(response.get_body()), response, None
 
     def delete_provisioning_key(self, key_id: str, key_type: str, **kwargs) -> int:
         """
@@ -273,9 +318,23 @@ class ProvisioningKeyAPI:
             ...    key_type="service_edge")
 
         """
+        http_method = "delete".upper()
+        api_url = format_url(f"{self._base_url}/associationType/{simplify_key_type(key_type)}/provisioningKey/{key_id}")
+
         params = {}
         if "microtenant_id" in kwargs:
             params["microtenantId"] = kwargs.pop("microtenant_id")
-        return self.rest.delete(
-            f"associationType/{simplify_key_type(key_type)}/provisioningKey/{key_id}", params=params
-        ).status_code
+
+        body = {}
+        headers = {}
+        form = {}
+
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, form, params=params)
+        if error:
+            return None, None, error
+
+        response, error = self._request_executor.execute(request)
+        if error:
+            return None, response, error
+
+        return response.status_code

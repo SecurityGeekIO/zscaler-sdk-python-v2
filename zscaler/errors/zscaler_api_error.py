@@ -2,7 +2,7 @@ from zscaler.errors.error import Error
 
 
 # ZPA API Errors
-class ZPAAPIError(Error):
+class ZscalerAPIError(Error):
     def __init__(self, url, response_details, response_body):
         self.status = response_details.status
         self.error_id = response_body.get("id", "")
@@ -19,3 +19,9 @@ class ZPAAPIError(Error):
 
 
 # ZIA API Errors
+
+# ZCC API Errors
+
+# ZDX API Errors
+
+# ZCON API Errors
