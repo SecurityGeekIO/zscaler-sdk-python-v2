@@ -1,4 +1,5 @@
 import os
+import logging
 import yaml
 from zscaler.constants import _GLOBAL_YAML_PATH, _LOCAL_YAML_PATH
 from flatdict import FlatDict
@@ -23,12 +24,27 @@ class ConfigSetter:
             "sandboxToken": "",
             "connectionTimeout": 30,
             "requestTimeout": 0,
-            "cache": {"enabled": False, "defaultTtl": 300, "defaultTti": 300},
-            "logging": {"enabled": False, "verbose": False},  # Default logging is disabled  # Default verbosity
-            "proxy": {"port": "", "host": "", "username": "", "password": ""},
-            "rateLimit": {"maxRetries": 2, "maxBackoff": 0},
+            "cache": {
+                "enabled": False, 
+                "defaultTtl": '', 
+                "defaultTti": '',
+                },
+            "logging": {
+                "enabled": False, 
+                "verbose": False
+                },
+            "proxy": {
+                "port": "",
+                "host": "",
+                "username": "",
+                "password": ""},
+            "rateLimit": {
+                "maxRetries": 2,
         },
-        "testing": {"disableHttpsCheck": False},
+        "testing": {
+            "disableHttpsCheck": ''
+            },
+        }
     }
 
     def __init__(self):
@@ -72,14 +88,18 @@ class ConfigSetter:
         3. Checking for a local Zscaler config YAML
         4. Checking for corresponding ENV variables
         """
+        # apply default config values to config
         self._apply_default_values()
-
-        if os.path.exists(_GLOBAL_YAML_PATH):
+        
+        # check if GLOBAL yaml exists, apply if true
+        if (os.path.exists(_GLOBAL_YAML_PATH)):
             self._apply_yaml_config(_GLOBAL_YAML_PATH)
-
-        if os.path.exists(_LOCAL_YAML_PATH):
+            
+        # check if LOCAL yaml exists, apply if true
+        if (os.path.exists(_LOCAL_YAML_PATH)):
             self._apply_yaml_config(_LOCAL_YAML_PATH)
-
+            
+        # apply existing environment variables
         self._apply_env_config()
 
     def _setup_logging(self):
@@ -96,33 +116,28 @@ class ConfigSetter:
             os.environ["ZSCALER_SDK_LOG"] = "false"
 
     def _apply_default_values(self):
-        """Apply default values to default client configuration"""
-        pass
-
-    def _apply_yaml_config(self, path: str):
-        """This method applies a YAML configuration to the Zscaler Client Config"""
-        config = {}
-        with open(path, "r") as file:
-            config = yaml.load(file, Loader=yaml.SafeLoader)
-        self._apply_config(config.get("zscaler", {}))
-
-    def _apply_env_config(self):
+        """Apply default values to default client configuration
         """
-        This method checks the environment variables for any Zscaler
-        configuration parameters and applies them if available.
-        """
-        flattened_config = FlatDict(self._config, delimiter="_")
-        flattened_keys = flattened_config.keys()
+        # Set defaults
+        self._config["client"]["connectionTimeout"] = 30
+        self._config["client"]["cache"] = {
+            "enabled": False,
+            "defaultTtl": 300,
+            "defaultTti": 300
+        }
 
-        updated_config = FlatDict({}, delimiter="_")
+        self._config["client"]["logging"] = {
+            "enabled": False,
+            "logLevel": logging.INFO
+        }
+        
+        self._config["client"]["userAgent"] = ""
+        self._config["client"]["requestTimeout"] = 0
+        self._config["client"]["rateLimit"] = {
+            "maxRetries": 2
+        }
 
-        for key in flattened_keys:
-            env_key = ConfigSetter._ZSCALER + "_" + key.upper()
-            env_value = os.environ.get(env_key, None)
-
-            if env_value is not None:
-                updated_config[key] = env_value
-        self._apply_config(updated_config.as_dict())
+        self._config["testing"]["testingDisableHttpsCheck"] = False
 
     def _apply_config(self, new_config: dict):
         """Apply a config dictionary to the current config, overwriting values"""
@@ -135,4 +150,39 @@ class ConfigSetter:
         flat_current_client.update(flat_new_client)
         flat_current_testing.update(flat_new_testing)
 
-        self._config = {"client": flat_current_client.as_dict(), "testing": flat_current_testing.as_dict()}
+        self._config = {"client": flat_current_client.as_dict(), 
+                        "testing": flat_current_testing.as_dict()}
+
+    def _apply_yaml_config(self, path: str):
+        """This method applies a YAML configuration to the Zscaler Client Config"""
+        # Start with empty config
+        config = {}
+        with open(path, "r") as file:
+            # Open file stream and attempt to load YAML
+            config = yaml.load(file, Loader=yaml.SafeLoader)
+        # Apply acquired config to configuration
+        self._apply_config(config.get("zscaler", {}))
+
+    def _apply_env_config(self):
+        """
+        This method checks the environment variables for any Zscaler
+        configuration parameters and applies them if available.
+        """
+        # Flatten current config and join with underscores
+        # (for environment variable format)
+        flattened_config = FlatDict(self._config, delimiter="_")
+        flattened_keys = flattened_config.keys()
+
+        # Create empty result config and populate
+        updated_config = FlatDict({}, delimiter="_")
+
+        # Go through keys and search for it in the environment vars
+        # using the format described in the README
+        for key in flattened_keys:
+            env_key = ConfigSetter._ZSCALER + "_" + key.upper()
+            env_value = os.environ.get(env_key, None)
+
+            if env_value is not None:
+                updated_config[key] = env_value
+        self._apply_config(updated_config.as_dict())
+

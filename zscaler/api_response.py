@@ -5,19 +5,34 @@ import time
 class ZscalerAPIResponse:
     """
     Class for defining the wrapper of a Zscaler API response.
-    Allows for paginated results to be retrieved easily.
+    Handles paginated results and accounts for service-specific behavior like
+    ZPA, ZIA, ZCC pagination and ZDX with offset/limit pagination.
     """
 
-    def __init__(self, request_executor, req, res_details=None, response_body="", data_type=None):
+    # Default and max page sizes for ZPA, ZIA, and ZDX
+    SERVICE_PAGE_LIMITS = {
+        "ZPA": {"default": 20, "max": 500},
+        "ZIA": {"default": 100, "max": 1000},
+        "ZDX": {"default": 10, "min": 1}  # ZDX has limit with minimum 1
+    }
+
+    def __init__(self, request_executor, req, service_type, res_details=None, response_body="", data_type=None):
         # Safely handle None values for res_details
         self._url = res_details.url if res_details and hasattr(res_details, 'url') else None
-        self._headers = req["headers"] if "headers" in req else {}
+        self._headers = req.get("headers", {})  # Headers for the request
+        self._params = req.get("params", {})  # Query parameters like filtering and pagination
         self._resp_headers = res_details.headers if res_details and hasattr(res_details, 'headers') else {}
-        self._self = None  # Link to first page of results
         self._body = None  # First page of results
         self._type = data_type
         self._status = res_details.status if res_details and hasattr(res_details, 'status') else None
         self._request_executor = request_executor  # Request Executor for future calls
+
+        # Pagination properties
+        self._service_type = service_type  # Either "ZPA", "ZIA", or "ZDX"
+        self._offset = self._params.get("offset", 0)  # Start with offset 0 for ZDX
+        self._limit = self.validate_page_size(self._params.get("limit"), service_type)  # Validate limit for ZDX
+        self._next_offset = None  # To track next_offset for ZDX
+        self._list = []  # To store the list of results
 
         # Build response body based on content type (supports only JSON)
         if res_details and hasattr(res_details, 'content_type') and "application/json" in res_details.content_type:
@@ -25,6 +40,20 @@ class ZscalerAPIResponse:
         else:
             # Save response as plain text if not JSON
             self._body = response_body
+
+    def validate_page_size(self, page_size, service_type):
+        """
+        Validates the page size based on the service type.
+        Uses service-specific max and default page sizes.
+        """
+        limits = self.SERVICE_PAGE_LIMITS.get(service_type, {})
+        max_page_size = limits.get("max", 100)  # Default max if service_type not found
+        default_page_size = limits.get("default", 20)  # Default page size
+
+        # If page_size is not provided, use default; otherwise, cap it at the max limit.
+        if page_size is None:
+            return default_page_size
+        return min(max(int(page_size), limits.get("min", 1)), max_page_size)
 
     def get_headers(self):
         """
@@ -46,9 +75,86 @@ class ZscalerAPIResponse:
 
     def build_json_response(self, response_body):
         """
-        Converts JSON response text into Python dictionary.
+        Converts JSON response text into Python dictionary or list depending on the service.
+        Handles ZPA's totalPages/totalCount, ZIA's raw list response, and ZDX offset/limit.
         """
         self._body = json.loads(response_body)
+
+        if isinstance(self._body, list):
+            # ZIA response is just a list of items
+            self._list = self._body
+        elif self._service_type == "ZDX":
+            # ZDX response structure with offset and limit handling
+            self._list = self._body.get("items", [])
+            self._next_offset = self._body.get("next_offset")
+        else:
+            # ZPA response contains structured metadata like totalPages
+            self._list = self._body.get("list", [])
+            if self._service_type == "ZPA":
+                self._total_pages = int(self._body.get("totalPages", 1))  # totalPages from the API response
+                self._total_count = int(self._body.get("totalCount", 0))  # totalCount from the API response
+
+    def get_total_count(self):
+        """
+        Returns the total number of items in the API response (if available for ZPA).
+        """
+        if self._service_type == "ZPA":
+            return self._total_count
+        return None  # ZIA and ZDX do not provide totalCount
+
+    def has_next(self):
+        """
+        Determines if there are more pages to fetch.
+        - For ZPA: Checks if the current page is less than totalPages.
+        - For ZIA and ZCC: Continues fetching until no data is returned.
+        - For ZDX: Continues fetching until next_offset becomes null.
+        """
+        if self._service_type == "ZPA":
+            return self._page < self._total_pages
+        elif self._service_type == "ZDX":
+            return self._next_offset is not None
+        else:
+            return bool(self._list)  # For ZIA and ZCC, stop when no data is returned
+
+    def next(self):
+        """
+        Fetches the next page of results.
+        - Stops for ZIA and ZCC when no data is returned.
+        - For ZPA, stops when the total number of pages is reached.
+        - For ZDX, stops when next_offset becomes null.
+        """
+        if not self.has_next():
+            return None  # No more pages to fetch
+
+        # Update the request with the next_offset for ZDX or page for ZPA/ZIA/ZCC
+        if self._service_type == "ZDX":
+            self._params['offset'] = self._next_offset
+        else:
+            self._page += 1
+            self._params['page'] = self._page
+
+        req = {
+            "headers": self._headers,
+            "params": self._params  # Include filters like search, sort, etc.
+        }
+
+        # Fire the request for the next page
+        next_response = self._request_executor.fire_request("GET", req)
+        response_body = next_response.get("body", {})
+        
+        # Update the response with the new page's data
+        self.build_json_response(response_body)
+
+        # Stop if no data was returned (especially for ZIA and ZDX)
+        if not self._list:
+            return None
+
+        return self._list
+
+
+
+
+
 
 # Move the pagination function outside of the class as a standalone function
 
