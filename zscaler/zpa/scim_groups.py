@@ -16,7 +16,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from zscaler.api_client import APIClient
 from zscaler.zpa.models.scim_groups import SCIMGroup
-from zscaler.api_response import get_paginated_data
+from urllib.parse import urlencode
 from zscaler.utils import format_url
 
 
@@ -29,7 +29,11 @@ class SCIMGroupsAPI(APIClient):
         super().__init__()
         self._base_url = ""
 
-    def list_groups(self, idp_id: str, **kwargs) -> list:
+    def list_groups(
+        self, idp_id: str, 
+        query_params=None,
+        keep_empty_params=False
+        ) -> tuple:
         """
         Returns a list of all configured SCIM groups for the specified IdP.
 
@@ -72,21 +76,47 @@ class SCIMGroupsAPI(APIClient):
             >>> for scim_group in zpa.scim_groups.list_groups("999999"):
             ...    pprint(scim_group)
         """
+        http_method = "get".upper()
         api_url = format_url(f"{self._base_url}/scimgroup/idpId/{idp_id}", api_version="userconfig_v1")
 
-        # Fetch paginated data using the get_paginated_data utility
-        list_data, error = get_paginated_data(
-            request_executor=self._request_executor,
-            path=api_url, 
-            **kwargs
+        # Handle query parameters (including microtenant_id if provided)
+        query_params = query_params or {}
+
+        # Build the query string
+        if query_params:
+            encoded_query_params = urlencode(query_params)
+            api_url += f"?{encoded_query_params}"
+
+        # Prepare request body and headers
+        body = {}
+        headers = {}
+        form = {}
+
+        # Create the request
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
         )
 
         if error:
-            return None
+            return (None, None, error)
 
-        # Convert the raw data into SCIMGroup objects
-        return [SCIMGroup(group) for group in list_data]
+        # Execute the request
+        response, error = self._request_executor.execute(request, SCIMGroup)
 
+        if error:
+            return (None, response, error)
+
+        # Parse the response into AppConnectorGroup instances
+        try:
+            result = []
+            for item in response.get_body():
+                result.append(SCIMGroup(
+                    self.form_response_body(item)
+                ))
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
 
     def get_group(self, group_id: str, **kwargs) -> SCIMGroup:
         """
@@ -114,82 +144,3 @@ class SCIMGroupsAPI(APIClient):
 
         # Convert the response to SCIMGroup object
         return SCIMGroup(response.get_body())
-
-
-# from box import Box, BoxList
-# import time
-# from zscaler.api_client import APIClient
-
-
-# class SCIMGroupsAPI(APIClient):
-
-#     def list_groups(self, idp_id: str, **kwargs) -> BoxList:
-#         """
-#         Returns a list of all configured SCIM groups for the specified IdP.
-
-#         Args:
-# idp_id (str):
-#     The unique id of the IdP.
-# sort_by (str):
-#     The field name to sort by, supported values: id, name, creationTime or modifiedTime (default to name)
-# sort_order (str):
-#     The sort order, values: ASC or DSC (default DSC)
-
-
-# Keyword Args:
-#     **end_time (str):
-#         The end of a time range for requesting last updated data (modified_time) for the SCIM group.
-#         This requires setting the ``start_time`` parameter as well.
-#     **idp_group_id (str):
-#         The unique id of the IdP group.
-#     **max_items (int):
-#         The maximum number of items to request before stopping iteration.
-#     **max_pages (int):
-#         The maximum number of pages to request before stopping iteration.
-#     **pagesize (int):
-#         Specifies the page size. The default size is 20, but the maximum size is 500.
-#     **scim_user_id (str):
-#         The unique id for the SCIM user.
-#     **search (str, optional):
-#         The search string used to match against features and fields.
-#     **sort_order (str):
-#         Sort the last updated time (modified_time) by ascending ``ASC`` or descending ``DSC`` order. Defaults to
-#         ``DSC``.
-#     **start_time (str):
-#         The start of a time range for requesting last updated data (modified_time) for the SCIM group.
-#         This requires setting the ``end_time`` parameter as well.
-
-#         Returns:
-#             :obj:`list`: A list of all configured SCIM groups.
-
-#         Examples:
-#             >>> for scim_group in zpa.scim_groups.list_groups("999999"):
-#             ...    pprint(scim_group)
-
-#         """
-#         list, _ = self.rest.get_paginated_data(
-#             path=f"/scimgroup/idpId/{idp_id}",
-#             **kwargs,
-#             api_version="userconfig_v1",
-#         )
-#         return list
-
-#     def get_group(self, group_id: str, **kwargs) -> Box:
-#         """
-#         Returns information on the specified SCIM group.
-
-#         Args:
-#             group_id (str):
-#                 The unique identifier for the SCIM group.
-#             **kwargs:
-#                 Optional keyword args.
-
-#         Returns:
-#             :obj:`dict`: The resource record for the SCIM group.
-
-#         Examples:
-#             >>> pprint(zpa.scim_groups.get_group('99999'))
-
-#         """
-#         response = self.rest.get(f"/scimgroup/{group_id}", **kwargs, api_version="userconfig_v1")
-#         return response

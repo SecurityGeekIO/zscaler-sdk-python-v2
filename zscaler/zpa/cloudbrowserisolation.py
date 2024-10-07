@@ -394,10 +394,7 @@ class CloudBrowserIsolationAPI(APIClient):
 
         return (response, None)
 
-    def list_cbi_profiles(
-            self, query_params=None,
-            keep_empty_params=False
-    ) -> tuple:
+    def list_cbi_profiles(self) -> tuple:
         """
         Enumerates CBI Profiles in your organization with pagination.
         A subset of connector groups can be returned that match a supported

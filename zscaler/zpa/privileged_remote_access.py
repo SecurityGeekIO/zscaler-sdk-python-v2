@@ -15,7 +15,7 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
 from zscaler.api_client import APIClient
 from zscaler.zpa.models.privileged_remote_access import PrivilegedRemoteAccessPortal

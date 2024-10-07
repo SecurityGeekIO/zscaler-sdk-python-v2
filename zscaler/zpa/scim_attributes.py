@@ -156,6 +156,7 @@ class ScimAttributeHeaderAPI(APIClient):
         Examples:
             >>> values = zpa.scim_attributes.get_values('99999', '88888')
         """
+        http_method = "get".upper()
         api_url = format_url(f"{self._base_url}/scimattribute/idpId/{idp_id}/attributeId/{attribute_id}", api_version="userconfig_v1")
 
         # Handle query parameters (including microtenant_id if provided)

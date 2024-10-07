@@ -1,24 +1,24 @@
-# -*- coding: utf-8 -*-
+"""
+Copyright (c) 2023, Zscaler Inc.
 
-# Copyright (c) 2023, Zscaler Inc.
-#
-# Permission to use, copy, modify, and/or distribute this software for any
-# purpose with or without fee is hereby granted, provided that the above
-# copyright notice and this permission notice appear in all copies.
-#
-# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
 
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+"""
 
 from box import Box, BoxList
 from requests import Response
 from zscaler.api_client import APIClient
-import os
+from zscaler.zpa.models.app_connectors import AppConnectorController
+from urllib.parse import urlencode
 from zscaler.utils import add_id_groups, snake_to_camel
 
 
@@ -29,29 +29,30 @@ class AppConnectorControllerAPI(APIClient):
         ("server_group_ids", "serverGroups"),
     ]
 
-    # def __init__(self, client: ZPAClient):
-    #     self.rest = client
+    def __init__(self):
+        super().__init__()
+        self._base_url = ""
 
-    def list_connectors(self, **kwargs) -> BoxList:
+    def list_connectors(
+            self, query_params=None,
+            keep_empty_params=False
+    ) -> tuple:
         """
-        Returns a list of all configured App Connectors.
+        Enumerates app connectors in your organization with pagination.
+        A subset of app connectors can be returned that match a supported
+        filter expression or query.
 
         Args:
-            **kwargs: Optional keyword args.
-
-        Keyword Args:
-            **max_items (int, optional):
-                The maximum number of items to request before stopping iteration.
-            **max_pages (int, optional):
-                The maximum number of pages to request before stopping iteration.
-            **pagesize (int, optional):
-                Specifies the page size. The default size is 100, but the maximum size is 1000.
-            **search (str, optional):
-                The search string used to match against a department's name or comments attributes.
+            query_params {dict}: Map of query parameters for the request.
+                [query_params.pagesize] {int}: Page size for pagination.
+                [query_params.search] {str}: Search string for filtering results.
+                [query_params.microtenant_id] {str}: ID of the microtenant, if applicable.
+                [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
+                [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
+            keep_empty_params {bool}: Whether to include empty parameters in the query string.
 
         Returns:
-            :obj:`BoxList`: List containing all configured ZPA App Connectors.
-
+            tuple: A tuple containing (list of AppConnectorGroup instances, Response, error)
         Examples:
             List all configured App Connectors:
 
@@ -59,8 +60,50 @@ class AppConnectorControllerAPI(APIClient):
             ...    print(connector)
 
         """
-        list, _ = self.rest.get_paginated_data(path="/connector", **kwargs, api_version="v1")
-        return list
+        http_method = "get".upper()
+        api_url = f"{self._base_url}/connector"
+
+        # Handle query parameters (including microtenant_id if provided)
+        query_params = query_params or {}
+        microtenant_id = query_params.pop("microtenant_id", None)
+        if microtenant_id:
+            query_params["microtenantId"] = microtenant_id
+
+        # Build the query string
+        if query_params:
+            encoded_query_params = urlencode(query_params)
+            api_url += f"?{encoded_query_params}"
+
+        # Prepare request body and headers
+        body = {}
+        headers = {}
+        form = {}
+
+        # Create the request
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
+        )
+
+        if error:
+            return (None, None, error)
+
+        # Execute the request
+        response, error = self._request_executor.execute(request, AppConnectorController)
+
+        if error:
+            return (None, response, error)
+
+        # Parse the response into AppConnectorGroup instances
+        try:
+            result = []
+            for item in response.get_body():
+                result.append(AppConnectorController(
+                    self.form_response_body(item)
+                ))
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
 
     def get_connector(self, connector_id: str, **kwargs) -> Box:
         """
