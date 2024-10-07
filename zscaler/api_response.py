@@ -1,5 +1,4 @@
 import json
-import time
 
 
 class ZscalerAPIResponse:
@@ -16,7 +15,9 @@ class ZscalerAPIResponse:
         "ZDX": {"default": 10, "min": 1}  # ZDX has limit with minimum 1
     }
 
-    def __init__(self, request_executor, req, service_type, res_details=None, response_body="", data_type=None):
+    def __init__(self, request_executor, req, service_type, res_details=None, response_body="",
+                 data_type=None, max_items=None, max_pages=None, all_entries=False,
+                 sort_order=None, sort_by=None, sort_dir=None, start_time=None, end_time=None):
         # Safely handle None values for res_details
         self._url = res_details.url if res_details and hasattr(res_details, 'url') else None
         self._headers = req.get("headers", {})  # Headers for the request
@@ -27,12 +28,32 @@ class ZscalerAPIResponse:
         self._status = res_details.status if res_details and hasattr(res_details, 'status') else None
         self._request_executor = request_executor  # Request Executor for future calls
 
-        # Pagination properties
-        self._service_type = service_type  # Either "ZPA", "ZIA", or "ZDX"
+        # Custom options
+        self._max_items = max_items  # Max number of items to return, if provided
+        self._max_pages = max_pages  # Max number of pages to return, if provided
+        self._items_fetched = 0  # Tracks the total number of items fetched
+        self._pages_fetched = 0  # Tracks the total number of pages fetched
+
+        # Pagination and query parameters
+        self._service_type = service_type
         self._offset = self._params.get("offset", 0)  # Start with offset 0 for ZDX
         self._limit = self.validate_page_size(self._params.get("limit"), service_type)  # Validate limit for ZDX
         self._next_offset = None  # To track next_offset for ZDX
         self._list = []  # To store the list of results
+
+        # Adding optional query parameters for ZPA
+        if all_entries:
+            self._params['allEntries'] = True
+        if sort_order:
+            self._params['sortOrder'] = sort_order
+        if sort_by:
+            self._params['sortBy'] = sort_by
+        if sort_dir:
+            self._params['sortDir'] = sort_dir
+        if start_time:
+            self._params['startTime'] = start_time
+        if end_time:
+            self._params['endTime'] = end_time
 
         # Build response body based on content type (supports only JSON)
         if res_details and hasattr(res_details, 'content_type') and "application/json" in res_details.content_type:
@@ -94,6 +115,10 @@ class ZscalerAPIResponse:
                 self._total_pages = int(self._body.get("totalPages", 1))  # totalPages from the API response
                 self._total_count = int(self._body.get("totalCount", 0))  # totalCount from the API response
 
+        # Track the number of items fetched in the current page
+        self._items_fetched += len(self._list)
+        self._pages_fetched += 1
+
     def get_total_count(self):
         """
         Returns the total number of items in the API response (if available for ZPA).
@@ -108,7 +133,13 @@ class ZscalerAPIResponse:
         - For ZPA: Checks if the current page is less than totalPages.
         - For ZIA and ZCC: Continues fetching until no data is returned.
         - For ZDX: Continues fetching until next_offset becomes null.
+        - Custom: Stops if max_items or max_pages limits are reached.
         """
+        if self._max_items is not None and self._items_fetched >= self._max_items:
+            return False  # Stop if we've reached the max number of items
+        if self._max_pages is not None and self._pages_fetched >= self._max_pages:
+            return False  # Stop if we've reached the max number of pages
+
         if self._service_type == "ZPA":
             return self._page < self._total_pages
         elif self._service_type == "ZDX":
@@ -122,6 +153,7 @@ class ZscalerAPIResponse:
         - Stops for ZIA and ZCC when no data is returned.
         - For ZPA, stops when the total number of pages is reached.
         - For ZDX, stops when next_offset becomes null.
+        - Custom: Stops if max_items or max_pages limits are reached.
         """
         if not self.has_next():
             return None  # No more pages to fetch
@@ -150,6 +182,7 @@ class ZscalerAPIResponse:
             return None
 
         return self._list
+
 
 
 

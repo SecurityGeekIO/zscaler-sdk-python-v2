@@ -17,7 +17,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from zscaler.api_client import APIClient
 from zscaler.zpa.models.application_segment_pra import ApplicationSegmentPRA
-from zscaler.api_response import get_paginated_data
+from urllib.parse import urlencode
 from zscaler.utils import format_url, snake_to_camel, recursive_snake_to_camel, add_id_groups
 
 class AppSegmentsPRAAPI(APIClient):
@@ -25,35 +25,76 @@ class AppSegmentsPRAAPI(APIClient):
     A client object for Application Segments PRA (Privileged Remote Access).
     """
 
-    def list_segments_pra(self, **kwargs) -> list:
+    def __init__(self):
+        super().__init__()
+        self._base_url = ""
+        
+    def list_segments_pra(
+            self, query_params=None,
+            keep_empty_params=False
+    ) -> tuple:
         """
-        Retrieve all configured application segments.
+        Enumerates application segment pra in your organization with pagination.
+        A subset of application segment pra can be returned that match a supported
+        filter expression or query.
 
-        Keyword Args:
-            microtenant_id (str, optional): Optional microtenant ID if needed.
+        Args:
+            query_params {dict}: Map of query parameters for the request.
+                [query_params.pagesize] {int}: Page size for pagination.
+                [query_params.search] {str}: Search string for filtering results.
+                [query_params.microtenant_id] {str}: ID of the microtenant, if applicable.
+                [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
+                [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
+            keep_empty_params {bool}: Whether to include empty parameters in the query string.
 
         Returns:
-            list: A list of ApplicationSegment instances.
+            tuple: A tuple containing (list of AppSegmentsPRA instances, Response, error)
         """
+        # Initialize URL and HTTP method
+        http_method = "get".upper()
         api_url = format_url(f"{self._base_url}/application")
 
-        # Add microtenant_id to kwargs if provided
-        microtenant_id = kwargs.pop("microtenant_id", None)
+        # Handle query parameters (including microtenant_id if provided)
+        query_params = query_params or {}
+        microtenant_id = query_params.pop("microtenant_id", None)
         if microtenant_id:
-            kwargs["microtenantId"] = microtenant_id
+            query_params["microtenantId"] = microtenant_id
 
-        # Fetch paginated data using get_paginated_data
-        list_data, error = get_paginated_data(
-            request_executor=self._request_executor,
-            path=api_url,
-            **kwargs
+        # Build the query string
+        if query_params:
+            encoded_query_params = urlencode(query_params)
+            api_url += f"?{encoded_query_params}"
+
+        # Prepare request body and headers
+        body = {}
+        headers = {}
+        form = {}
+
+        # Create the request
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
         )
 
         if error:
-            return []
+            return (None, None, error)
 
-        # Convert the raw application segment data into ApplicationSegment objects
-        return [ApplicationSegmentPRA(segment) for segment in list_data]
+        # Execute the request
+        response, error = self._request_executor.execute(request, ApplicationSegmentPRA)
+
+        if error:
+            return (None, response, error)
+
+        # Parse the response into AppConnectorGroup instances
+        try:
+            result = []
+            for item in response.get_body():
+                result.append(ApplicationSegmentPRA(
+                    self.form_response_body(item)
+                ))
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
 
 
     def get_segment_pra(self, segment_id: str, **kwargs) -> tuple:

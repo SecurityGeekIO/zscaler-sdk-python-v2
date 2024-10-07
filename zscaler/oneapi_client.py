@@ -42,8 +42,12 @@ from zscaler.zpa.service_edge_groups import ServiceEdgeGroupAPI
 from zscaler.zpa.service_edge_schedule import ServiceEdgeSchedule
 from zscaler.zpa.trusted_networks import TrustedNetworksAPI
 
+# Zscaler Internet Access APIs
+from zscaler.zia.rule_labels import RuleLabelsAPI
 
+# Zscaler Client Connector APIs
 class Client(
+    # ZPA API Resources
     ApplicationSegmentAPI,
     AppSegmentsInspectionAPI,
     AppSegmentsPRAAPI,
@@ -74,6 +78,9 @@ class Client(
     ServiceEdgeGroupAPI,
     ServiceEdgeSchedule,
     TrustedNetworksAPI,
+    
+    # ZIA API Resources
+    RuleLabelsAPI
 ):
     """A Zscaler client object"""
 

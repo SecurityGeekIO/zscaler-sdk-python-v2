@@ -16,7 +16,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from zscaler.api_client import APIClient
 from zscaler.zpa.models.app_connector_groups import AppConnectorGroup
-from zscaler.api_response import get_paginated_data
+from urllib.parse import urlencode
 from zscaler.utils import format_url, add_id_groups, pick_version_profile, snake_to_camel
 
 
@@ -34,37 +34,71 @@ class AppConnectorGroupAPI(APIClient):
         super().__init__()
         self._base_url = ""
 
-    def list_connector_groups(self, **kwargs) -> tuple:
+    def list_connector_groups(
+            self, query_params=None,
+            keep_empty_params=False
+    ) -> tuple:
         """
-        Returns a list of all connector groups.
+        Enumerates connector groups in your organization with pagination.
+        A subset of connector groups can be returned that match a supported
+        filter expression or query.
 
-        Keyword Args:
-            max_items (int, optional): The maximum number of items to request before stopping iteration.
-            max_pages (int, optional): The maximum number of pages to request before stopping iteration.
-            pagesize (int, optional): Specifies the page size. The default size is 100, but the maximum size is 1000.
-            search (str, optional): The search string used to match against a department's name or comments attributes.
-            keep_empty_params (bool): Whether to include empty parameters in the query string.
-            microtenant_id (str, optional): ID of the microtenant, if applicable.
+        Args:
+            query_params {dict}: Map of query parameters for the request.
+                [query_params.pagesize] {int}: Page size for pagination.
+                [query_params.search] {str}: Search string for filtering results.
+                [query_params.microtenant_id] {str}: ID of the microtenant, if applicable.
+                [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
+                [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
+            keep_empty_params {bool}: Whether to include empty parameters in the query string.
 
         Returns:
             tuple: A tuple containing (list of AppConnectorGroup instances, Response, error)
         """
+        # Initialize URL and HTTP method
+        http_method = "get".upper()
         api_url = format_url(f"{self._base_url}/appConnectorGroup")
 
-        # Extract microtenant_id from kwargs and add to params if provided
-        microtenant_id = kwargs.pop("microtenant_id", None)
-        params = {"microtenantId": microtenant_id} if microtenant_id else {}
+        # Handle query parameters (including microtenant_id if provided)
+        query_params = query_params or {}
+        microtenant_id = query_params.pop("microtenant_id", None)
+        if microtenant_id:
+            query_params["microtenantId"] = microtenant_id
 
-        # Fetch paginated data using the request_executor
-        list_data, response, error = get_paginated_data(
-            request_executor=self._request_executor, path=api_url, params=params, **kwargs
+        # Build the query string
+        if query_params:
+            encoded_query_params = urlencode(query_params)
+            api_url += f"?{encoded_query_params}"
+
+        # Prepare request body and headers
+        body = {}
+        headers = {}
+        form = {}
+
+        # Create the request
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
         )
+
+        if error:
+            return (None, None, error)
+
+        # Execute the request
+        response, error = self._request_executor.execute(request, AppConnectorGroup)
 
         if error:
             return (None, response, error)
 
-        # Convert the raw data into AppConnectorGroup instances
-        result = [AppConnectorGroup(group) for group in list_data]
+        # Parse the response into AppConnectorGroup instances
+        try:
+            result = []
+            for item in response.get_body():
+                result.append(AppConnectorGroup(
+                    self.form_response_body(item)
+                ))
+        except Exception as error:
+            return (None, response, error)
+
         return (result, response, None)
 
     def get_connector_group(self, group_id: str, **kwargs) -> tuple:

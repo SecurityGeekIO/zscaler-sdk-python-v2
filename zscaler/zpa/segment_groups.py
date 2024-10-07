@@ -17,7 +17,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 from zscaler.api_client import APIClient
 from zscaler.zpa.models.segment_group import SegmentGroup
 from zscaler.utils import format_url
-from zscaler.api_response import get_paginated_data
+from urllib.parse import urlencode
 
 class SegmentGroupsAPI(APIClient):
     """
@@ -28,44 +28,74 @@ class SegmentGroupsAPI(APIClient):
         super().__init__()
         self._base_url = ""
 
-    def list_groups(self, **kwargs) -> list:
+    def list_groups(
+            self, query_params=None,
+            keep_empty_params=False
+    ) -> tuple:
         """
-        Returns all configured segment groups with pagination support.
+        Enumerates segment groups in your organization with pagination.
+        A subset of segment groups can be returned that match a supported
+        filter expression or query.
 
-        Keyword Args:
-            - search (str): The search string used to match against features and fields.
-            - search_field (str): The field to be searched (default is "name").
-            - max_items (int): Maximum number of items to return.
-            - max_pages (int): Maximum number of pages to return.
-            - pagesize (int): Number of items per page (default is 20, maximum is 500).
-            - keep_empty_params (bool): Whether to include empty parameters in the query string.
-            - microtenant_id (str): ID of the microtenant, if applicable.
+        Args:
+            query_params {dict}: Map of query parameters for the request.
+                [query_params.pagesize] {int}: Page size for pagination.
+                [query_params.search] {str}: Search string for filtering results.
+                [query_params.microtenant_id] {str}: ID of the microtenant, if applicable.
+                [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
+                [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
+            keep_empty_params {bool}: Whether to include empty parameters in the query string.
 
         Returns:
-            list: A list of `SegmentGroup` instances.
+            tuple: A tuple containing (list of AppConnectorGroup instances, Response, error)
         
         Example:
             >>> segment_groups = zpa.segment_groups.list_groups(search="example", pagesize=100)
         """
+        http_method = "get".upper()
         api_url = format_url(f"{self._base_url}/segmentGroup")
 
-        # Add microtenant_id to kwargs if provided
-        microtenant_id = kwargs.pop("microtenant_id", None)
+        # Handle query parameters (including microtenant_id if provided)
+        query_params = query_params or {}
+        microtenant_id = query_params.pop("microtenant_id", None)
         if microtenant_id:
-            kwargs["microtenantId"] = microtenant_id
+            query_params["microtenantId"] = microtenant_id
 
-        # Fetch paginated data using the request executor
-        list_data, error = get_paginated_data(
-            request_executor=self._request_executor,
-            path=api_url,
-            **kwargs
+        # Build the query string
+        if query_params:
+            encoded_query_params = urlencode(query_params)
+            api_url += f"?{encoded_query_params}"
+
+        # Prepare request body and headers
+        body = {}
+        headers = {}
+        form = {}
+
+        # Create the request
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
         )
 
         if error:
-            return []
+            return (None, None, error)
 
-        # Convert the raw segment group data into SegmentGroup objects
-        return [SegmentGroup(group) for group in list_data]
+        # Execute the request
+        response, error = self._request_executor.execute(request, SegmentGroup)
+
+        if error:
+            return (None, response, error)
+
+        # Parse the response into AppConnectorGroup instances
+        try:
+            result = []
+            for item in response.get_body():
+                result.append(SegmentGroup(
+                    self.form_response_body(item)
+                ))
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
 
     def get_group(self, group_id: str, **kwargs) -> SegmentGroup:
         """

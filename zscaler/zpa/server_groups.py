@@ -17,7 +17,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 from zscaler.api_client import APIClient
 from zscaler.zpa.models.server_group import ServerGroup
 from zscaler.utils import format_url, snake_to_camel, add_id_groups
-from zscaler.api_response import get_paginated_data
+from urllib.parse import urlencode
 
 
 class ServerGroupsAPI(APIClient):
@@ -29,43 +29,74 @@ class ServerGroupsAPI(APIClient):
         super().__init__()
         self._base_url = ""
 
-    def list_server_groups(self, **kwargs) -> list:
+    def list_server_groups(
+            self, query_params=None,
+            keep_empty_params=False
+    ) -> tuple:
         """
-        Returns a list of all configured server groups.
+        Enumerates server groups in your organization with pagination.
+        A subset of server groups can be returned that match a supported
+        filter expression or query.
 
-        Keyword Args:
-            max_items (int, optional): The maximum number of items to request before stopping iteration.
-            max_pages (int, optional): The maximum number of pages to request before stopping iteration.
-            pagesize (int, optional): The page size, default is 20, maximum is 500.
-            search (str, optional): The search string used to match against features and fields.
-            keep_empty_params (bool, optional): Whether to include empty parameters in the query string.
-            microtenant_id (str, optional): Optional microtenant ID if needed.
+        Args:
+            query_params {dict}: Map of query parameters for the request.
+                [query_params.pagesize] {int}: Page size for pagination.
+                [query_params.search] {str}: Search string for filtering results.
+                [query_params.microtenant_id] {str}: ID of the microtenant, if applicable.
+                [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
+                [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
+            keep_empty_params {bool}: Whether to include empty parameters in the query string.
 
         Returns:
-            list: A list of `ServerGroup` instances.
+            tuple: A tuple containing (list of ServerGroups instances, Response, error)
         
         Examples:
             >>> server_groups = zpa.server_groups.list_groups(search="example")
         """
+        http_method = "get".upper()
         api_url = format_url(f"{self._base_url}/serverGroup")
 
-        # Add microtenant_id to kwargs if provided
-        microtenant_id = kwargs.pop("microtenant_id", None)
+        # Handle query parameters (including microtenant_id if provided)
+        query_params = query_params or {}
+        microtenant_id = query_params.pop("microtenant_id", None)
         if microtenant_id:
-            kwargs["microtenantId"] = microtenant_id
+            query_params["microtenantId"] = microtenant_id
 
-        # Fetch paginated data using get_paginated_data
-        list_data, error = get_paginated_data(
-            request_executor=self._request_executor,
-            path=api_url,
-            **kwargs
+        # Build the query string
+        if query_params:
+            encoded_query_params = urlencode(query_params)
+            api_url += f"?{encoded_query_params}"
+
+        # Prepare request body and headers
+        body = {}
+        headers = {}
+        form = {}
+
+        # Create the request
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
         )
 
         if error:
-            return []
+            return (None, None, error)
 
-        # Convert the raw server group data into ServerGroup objects
-        return [ServerGroup(group) for group in list_data]
+        # Execute the request
+        response, error = self._request_executor.execute(request, ServerGroup)
+
+        if error:
+            return (None, response, error)
+
+        # Parse the response into AppConnectorGroup instances
+        try:
+            result = []
+            for item in response.get_body():
+                result.append(ServerGroup(
+                    self.form_response_body(item)
+                ))
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
 
     def get_group(self, group_id: str, **kwargs) -> tuple:
         """

@@ -17,7 +17,7 @@
 from zscaler.api_client import APIClient
 from zscaler.zpa.models.trusted_network import TrustedNetwork
 from zscaler.utils import format_url
-from zscaler.api_response import get_paginated_data  # Importing the correct paginated function
+from urllib.parse import urlencode
 
 
 class TrustedNetworksAPI(APIClient):
@@ -29,7 +29,10 @@ class TrustedNetworksAPI(APIClient):
         super().__init__()  # Inherit initialization from APIClient
         self._base_url = ""
 
-    def list_trusted_networks(self, **kwargs) -> list:
+    def list_trusted_networks(
+            self, query_params=None,
+            keep_empty_params=False
+    ) -> tuple:
         """
         Returns a list of all configured trusted networks.
 
@@ -46,20 +49,47 @@ class TrustedNetworksAPI(APIClient):
         Example:
             >>> trusted_networks = zpa.trusted_networks.list_trusted_networks(search="example")
         """
+        http_method = "get".upper()
         api_url = format_url(f"{self._base_url}/network")
 
-        # Fetch paginated data using get_paginated_data from APIClient
-        list_data, error = get_paginated_data(
-            request_executor=self._request_executor,
-            path=api_url,
-            **kwargs  # Pass any additional pagination/filter params
+        # Handle query parameters (including microtenant_id if provided)
+        query_params = query_params or {}
+        
+        # Build the query string
+        if query_params:
+            encoded_query_params = urlencode(query_params)
+            api_url += f"?{encoded_query_params}"
+
+        # Prepare request body and headers
+        body = {}
+        headers = {}
+        form = {}
+
+        # Create the request
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
         )
 
         if error:
-            raise Exception(f"Error fetching trusted networks data: {error}")
+            return (None, None, error)
 
-        # Convert the raw trusted network data into TrustedNetwork objects
-        return [TrustedNetwork(network) for network in list_data]
+        # Execute the request
+        response, error = self._request_executor.execute(request, TrustedNetwork)
+
+        if error:
+            return (None, response, error)
+
+        # Parse the response into AppConnectorGroup instances
+        try:
+            result = []
+            for item in response.get_body():
+                result.append(TrustedNetwork(
+                    self.form_response_body(item)
+                ))
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
 
     def get_network(self, network_id: str) -> TrustedNetwork:
         """

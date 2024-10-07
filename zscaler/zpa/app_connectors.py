@@ -16,46 +16,86 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from zscaler.api_client import APIClient
 from zscaler.zpa.models.app_connectors import AppConnectorController
-from zscaler.api_response import get_paginated_data
+from urllib.parse import urlencode
 from zscaler.utils import format_url, snake_to_camel
 
 
 class AppConnectorControllerAPI(APIClient):
     """
-    A Client object for the App Connector Groups resource.
+    A Client object for the App Connectors resource.
     """
 
     def __init__(self):
         super().__init__()
         self._base_url = ""
-        
-    def list_connectors(self, **kwargs) -> list:
-        """
-        Returns all configured ZPA App Connectors.
 
-        Keyword Args:
-            max_items (int, optional): Maximum number of items to return.
-            max_pages (int, optional): Maximum number of pages to return.
-            pagesize (int, optional): Number of items per page (default is 100, maximum is 1000).
-            search (str, optional): The search string used to match against a department's name or comments attributes.
+    def list_connectors(
+            self, query_params=None,
+            keep_empty_params=False
+    ) -> tuple:
+        """
+        Enumerates connectors in your organization with pagination.
+        A subset of connectors can be returned that match a supported
+        filter expression or query.
+
+        Args:
+            query_params {dict}: Map of query parameters for the request.
+                [query_params.pagesize] {int}: Page size for pagination.
+                [query_params.search] {str}: Search string for filtering results.
+                [query_params.microtenant_id] {str}: ID of the microtenant, if applicable.
+                [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
+                [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
+            keep_empty_params {bool}: Whether to include empty parameters in the query string.
 
         Returns:
-            list: A list of `AppConnector` instances.
+            tuple: A tuple containing (list of AppConnector instances, Response, error)
         """
-        api_url = f"{self._base_url}/connector"
+        # Initialize URL and HTTP method
+        http_method = "get".upper()
+        api_url = format_url(f"{self._base_url}/connector")
 
-        # Fetch paginated data
-        list_data, error = get_paginated_data(
-            request_executor=self._request_executor,
-            path=api_url,
-            **kwargs
+        # Handle query parameters (including microtenant_id if provided)
+        query_params = query_params or {}
+        microtenant_id = query_params.pop("microtenant_id", None)
+        if microtenant_id:
+            query_params["microtenantId"] = microtenant_id
+
+        # Build the query string
+        if query_params:
+            encoded_query_params = urlencode(query_params)
+            api_url += f"?{encoded_query_params}"
+
+        # Prepare request body and headers
+        body = {}
+        headers = {}
+        form = {}
+
+        # Create the request
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
         )
 
         if error:
-            return []
+            return (None, None, error)
 
-        # Convert the raw data to AppConnector objects
-        return [AppConnectorController(connector) for connector in list_data]
+        # Execute the request
+        response, error = self._request_executor.execute(request, AppConnectorController)
+
+        if error:
+            return (None, response, error)
+
+        # Parse the response into AppConnector instances
+        try:
+            result = []
+            for item in response.get_body():
+                result.append(AppConnectorController(
+                    self.form_response_body(item)
+                ))
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
+
 
     def get_connector(self, connector_id: str, **kwargs) -> AppConnectorController:
         """

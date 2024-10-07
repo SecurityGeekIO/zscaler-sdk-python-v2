@@ -27,28 +27,32 @@ class AppServersAPI(APIClient):
     def __init__(self):
         self._base_url = ""
 
-    def list_servers(self, **kwargs) -> list:
+    def list_servers(
+            self, query_params=None,
+            keep_empty_params=False
+    ) -> tuple:
         """
-        Returns all configured servers with pagination support.
+        Enumerates application servers in your organization with pagination.
+        A subset of application servers can be returned that match a supported
+        filter expression or query.
 
         Args:
-            **kwargs: Optional keyword arguments to be passed to the pagination handler, such as:
-                - search: The search string used to match against features and fields.
-                - search_field: The field to be searched (default is "name").
-                - max_items: Maximum number of items to return.
-                - max_pages: Maximum number of pages to return.
-                - pagesize: Number of items per page (default is 20, maximum is 500).
-                - sort_order: The order in which to sort (e.g., ASC or DESC).
-                - sort_by: The field by which to sort the results.
-                - microtenant_id: ID of the microtenant, if applicable.
+            query_params {dict}: Map of query parameters for the request.
+                [query_params.pagesize] {int}: Page size for pagination.
+                [query_params.search] {str}: Search string for filtering results.
+                [query_params.microtenant_id] {str}: ID of the microtenant, if applicable.
+                [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
+                [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
+            keep_empty_params {bool}: Whether to include empty parameters in the query string.
 
         Returns:
-            list: A list of `AppServers` instances.
+            tuple: A tuple containing (list of AppConnectorGroup instances, Response, error)
 
         Example:
             >>> servers = zpa.servers.list_servers(search="Example 100", pagesize=100, microtenant_id="216199618143464722")
         """
         # Construct the API URL with the base URL and the servers endpoint
+        http_method = "get".upper()
         api_url = format_url(
             f"""
             {self._base_url}
@@ -56,24 +60,46 @@ class AppServersAPI(APIClient):
         """
         )
 
-        # Add microtenant_id to kwargs if provided
-        microtenant_id = kwargs.pop("microtenant_id", None)
+        # Handle query parameters (including microtenant_id if provided)
+        query_params = query_params or {}
+        microtenant_id = query_params.pop("microtenant_id", None)
         if microtenant_id:
-            kwargs["microtenantId"] = microtenant_id
+            query_params["microtenantId"] = microtenant_id
 
-        # Ensure the query params are properly encoded
-        if kwargs:
-            encoded_query_params = urlencode(kwargs)
+        # Build the query string
+        if query_params:
+            encoded_query_params = urlencode(query_params)
             api_url += f"?{encoded_query_params}"
 
-        # Call get_paginated_data to fetch the paginated server data
-        list_data, error = get_paginated_data(request_executor=self.rest, path=api_url, **kwargs)
+        # Prepare request body and headers
+        body = {}
+        headers = {}
+        form = {}
+
+        # Create the request
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
+        )
 
         if error:
-            raise Exception(f"Error fetching server data: {error}")
+            return (None, None, error)
 
-        # Convert the raw server data into AppServers objects
-        return [AppServers(server) for server in list_data]
+        # Execute the request
+        response, error = self._request_executor.execute(request, AppServers)
+
+        if error:
+            return (None, response, error)
+
+        try:
+            result = []
+            for item in response.get_body():
+                result.append(AppServers(
+                    self.form_response_body(item)
+                ))
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
 
     def get_server(self, server_id: str, **kwargs) -> AppServers:
         """

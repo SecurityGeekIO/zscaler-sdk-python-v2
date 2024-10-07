@@ -17,7 +17,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 from zscaler.oneapi_object import ZscalerObject
 from zscaler.zpa.models import server_group\
     as server_group
-class ApplicationSegmentPRA(ZscalerObject):
+class ApplicationSegmentInspection(ZscalerObject):
     """
     A class representing the Application Segment in ZPA for PRA (Privileged Remote Access).
     """

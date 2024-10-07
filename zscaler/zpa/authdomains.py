@@ -27,16 +27,12 @@ class AuthDomainsAPI(APIClient):
     def __init__(self):
         self._base_url = ""
 
-    def get_auth_domains(self, query_params={}, keep_empty_params=False):
+    def get_auth_domains(self):
         """
         Returns information on authentication domains.
 
-        Args:
-            query_params (dict): Optional query parameters for the request.
-            keep_empty_params (bool): Whether to include empty query parameters.
-
         Returns:
-            dict: The resource record for the authentication domains.
+            tuple: A dictionary containing custom ZPA Inspection Control HTTP Methods.
 
         Example:
             >>> auth_domains, response, error = zpa.authdomains.get_auth_domains()
@@ -51,25 +47,31 @@ class AuthDomainsAPI(APIClient):
             """
         )
 
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
+        body = {}
+        headers = {}
+        form = {}
 
-        body, headers, form = {}, {}, {}
-
+        # Create the request
         request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
+            http_method, api_url, body, headers, form
         )
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        # Execute the request
+        response, error = self._request_executor.execute(request, str)  # Expecting a list of strings
 
         if error:
             return (None, response, error)
 
-        return response.get_body(), response, None
+        # Parse the response
+        try:
+            result = response.get_body()  # In this case, response is a list of strings like ["PASS", "BLOCK", "REDIRECT"]
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
 
 
 # from box import Box

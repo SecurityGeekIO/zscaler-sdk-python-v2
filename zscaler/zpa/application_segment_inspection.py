@@ -25,29 +25,86 @@ from zscaler.utils import (
     snake_to_camel,
 )
 from zscaler.api_client import APIClient
-
+from zscaler.zpa.models.application_segment_inspection import ApplicationSegmentInspection
+from urllib.parse import urlencode
+from zscaler.utils import format_url
 
 class AppSegmentsInspectionAPI(APIClient):
+    """
+    A client object for the Application Segment Inspection resource.
+    """
+    
+    def __init__(self):
+        super().__init__()  # Inherit initialization from APIClient
+        self._base_url = ""
+        
     reformat_params = [
         ("server_group_ids", "serverGroups"),
     ]
 
-    # def __init__(self, client: ZPAClient):
-    #     self.rest = client
-
-    def list_segment_inspection(self, **kwargs) -> BoxList:
+    def list_segment_inspection(
+            self, query_params=None,
+            keep_empty_params=False
+    ) -> tuple:
         """
-        Retrieve all configured AppProtection application segments.
+        Returns all configured application segment inspection with pagination support.
+
+        Keyword Args:
+            max_items (int): The maximum number of items to request before stopping iteration.
+            max_pages (int): The maximum number of pages to request before stopping iteration.
+            pagesize (int): Specifies the page size. The default size is 20, but the maximum size is 500.
+            search (str, optional): The search string used to match against features and fields.
+            microtenant_id (str, optional): ID of the microtenant, if applicable.
+            keep_empty_params (bool, optional): Whether to include empty parameters in the query string.
 
         Returns:
-            :obj:`BoxList`: List of AppProtection application segments.
-
+            tuple: A tuple containing a list of `AppSegmentsInspection` instances, response object, and error if any.
         Examples:
             >>> app_segments = zpa.app_segments_inspection.list_segments_inspection()
 
         """
-        list, _ = self.rest.get_paginated_data(path="/application", **kwargs, api_version="v1")
-        return list
+        # Initialize URL and HTTP method
+        http_method = "get".upper()
+        api_url = format_url(f"{self._base_url}/application")
+
+        # Handle query parameters (including microtenant_id if provided)
+        query_params = query_params or {}
+
+        # Build the query string
+        if query_params:
+            encoded_query_params = urlencode(query_params)
+            api_url += f"?{encoded_query_params}"
+
+        # Prepare request body and headers
+        body = {}
+        headers = {}
+        form = {}
+
+        # Create the request
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
+        )
+
+        if error:
+            return (None, None, error)
+
+        # Execute the request
+        response, error = self._request_executor.execute(request, ApplicationSegmentInspection)
+
+        if error:
+            return (None, response, error)
+
+        # Parse the response into AppConnectorGroup instances
+        try:
+            result = []
+            for item in response.get_body():
+                result.append(ApplicationSegmentInspection(
+                    self.form_response_body(item)
+                ))
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
 
     def get_segment_inspection(self, segment_id: str, **kwargs) -> Box:
         """

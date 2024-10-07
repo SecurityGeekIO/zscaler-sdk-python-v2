@@ -15,16 +15,18 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 
-from box import Box, BoxList
-from requests import Response
-
+from zscaler.api_client import APIClient
 from zscaler.utils import Iterator, convert_keys, snake_to_camel
-from zscaler.zia import ZIAClient
 
 
-class RuleLabelsAPI:
-    def __init__(self, client: ZIAClient):
-        self.rest = client
+
+class RuleLabelsAPI(APIClient):
+    """
+    A Client object for the Rule labels resource.
+    """
+    def __init__(self):
+        super().__init__()
+        self._base_url = ""
 
     def list_labels(self, **kwargs) -> BoxList:
         """

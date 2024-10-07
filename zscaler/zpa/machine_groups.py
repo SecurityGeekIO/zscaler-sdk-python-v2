@@ -29,42 +29,73 @@ class MachineGroupsAPI(APIClient):
         super().__init__()  # Inherit the request executor from APIClient
         self._base_url = ""
 
-    def list_machine_groups(self, **kwargs) -> list:
+    def list_machine_groups(
+            self, query_params=None,
+            keep_empty_params=False
+    ) -> tuple:
         """
-        Fetches all configured machine groups with pagination support.
+        Enumerates machine groups in your organization with pagination.
+        A subset of machine groups can be returned that match a supported
+        filter expression or query.
 
-        Keyword Args:
-            max_items (int): The maximum number of items to request before stopping iteration.
-            max_pages (int): The maximum number of pages to request before stopping iteration.
-            pagesize (int): The page size, default is 20 and maximum is 500.
-            search (str, optional): The search string used to match against features and fields.
-            keep_empty_params (bool): Whether to include empty parameters in the query string.
+        Args:
+            query_params {dict}: Map of query parameters for the request.
+                [query_params.pagesize] {int}: Page size for pagination.
+                [query_params.search] {str}: Search string for filtering results.
+                [query_params.microtenant_id] {str}: ID of the microtenant, if applicable.
+                [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
+                [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
+            keep_empty_params {bool}: Whether to include empty parameters in the query string.
 
         Returns:
-            list: A list of `MachineGroup` instances.
+            tuple: A tuple containing (list of AppConnectorGroup instances, Response, error)
         
         Example:
             >>> machine_groups = zpa.machine_groups.list_machine_groups(search="example")
         """
-        api_url = f"/machineGroup"  # The relative endpoint path without base URL
-        print(f"Requesting URL: {self._base_url}{api_url}")  # Debugging the constructed URL
+        http_method = "get".upper()
+        api_url = format_url(f"{self._base_url}/appConnectorGroup")
+        
+        query_params = query_params or {}
+        microtenant_id = query_params.pop("microtenant_id", None)
+        if microtenant_id:
+            query_params["microtenantId"] = microtenant_id
 
-        # Fetch paginated data using the request_executor
-        list_data, error = get_paginated_data(
-            request_executor=self._request_executor,
-            path=api_url,  # Pass the relative path
-            api_version="v1",  # Specify the API version for ZPA
-            **kwargs  # Pass any additional pagination/filter params
+        # Build the query string
+        if query_params:
+            encoded_query_params = urlencode(query_params)
+            api_url += f"?{encoded_query_params}"
+
+        # Prepare request body and headers
+        body = {}
+        headers = {}
+        form = {}
+
+        # Create the request
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
         )
 
         if error:
-            raise Exception(f"Error fetching machine groups data: {error}")
+            return (None, None, error)
 
-        if list_data:
-            return [MachineGroup(group) for group in list_data]
-        else:
-            print("No machine groups found.")
-            return []
+        # Execute the request
+        response, error = self._request_executor.execute(request, MachineGroup)
+
+        if error:
+            return (None, response, error)
+
+        # Parse the response into AppConnectorGroup instances
+        try:
+            result = []
+            for item in response.get_body():
+                result.append(MachineGroup(
+                    self.form_response_body(item)
+                ))
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
 
     def get_group(self, group_id, query_params={}, keep_empty_params=False):
         """

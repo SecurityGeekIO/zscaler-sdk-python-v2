@@ -33,33 +33,42 @@ class CloudBrowserIsolationAPI(APIClient):
         super().__init__()
         self._base_url = ""
         
-    def list_cbi_banners(self, **kwargs) -> tuple:
+    def list_cbi_banners(self) -> tuple:
         """
         Returns a list of all cloud browser isolation banners.
-
-        Keyword Args:
-            max_items (int): The maximum number of items to request before stopping iteration.
-            max_pages (int): The maximum number of pages to request before stopping iteration.
-            pagesize (int): Specifies the page size. The default size is 20, but the maximum size is 500.
-            search (str, optional): The search string used to match against features and fields.
 
         Returns:
             tuple: A tuple containing a list of `CBIBanner` instances, response object, and error if any.
         """
-        api_url = format_url(f"{self._base_url}/banners")
+        http_method = "get".upper()
+        api_url = format_url(f"{self._base_url}/banners", api_version="cbiconfig_v1")
 
-        # Fetch paginated data using the request_executor
-        list_data, response, error = get_paginated_data(
-            request_executor=self._request_executor,
-            path=api_url,
-            **kwargs,
-            api_version="cbiconfig_v1"
+        # Prepare request
+        body = {}
+        headers = {}
+        form = {}
+
+        # Create the request
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body, headers, form
         )
+
+        if error:
+            return (None, None, error)
+
+        # Execute the request
+        response, error = self._request_executor.execute(request, CBIBanner)
 
         if error:
             return (None, response, error)
 
-        return ([CBIBanner(banner) for banner in list_data], response, None)
+        # Parse the response into CBIBanner instances
+        try:
+            result = [CBIBanner(self.form_response_body(item)) for item in response.get_body()]
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
 
     def get_cbi_banner(self, banner_id: str, **kwargs) -> tuple:
         """
@@ -194,31 +203,42 @@ class CloudBrowserIsolationAPI(APIClient):
 
         return (response, None)
 
-    def list_cbi_certificates(self, **kwargs) -> tuple:
+    def list_cbi_certificates(self) -> tuple:
         """
         Returns a list of all cloud browser isolation certificates.
-
-        Keyword Args:
-            max_items (int): The maximum number of items to request before stopping iteration.
-            max_pages (int): The maximum number of pages to request before stopping iteration.
-            pagesize (int): Specifies the page size. The default size is 20, but the maximum size is 500.
-            search (str, optional): The search string used to match against features and fields.
 
         Returns:
             tuple: A tuple containing a list of `CBICertificate` instances, response object, and error if any.
         """
+        http_method = "get".upper()
         api_url = format_url(f"{self._base_url}/certificates", api_version="cbiconfig_v1")
 
-        list_data, response, error = get_paginated_data(
-            request_executor=self._request_executor,
-            path=api_url,
-            **kwargs
+        # Prepare request
+        body = {}
+        headers = {}
+        form = {}
+
+        # Create the request
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body, headers, form
         )
+
+        if error:
+            return (None, None, error)
+
+        # Execute the request
+        response, error = self._request_executor.execute(request, CBICertificate)
 
         if error:
             return (None, response, error)
 
-        return ([CBICertificate(cert) for cert in list_data], response, None)
+        # Parse the response into CBICertificate instances
+        try:
+            result = [CBICertificate(self.form_response_body(item)) for item in response.get_body()]
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
 
     def get_cbi_certificate(self, certificate_id: str, **kwargs) -> tuple:
         """
@@ -374,33 +394,56 @@ class CloudBrowserIsolationAPI(APIClient):
 
         return (response, None)
 
-    def list_cbi_profiles(self, **kwargs) -> tuple:
+    def list_cbi_profiles(
+            self, query_params=None,
+            keep_empty_params=False
+    ) -> tuple:
         """
-        Returns a list of all cloud browser isolation profiles.
+        Enumerates CBI Profiles in your organization with pagination.
+        A subset of connector groups can be returned that match a supported
+        filter expression or query.
 
-        Keyword Args:
-            max_items (int): The maximum number of items to request before stopping iteration.
-            max_pages (int): The maximum number of pages to request before stopping iteration.
-            pagesize (int): Specifies the page size. The default size is 20, but the maximum size is 500.
-            search (str, optional): The search string used to match against features and fields.
-            keep_empty_params (bool): Whether to include empty parameters in the query string.
+        Args:
+            query_params {dict}: Map of query parameters for the request.
+                [query_params.pagesize] {int}: Page size for pagination.
+                [query_params.search] {str}: Search string for filtering results.
+                [query_params.microtenant_id] {str}: ID of the microtenant, if applicable.
+                [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
+                [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
+            keep_empty_params {bool}: Whether to include empty parameters in the query string.
 
         Returns:
-            tuple: A tuple containing a list of `CBIProfile` instances, response object, and error if any.
+            tuple: A tuple containing (list of CBI Profiles instances, Response, error)
         """
-        api_url = format_url(f"{self._base_url}/isolation/profiles", api_version="cbiconfig_v1")
+        http_method = "get".upper()
+        api_url = format_url(f"{self._base_url}/isolation/profiles")
 
-        # Fetch paginated data using the request_executor
-        list_data, response, error = get_paginated_data(
-            request_executor=self._request_executor,
-            path=api_url,
-            **kwargs
+        # Prepare request
+        body = {}
+        headers = {}
+        form = {}
+
+        # Create the request
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body, headers, form
         )
+
+        if error:
+            return (None, None, error)
+
+        # Execute the request
+        response, error = self._request_executor.execute(request, CBIProfile)
 
         if error:
             return (None, response, error)
 
-        return ([CBIProfile(profile) for profile in list_data], response, None)
+        # Parse the response into CBIProfile instances
+        try:
+            result = [CBIProfile(self.form_response_body(item)) for item in response.get_body()]
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
 
     def get_cbi_profile(self, profile_id: str, **kwargs) -> tuple:
         """
@@ -445,7 +488,7 @@ class CloudBrowserIsolationAPI(APIClient):
 
         return (None, response, f"Profile with name {name} not found")
 
-    def list_cbi_zpa_profiles(self, show_disabled: bool = None, scope_id: str = None, **kwargs) -> tuple:
+    def list_cbi_zpa_profiles(self) -> tuple:
         """
         Returns a list of all cloud browser isolation ZPA profiles, with options to filter by disabled status and scope.
 
@@ -456,24 +499,35 @@ class CloudBrowserIsolationAPI(APIClient):
         Returns:
             tuple: A tuple containing a list of `ZPAProfile` instances, response object, and error if any.
         """
-        params = {}
-        if show_disabled is not None:
-            params["showDisabled"] = show_disabled
-        if scope_id is not None:
-            params["scopeId"] = scope_id
-
+        http_method = "get".upper()
         api_url = format_url(f"{self._base_url}/isolation/zpaprofiles", api_version="cbiconfig_v1")
-        list_data, response, error = get_paginated_data(
-            request_executor=self._request_executor,
-            path=api_url,
-            params=params,
-            **kwargs
+
+        # Prepare request
+        body = {}
+        headers = {}
+        form = {}
+
+        # Create the request
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body, headers, form
         )
+
+        if error:
+            return (None, None, error)
+
+        # Execute the request
+        response, error = self._request_executor.execute(request, ZPACBIProfile)
 
         if error:
             return (None, response, error)
 
-        return ([ZPACBIProfile(profile) for profile in list_data], response, None)
+        # Parse the response into ZPACBIProfile instances
+        try:
+            result = [ZPACBIProfile(self.form_response_body(item)) for item in response.get_body()]
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
     
     def add_cbi_profile(self, name: str, region_ids: list, certificate_ids: list, **kwargs) -> tuple:
         """
@@ -709,18 +763,35 @@ class CloudBrowserIsolationAPI(APIClient):
             >>> for region in zpa.isolation.list_cbi_regions():
             ...    pprint(region)
         """
+        http_method = "get".upper()
         api_url = format_url(f"{self._base_url}/regions", api_version="cbiconfig_v1")
 
-        # Fetch paginated data using get_paginated_data
-        list_data, error = get_paginated_data(
-            request_executor=self._request_executor, path=api_url, **kwargs
+        # Prepare request
+        body = {}
+        headers = {}
+        form = {}
+
+        # Create the request
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body, headers, form
         )
 
         if error:
-            return None
+            return (None, None, error)
 
-        # Convert the raw data into CBIRegion objects
-        return [CBIRegion(region) for region in list_data]
+        # Execute the request
+        response, error = self._request_executor.execute(request, CBIRegion)
+
+        if error:
+            return (None, response, error)
+
+        # Parse the response into CBIRegion instances
+        try:
+            result = [CBIRegion(self.form_response_body(item)) for item in response.get_body()]
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
 
     def get_cbi_region(self, region_id: str) -> tuple:
         """

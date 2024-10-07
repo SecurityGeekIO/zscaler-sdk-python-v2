@@ -17,7 +17,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 from zscaler.api_client import APIClient
 from zscaler.zpa.models.provisioning_keys import ProvisioningKey
 from zscaler.utils import format_url, snake_to_camel
-from zscaler.api_response import get_paginated_data
+from urllib.parse import urlencode
 
 
 def simplify_key_type(key_type):
@@ -47,27 +47,26 @@ class ProvisioningKeyAPI(APIClient):
         super().__init__()
         self._base_url = ""
 
-    def list_provisioning_keys(self, key_type: str, **kwargs) -> list:
+    def list_provisioning_keys(
+            self, key_type: str, query_params=None,
+            keep_empty_params=False
+    ) -> tuple:
         """
         Returns a list of all configured provisioning keys that match the specified ``key_type``.
 
         Args:
-            key_type (str): The type of provisioning key, accepted values are:
+            key_type (str): The type of provisioning key. Accepted values are:
                 ``connector`` and ``service_edge``.
-            **kwargs: Optional keyword args.
-
-        Keyword Args:
-            max_items (int, optional):
-                The maximum number of items to request before stopping iteration.
-            max_pages (int, optional):
-                The maximum number of pages to request before stopping iteration.
-            pagesize (int, optional):
-                Specifies the page size. The default size is 20, but the maximum size is 500.
-            search (str, optional):
-                The search string used to match against features and fields.
+            query_params (dict, optional): Map of query parameters for the request.
+                [query_params.pagesize] {int}: Page size for pagination.
+                [query_params.search] {str}: Search string for filtering results.
+                [query_params.microtenant_id] {str}: ID of the microtenant, if applicable.
+                [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
+                [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
+            keep_empty_params (bool): Whether to include empty parameters in the query string.
 
         Returns:
-            list: A list containing the requested provisioning keys.
+            tuple: A tuple containing (list of ProvisioningKey instances, Response, error)
 
         Examples:
             List all App Connector provisioning keys:
@@ -80,18 +79,46 @@ class ProvisioningKeyAPI(APIClient):
             >>> for key in zpa.provisioning.list_provisioning_keys(key_type="service_edge"):
             ...    print(key)
         """
+        # Ensure the key_type is correctly formatted
         api_url = format_url(f"{self._base_url}/associationType/{simplify_key_type(key_type)}/provisioningKey")
 
-        # Fetch paginated data using get_paginated_data
-        list_data, error = get_paginated_data(
-            request_executor=self._request_executor, path=api_url, **kwargs
+        # Handle query parameters (including microtenant_id if provided)
+        query_params = query_params or {}
+        microtenant_id = query_params.pop("microtenant_id", None)
+        if microtenant_id:
+            query_params["microtenantId"] = microtenant_id
+
+        # Build the query string
+        if query_params:
+            encoded_query_params = urlencode(query_params)
+            api_url += f"?{encoded_query_params}"
+
+        # Prepare request body and headers
+        body = {}
+        headers = {}
+        form = {}
+
+        # Create the request
+        request, error = self._request_executor.create_request(
+            "get".upper(), api_url, body, headers, form, keep_empty_params=keep_empty_params
         )
 
         if error:
-            return []
+            return (None, None, error)
 
-        # Convert the raw provisioning key data into ProvisioningKey objects
-        return [ProvisioningKey(key) for key in list_data]
+        # Execute the request
+        response, error = self._request_executor.execute(request, ProvisioningKey)
+
+        if error:
+            return (None, response, error)
+
+        # Parse the response into ProvisioningKey instances
+        try:
+            result = [ProvisioningKey(self.form_response_body(item)) for item in response.get_body()]
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
 
     def get_provisioning_key(self, key_id: str, key_type: str, **kwargs) -> ProvisioningKey:
         """

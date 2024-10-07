@@ -17,9 +17,10 @@
 
 from box import Box, BoxList
 from requests import Response
-import os
-from zscaler.utils import add_id_groups, pick_version_profile, snake_to_camel
 from zscaler.api_client import APIClient
+import os
+from zscaler.utils import add_id_groups, snake_to_camel
+
 
 
 class AppConnectorControllerAPI(APIClient):

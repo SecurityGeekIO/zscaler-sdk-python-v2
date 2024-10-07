@@ -1,7 +1,7 @@
 from zscaler.api_client import APIClient
 from zscaler.zpa.models.policyset_controller_v1 import PolicySetControllerV1
 from zscaler.utils import format_url, snake_to_camel, convert_keys, add_id_groups
-from zscaler.api_response import get_paginated_data
+from urllib.parse import urlencode
 
 class PolicySetControllerAPI(APIClient):
     """
@@ -254,7 +254,9 @@ class PolicySetControllerAPI(APIClient):
 
         return None
 
-    def list_rules(self, policy_type: str, **kwargs) -> list:
+    def list_rules(
+            self, policy_type: str, query_params=None, keep_empty_params=False
+    ) -> tuple:
         """
         Returns policy rules for a given policy type.
 
@@ -277,22 +279,46 @@ class PolicySetControllerAPI(APIClient):
         Example:
             >>> rules = zpa.policies.list_rules('access')
         """
+        # Map the policy type to the ZPA API equivalent
         mapped_policy_type = self.POLICY_MAP.get(policy_type)
         if not mapped_policy_type:
             raise ValueError(f"Incorrect policy type provided: {policy_type}")
 
+        http_method = "get".upper()
         api_url = format_url(f"{self._base_url}/policySet/rules/policyType/{mapped_policy_type}")
 
-        microtenant_id = kwargs.pop("microtenant_id", None)
+        # Handle query parameters (including microtenant_id if provided)
+        query_params = query_params or {}
+        microtenant_id = query_params.pop("microtenant_id", None)
         if microtenant_id:
-            kwargs["microtenantId"] = microtenant_id
+            query_params["microtenantId"] = microtenant_id
 
-        list_data, error = get_paginated_data(self._request_executor, path=api_url, **kwargs)
+        # Build the query string
+        if query_params:
+            encoded_query_params = urlencode(query_params)
+            api_url += f"?{encoded_query_params}"
+
+        # Create the request
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body={}, headers={}, form={}, keep_empty_params=keep_empty_params
+        )
+
         if error:
-            return []
+            return (None, None, error)
 
-        return [PolicySetControllerV1(rule) for rule in list_data]
+        # Execute the request
+        response, error = self._request_executor.execute(request, PolicySetControllerV1)
 
+        if error:
+            return (None, response, error)
+
+        # Parse the response into PolicySetControllerV1 instances
+        try:
+            result = [PolicySetControllerV1(self.form_response_body(item)) for item in response.get_body()]
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
     def add_access_rule(
         self,
         name: str,

@@ -16,7 +16,6 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from zscaler.api_client import APIClient
 from zscaler.zpa.models.posture_profiles import PostureProfile
-from zscaler.api_response import get_paginated_data
 from zscaler.utils import format_url, remove_cloud_suffix
 from urllib.parse import urlencode
 
@@ -29,7 +28,10 @@ class PostureProfilesAPI(APIClient):
         super().__init__()  # Inherit initialization from APIClient
         self._base_url = ""
 
-    def list_posture_profiles(self, **kwargs) -> list:
+    def list_posture_profiles(
+            self, query_params=None,
+            keep_empty_params=False
+    ) -> tuple:
         """
         Returns a list of all configured posture profiles.
 
@@ -46,21 +48,48 @@ class PostureProfilesAPI(APIClient):
         Example:
             >>> posture_profiles = zpa.posture_profiles.list_posture_profiles(search="example")
         """
+        http_method = "get".upper()
         api_url = format_url(f"{self._base_url}/posture")
 
-        # Fetch paginated data using get_paginated_data from APIClient
-        list_data, error = get_paginated_data(
-            request_executor=self._request_executor,
-            path=api_url,
-            **kwargs  # Pass any additional pagination/filter params
+        # Handle query parameters (including microtenant_id if provided)
+        query_params = query_params or {}
+        
+        # Build the query string
+        if query_params:
+            encoded_query_params = urlencode(query_params)
+            api_url += f"?{encoded_query_params}"
+
+        # Prepare request body and headers
+        body = {}
+        headers = {}
+        form = {}
+
+        # Create the request
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
         )
 
         if error:
-            raise Exception(f"Error fetching posture profiles data: {error}")
+            return (None, None, error)
 
-        # Convert the raw posture profile data into PostureProfile objects
-        return [PostureProfile(profile) for profile in list_data]
+        # Execute the request
+        response, error = self._request_executor.execute(request, PostureProfile)
 
+        if error:
+            return (None, response, error)
+
+        # Parse the response into AppConnectorGroup instances
+        try:
+            result = []
+            for item in response.get_body():
+                result.append(PostureProfile(
+                    self.form_response_body(item)
+                ))
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
+    
     def get_profile(self, profile_id: str, query_params={}, keep_empty_params=False):
         """
         Gets a specific posture profile by its unique ID.
@@ -71,7 +100,7 @@ class PostureProfilesAPI(APIClient):
             keep_empty_params (bool): Whether to include empty query parameters in the request.
 
         Returns:
-            dict: The posture profile object.
+            tuple: A tuple containing (list of Posture Profile instances, Response, error)
 
         Example:
             >>> profile, response, error = zpa.posture_profiles.get_profile('12345')
