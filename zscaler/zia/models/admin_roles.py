@@ -16,47 +16,30 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from zscaler.oneapi_object import ZscalerObject
 
-class RuleLabels(ZscalerObject):
+class AdminRoles(ZscalerObject):
     """
-    A class for RuleLabels objects.
+    A class for AdminRole objects.
     """
 
     def __init__(self, config=None):
-        """
-        Initialize the RuleLabels model based on API response.
-
-        Args:
-            config (dict): A dictionary representing the Rule Labels configuration.
-        """
         super().__init__(config)
-        
         if config:
             self.id = config["id"]\
                 if "id" in config else None
+            self.rank = config["rank"]\
+                if "rank" in config else None
             self.name = config["name"]\
                 if "name" in config else None
-            self.last_modified_time = config["lastModifiedTime"]\
-                if "lastModifiedTime" in config else None
-
-            # Directly handle lastModifiedBy and createdBy without a separate function
-            self.last_modified_by = {
-                "id": config["lastModifiedBy"]["id"],
-                "name": config["lastModifiedBy"]["name"]
-            } if "lastModifiedBy" in config else None
-
-            self.created_by = {
-                "id": config["createdBy"]["id"],
-                "name": config["createdBy"]["name"]
-            } if "createdBy" in config else None
-
-            self.referenced_rule_count = config["referencedRuleCount"] if "referencedRuleCount" in config else 0
+            self.role_type = config["roleType"]\
+                if "roleType" in config else None
+            self.report_time_duration = config["reportTimeDuration"]\
+                if "reportTimeDuration" in config else None
         else:
             self.id = None
+            self.rank = None
             self.name = None
-            self.last_modified_time = None
-            self.last_modified_by = None
-            self.created_by = None
-            self.referenced_rule_count = 0
+            self.role_type = None
+            self.report_time_duration = None
 
     def request_format(self):
         """
@@ -65,11 +48,10 @@ class RuleLabels(ZscalerObject):
         parent_req_format = super().request_format()
         current_obj_format = {
             "id": self.id,
+            "rank": self.rank,
             "name": self.name,
-            "lastModifiedTime": self.last_modified_time,
-            "lastModifiedBy": self.last_modified_by,
-            "createdBy": self.created_by,
-            "referencedRuleCount": self.referenced_rule_count
+            "roleType": self.role_type,
+            "reportTimeDuration": self.report_time_duration,
         }
         parent_req_format.update(current_obj_format)
         return parent_req_format

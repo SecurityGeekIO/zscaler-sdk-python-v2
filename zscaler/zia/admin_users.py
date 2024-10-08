@@ -1,77 +1,148 @@
-# -*- coding: utf-8 -*-
+"""
+Copyright (c) 2023, Zscaler Inc.
 
-# Copyright (c) 2023, Zscaler Inc.
-#
-# Permission to use, copy, modify, and/or distribute this software for any
-# purpose with or without fee is hereby granted, provided that the above
-# copyright notice and this permission notice appear in all copies.
-#
-# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
 
-from box import Box, BoxList
-from requests import Response
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+"""
 
-from zscaler.utils import Iterator, snake_to_camel
-from zscaler.zia import ZIAClient
+from zscaler.api_client import APIClient
+from zscaler.zia.models.admin_users import AdminUser
+from zscaler.utils import format_url
+from zscaler.utils import  snake_to_camel
+from urllib.parse import urlencode
 
+class AdminUsers(APIClient):
+    """
+    A Client object for the Admin and Role resource.
+    """
 
-class AdminAndRoleManagementAPI:
-    def __init__(self, client: ZIAClient):
-        self.rest = client
+    def __init__(self):
+        super().__init__()
+        self._base_url = ""
 
-    def list_users(self, **kwargs) -> BoxList:
+    def list_admin_users(
+            self, query_params=None,
+            keep_empty_params=False
+    ) -> tuple:
         """
         Returns a list of admin users.
 
-        Keyword Args:
-            include_auditor_users (bool, optional):
-                Include or exclude auditor user information in the list.
-            include_admin_users (bool, optional):
-                Include or exclude admin user information in the list. (default: True)
-            search (str, optional):
-                The search string used to partially match against an admin/auditor user's Login ID or Name.
-            page (int, optional):
-                Specifies the page offset.
-            page_size (int, optional):
-                Specifies the page size. The default size is 100, but the maximum size is 1000.
+        Args:
+            query_params {dict}: Map of query parameters for the request.
+                [query_params.include_auditor_users] {bool}: Include or exclude auditor user information in the list.
+                [query_params.include_admin_users] {bool}: Include or exclude admin user information in the list. Default is True.
+                [query_params.search] {str}: The search string used to partially match against an admin/auditor user's Login ID or Name.
+                [query_params.page] {int}: Specifies the page offset.
+                [query_params.pagesize] {int}: Specifies the page size. The default size is 100, but the maximum size is 1000.
+                [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
+                [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
+            keep_empty_params {bool}: Whether to include empty parameters in the query string.
 
         Returns:
-            list: The admin_users resource records.
+            tuple: A tuple containing (list of AdminUser instances, Response, error)
 
         Examples:
-            >>> users = zia.admin_and_role_management.list_users('admin@example.com')
-
+            >>> users = zia.admin_and_role_management.list_admin_users(
+            ...    query_params={'include_auditor_users': True, 'page': 2, 'pagesize': 100})
         """
-        return BoxList(Iterator(self.rest, "adminUsers", **kwargs))
+        http_method = "get".upper()
+        api_url = format_url(f"{self._base_url}/adminUsers")
 
-    def get_user(self, user_id: str) -> Box:
+        # Handle query parameters (including microtenant_id if provided)
+        query_params = query_params or {}
+
+        # Build the query string
+        if query_params:
+            encoded_query_params = urlencode(query_params)
+            api_url += f"?{encoded_query_params}"
+
+        # Prepare request body and headers
+        body = {}
+        headers = {}
+        form = {}
+
+        # Create the request
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
+        )
+
+        if error:
+            return (None, None, error)
+
+        # Execute the request
+        response, error = self._request_executor.execute(request, AdminUser)
+
+        if error:
+            return (None, response, error)
+
+        # Parse the response into AdminUser instances
+        try:
+            result = []
+            for item in response.get_body():
+                result.append(AdminUser(
+                    self.form_response_body(item)
+                ))
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
+    
+    def get_admin_user(self, user_id: str) -> tuple:
         """
         Returns information on the specified admin user id.
 
         Args:
             user_id (str): The unique id of the admin user.
+            query_params {dict}: Map of query parameters for the request.
 
         Returns:
-            :obj:`Box`: The admin user resource record.
+            tuple: A tuple containing (AdminUser instance, Response, error)
 
         Examples:
-            >>> print(zia.admin_and_role_management.get_user('987321202'))
-
+            >>> admin_user, response, error = zia.admin_and_role_management.get_admin_user('987321202')
         """
-        response = self.rest.get("/adminUsers/%s" % (user_id))
-        if isinstance(response, Response):
-            status_code = response.status_code
-            if status_code != 200:
-                return None
-        return response
+        http_method = "get".upper()
+        api_url = format_url(f"{self._base_url}/adminUsers/{user_id}")
 
-    def add_user(self, name: str, login_name: str, email: str, password: str, **kwargs) -> Box:
+        body = {}
+        headers = {}
+        form = {}
+
+        # Create the request
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body, headers, form
+        )
+
+        if error:
+            return (None, None, error)
+
+        # Execute the request
+        response, error = self._request_executor.execute(request, AdminUser)
+
+        if error:
+            return (None, response, error)
+
+        # Parse the response
+        try:
+            result = AdminUser(self.form_response_body(response.get_body()))
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
+
+    def add_admin_user(
+            self, name: str, login_name: str, email: str, password: str,
+            keep_empty_params=False, **kwargs
+    ) -> tuple:
         """
         Adds a new admin user to ZIA.
 
@@ -136,6 +207,9 @@ class AdminAndRoleManagementAPI:
                 ...    is_auditor=True)
 
         """
+        http_method = "post".upper()
+        api_url = format_url(f"{self._base_url}/adminUsers")
+
         payload = {
             "userName": name,
             "loginName": login_name,
@@ -143,22 +217,14 @@ class AdminAndRoleManagementAPI:
             "password": password,
         }
 
-        # Get the admin scope if provided
+        # Handle admin scope and optional parameters
         admin_scope = kwargs.pop("admin_scope", None)
-
-        # The default admin scope is organization so we don't really need to
-        # send it to ZIA as part of this API call. Otherwise if the user has
-        # supplied something different then we want to explicitly set that for
-        # the adminScopeType.
         if admin_scope and admin_scope != "organization":
             payload["adminScopeType"] = admin_scope.upper()
             payload["adminScopeScopeEntities"] = []
 
         # Add optional parameters to payload
         for key, value in kwargs.items():
-            # If the user has supplied ids for the admin scope then we'll add
-            # them to the payload here. If the user doesn't supply them then
-            # ZIA will return an error.
             if key == "scope_ids":
                 for scope_id in value:
                     payload["adminScopeScopeEntities"].append({"id": scope_id})
@@ -167,15 +233,29 @@ class AdminAndRoleManagementAPI:
             else:
                 payload[snake_to_camel(key)] = value
 
-        response = self.rest.post("adminUsers", json=payload)
-        if isinstance(response, Response):
-            # Handle error response
-            status_code = response.status_code
-            if status_code != 200:
-                raise Exception(f"API call failed with status {status_code}: {response.json()}")
-        return response
+        request, error = self._request_executor.create_request(
+            http_method, api_url, payload, {}, {}, keep_empty_params=keep_empty_params
+        )
 
-    def update_user(self, user_id: str, **kwargs) -> dict:
+        if error:
+            return (None, None, error)
+
+        response, error = self._request_executor.execute(request, AdminUser)
+
+        if error:
+            return (None, response, error)
+
+        try:
+            result = AdminUser(self.form_response_body(response.get_body()))
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
+
+    def update_admin_user(
+            self, user_id: str, query_params=None,
+            keep_empty_params=False, **kwargs
+    ) -> tuple:
         """
         Update an admin user.
 
@@ -224,48 +304,43 @@ class AdminAndRoleManagementAPI:
                 ...    scope_ids=['3846532', '3846541'])
 
         """
+        http_method = "put".upper()
+        api_url = format_url(f"{self._base_url}/adminUsers/{user_id}")
 
-        # Get the resource record for the provided user id
-        payload = {snake_to_camel(k): v for k, v in self.get_user(user_id).items()}
+        # Get the admin user record for the provided user id
+        payload = {snake_to_camel(k): v for k, v in self.get_admin_user(user_id)[0].__dict__.items()}
 
-        # Get the admin scope if provided
+        # Handle admin scope and optional parameters
         admin_scope = kwargs.pop("admin_scope", None)
-
-        # The default admin scope is organization so we don't really need to
-        # send it to ZIA as part of this API call. Otherwise if the user has
-        # supplied something different then we want to explicitly set that for
-        # the adminScopeType.
         if admin_scope and admin_scope != "organization":
             payload["adminScopeType"] = admin_scope.upper()
             payload["adminScopeScopeEntities"] = []
 
         # Add optional parameters to payload
         for key, value in kwargs.items():
-            # If the user has supplied ids for the admin scope then we'll add
-            # them to the payload here. If the user doesn't supply them then
-            # ZIA will return an error.
             if key == "scope_ids":
                 for scope_id in value:
                     payload["adminScopeScopeEntities"].append({"id": scope_id})
             elif key == "name":
-                # We renamed the username param to make it more meaningful for zscaler-sdk-python users
                 payload["userName"] = value
             else:
                 payload[snake_to_camel(key)] = value
 
-        # Update payload
-        for key, value in kwargs.items():
-            payload[snake_to_camel(key)] = value
+        request, error = self._request_executor.create_request(
+            http_method, api_url, payload, {}, {}, keep_empty_params=keep_empty_params
+        )
 
-        response = self.rest.put("/adminUsers/%s" % (user_id), json=payload)
-        if isinstance(response, Response) and not response.ok:
-            # Handle error response
-            raise Exception(f"API call failed with status {response.status_code}: {response.json()}")
+        if error:
+            return (None, None, error)
 
-        # Return the updated object
-        return self.get_user(user_id)
+        response, error = self._request_executor.execute(request, AdminUser)
 
-    def delete_user(self, user_id: str) -> int:
+        if error:
+            return (None, response, error)
+
+        return self.get_admin_user(user_id)
+
+    def delete_admin_user(self, user_id: str, query_params=None) -> tuple:
         """
         Deletes the specified admin user by id.
 
@@ -279,84 +354,17 @@ class AdminAndRoleManagementAPI:
             >>> zia.admin_role_management.delete_admin_user('99272455')
 
         """
-        response = self.rest.delete("/adminUsers/%s" % (user_id))
-        return response.status_code
+        http_method = "delete".upper()
+        api_url = format_url(f"{self._base_url}/adminUsers/{user_id}")
 
-    def list_roles(self, **kwargs) -> BoxList:
-        """
-        Return a list of the configured admin roles in ZIA.
+        request, error = self._request_executor.create_request(http_method, api_url, {}, {}, {}, keep_empty_params=False)
 
-        Args:
-            **kwargs: Optional keyword args.
+        if error:
+            return (None, error)
 
-        Keyword Args:
-            include_auditor_role (bool): Set to ``True`` to include auditor role information in the response.
-            include_partner_role (bool): Set to ``True`` to include partner admin role information in the response.
+        response, error = self._request_executor.execute(request)
 
-        Returns:
-            :obj:`BoxList`: A list of admin role resource records.
+        if error:
+            return (response, error)
 
-        Examples:
-            Get a list of all configured admin roles:
-            >>> roles = zia.admin_and_management_roles.list_roles()
-
-        """
-        payload = {snake_to_camel(key): value for key, value in kwargs.items()}
-        return self.rest.get("adminRoles/lite", params=payload)
-
-    def get_role(self, role_id: str) -> Box:
-        """
-        Returns information on the specified admin user id.
-
-        Args:
-            user_id (str): The unique id of the admin user.
-
-        Returns:
-            :obj:`Box`: The admin user resource record.
-
-        Examples:
-            >>> print(zia.admin_and_role_management.get_user('987321202'))
-
-        """
-        admin_role = next(user for user in self.list_roles() if user.id == int(role_id))
-        return admin_role
-
-    def get_roles_by_name(self, name):
-        """
-        Retrieves a specific admin roles by its name.
-
-        Args:
-            name (str): The name of the admin roles  to retrieve.
-
-        Returns:
-            :obj:`Box`: The admin roles  if found, otherwise None.
-
-        Examples:
-            >>> role = zia.admin_and_role_management.get_roles_by_name('Super Admin')
-            ...    print(role)
-        """
-        roles = self.list_roles()
-        for role in roles:
-            if role.get("name") == name:
-                return role
-        return None
-
-    def get_roles_by_id(self, role_id):
-        """
-        Retrieves a specific admin roles by its ID.
-
-        Args:
-            name (str): The ID of the admin roles  to retrieve.
-
-        Returns:
-            :obj:`Box`: The admin roles  if found, otherwise None.
-
-        Examples:
-            >>> role = zia.admin_and_role_management.get_roles_by_id('123456789')
-            ...    print(role)
-        """
-        roles = self.list_roles()
-        for role in roles:
-            if role.get("id") == role_id:
-                return role
-        return None
+        return (response, None)

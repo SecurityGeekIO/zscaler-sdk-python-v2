@@ -15,6 +15,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.oneapi_object import ZscalerObject
+from zscaler.oneapi_collection import ZscalerCollection
 from zscaler.zpa.models import server_group\
     as server_group
 from zscaler.utils import format_clientless_apps
@@ -90,14 +91,8 @@ class ApplicationSegment(ZscalerObject):
             self.segment_group_name = config["segmentGroupName"]\
                 if "segmentGroupName" in config else None
 
-            # Handle serverGroups using defensive programming with conditionals
-            self.server_groups = []
-            if "serverGroups" in config:
-                for group in config["serverGroups"]:
-                    if isinstance(group, server_group.ServerGroup):
-                        self.server_groups.append(group)
-                    else:
-                        self.server_groups.append(server_group.ServerGroup(group))
+            # Use ZscalerCollection for serverGroups
+            self.server_groups = ZscalerCollection.form_list(config.get("serverGroups", []), server_group.ServerGroup)
 
             # Handle tcpPortRange using conditionals for defensive programming
             self.tcp_port_range = []

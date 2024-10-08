@@ -1,4 +1,4 @@
-from pydash.strings import camel_case, snake_case
+from pydash.strings import camel_case
 
 
 class APIClient:
@@ -15,9 +15,10 @@ class APIClient:
     @staticmethod
     def form_response_body(body: dict):
         """
-        Method to verify the response body and convert to camelCase.
+        Method to verify the response body from the Zscaler API before
+        passing it into the constructor.
         Args:
-            body (dict): API response body
+            body (dict): Zscaler API response body
         """
         result = {}
         for key, val in body.items():

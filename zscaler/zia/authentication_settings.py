@@ -15,80 +15,119 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 
-from box import BoxList
+from zscaler.api_client import APIClient
+from zscaler.zia.models.authentication_settings import AuthenticationSettings
+from zscaler.utils import format_url
 
-from zscaler.zia import ZIAClient
+class AuthenticationSettingsAPI(APIClient):
+    """
+    A Client object for the Authentication Settings resource.
+    """
 
+    def __init__(self):
+        super().__init__()
+        self._base_url = ""
 
-class AuthenticationSettingsAPI:
-    def __init__(self, client: ZIAClient):
-        self.rest = client
-
-    def get_exempted_urls(self) -> BoxList:
+    def get_exempted_urls(self, keep_empty_params=False) -> tuple:
         """
         Returns a list of exempted URLs.
 
+        Args:
+            keep_empty_params (bool): Whether to include empty parameters in the query string.
+
         Returns:
-            :obj:`BoxList`: A list of exempted URLs
+            tuple: A tuple containing (AuthenticationSettings instance, Response, error)
 
         Examples:
-            >>> for url in zia.authentication_settings.get_exempted_urls():
-            ...    pprint(url)
+            >>> exempted_urls, response, error = zia.authentication_settings.get_exempted_urls()
         """
-        response = self.rest.get("authSettings/exemptedUrls")
+        http_method = "get".upper()
+        api_url = format_url(f"{self._base_url}/authSettings/exemptedUrls")
 
-        # Ensure the correct attribute key is used in the response check.
-        if "urls" in response:
-            return response.urls
-        else:
-            return BoxList()
+        # Prepare request body and headers
+        body = {}
+        headers = {}
+        form = {}
 
-    def add_urls_to_exempt_list(self, url_list: list) -> BoxList:
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
+        )
+
+        if error:
+            return (None, None, error)
+
+        response, error = self._request_executor.execute(request, AuthenticationSettings)
+
+        if error:
+            return (None, response, error)
+
+        try:
+            result = AuthenticationSettings(self.form_response_body(response.get_body()))
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
+
+    def add_urls_to_exempt_list(self, url_list: list, keep_empty_params=False) -> tuple:
         """
         Adds the provided URLs to the exempt list.
 
         Args:
-            url_list (:obj:`list` of :obj:`str`):
-                The list of URLs to be added.
+            url_list (:obj:`list` of :obj:`str`): The list of URLs to be added.
 
         Returns:
-            :obj:`BoxList`: The complete and updated exempt list.
+            tuple: A tuple containing (updated AuthenticationSettings instance, Response, error)
 
+        Examples:
+            >>> exempted_urls, response, error = zia.authentication_settings.add_urls_to_exempt_list(["example.com"])
         """
+        http_method = "post".upper()
+        api_url = format_url(f"{self._base_url}/authSettings/exemptedUrls?action=ADD_TO_LIST")
 
         payload = {"urls": url_list}
 
-        resp = self.rest.post("authSettings/exemptedUrls?action=ADD_TO_LIST", json=payload)
+        request, error = self._request_executor.create_request(
+            http_method, api_url, payload, {}, {}, keep_empty_params=keep_empty_params
+        )
 
-        # Check if the response object has a 'status_code' attribute before accessing it
-        if hasattr(resp, "status_code"):
-            if resp.status_code == 204:
-                return self.get_exempted_urls()
-        else:
-            # Handle case where resp is a Box object
-            if "urls" in resp:
-                return resp.urls
-            else:
-                return BoxList()  # Return empty list if no URLs are present
+        if error:
+            return (None, None, error)
 
-    def delete_urls_from_exempt_list(self, url_list: list) -> BoxList:
+        response, error = self._request_executor.execute(request, AuthenticationSettings)
+
+        if error:
+            return (None, response, error)
+
+        return self.get_exempted_urls()
+
+    def delete_urls_from_exempt_list(self, url_list: list, keep_empty_params=False) -> tuple:
         """
         Deletes the provided URLs from the exemption list.
 
         Args:
-            url_list (:obj:`list` of :obj:`str`):
-                The list of URLs to be removed.
+            url_list (:obj:`list` of :obj:`str`): The list of URLs to be removed.
 
         Returns:
-            :obj:`BoxList`: The updated exemption list.
+            tuple: A tuple containing (updated AuthenticationSettings instance, Response, error)
 
         Examples:
-            >>> zia.authentication_settings.delete_urls_from_exempt_list(['example.com'])
-
+            >>> exempted_urls, response, error = zia.authentication_settings.delete_urls_from_exempt_list(["example.com"])
         """
-        payload = {"urls": url_list}
-        resp = self.rest.post("authSettings/exemptedUrls?action=REMOVE_FROM_LIST", json=payload)
+        http_method = "post".upper()
+        api_url = format_url(f"{self._base_url}/authSettings/exemptedUrls?action=REMOVE_FROM_LIST")
 
-        # Return the updated exemption list if the removal was successful.
-        if resp == 200:
-            return self.get_exempted_urls()
+        payload = {"urls": url_list}
+
+        request, error = self._request_executor.create_request(
+            http_method, api_url, payload, {}, {}, keep_empty_params=keep_empty_params
+        )
+
+        if error:
+            return (None, None, error)
+
+        response, error = self._request_executor.execute(request, AuthenticationSettings)
+
+        if error:
+            return (None, response, error)
+
+        return self.get_exempted_urls()

@@ -101,35 +101,65 @@ class AppConnectorGroupAPI(APIClient):
 
         return (result, response, None)
 
-    def get_connector_group(self, group_id: str, **kwargs) -> tuple:
+    def get_connector_group(
+        self, group_id: str, query_params=None, keep_empty_params=False
+) -> tuple:
         """
-        Gets information for a specified connector group.
+        Fetches a specific connector group by ID.
 
         Args:
             group_id (str): The unique identifier for the connector group.
+            query_params (dict, optional): Map of query parameters for the request.
+                [query_params.microtenantId] {str}: The microtenant ID, if applicable.
+            keep_empty_params (bool): Whether to include empty parameters in the query string.
 
         Returns:
-            tuple: A tuple containing (AppConnectorGroup, Response, error)
+            tuple: A tuple containing (AppConnectorGroup instance, Response, error).
         """
+        # Specify HTTP method
         http_method = "get".upper()
-        api_url = format_url(
-            f"""
-            {self._base_url}/appConnectorGroup/{group_id}
-            """
+
+        # Construct the API URL
+        api_url = format_url(f"{self._base_url}/appConnectorGroup/{group_id}")
+
+        # Handle optional query parameters
+        query_params = query_params or {}
+        microtenant_id = query_params.pop("microtenant_id", None)
+        if microtenant_id:
+            query_params["microtenantId"] = microtenant_id
+
+        # Build the query string
+        if query_params:
+            encoded_query_params = urlencode(query_params)
+            api_url += f"?{encoded_query_params}"
+
+        # Prepare request body, headers, and form (if needed)
+        body = {}
+        headers = {}
+        form = {}
+
+        # Create the request
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
         )
 
-        microtenant_id = kwargs.pop("microtenant_id", None)
-        params = {"microtenantId": microtenant_id} if microtenant_id else {}
-
-        request, error = self._request_executor.create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        # Execute the request
+        response, error = self._request_executor.execute(request, AppConnectorGroup)
+
         if error:
             return (None, response, error)
 
-        result = AppConnectorGroup(response.get_body())
+        # Parse the response into an AppConnectorGroup instance
+        try:
+            result = AppConnectorGroup(
+                self.form_response_body(response.get_body())
+            )
+        except Exception as error:
+            return (None, response, error)
+
         return (result, response, None)
 
     def get_connector_group_by_name(self, name: str, **kwargs) -> tuple:

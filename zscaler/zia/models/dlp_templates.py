@@ -16,47 +16,43 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from zscaler.oneapi_object import ZscalerObject
 
-class RuleLabels(ZscalerObject):
+class DLPTemplates(ZscalerObject):
     """
-    A class for RuleLabels objects.
+    A class for DLPTemplate objects.
     """
 
     def __init__(self, config=None):
         """
-        Initialize the RuleLabels model based on API response.
+        Initialize the DLPTemplate model based on API response.
 
         Args:
-            config (dict): A dictionary representing the Rule Labels configuration.
+            config (dict): A dictionary representing the DLP Template configuration.
         """
         super().__init__(config)
-        
+
         if config:
             self.id = config["id"]\
                 if "id" in config else None
             self.name = config["name"]\
                 if "name" in config else None
-            self.last_modified_time = config["lastModifiedTime"]\
-                if "lastModifiedTime" in config else None
-
-            # Directly handle lastModifiedBy and createdBy without a separate function
-            self.last_modified_by = {
-                "id": config["lastModifiedBy"]["id"],
-                "name": config["lastModifiedBy"]["name"]
-            } if "lastModifiedBy" in config else None
-
-            self.created_by = {
-                "id": config["createdBy"]["id"],
-                "name": config["createdBy"]["name"]
-            } if "createdBy" in config else None
-
-            self.referenced_rule_count = config["referencedRuleCount"] if "referencedRuleCount" in config else 0
+            self.subject = config["subject"]\
+                if "subject" in config else None
+            self.tls_enabled = config["tlsEnabled"]\
+                if "tlsEnabled" in config else None
+            self.attach_content = config["attachContent"]\
+                if "attachContent" in config else None
+            self.plain_text_message = config["plainTextMessage"]\
+                if "plainTextMessage" in config else None
+            self.html_message = config["htmlMessage"]\
+                if "htmlMessage" in config else None
         else:
             self.id = None
             self.name = None
-            self.last_modified_time = None
-            self.last_modified_by = None
-            self.created_by = None
-            self.referenced_rule_count = 0
+            self.subject = None
+            self.tls_enabled = None
+            self.attach_content = None
+            self.plain_text_message = None
+            self.html_message = None
 
     def request_format(self):
         """
@@ -66,10 +62,11 @@ class RuleLabels(ZscalerObject):
         current_obj_format = {
             "id": self.id,
             "name": self.name,
-            "lastModifiedTime": self.last_modified_time,
-            "lastModifiedBy": self.last_modified_by,
-            "createdBy": self.created_by,
-            "referencedRuleCount": self.referenced_rule_count
+            "subject": self.subject,
+            "tlsEnabled": self.tls_enabled,
+            "attachContent": self.attach_content,
+            "plainTextMessage": self.plain_text_message,
+            "htmlMessage": self.html_message,
         }
         parent_req_format.update(current_obj_format)
         return parent_req_format

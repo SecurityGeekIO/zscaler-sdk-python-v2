@@ -15,28 +15,31 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.api_client import APIClient
-from zscaler.zia.models.workload_groups import WorkloadGroups
+from zscaler.zia.models.admin_roles import AdminRoles
 from zscaler.utils import format_url
 from urllib.parse import urlencode
 
-class WorkloadGroupsAPI(APIClient):
+class AdminRolesAPI(APIClient):
     """
-    A Client object for the Workload Groups API resource.
+    A Client object for the Admin and Role resource.
     """
 
     def __init__(self):
         super().__init__()
         self._base_url = ""
 
-    def list_groups(
+    def list_roles(
             self, query_params=None,
             keep_empty_params=False
     ) -> tuple:
         """
-        Returns the list of workload groups configured in the ZIA Admin Portal.
+        Return a list of the configured admin roles in ZIA.
 
         Args:
             query_params {dict}: Map of query parameters for the request.
+                [query_params.include_auditor_role] {bool}: Include or exclude auditor user information in the list.
+                [query_params.include_partner_role] {bool}: Include or exclude admin user information in the list. Default is True.
+                [query_params.search] {str}: The search string used to partially match against an admin/auditor user's Login ID or Name.
                 [query_params.page] {int}: Specifies the page offset.
                 [query_params.pagesize] {int}: Specifies the page size. The default size is 100, but the maximum size is 1000.
                 [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
@@ -44,17 +47,18 @@ class WorkloadGroupsAPI(APIClient):
             keep_empty_params {bool}: Whether to include empty parameters in the query string.
 
         Returns:
-            tuple: A tuple containing (list of WorkloadGroups instances, Response, error)
+            tuple: A tuple containing (list of AdminRole instances, Response, error)
 
 
         Examples:
-            >>> for workloads in zia.workload_groups.list_groups():
-            ...    pprint(workloads)
+            Get a list of all configured admin roles:
+            >>> roles = zia.admin_and_management_roles.list_roles()
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/workloadGroups")
+        api_url = format_url(f"{self._base_url}/adminRoles/lite")
 
+        # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
 
         # Build the query string
@@ -76,7 +80,7 @@ class WorkloadGroupsAPI(APIClient):
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, WorkloadGroups)
+        response, error = self._request_executor.execute(request, AdminRoles)
 
         if error:
             return (None, response, error)
@@ -85,7 +89,7 @@ class WorkloadGroupsAPI(APIClient):
         try:
             result = []
             for item in response.get_body():
-                result.append(WorkloadGroups(
+                result.append(AdminRoles(
                     self.form_response_body(item)
                 ))
         except Exception as error:
@@ -93,44 +97,42 @@ class WorkloadGroupsAPI(APIClient):
 
         return (result, response, None)
 
-    # Search Workload Group By Name
-    def get_group_by_name(self, name):
+    def get_roles_by_name(self, name):
         """
-        Retrieves a specific workload group by its name.
+        Retrieves a specific admin roles by its name.
 
         Args:
-            name (str): The name of the workload group  to retrieve.
+            name (str): The name of the admin roles  to retrieve.
 
         Returns:
-            :obj:`Box`: The workload group  if found, otherwise None.
+            :obj:`Box`: The admin roles  if found, otherwise None.
 
         Examples:
-            >>> workload = zia.workload_groups.get_group_by_name('BD_WORKLOAD_GROUP01')
-            ...    print(workload)
+            >>> role = zia.admin_and_role_management.get_roles_by_name('Super Admin')
+            ...    print(role)
         """
-        groups = self.list_groups()
-        for group in groups:
-            if group.get("name") == name:
-                return group
+        roles = self.list_roles()
+        for role in roles:
+            if role.get("name") == name:
+                return role
         return None
 
-    # Search Workload Group By ID
-    def get_group_by_id(self, group_id):
+    def get_roles_by_id(self, role_id):
         """
-        Retrieves a specific workload group by its unique identifier.
+        Retrieves a specific admin roles by its ID.
 
         Args:
-            profile_id (str): The ID of the workload group  to retrieve.
+            name (str): The ID of the admin roles  to retrieve.
 
         Returns:
-            :obj:`Box`: The workload group if found, otherwise None.
+            :obj:`Box`: The admin roles  if found, otherwise None.
 
         Examples:
-            >>> workload = zia.get_group_by_name.get_group_by_id('12345')
-            ...    print(workload)
+            >>> role = zia.admin_and_role_management.get_roles_by_id('123456789')
+            ...    print(role)
         """
-        groups = self.list_groups()
-        for group in groups:
-            if group.get("id") == group_id:
-                return group
+        roles = self.list_roles()
+        for role in roles:
+            if role.get("id") == role_id:
+                return role
         return None

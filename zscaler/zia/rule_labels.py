@@ -1,23 +1,23 @@
-# -*- coding: utf-8 -*-
+"""
+Copyright (c) 2023, Zscaler Inc.
 
-# Copyright (c) 2023, Zscaler Inc.
-#
-# Permission to use, copy, modify, and/or distribute this software for any
-# purpose with or without fee is hereby granted, provided that the above
-# copyright notice and this permission notice appear in all copies.
-#
-# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
 
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+"""
 
 from zscaler.api_client import APIClient
-from zscaler.utils import Iterator, convert_keys, snake_to_camel
-
+from zscaler.zia.models.rule_labels import RuleLabels
+from zscaler.utils import format_url, snake_to_camel
+from urllib.parse import urlencode
 
 
 class RuleLabelsAPI(APIClient):
@@ -28,20 +28,25 @@ class RuleLabelsAPI(APIClient):
         super().__init__()
         self._base_url = ""
 
-    def list_labels(self, **kwargs) -> BoxList:
+    def list_labels(
+            self, query_params=None,
+            keep_empty_params=False
+    ) -> tuple:
         """
-        Returns the list of ZIA Rule Labels.
+        Enumerates rule labels in your organization with pagination.
+        A subset of rule labels  can be returned that match a supported
+        filter expression or query.
 
-        Keyword Args:
-            **max_items (int, optional):
-                The maximum number of items to request before stopping iteration.
-            **max_pages (int, optional):
-                The maximum number of pages to request before stopping iteration.
-            **page_size (int, optional):
-                Specifies the page size. The default size is 100, but the maximum size is 1000.
+        Args:
+            query_params {dict}: Map of query parameters for the request.
+                [query_params.pagesize] {int}: Page size for pagination.
+                [query_params.search] {str}: Search string for filtering results.
+                [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
+                [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
+            keep_empty_params {bool}: Whether to include empty parameters in the query string.
 
         Returns:
-            :obj:`BoxList`: The list of Rule Labels configured in ZIA.
+            tuple: A tuple containing (list of Rule Labels instances, Response, error)
 
         Examples:
             List Rule Labels using default settings:
@@ -60,121 +65,221 @@ class RuleLabelsAPI(APIClient):
             ...    print(label)
 
         """
-        return BoxList(Iterator(self.rest, "ruleLabels", **kwargs))
+        http_method = "get".upper()
+        api_url = format_url(f"{self._base_url}/ruleLabels")
 
-    def get_label(self, label_id: str) -> Box:
+        # Handle query parameters (including microtenant_id if provided)
+        query_params = query_params or {}
+
+        # Build the query string
+        if query_params:
+            encoded_query_params = urlencode(query_params)
+            api_url += f"?{encoded_query_params}"
+
+        # Prepare request body and headers
+        body = {}
+        headers = {}
+        form = {}
+
+        # Create the request
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
+        )
+
+        if error:
+            return (None, None, error)
+
+        # Execute the request
+        response, error = self._request_executor.execute(request, RuleLabels)
+
+        if error:
+            return (None, response, error)
+
+        # Parse the response into AppConnectorGroup instances
+        try:
+            result = []
+            for item in response.get_body():
+                result.append(RuleLabels(
+                    self.form_response_body(item)
+                ))
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
+
+    def get_label(
+        self, label_id: str, 
+        query_params=None, 
+        keep_empty_params=False
+) -> tuple:
         """
-        Returns the label details for a given Rule Label.
+        Fetches a specific rule labels by ID.
 
         Args:
-            label_id (str): The unique identifier for the Rule Label.
+            label_id (str): The unique identifier for the connector group.
+            query_params (dict, optional): Map of query parameters for the request.
+            keep_empty_params (bool): Whether to include empty parameters in the query string.
 
         Returns:
-            :obj:`Box`: The Rule Label resource record.
-
-        Examples:
-            >>> label = zia.labels.get_label('99999')
-
+            tuple: A tuple containing (AppConnectorGroup instance, Response, error).
         """
-        response = self.rest.get("/ruleLabels/%s" % (label_id))
-        if isinstance(response, Response):
-            status_code = response.status_code
-            if status_code != 200:
-                return None
-        return response
+        http_method = "get".upper()
+        api_url = format_url(
+            f"""
+            {self._base_url}/ruleLabels/{label_id}
+            """
+        )
+        # Handle optional query parameters
+        query_params = query_params or {}
 
-    def add_label(self, name: str, **kwargs) -> Box:
+        # Build the query string
+        if query_params:
+            encoded_query_params = urlencode(query_params)
+            api_url += f"?{encoded_query_params}"
+
+        # Prepare request body, headers, and form (if needed)
+        body = {}
+        headers = {}
+        form = {}
+
+        # Create the request
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
+        )
+
+        if error:
+            return (None, None, error)
+
+        # Execute the request
+        response, error = self._request_executor.execute(request, RuleLabels)
+
+        if error:
+            return (None, response, error)
+
+        try:
+            result = RuleLabels(
+                self.form_response_body(response.get_body())
+            )
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
+
+    def add_label(self, name: str, query_params=None, keep_empty_params=False) -> tuple:
         """
         Creates a new ZIA Rule Label.
 
         Args:
-            name (str):
-                The name of the Rule Label.
-
-        Keyword Args:
-            description (str):
-                Additional information about the Rule Label.
+            name (str): The name of the Rule Label.
+            query_params (dict, optional): Optional parameters for the request.
+                [query_params.description] {str}: Additional information about the Rule Label.
+            keep_empty_params (bool, optional): Whether to include empty parameters in the request.
 
         Returns:
-            :obj:`Box`: The newly added Rule Label resource record.
-
-        Examples:
-            Add a label with default parameters:
-
-            >>> label = zia.labels.add_label("My New Label")
-
-            Add a label with description:
-
-            >>> label = zia.labels.add_label("My Second Label":
-            ...    description="My second label description")
-
+            tuple: A tuple containing the newly added Rule Label (Box), response, and error.
         """
+        http_method = "post".upper()
+        api_url = format_url(f"{self._base_url}/ruleLabels")
+
+        # Build the payload
         payload = {"name": name}
 
-        # Add optional parameters to payload
-        for key, value in kwargs.items():
+        # Add optional query parameters to the payload
+        query_params = query_params or {}
+        for key, value in query_params.items():
             payload[snake_to_camel(key)] = value
 
-        response = self.rest.post("ruleLabels", json=payload)
-        if isinstance(response, Response):
-            # this is only true when the creation failed (status code is not 2xx)
-            status_code = response.status_code
-            # Handle error response
-            raise Exception(f"API call failed with status {status_code}: {response.json()}")
-        return response
+        form = {}
 
-    def update_label(self, label_id: str, **kwargs):
+        # Create the request
+        request, error = self._request_executor.create_request(
+            http_method, api_url, payload, form, keep_empty_params=keep_empty_params
+        )
+
+        if error:
+            return (None, None, error)
+
+        # Execute the request
+        response, error = self._request_executor.execute(request, RuleLabels)
+
+        if error:
+            return (None, response, error)
+
+        try:
+            result = RuleLabels(self.form_response_body(response.get_body()))
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
+
+    def update_label(self, label_id: int, **kwargs) -> tuple:
         """
         Updates information for the specified ZIA Rule Label.
 
         Args:
-            label_id (str): The unique id for the Rule Label that will be updated.
-
-        Keyword Args:
-            name (str): The name of the Rule Label.
-            description (str): Additional information for the Rule Label.
+            label_id (str): The unique ID for the Rule Label.
 
         Returns:
-            :obj:`Box`: The updated Rule Label resource record.
-
-        Examples:
-            Update the name of a Rule Label:
-
-            >>> label = zia.labels.update_label(99999,
-            ...    name="Updated Label Name")
-
-            Update the name and description of a Rule Label:
-
-            >>> label = zia.labels.update_label(99999,
-            ...    name="Updated Label Name",
-            ...    description="Updated Label Description")
-
+            tuple: A tuple containing the updated Rule Label (Box), response, and error.
         """
-        # Get the label data from ZIA
-        payload = convert_keys(self.get_label(label_id))
+        http_method = "put".upper()
+        api_url = format_url(f"{self._base_url}/ruleLabels/{label_id}")
 
-        # Add optional parameters to payload
-        for key, value in kwargs.items():
-            payload[snake_to_camel(key)] = value
+        # Construct the payload using the provided kwargs
+        payload = {snake_to_camel(key): value for key, value in kwargs.items()}
 
-        resp = self.rest.put(f"ruleLabels/{label_id}", json=payload)
+        # Create and send the request
+        request, error = self._request_executor.create_request(http_method, api_url, payload, {}, {})
+        if error:
+            return (None, None, error)
 
-        # Return the object if it was updated successfully
-        if not isinstance(resp, Response):
-            return self.get_label(label_id)
+        response, error = self._request_executor.execute(request, RuleLabels)
+        if error:
+            return (None, response, error)
 
-    def delete_label(self, label_id):
+        try:
+            # Parse and return the updated object from the API response
+            result = RuleLabels(self.form_response_body(response.get_body()))
+        except Exception as error:
+            return (None, response, error)
+        return (result, response, None)
+
+    def delete_label(self, label_id: str, query_params=None, keep_empty_params=False) -> tuple:
         """
         Deletes the specified Rule Label.
 
         Args:
-            label_id (str): The unique identifier of the Rule Label that will be deleted.
+            label_id (str): The unique identifier of the Rule Label.
+            query_params (dict, optional): Optional query parameters for the request.
+            keep_empty_params (bool, optional): Whether to include empty parameters in the request.
 
         Returns:
-            :obj:`int`: The response code for the request.
-
-        Examples
-            >>> user = zia.labels.delete_label('99999')
-
+            tuple: A tuple containing the response object and error (if any).
         """
-        return self.rest.delete(f"ruleLabels/{label_id}").status_code
+        http_method = "delete".upper()
+        api_url = format_url(f"{self._base_url}/ruleLabels/{label_id}")
+
+        # Handle query parameters if provided
+        if query_params:
+            encoded_query_params = urlencode(query_params)
+            api_url += f"?{encoded_query_params}"
+
+        body = {}
+        headers = {}
+        form = {}
+
+        # Create the request
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
+        )
+
+        if error:
+            return (None, error)
+
+        # Execute the request
+        response, error = self._request_executor.execute(request)
+
+        if error:
+            return (response, error)
+
+        return (response, None)

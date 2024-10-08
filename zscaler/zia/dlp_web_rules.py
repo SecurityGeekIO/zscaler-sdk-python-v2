@@ -1,33 +1,41 @@
-# -*- coding: utf-8 -*-
+"""
+Copyright (c) 2023, Zscaler Inc.
 
-# Copyright (c) 2023, Zscaler Inc.
-#
-# Permission to use, copy, modify, and/or distribute this software for any
-# purpose with or without fee is hereby granted, provided that the above
-# copyright notice and this permission notice appear in all copies.
-#
-# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+"""
 
 from box import Box, BoxList
 from requests import Response
+
+from zscaler.api_client import APIClient
+from zscaler.zia.models.dlp_web_rules import DLPWebRules
 
 from zscaler.utils import (
     convert_keys,
     recursive_snake_to_camel,
     snake_to_camel,
     transform_common_id_fields,
+    format_url
 )
-from zscaler.zia import ZIAClient
+
+from urllib.parse import urlencode
 
 
-class WebDLPAPI:
-    # Web DLP rule keys that only require an ID to be provided.
+class DLPWebRuleAPI(APIClient):
+    """
+    A Client object for the DLP Web Rule resource.
+    """
+    
     reformat_params = [
         ("auditor", "auditor"),
         ("dlp_engines", "dlpEngines"),
@@ -45,15 +53,30 @@ class WebDLPAPI:
         ("url_categories", "urlCategories"),
     ]
 
-    def __init__(self, client: ZIAClient):
-        self.rest = client
+    def __init__(self):
+        super().__init__()
+        self._base_url = ""
 
-    def list_rules(self) -> BoxList:
+    def list_rules(
+            self, query_params=None,
+            keep_empty_params=False
+    ) -> tuple:
         """
-        Returns a list of DLP policy rules, excluding SaaS Security API DLP policy rules.
+        Enumerates dlp web rules in your organization with pagination.
+        A subset of dlp web rules can be returned that match a supported
+        filter expression or query.
+
+        Args:
+            query_params {dict}: Map of query parameters for the request.
+                [query_params.pagesize] {int}: Page size for pagination.
+                [query_params.search] {str}: Search string for filtering results.
+                [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
+                [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
+            keep_empty_params {bool}: Whether to include empty parameters in the query string.
 
         Returns:
-            :obj:`BoxList`: List of Web DLP items.
+            tuple: A tuple containing (list of DLP Web Rules instances, Response, error)
+
 
         Examples:
             Get a list of all Web DLP Items
@@ -63,10 +86,47 @@ class WebDLPAPI:
             ...    print(item)
 
         """
-        response = self.rest.get("/webDlpRules")
-        if isinstance(response, Response):
-            return None
-        return response
+        http_method = "get".upper()
+        api_url = format_url(f"{self._base_url}/ruleLabels")
+
+        # Handle query parameters (including microtenant_id if provided)
+        query_params = query_params or {}
+
+        # Build the query string
+        if query_params:
+            encoded_query_params = urlencode(query_params)
+            api_url += f"?{encoded_query_params}"
+
+        # Prepare request body and headers
+        body = {}
+        headers = {}
+        form = {}
+
+        # Create the request
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
+        )
+
+        if error:
+            return (None, None, error)
+
+        # Execute the request
+        response, error = self._request_executor.execute(request, RuleLabels)
+
+        if error:
+            return (None, response, error)
+
+        # Parse the response into AppConnectorGroup instances
+        try:
+            result = []
+            for item in response.get_body():
+                result.append(RuleLabels(
+                    self.form_response_body(item)
+                ))
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
 
     def get_rule(self, rule_id: str) -> Box:
         """
