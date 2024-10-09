@@ -16,50 +16,37 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from zscaler.oneapi_object import ZscalerObject
 from zscaler.oneapi_collection import ZscalerCollection
+from zscaler.zia.models import cloud_firewall_nw_service as nw_service
 
-class IPSourceGroup(ZscalerObject):
+class NetworkServiceGroups(ZscalerObject):
     """
-    A class representing a Cloud Firewall IP Source Group object.
+    A class representing a Cloud Firewall Network Service Groups object.
     """
 
     def __init__(self, config=None):
         super().__init__(config)
         if config:
-            self.id = config["id"]\
-                if "id" in config else None
-            self.name = config["name"]\
-                if "name" in config else None
-            self.description = config["description"]\
-                if "description" in config else None
-            self.creator_context = config["creatorContext"]\
-                if "creatorContext" in config else None
-            self.is_non_editable = config["isNonEditable"]\
-                if "isNonEditable" in config else None
-                
-            self.ip_addresses = ZscalerCollection.form_list(
-                config["ipAddresses"] if "ipAddresses" in config else [],
-                str
+            self.id = config["id"] if "id" in config else None
+            self.name = config["name"] if "name" in config else None
+            self.description = config["description"] if "description" in config else None
+
+            # Handling services list using ZscalerCollection and the NetworkServices model
+            self.services = ZscalerCollection.form_list(
+                config["services"] if "services" in config else [], nw_service.NetworkServices
             )
         else:
             self.id = None
             self.name = None
             self.description = None
-            self.creator_context = None
-            self.is_non_editable = None
-            self.ip_addresses = []
+            self.services = []
 
     def request_format(self):
-        """
-        Return the object as a dictionary in the format expected for API requests.
-        """
         parent_req_format = super().request_format()
         current_obj_format = {
             "id": self.id,
             "name": self.name,
             "description": self.description,
-            "creatorContext": self.creator_context,
-            "isNonEditable": self.is_non_editable,
-            "ipAddresses": self.ip_addresses,
+            "services": [service.request_format() for service in self.services]
         }
         parent_req_format.update(current_obj_format)
         return parent_req_format

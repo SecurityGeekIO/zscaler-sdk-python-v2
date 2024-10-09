@@ -23,89 +23,77 @@ from zscaler.zia.models import location_group as location_group
 from zscaler.zia.models import user_management as user_management
 from zscaler.zia.models import rule_labels as rule_labels
 from zscaler.zia.models import cloud_firewall_time_windows as time_windows
-from zscaler.zia.models import workload_groups as workload_groups
-from zscaler.zia.models import cloud_firewall_app_services as app_services
-from zscaler.zia.models import cloud_firewall_destination_groups as destination_groups
-from zscaler.zia.models import cloud_firewall_source_groups as source_groups
 from zscaler.zia.models import cloud_firewall_nw_service_groups as nw_service_groups
 from zscaler.zia.models import cloud_firewall_nw_service as nw_service
 from zscaler.zia.models import cloud_firewall_nw_application_groups as nw_application_groups
+from zscaler.zia.models import zpa_gateway as zpa_gateway
 from zscaler.zia.models import common as common_reference
 
-class FirewallRule(ZscalerObject):
+class ForwardingControlRule(ZscalerObject):
     """
-    A class representing a Firewall Rule object.
+    A class representing a Forwarding Control Rule object.
     """
 
     def __init__(self, config=None):
         super().__init__(config)
         if config:
-            self.access_control = config["accessControl"]\
-                if "accessControl" in config else None
-            self.enable_full_logging = config["enableFullLogging"]\
-                if "enableFullLogging" in config else False
             self.id = config["id"]\
                 if "id" in config else None
             self.name = config["name"]\
                 if "name" in config else None
+            self.type = config["type"]\
+                if "type" in config else None
             self.order = config["order"]\
                 if "order" in config else None
             self.rank = config["rank"]\
                 if "rank" in config else None
-            self.action = config["action"]\
-                if "action" in config else None
-            self.capture_pcap = config["capturePCAP"]\
-                if "capturePCAP" in config else False
             self.state = config["state"]\
                 if "state" in config else None
+            self.forward_method = config["forwardMethod"]\
+                if "forwardMethod" in config else None
             self.description = config["description"]\
                 if "description" in config else None
             self.last_modified_time = config["lastModifiedTime"]\
                 if "lastModifiedTime" in config else None
+            self.zpa_broker_rule = config["zpaBrokerRule"]\
+                if "zpaBrokerRule" in config else None
+
+            # Nested single object
             self.last_modified_by = {
                 "id": config["lastModifiedBy"]["id"] if "lastModifiedBy" in config and "id" in config["lastModifiedBy"] else None,
-                "name": config["lastModifiedBy"]["name"] if "lastModifiedBy" in config and "name" in config["lastModifiedBy"] else None
+                "name": config["lastModifiedBy"]["name"] if "lastModifiedBy" in config and "name" in config["lastModifiedBy"] else None,
+                "externalId": config["lastModifiedBy"]["externalId"] if "lastModifiedBy" in config and "externalId" in config["lastModifiedBy"] else None
             } if "lastModifiedBy" in config else None
 
-
             # Handling lists of simple values
-            self.dest_ip_categories = ZscalerCollection.form_list(
-                config["destIpCategories"] if "destIpCategories" in config else [], str
-            )
-            self.dest_countries = ZscalerCollection.form_list(
-                config["destCountries"] if "destCountries" in config else [], str
-            )
-            self.source_countries = ZscalerCollection.form_list(
-                config["sourceCountries"] if "sourceCountries" in config else [], str
-            )
-            self.exclude_src_countries = ZscalerCollection.form_list(
-                config["excludeSrcCountries"] if "excludeSrcCountries" in config else [], str
-            )
-            self.device_trust_levels = ZscalerCollection.form_list(
-                config["deviceTrustLevels"] if "deviceTrustLevels" in config else [], str
-            )
-            self.nw_applications = ZscalerCollection.form_list(
-                config["nwApplications"] if "nwApplications" in config else [], str
-            )
             self.src_ips = ZscalerCollection.form_list(
                 config["srcIps"] if "srcIps" in config else [], str
             )
             self.dest_addresses = ZscalerCollection.form_list(
                 config["destAddresses"] if "destAddresses" in config else [], str
             )
-                
+            self.dest_ip_categories = ZscalerCollection.form_list(
+                config["destIpCategories"] if "destIpCategories" in config else [], str
+            )
+            self.res_categories = ZscalerCollection.form_list(
+                config["resCategories"] if "resCategories" in config else [], str
+            )
+            self.dest_countries = ZscalerCollection.form_list(
+                config["destCountries"] if "destCountries" in config else [], str
+            )
+            self.nw_applications = ZscalerCollection.form_list(
+                config["nwApplications"] if "nwApplications" in config else [], str
+            )
+
             # Handling nested lists of objects
-            self.app_service_groups = ZscalerCollection.form_list(
-                config["appServiceGroups"] if "appServiceGroups" in config else [], app_services.AppServices
-            )
-            self.nw_services = ZscalerCollection.form_list(
-                config["appServices"] if "appServices" in config else [], app_services.AppServices
-            )
             self.locations = ZscalerCollection.form_list(
                 config["locations"] if "locations" in config else [], location_management.LocationManagement
             )
             self.location_groups = ZscalerCollection.form_list(
                 config["locationGroups"] if "locationGroups" in config else [], location_group.LocationGroup
+            )
+            self.ec_groups = ZscalerCollection.form_list(
+                config["ecGroups"] if "ecGroups" in config else [], common_reference.ResourceReference
             )
             self.departments = ZscalerCollection.form_list(
                 config["departments"] if "departments" in config else [], user_management.Department
@@ -116,32 +104,17 @@ class FirewallRule(ZscalerObject):
             self.users = ZscalerCollection.form_list(
                 config["users"] if "users" in config else [], user_management.UserManagement
             )
-            self.dest_ip_groups = ZscalerCollection.form_list(
-                config["destIpGroups"] if "destIpGroups" in config else [], destination_groups.IPDestinationGroups
-            )
-            self.source_ip_groups = ZscalerCollection.form_list(
-                config["srcIpGroups"] if "srcIpGroups" in config else [], source_groups.IPSourceGroup
+            self.src_ip_groups = ZscalerCollection.form_list(
+                config["srcIpGroups"] if "srcIpGroups" in config else [], common_reference.ResourceReference
             )
             self.src_ipv6_groups = ZscalerCollection.form_list(
-                config["srcIpv6Groups"] if "srcIpv6Groups" in config else [], source_groups.IPSourceGroup
+                config["srcIpv6Groups"] if "srcIpv6Groups" in config else [], common_reference.ResourceReference
+            )
+            self.dest_ip_groups = ZscalerCollection.form_list(
+                config["destIpGroups"] if "destIpGroups" in config else [], common_reference.ResourceReference
             )
             self.dest_ipv6_groups = ZscalerCollection.form_list(
-                config["destIpv6Groups"] if "destIpv6Groups" in config else [], destination_groups.IPDestinationGroups
-            )
-            self.time_windows = ZscalerCollection.form_list(
-                config["timeWindows"] if "timeWindows" in config else [], time_windows.TimeWindows
-            )
-            self.workload_groups = ZscalerCollection.form_list(
-                config["workloadGroups"] if "workloadGroups" in config else [], workload_groups.WorkloadGroups
-            )
-            self.device_groups = ZscalerCollection.form_list(
-                config["deviceGroups"] if "deviceGroups" in config else [], device_groups.DeviceGroups
-            )
-            self.devices = ZscalerCollection.form_list(
-                config["devices"] if "devices" in config else [], devices.Devices
-            )
-            self.labels = ZscalerCollection.form_list(
-                config["labels"] if "labels" in config else [], rule_labels.RuleLabels
+                config["destIpv6Groups"] if "destIpv6Groups" in config else [], common_reference.ResourceReference
             )
             self.nw_services = ZscalerCollection.form_list(
                 config["nwServices"] if "nwServices" in config else [], nw_service.NetworkServices
@@ -152,57 +125,76 @@ class FirewallRule(ZscalerObject):
             self.nw_application_groups = ZscalerCollection.form_list(
                 config["nwApplicationGroups"] if "nwApplicationGroups" in config else [], nw_application_groups.NetworkApplicationGroups
             )
-            # Reuse the external ZPAAppSegment class
+            self.time_windows = ZscalerCollection.form_list(
+                config["timeWindows"] if "timeWindows" in config else [], time_windows.TimeWindows
+            )
+            self.labels = ZscalerCollection.form_list(
+                config["labels"] if "labels" in config else [], rule_labels.RuleLabels
+            )
+            self.devices = ZscalerCollection.form_list(
+                config["devices"] if "devices" in config else [], devices.Devices
+            )
+            self.device_groups = ZscalerCollection.form_list(
+                config["deviceGroups"] if "deviceGroups" in config else [], device_groups.DeviceGroups
+            )
             self.zpa_app_segments = ZscalerCollection.form_list(
                 config["zpaAppSegments"] if "zpaAppSegments" in config else [], common_reference.ResourceReference
             )
+            self.zpa_application_segments = ZscalerCollection.form_list(
+                config["zpaApplicationSegments"] if "zpaApplicationSegments" in config else [], common_reference.ResourceReference
+            )
+            self.zpa_application_segment_groups = ZscalerCollection.form_list(
+                config["zpaApplicationSegmentGroups"] if "zpaApplicationSegmentGroups" in config else [], common_reference.ResourceReference
+            )
 
-            self.default_rule = config["defaultRule"]\
-                if "defaultRule" in config else False
-                
-            self.predefined = config["predefined"]\
-                if "predefined" in config else False
+            # Handle nested single objects
+            self.proxy_gateway = common_reference.ResourceReference(config["proxyGateway"])\
+                if "proxyGateway" in config else None
+
+            self.zpa_gateway = zpa_gateway.ZPAGateway(config["zpaGateway"])\
+                if "zpaGateway" in config else None
 
         else:
-            # Defaults if config is None
-            self.access_control = None
-            self.enable_full_logging = False
+            # Defaults when config is None
             self.id = None
             self.name = None
+            self.type = None
             self.order = None
             self.rank = None
-            self.action = None
-            self.capture_pcap = False
             self.state = None
+            self.forward_method = None
             self.description = None
             self.last_modified_time = None
             self.last_modified_by = None
-            self.dest_ip_categories = []
-            self.dest_countries = []
-            self.source_countries = []
-            self.device_trust_levels = []
-            self.nw_applications = []
             self.src_ips = []
             self.dest_addresses = []
-            self.app_service_groups = []
+            self.dest_ip_categories = []
+            self.res_categories = []
+            self.dest_countries = []
+            self.nw_applications = []
             self.locations = []
             self.location_groups = []
+            self.ec_groups = []
             self.departments = []
             self.groups = []
             self.users = []
+            self.src_ip_groups = []
+            self.src_ipv6_groups = []
+            self.dest_ip_groups = []
+            self.dest_ipv6_groups = []
             self.nw_services = []
             self.nw_service_groups = []
             self.nw_application_groups = []
-            self.src_ip_groups = []
-            self.dest_ip_groups = []
-            self.zpa_app_segments = []
-            self.workload_groups = []
+            self.time_windows = []
+            self.labels = []
+            self.devices = []
             self.device_groups = []
-            self.src_ipv6_groups = []
-            self.dest_ipv6_groups = []
-            self.default_rule = False
-            self.exclude_src_countries = False
-            self.predefined = False
+            self.zpa_app_segments = []
+            self.zpa_application_segments = []
+            self.zpa_application_segment_groups = []
+            self.proxy_gateway = None
+            self.zpa_gateway = None
+            self.zpa_broker_rule = None
 
     def request_format(self):
         """
@@ -210,45 +202,45 @@ class FirewallRule(ZscalerObject):
         """
         parent_req_format = super().request_format()
         current_obj_format = {
-            "accessControl": self.access_control,
-            "enableFullLogging": self.enable_full_logging,
             "id": self.id,
             "name": self.name,
+            "type": self.type,
             "order": self.order,
             "rank": self.rank,
-            "action": self.action,
-            "capturePCAP": self.capture_pcap,
             "state": self.state,
+            "forwardMethod": self.forward_method,
             "description": self.description,
             "lastModifiedTime": self.last_modified_time,
-            "lastModifiedBy": self.last_modified_by.request_format() if self.last_modified_by else None,
-            "destIpCategories": self.dest_ip_categories,
-            "destCountries": self.dest_countries,
-            "sourceCountries": self.source_countries,
-            "deviceTrustLevels": self.device_trust_levels,
-            "nwApplications": self.nw_applications,
+            "lastModifiedBy": self.last_modified_by if self.last_modified_by else None,
             "srcIps": self.src_ips,
             "destAddresses": self.dest_addresses,
-            "appServiceGroups": [asg.request_format() for asg in self.app_service_groups],
+            "destIpCategories": self.dest_ip_categories,
+            "resCategories": self.res_categories,
+            "destCountries": self.dest_countries,
+            "nwApplications": self.nw_applications,
             "locations": [loc.request_format() for loc in self.locations],
-            "locationGroups": [lg.request_format() for lg in self.location_groups],
+            "locationGroups": [loc_group.request_format() for loc_group in self.location_groups],
+            "ecGroups": [ec_group.request_format() for ec_group in self.ec_groups],
             "departments": [dept.request_format() for dept in self.departments],
-            "groups": [grp.request_format() for grp in self.groups],
+            "groups": [group.request_format() for group in self.groups],
             "users": [user.request_format() for user in self.users],
-            "nwServices": [service.request_format() for service in self.nw_services],
-            "nwServiceGroups": [sg.request_format() for sg in self.nw_service_groups],
-            "nwApplicationGroups": [ag.request_format() for ag in self.nw_application_groups],
             "srcIpGroups": [sig.request_format() for sig in self.src_ip_groups],
-            "destIpGroups": [dig.request_format() for dig in self.dest_ip_groups],
             "srcIpv6Groups": [sig.request_format() for sig in self.src_ipv6_groups],
+            "destIpGroups": [dig.request_format() for dig in self.dest_ip_groups],
             "destIpv6Groups": [dig.request_format() for dig in self.dest_ipv6_groups],
-            "zpaAppSegments": [zpa.request_format() for zpa in self.zpa_app_segments],
-            "workloadGroups": [wg.request_format() for wg in self.workload_groups],
+            "nwServices": [service.request_format() for service in self.nw_services],
+            "nwServiceGroups": [service_group.request_format() for service_group in self.nw_service_groups],
+            "nwApplicationGroups": [app_group.request_format() for app_group in self.nw_application_groups],
+            "timeWindows": [window.request_format() for window in self.time_windows],
+            "labels": [label.request_format() for label in self.labels],
+            "devices": [device.request_format() for device in self.devices],
             "deviceGroups": [dg.request_format() for dg in self.device_groups],
-            "devices": [dg.request_format() for dg in self.devices],
-            "defaultRule": self.default_rule,
-            "excludeSrcCountries": self.exclude_src_countries,
-            "predefined": self.predefined
+            "zpaAppSegments": [zpa.request_format() for zpa in self.zpa_app_segments],
+            "zpaApplicationSegments": [zpa_app.request_format() for zpa_app in self.zpa_application_segments],
+            "zpaApplicationSegmentGroups": [zpa_app_group.request_format() for zpa_app_group in self.zpa_application_segment_groups],
+            "proxyGateway": self.proxy_gateway.request_format() if self.proxy_gateway else None,
+            "zpaGateway": self.zpa_gateway.request_format() if self.zpa_gateway else None,
+            "zpaBrokerRule": self.zpa_broker_rule
         }
         parent_req_format.update(current_obj_format)
         return parent_req_format

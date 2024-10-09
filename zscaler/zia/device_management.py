@@ -14,23 +14,39 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
-from box import BoxList
-
 from zscaler.api_client import APIClient
+from zscaler.zia.models.devices import Devices
+from zscaler.zia.models.device_groups import DeviceGroups
+from zscaler.utils import format_url, snake_to_camel
+from urllib.parse import urlencode
+
 
 class DeviceManagementAPI(APIClient):
-    def __init__(self, client: ZIAClient):
-        self.rest = client
+    """
+    A Client object for the Device Management resource.
+    """
 
-    def list_device_groups(self, query: str = None) -> BoxList:
+    def __init__(self):
+        super().__init__()
+        self._base_url = ""
+
+    def list_device_groups(
+            self, query_params=None,
+            keep_empty_params=False
+    ) -> tuple:
         """
         Returns the list of ZIA Device Groups.
 
         Args:
-            query (str): A search string used to match against a Device Group's name or description attributes.
+            query_params {dict}: Map of query parameters for the request.
+                [query_params.page] {int}: Specifies the page offset.
+                [query_params.pagesize] {int}: Specifies the page size. The default size is 100, but the maximum size is 1000.
+                [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
+                [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
+            keep_empty_params {bool}: Whether to include empty parameters in the query string.
 
         Returns:
-            :obj:`BoxList`: A list containing ZIA Device Groups.
+            tuple: A tuple containing (list of Device Group instances, Response, error)
 
         Examples:
             Print all device groups
@@ -43,39 +59,123 @@ class DeviceManagementAPI(APIClient):
             >>> pprint(zia.device_groups.list_device_groups('Windows'))
 
         """
-        payload = {"search": query}
-        return self.rest.get("deviceGroups", params=payload)
+        http_method = "get".upper()
+        api_url = format_url(f"{self._base_url}/deviceGroups")
 
-    def list_devices(self, query: str = None) -> BoxList:
+        query_params = query_params or {}
+
+        if query_params:
+            encoded_query_params = urlencode(query_params)
+            api_url += f"?{encoded_query_params}"
+
+        body = {}
+        headers = {}
+        form = {}
+
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
+        )
+
+        if error:
+            return (None, None, error)
+
+        response, error = self._request_executor.execute(request, DeviceGroups)
+
+        if error:
+            return (None, response, error)
+
+        try:
+            result = []
+            for item in response.get_body():
+                result.append(DeviceGroups(
+                    self.form_response_body(item)
+                ))
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
+
+    def list_devices(
+            self, query_params=None,
+            keep_empty_params=False
+    ) -> tuple:
         """
         Returns the list of Devices.
 
         Args:
-            query (str): A search string used to match against a Device's name or description attributes.
+            query_params {dict}: Map of query parameters for the request.
+                [query_params.name] {str}: The device group name. This is a `starts with` match.
+                [query_params.userIds] {list}: Used to list devices for specific users.
+                [query_params.includeAll] {bool}: Used to include or exclude Cloud Browser Isolation devices.                       
+                [query_params.page] {int}: Specifies the page offset.
+                [query_params.pagesize] {int}: Specifies the page size. The default size is 100, but the maximum size is 1000.
+                [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
+                [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
+            keep_empty_params {bool}: Whether to include empty parameters in the query string.
 
         Returns:
-            :obj:`BoxList`: A list containing Device.
+            tuple: A tuple containing (list of Devices instances, Response, error)
+
 
         Examples:
             Print all devices
 
-            >>> for dlp idm in zia.device_groups.list_devices():
-            ...    pprint(idm)
+            >>> for dlp device in zia.device_groups.list_devices():
+            ...    pprint(device)
 
-            Print IDM profiles that match the name or description 'WINDOWS_OS'
+            Print Devices that match the name or description 'WINDOWS_OS'
 
             >>> pprint(zia.device_groups.list_devices('WINDOWS_OS'))
 
         """
-        payload = {"search": query}
-        return self.rest.get("deviceGroups/devices", params=payload)
+        http_method = "get".upper()
+        api_url = format_url(f"{self._base_url}/deviceGroups/devices")
 
-    def list_device_lite(self) -> BoxList:
+        # Handle query parameters (including microtenant_id if provided)
+        query_params = query_params or {}
+
+        # Build the query string
+        if query_params:
+            encoded_query_params = urlencode(query_params)
+            api_url += f"?{encoded_query_params}"
+
+        # Prepare request body and headers
+        body = {}
+        headers = {}
+        form = {}
+
+        # Create the request
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
+        )
+
+        if error:
+            return (None, None, error)
+
+        # Execute the request
+        response, error = self._request_executor.execute(request, Devices)
+
+        if error:
+            return (None, response, error)
+
+        # Parse the response into AdminUser instances
+        try:
+            result = []
+            for item in response.get_body():
+                result.append(Devices(
+                    self.form_response_body(item)
+                ))
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
+
+    def list_device_lite(self) -> tuple:
         """
         Returns the list of devices that includes device ID, name, and owner name.
 
         Returns:
-            :obj:`BoxList`: List of Device/ids.
+            tuple: List of Device/ids.
 
         Examples:
             Get Device Lite results
@@ -85,4 +185,29 @@ class DeviceManagementAPI(APIClient):
             ...    print(item)
 
         """
-        return self.rest.get("deviceGroups/devices/lite")
+        http_method = "get".upper()
+        api_url = format_url(f"{self._base_url}/deviceGroups/devices/lite")
+
+        # Prepare the request (GET request, no body needed)
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body=None, headers={}, form=None, keep_empty_params=False
+        )
+
+        if error:
+            return (None, None, error)
+
+        # Execute the request
+        response, error = self._request_executor.execute(request, DeviceGroups)
+
+        if error:
+            return (None, response, error)
+
+        # Parse the response into Application instances
+        try:
+            result = []
+            for item in response.get_body():
+                result.append(DeviceGroups(self.form_response_body(item)))
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)

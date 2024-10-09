@@ -45,7 +45,7 @@ class DLPEngineAPI(APIClient):
             keep_empty_params {bool}: Whether to include empty parameters in the query string.
 
         Returns:
-            tuple: A tuple containing (list of DLPTemplates instances, Response, error)
+            tuple: A tuple containing (list of DLP Engines instances, Response, error)
 
 
         Examples:
@@ -61,6 +61,7 @@ class DLPEngineAPI(APIClient):
         """
         http_method = "get".upper()
         api_url = format_url(f"{self._base_url}/dlpEngines")
+        
         query_params = query_params or {}
 
         if query_params:

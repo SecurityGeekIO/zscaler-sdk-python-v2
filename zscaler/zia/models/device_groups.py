@@ -15,11 +15,10 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.oneapi_object import ZscalerObject
-from zscaler.oneapi_collection import ZscalerCollection
 
-class IPDestinationGroups(ZscalerObject):
+class DeviceGroups(ZscalerObject):
     """
-    A class representing a Cloud Firewall IP Destination Group object.
+    A class representing a Device Group object.
     """
 
     def __init__(self, config=None):
@@ -31,32 +30,20 @@ class IPDestinationGroups(ZscalerObject):
                 if "name" in config else None
             self.description = config["description"]\
                 if "description" in config else None
-            self.type = config["type"]\
-                if "type" in config else None
-            self.is_non_editable = config["isNonEditable"]\
-                if "isNonEditable" in config else None
-                
-            self.addresses = ZscalerCollection.form_list(
-                config["addresses"] if "addresses" in config else [],
-                str
-            )
-            self.ip_categories = ZscalerCollection.form_list(
-                config["ipCategories"] if "ipCategories" in config else [],
-                str
-            )
-            self.countries = ZscalerCollection.form_list(
-                config["countries"] if "countries" in config else [],
-                str
-            )
+            self.group_type = config["groupType"]\
+                if "groupType" in config else None
+            self.os_type = config["osType"]\
+                if "osType" in config else None
+            self.predefined = config["predefined"]\
+                if "predefined" in config else None
+
         else:
             self.id = None
             self.name = None
             self.description = None
-            self.type = None
-            self.is_non_editable = None
-            self.addresses = []
-            self.ip_categories = []
-            self.countries = []
+            self.group_type = None
+            self.os_type = None
+            self.predefined = None
 
     def request_format(self):
         """
@@ -67,11 +54,10 @@ class IPDestinationGroups(ZscalerObject):
             "id": self.id,
             "name": self.name,
             "description": self.description,
-            "type": self.type,
-            "isNonEditable": self.is_non_editable,
-            "addresses": self.addresses,
-            "countries": self.countries,
-            "ipCategories": self.ip_categories,
+            "groupType": self.group_type,
+            "osType": self.os_type,
+            "predefined": self.predefined,
         }
         parent_req_format.update(current_obj_format)
         return parent_req_format
+

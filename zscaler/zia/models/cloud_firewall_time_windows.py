@@ -17,9 +17,9 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 from zscaler.oneapi_object import ZscalerObject
 from zscaler.oneapi_collection import ZscalerCollection
 
-class IPDestinationGroups(ZscalerObject):
+class TimeWindows(ZscalerObject):
     """
-    A class representing a Cloud Firewall IP Destination Group object.
+    A class representing a Cloud Firewall Time Windows object.
     """
 
     def __init__(self, config=None):
@@ -29,34 +29,20 @@ class IPDestinationGroups(ZscalerObject):
                 if "id" in config else None
             self.name = config["name"]\
                 if "name" in config else None
-            self.description = config["description"]\
-                if "description" in config else None
-            self.type = config["type"]\
-                if "type" in config else None
-            self.is_non_editable = config["isNonEditable"]\
-                if "isNonEditable" in config else None
+            self.start_time = config["startTime"]\
+                if "startTime" in config else None
+            self.end_time = config["endTime"]\
+                if "endTime" in config else None
                 
-            self.addresses = ZscalerCollection.form_list(
-                config["addresses"] if "addresses" in config else [],
-                str
-            )
-            self.ip_categories = ZscalerCollection.form_list(
-                config["ipCategories"] if "ipCategories" in config else [],
-                str
-            )
-            self.countries = ZscalerCollection.form_list(
-                config["countries"] if "countries" in config else [],
-                str
+            self.days_of_week = ZscalerCollection.form_list(
+                config["dayOfWeek"] if "dayOfWeek" in config else [], str
             )
         else:
             self.id = None
             self.name = None
-            self.description = None
-            self.type = None
-            self.is_non_editable = None
-            self.addresses = []
-            self.ip_categories = []
-            self.countries = []
+            self.start_time = None
+            self.end_time = None
+            self.days_of_week = []
 
     def request_format(self):
         """
@@ -66,12 +52,9 @@ class IPDestinationGroups(ZscalerObject):
         current_obj_format = {
             "id": self.id,
             "name": self.name,
-            "description": self.description,
-            "type": self.type,
-            "isNonEditable": self.is_non_editable,
-            "addresses": self.addresses,
-            "countries": self.countries,
-            "ipCategories": self.ip_categories,
+            "startTime": self.start_time,
+            "endTime": self.end_time,
+            "dayOfWeek": self.days_of_week,
         }
         parent_req_format.update(current_obj_format)
         return parent_req_format

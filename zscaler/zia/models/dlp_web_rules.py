@@ -16,12 +16,18 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from zscaler.oneapi_object import ZscalerObject
 from zscaler.oneapi_collection import ZscalerCollection
+
+from zscaler.zia.models import admin_users as admin_users
+from zscaler.zia.models import dlp_engine as dlp_engine
 from zscaler.zia.models import dlp_templates as dlp_templates
 from zscaler.zia.models import dlp_resources as dlp_resources
+from zscaler.zia.models import cloud_firewall_source_groups as cloud_firewall_source_groups
 from zscaler.zia.models import location_group as location_group
 from zscaler.zia.models import location_management as location_management
 from zscaler.zia.models import user_management as user_management
 from zscaler.zia.models import urlcategory as urlcategory
+from zscaler.zia.models import rule_labels as labels
+from zscaler.zia.models import common as common_reference
 from zscaler.zia.models import workload_groups as workload_groups
 
 class DLPWebRules(ZscalerObject):
@@ -60,19 +66,26 @@ class DLPWebRules(ZscalerObject):
                 if "zccNotificationsEnabled" in config else False
             self.severity = config["severity"]\
                 if "severity" in config else None
+            self.parent_rule = config["parentRule"]\
+                if "parentRule" in config else None
+            self.sub_rules = config["subRules"]\
+                if "subRules" in config else None
             self.order = config["order"]\
                 if "order" in config else None
             self.eun_template_id = config["eunTemplateId"]\
                 if "eunTemplateId" in config else None
+            self.inspect_http_get_enabled = config["inspectHttpGetEnabled"]\
+                if "inspectHttpGetEnabled" in config else None
             self.zscaler_incident_receiver = config["zscalerIncidentReceiver"]\
                 if "zscalerIncidentReceiver" in config else None
+            self.external_auditor_email = config["externalAuditorEmail"]\
+                if "externalAuditorEmail" in config else None
 
             # Handling lists of simple values
             self.protocols = ZscalerCollection.form_list(
                 config["protocols"] if "protocols" in config else [],
                 str
             )
-
             self.file_types = ZscalerCollection.form_list(
                 config["fileTypes"] if "fileTypes" in config else [],
                 str
@@ -81,17 +94,16 @@ class DLPWebRules(ZscalerObject):
                 config["cloudApplications"] if "cloudApplications" in config else [],
                 str
             )
-            self.location_groups = ZscalerCollection.form_list(
-                config["locationGroups"] if "locationGroups" in config else [],
-                location_group.LocationGroup
-            )
 
             # Handling nested objects with ZscalerCollection and defensive programming
             self.locations = ZscalerCollection.form_list(
                 config["locations"] if "locations" in config else [],
                 location_management.LocationManagement
             )
-
+            self.location_groups = ZscalerCollection.form_list(
+                config["locationGroups"] if "locationGroups" in config else [],
+                location_group.LocationGroup
+            )
             self.groups = ZscalerCollection.form_list(
                 config["groups"] if "groups" in config else [],
                 user_management.Groups
@@ -110,11 +122,15 @@ class DLPWebRules(ZscalerObject):
             )
             self.included_domain_profiles = ZscalerCollection.form_list(
                 config["includedDomainProfiles"] if "includedDomainProfiles" in config else [],
-                IncludedDomainProfile
+                common_reference.ResourceReference
+            )
+            self.excluded_domain_profiles = ZscalerCollection.form_list(
+                config["excludedDomainProfiles"] if "excludedDomainProfiles" in config else [],
+                common_reference.ResourceReference
             )
             self.source_ip_groups = ZscalerCollection.form_list(
                 config["sourceIpGroups"] if "sourceIpGroups" in config else [],
-                SourceIPGroup
+                cloud_firewall_source_groups.IPSourceGroup
             )
             self.url_categories = ZscalerCollection.form_list(
                 config["urlCategories"] if "urlCategories" in config else [],
@@ -122,14 +138,35 @@ class DLPWebRules(ZscalerObject):
             )
             self.zpa_app_segments = ZscalerCollection.form_list(
                 config["zpaAppSegments"] if "zpaAppSegments" in config else [],
-                ZPAAppSegment
+                common_reference.ResourceReference
             )
-
-            # Handling single nested objects with defensive programming
-            self.auditor = Auditor(config["auditor"])\
+            self.dlp_engines = ZscalerCollection.form_list(
+                config["dlpEngines"] if "dlpEngines" in config else [],
+                dlp_engine.DLPEngine
+            )
+            self.labels = ZscalerCollection.form_list(
+                config["labels"] if "labels" in config else [],  # Missing Attribute
+                labels.RuleLabels
+            )
+            self.excluded_groups = ZscalerCollection.form_list(
+                config["excludedGroups"] if "excludedGroups" in config else [],  # New Attribute
+                user_management.Groups
+            )
+            self.excluded_departments = ZscalerCollection.form_list(
+                config["excludedDepartments"] if "excludedDepartments" in config else [],
+                user_management.Department
+            )
+            self.excluded_users = ZscalerCollection.form_list(
+                config["excludedUsers"] if "excludedUsers" in config else [],
+                user_management.UserManagement
+            )
+            
+            self.auditor = admin_users.AdminUser(config["auditor"])\
                 if "auditor" in config else None
+                
             self.notification_template = dlp_templates.DLPTemplates(
                 config["notificationTemplate"]) if "notificationTemplate" in config else None
+
             self.icap_server = dlp_resources.DLPICAPServer(
                 config["icapServer"]) if "icapServer" in config else None
 
@@ -149,6 +186,8 @@ class DLPWebRules(ZscalerObject):
             self.dlp_download_scan_enabled = False
             self.zcc_notifications_enabled = False
             self.severity = None
+            self.parent_rule = None
+            self.sub_rules = []
             self.order = None
             self.eun_template_id = None
             self.zscaler_incident_receiver = None
@@ -164,10 +203,16 @@ class DLPWebRules(ZscalerObject):
             self.zpa_app_segments = []
             self.workload_groups = []
             self.included_domain_profiles = []
+            self.excluded_domain_profiles = []
             self.source_ip_groups = []
+            self.labels = []
+            self.excluded_groups = []
+            self.excluded_departments = []
+            self.excluded_users = []
             self.auditor = None
             self.notification_template = None
             self.icap_server = None
+            self.external_auditor_email = None  # New attribute
 
     def request_format(self):
         """
@@ -189,6 +234,8 @@ class DLPWebRules(ZscalerObject):
             "dlpDownloadScanEnabled": self.dlp_download_scan_enabled,
             "zccNotificationsEnabled": self.zcc_notifications_enabled,
             "severity": self.severity,
+            "parentRule": self.parent_rule,
+            "subRules": self.sub_rules,
             "order": self.order,
             "eunTemplateId": self.eun_template_id,
             "zscalerIncidentReceiver": self.zscaler_incident_receiver,
@@ -204,33 +251,19 @@ class DLPWebRules(ZscalerObject):
             "zpaAppSegments": [segment.request_format() for segment in self.zpa_app_segments],
             "workloadGroups": [group.request_format() for group in self.workload_groups],
             "includedDomainProfiles": [profile.request_format() for profile in self.included_domain_profiles],
+            "excludedDomainProfiles": [exclude_profile.request_format() for exclude_profile in self.excluded_domain_profiles],
             "sourceIpGroups": [group.request_format() for group in self.source_ip_groups],
+            "labels": [label.request_format() for label in self.labels],
+            "excludedGroups": [group.request_format() for group in self.excluded_groups],  # New Attribute
+            "excludedDepartments": [department.request_format() for department in self.excluded_departments],  # New Attribute
+            "excludedUsers": [user.request_format() for user in self.excluded_users],  # New Attribute
             "auditor": self.auditor.request_format()\
                 if self.auditor else None,
             "notificationTemplate": self.notification_template.request_format()\
                 if self.notification_template else None,
             "icapServer": self.icap_server.request_format()\
                 if self.icap_server else None,
+            "externalAuditorEmail": self.external_auditor_email  # New Attribute
         }
         parent_req_format.update(current_obj_format)
         return parent_req_format
-
-# Example of nested models used within the DLPWebRules model
-
-class Location(ZscalerObject):
-    def __init__(self, config=None):
-        super().__init__(config)
-        self.id = config["id"]\
-            if "id" in config else None
-        self.name = config["name"]\
-            if "name" in config else None
-
-class LocationGroup(ZscalerObject):
-    def __init__(self, config=None):
-        super().__init__(config)
-        self.id = config["id"]\
-            if "id" in config else None
-        self.name = config["name"]\
-            if "name" in config else None
-
-# Define other nested classes similarly.

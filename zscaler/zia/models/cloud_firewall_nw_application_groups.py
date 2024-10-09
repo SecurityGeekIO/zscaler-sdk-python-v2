@@ -17,9 +17,9 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 from zscaler.oneapi_object import ZscalerObject
 from zscaler.oneapi_collection import ZscalerCollection
 
-class IPDestinationGroups(ZscalerObject):
+class NetworkApplicationGroups(ZscalerObject):
     """
-    A class representing a Cloud Firewall IP Destination Group object.
+    A class representing a Cloud Firewall Network Application Groups object.
     """
 
     def __init__(self, config=None):
@@ -31,32 +31,16 @@ class IPDestinationGroups(ZscalerObject):
                 if "name" in config else None
             self.description = config["description"]\
                 if "description" in config else None
-            self.type = config["type"]\
-                if "type" in config else None
-            self.is_non_editable = config["isNonEditable"]\
-                if "isNonEditable" in config else None
                 
-            self.addresses = ZscalerCollection.form_list(
-                config["addresses"] if "addresses" in config else [],
-                str
-            )
-            self.ip_categories = ZscalerCollection.form_list(
-                config["ipCategories"] if "ipCategories" in config else [],
-                str
-            )
-            self.countries = ZscalerCollection.form_list(
-                config["countries"] if "countries" in config else [],
+            self.network_applications = ZscalerCollection.form_list(
+                config["networkApplications"] if "networkApplications" in config else [],
                 str
             )
         else:
             self.id = None
             self.name = None
             self.description = None
-            self.type = None
-            self.is_non_editable = None
-            self.addresses = []
-            self.ip_categories = []
-            self.countries = []
+            self.network_applications = []
 
     def request_format(self):
         """
@@ -67,11 +51,7 @@ class IPDestinationGroups(ZscalerObject):
             "id": self.id,
             "name": self.name,
             "description": self.description,
-            "type": self.type,
-            "isNonEditable": self.is_non_editable,
-            "addresses": self.addresses,
-            "countries": self.countries,
-            "ipCategories": self.ip_categories,
+            "networkApplications": self.network_applications,
         }
         parent_req_format.update(current_obj_format)
         return parent_req_format

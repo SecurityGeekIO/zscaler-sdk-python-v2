@@ -15,11 +15,10 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.oneapi_object import ZscalerObject
-from zscaler.oneapi_collection import ZscalerCollection
 
-class IPDestinationGroups(ZscalerObject):
+class CBIProfile(ZscalerObject):
     """
-    A class representing a Cloud Firewall IP Destination Group object.
+    A class representing a Devices object.
     """
 
     def __init__(self, config=None):
@@ -29,34 +28,16 @@ class IPDestinationGroups(ZscalerObject):
                 if "id" in config else None
             self.name = config["name"]\
                 if "name" in config else None
-            self.description = config["description"]\
-                if "description" in config else None
-            self.type = config["type"]\
-                if "type" in config else None
-            self.is_non_editable = config["isNonEditable"]\
-                if "isNonEditable" in config else None
-                
-            self.addresses = ZscalerCollection.form_list(
-                config["addresses"] if "addresses" in config else [],
-                str
-            )
-            self.ip_categories = ZscalerCollection.form_list(
-                config["ipCategories"] if "ipCategories" in config else [],
-                str
-            )
-            self.countries = ZscalerCollection.form_list(
-                config["countries"] if "countries" in config else [],
-                str
-            )
+            self.url = config["url"]\
+                if "url" in config else None
+            self.default_profile = config["defaultProfile"]\
+                if "defaultProfile" in config else None
+         
         else:
             self.id = None
             self.name = None
-            self.description = None
-            self.type = None
-            self.is_non_editable = None
-            self.addresses = []
-            self.ip_categories = []
-            self.countries = []
+            self.url = None
+            self.default_profile = None
 
     def request_format(self):
         """
@@ -66,12 +47,9 @@ class IPDestinationGroups(ZscalerObject):
         current_obj_format = {
             "id": self.id,
             "name": self.name,
-            "description": self.description,
-            "type": self.type,
-            "isNonEditable": self.is_non_editable,
-            "addresses": self.addresses,
-            "countries": self.countries,
-            "ipCategories": self.ip_categories,
+            "url": self.url,
+            "defaultProfile": self.default_profile,
         }
         parent_req_format.update(current_obj_format)
         return parent_req_format
+

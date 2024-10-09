@@ -15,68 +15,81 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 
-from box import BoxList
+from zscaler.api_client import APIClient
+from zscaler.zia.models.cloud_browser_isolation import CBIProfile
+from zscaler.utils import format_url
+from urllib.parse import urlencode
 
-from zscaler.utils import snake_to_camel
-from zscaler.zia.client import ZIAClient
 
+class CBIProfileAPI(APIClient):
+    """
+    A Client object for the Cloud Browser Isolation Profile resource.
+    """
+    def __init__(self):
+        super().__init__()
+        self._base_url = ""
 
-class IsolationProfileAPI:
-    def __init__(self, client: ZIAClient):
-        self.rest = client
-
-    def list_isolation_profiles(self, **kwargs) -> BoxList:
+    def list_isolation_profiles(
+            self, query_params=None,
+            keep_empty_params=False
+    ) -> tuple:
         """
-        Returns a list of all profiles in the Isolation Profile field for URL Filtering rules and Cloud App Control rules.
+        Enumerates isolation profiles in your organization with pagination.
+        A subset of isolation profiles  can be returned that match a supported
+        filter expression or query.
 
         Args:
-            **kwargs: Optional keyword arguments to refine the search query.
+            query_params {dict}: Map of query parameters for the request.
+                [query_params.pagesize] {int}: Page size for pagination.
+                [query_params.search] {str}: Search string for filtering results.
+                [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
+                [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
+            keep_empty_params {bool}: Whether to include empty parameters in the query string.
 
         Returns:
-            :obj:`BoxList`: A list of isolation profile resource records.
+            tuple: A tuple containing (list of isolation profiles instances, Response, error)
 
         Examples:
             >>> isolation_profiles = zia.isolation_profiles.list_isolation_profiles()
 
         """
-        return self.rest.get("browserIsolation/profiles")
+        http_method = "get".upper()
+        api_url = format_url(f"{self._base_url}/browserIsolation/profiles")
 
-    def get_profiles_by_name(self, name: str):
-        """
-        Retrieves a specific isolation profile by its name.
+        # Handle query parameters (including microtenant_id if provided)
+        query_params = query_params or {}
 
-        Args:
-            name (str): The name of the isolation profile to retrieve.
+        # Build the query string
+        if query_params:
+            encoded_query_params = urlencode(query_params)
+            api_url += f"?{encoded_query_params}"
 
-        Returns:
-            :obj:`Box`: The isolation profile if found, otherwise None.
+        # Prepare request body and headers
+        body = {}
+        headers = {}
+        form = {}
 
-        Examples:
-            >>> profile = zia.isolation_profiles.get_profiles_by_name('Default Isolation')
-            ...    print(profile)
-        """
-        profiles = self.list_isolation_profiles()
-        for profile in profiles:
-            if profile.get("name") == name:
-                return profile
-        return None
+        # Create the request
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
+        )
 
-    def get_profiles_by_id(self, profile_id: str):
-        """
-        Retrieves a specific isolation profile by its unique identifier.
+        if error:
+            return (None, None, error)
 
-        Args:
-            profile_id (str): The ID of the isolation profile to retrieve.
+        # Execute the request
+        response, error = self._request_executor.execute(request, CBIProfile)
 
-        Returns:
-            :obj:`Box`: The isolation profile if found, otherwise None.
+        if error:
+            return (None, response, error)
 
-        Examples:
-            >>> profile = zia.isolation_profiles.get_profiles_by_id('12345')
-            ...    print(profile)
-        """
-        profiles = self.list_isolation_profiles()
-        for profile in profiles:
-            if profile.get("id") == profile_id:
-                return profile
-        return None
+        try:
+            result = []
+            for item in response.get_body():
+                result.append(CBIProfile(
+                    self.form_response_body(item)
+                ))
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)

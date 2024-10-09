@@ -14,9 +14,6 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
-from box import Box, BoxList
-from requests import Response
-
 from zscaler.api_client import APIClient
 from zscaler.zia.models.dlp_web_rules import DLPWebRules
 
@@ -27,7 +24,6 @@ from zscaler.utils import (
     transform_common_id_fields,
     format_url
 )
-
 from urllib.parse import urlencode
 
 
@@ -111,7 +107,7 @@ class DLPWebRuleAPI(APIClient):
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, RuleLabels)
+        response, error = self._request_executor.execute(request, DLPWebRules)
 
         if error:
             return (None, response, error)
@@ -120,7 +116,7 @@ class DLPWebRuleAPI(APIClient):
         try:
             result = []
             for item in response.get_body():
-                result.append(RuleLabels(
+                result.append(DLPWebRules(
                     self.form_response_body(item)
                 ))
         except Exception as error:
@@ -128,7 +124,7 @@ class DLPWebRuleAPI(APIClient):
 
         return (result, response, None)
 
-    def get_rule(self, rule_id: str) -> Box:
+    def get_rule(self, rule_id: str) -> tuple:
         """
         Returns a DLP policy rule, excluding SaaS Security API DLP policy rules.
 
@@ -145,9 +141,36 @@ class DLPWebRuleAPI(APIClient):
             ... print(results)
 
         """
-        return self.rest.get(f"webDlpRules/{rule_id}")
+        http_method = "get".upper()
+        api_url = format_url(f"{self._base_url}/webDlpRules/{rule_id}")
 
-    def list_rules_lite(self) -> BoxList:
+        body = {}
+        headers = {}
+        form = {}
+
+        # Create the request
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body, headers, form
+        )
+
+        if error:
+            return (None, None, error)
+
+        # Execute the request
+        response, error = self._request_executor.execute(request, DLPWebRules)
+
+        if error:
+            return (None, response, error)
+
+        # Parse the response
+        try:
+            result = DLPWebRules(self.form_response_body(response.get_body()))
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
+
+    def list_rules_lite(self) -> tuple:
         """
         Returns the name and ID for all DLP policy rules, excluding SaaS Security API DLP policy rules.
 
@@ -162,12 +185,49 @@ class DLPWebRuleAPI(APIClient):
             ...    print(item)
 
         """
-        response = self.rest.get("webDlpRules/lite")
-        if isinstance(response, Response):
-            return None
-        return response
+        http_method = "get".upper()
+        api_url = format_url(f"{self._base_url}/webDlpRules/lite")
 
-    def add_rule(self, name: str, action: str, **kwargs) -> Box:
+        # Handle query parameters (including microtenant_id if provided)
+        query_params = query_params or {}
+
+        # Build the query string
+        if query_params:
+            encoded_query_params = urlencode(query_params)
+            api_url += f"?{encoded_query_params}"
+
+        # Prepare request body and headers
+        body = {}
+        headers = {}
+        form = {}
+
+        # Create the request
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body, headers, form
+        )
+
+        if error:
+            return (None, None, error)
+
+        # Execute the request
+        response, error = self._request_executor.execute(request, DLPWebRules)
+
+        if error:
+            return (None, response, error)
+
+        # Parse the response into AdminUser instances
+        try:
+            result = []
+            for item in response.get_body():
+                result.append(DLPWebRules(
+                    self.form_response_body(item)
+                ))
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
+
+    def add_rule(self, name: str, action: str, **kwargs) -> tuple:
         """
         Adds a new DLP policy rule.
 
@@ -226,6 +286,9 @@ class DLPWebRuleAPI(APIClient):
             ...    groups=['95016183'],
             ...    description='TT#1965432122')
         """
+        http_method = "post".upper()
+        api_url = format_url(f"{self._base_url}/webDlpRules")
+
         # Convert enabled to API format if present
         if "enabled" in kwargs:
             kwargs["state"] = "ENABLED" if kwargs.pop("enabled") else "DISABLED"
@@ -248,15 +311,24 @@ class DLPWebRuleAPI(APIClient):
             if value is not None:
                 camel_payload[snake_to_camel(key)] = value
 
-        # Send POST request to create the rule
-        response = self.rest.post("webDlpRules", json=payload)
-        if isinstance(response, Response):
-            status_code = response.status_code
-            # Handle error response
-            raise Exception(f"API call failed with status {status_code}: {response.json()}")
-        return response
+        request, error = self._request_executor.create_request(http_method, api_url, payload, {}, {})
+        if error:
+            return (None, None, error)
 
-    def update_rule(self, rule_id: str, **kwargs) -> Box:
+        response, error = self._request_executor.execute(request, DLPWebRules)
+
+        if error:
+            return (None, response, error)
+
+        try:
+            result = DLPWebRules(self.form_response_body(response.get_body()))
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
+
+
+    def update_rule(self, rule_id: str, **kwargs) -> tuple:
         """
         Updates an existing DLP policy rule. Not applicable to SaaS Security API DLP policy rules.
 
@@ -308,6 +380,9 @@ class DLPWebRuleAPI(APIClient):
 
                 >>> zia.web_dlp.update_rule('976597', description="TT#1965232866")
         """
+        http_method = "put".upper()
+        api_url = format_url(f"{self._base_url}/webDlpRules/{rule_id}")
+
         # Set payload to value of existing record and convert nested dict keys.
         payload = convert_keys(self.get_rule(rule_id))
 
@@ -322,15 +397,24 @@ class DLPWebRuleAPI(APIClient):
         for key, value in kwargs.items():
             payload[snake_to_camel(key)] = value
 
-        response = self.rest.put(f"webDlpRules/{rule_id}", json=payload)
-        if isinstance(response, Response) and not response.ok:
-            # Handle error response
-            raise Exception(f"API call failed with status {response.status_code}: {response.json()}")
+        request, error = self._request_executor.create_request(http_method, api_url, payload, {}, {})
+        if error:
+            return (None, None, error)
 
-        # Return the updated object
-        return self.get_rule(rule_id)
+        response, error = self._request_executor.execute(request, DLPWebRules)
 
-    def delete_rule(self, rule_id: str) -> Box:
+        if error:
+            return (None, response, error)
+
+        try:
+            result = DLPWebRules(
+                self.form_response_body(response.get_body())
+            )
+        except Exception as error:
+            return (None, response, error)
+        return (result, response, None)
+
+    def delete_rule(self, rule_id: int) -> tuple:
         """
         Deletes a DLP policy rule. This endpoint is not applicable to SaaS Security API DLP policy rules.
 
@@ -348,4 +432,16 @@ class DLPWebRuleAPI(APIClient):
 
 
         """
-        return self.rest.delete(f"webDlpRules/{rule_id}").status_code
+        http_method = "delete".upper()
+        api_url = format_url(f"{self._base_url}/webDlpRules/{rule_id}")
+
+        request, error = self._request_executor.create_request(http_method, api_url, {}, {}, {})
+        if error:
+            return (None, error)
+
+        response, error = self._request_executor.execute(request)
+
+        if error:
+            return (None, error)
+
+        return (response, None)

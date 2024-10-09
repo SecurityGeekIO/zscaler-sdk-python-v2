@@ -196,7 +196,6 @@ class UserManagementAPI(APIClient):
         http_method = "get".upper()
         api_url = format_url(f"{self._base_url}/users/references")
 
-        # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
 
         # Build the query string
@@ -465,7 +464,6 @@ class UserManagementAPI(APIClient):
         http_method = "get".upper()
         api_url = format_url(f"{self._base_url}/departments")
 
-        # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
 
         # Build the query string
@@ -586,7 +584,6 @@ class UserManagementAPI(APIClient):
         http_method = "get".upper()
         api_url = format_url(f"{self._base_url}/groups")
 
-        # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
 
         # Build the query string

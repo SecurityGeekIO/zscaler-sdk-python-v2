@@ -15,16 +15,19 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from typing import List
-from box import Box, BoxList
-from requests import Response
+
+from zscaler.api_client import APIClient
+from zscaler.zia.models.cloudappcontrol import CloudApplicationControl
+from zscaler.zia.models.cloudappcontrol import Application
 
 from zscaler.utils import (
     convert_keys,
     recursive_snake_to_camel,
     snake_to_camel,
     transform_common_id_fields,
+    format_url
 )
-from zscaler.api_client import APIClient
+from urllib.parse import urlencode
 
 
 class CloudAppControlAPI(APIClient):
@@ -45,34 +48,68 @@ class CloudAppControlAPI(APIClient):
         ("users", "users"),
     ]
 
-    def __init__(self, client: ZIAClient):
-        self.rest = client
+    def __init__(self):
+        super().__init__()
+        self._base_url = ""
 
-    def list_available_actions(self, rule_type: str, cloud_apps: List[str]) -> BoxList:
+    def list_available_actions(self, rule_type: str) -> tuple:
         """
-        Returns a list of granular actions supported for applications based on rule type.
+        Retrieves a list of granular actions supported for a specific rule type.
 
         Args:
-            rule_type (str): The type of rules to retrieve (e.g., "STREAMING_MEDIA").
-            cloud_apps (list): The list of cloud applications to retrieve actions for.
+            rule_type (str): The type of rule for which actions should be retrieved 
+                             (e.g., "STREAMING_MEDIA").
 
         Returns:
-            :obj:`BoxList`: The list of granular available actions.
+            tuple: A tuple containing:
+                   - result (list): A list of actions supported for the given rule type.
+                   - response (object): The full API response object.
+                   - error (object): Any error encountered during the request.
 
         Examples:
-            List all available actions for a specific rule type::
+            Retrieve available actions for a specific rule type:
 
-                >>> for actions in zia.cloudappcontrol.list_available_actions(
-                ...     'STREAMING_MEDIA',
-                ...     cloud_apps=['DROPBOX']
-                ... ):
-                ...    pprint(actions)
+                >>> actions, response, error = zia.cloudappcontrol.list_available_actions(
+                ...     'STREAMING_MEDIA'
+                ... )
+                >>> if actions:
+                ...     for action in actions:
+                ...         print(action)
 
         """
-        payload = {"cloudApps": cloud_apps}
-        return self.rest.post(f"webApplicationRules/{rule_type}/availableActions", json=payload)
+        # Set the HTTP method and API URL
+        http_method = "get".upper()
+        api_url = f"{self._base_url}/webApplicationRules/{rule_type}/availableActions"
 
-    def list_rules(self, rule_type: str) -> BoxList:
+        # Prepare the request (GET request, no body needed)
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body=None, headers={}, form=None, keep_empty_params=False
+        )
+
+        if error:
+            return (None, None, error)
+
+        # Execute the request
+        response, error = self._request_executor.execute(request, Application)
+
+        if error:
+            return (None, response, error)
+
+        # Parse the response into Application instances
+        try:
+            result = []
+            for item in response.get_body():
+                result.append(Application(self.form_response_body(item)))
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
+
+    def list_rules(
+        self, rule_type: str,
+        query_params=None,
+        keep_empty_params=False
+        ) -> tuple:
         """
         Returns a list of all Cloud App Control rules for the specified rule type.
 
@@ -80,7 +117,7 @@ class CloudAppControlAPI(APIClient):
             rule_type (str): The type of rules to retrieve (e.g., "STREAMING_MEDIA").
 
         Returns:
-            :obj:`BoxList`: The list of Cloud App Control rules.
+            tuple: The list of Cloud App Control rules.
 
         Examples:
             List all rules for a specific type::
@@ -89,9 +126,49 @@ class CloudAppControlAPI(APIClient):
                 ...    pprint(rule)
 
         """
-        return self.rest.get(f"webApplicationRules/{rule_type}")
+        http_method = "get".upper()
+        api_url = format_url(f"{self._base_url}/webApplicationRules/{rule_type}")
 
-    def get_rule(self, rule_type: str, rule_id: str) -> Box:
+        # Handle query parameters (including microtenant_id if provided)
+        query_params = query_params or {}
+
+        # Build the query string
+        if query_params:
+            encoded_query_params = urlencode(query_params)
+            api_url += f"?{encoded_query_params}"
+
+        # Prepare request body and headers
+        body = {}
+        headers = {}
+        form = {}
+
+        # Create the request
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
+        )
+
+        if error:
+            return (None, None, error)
+
+        # Execute the request
+        response, error = self._request_executor.execute(request, CloudApplicationControl)
+
+        if error:
+            return (None, response, error)
+
+        # Parse the response into AppConnectorGroup instances
+        try:
+            result = []
+            for item in response.get_body():
+                result.append(CloudApplicationControl(
+                    self.form_response_body(item)
+                ))
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
+
+    def get_rule(self, rule_type: str, rule_id: str) -> tuple:
         """
         Returns information for the specified Cloud App Control rule under the specified rule type.
 
@@ -108,30 +185,36 @@ class CloudAppControlAPI(APIClient):
                 >>> pprint(zia.cloudappcontrol.get_rule('STREAMING_MEDIA', '431233'))
 
         """
-        return self.rest.get(f"webApplicationRules/{rule_type}/{rule_id}")
+        http_method = "get".upper()
+        api_url = format_url(f"{self._base_url}/webApplicationRules/{rule_type}/{rule_id}")
 
-    def get_rule_by_name(self, rule_type: str, rule_name: str) -> Box:
-        """
-        Retrieves a specific Cloud App Control rule by its name and type.
+        body = {}
+        headers = {}
+        form = {}
 
-        Args:
-            rule_type (str): The type of rules to search within (e.g., "WEBMAIL").
-            rule_name (str): The name of the rule to retrieve.
+        # Create the request
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body, headers, form
+        )
 
-        Returns:
-            :obj:`Box`: The Cloud App Control rule if found, otherwise None.
+        if error:
+            return (None, None, error)
 
-        Examples:
-            >>> rule = zia.cloudappcontrol.get_rule_by_name('WEBMAIL', 'Webmail Rule-1')
-            ...    print(rule)
-        """
-        rules = self.list_rules(rule_type)
-        for rule in rules:
-            if rule.get("name") == rule_name:
-                return rule
-        return None
+        # Execute the request
+        response, error = self._request_executor.execute(request, CloudApplicationControl)
 
-    def add_rule(self, rule_type: str, name: str, **kwargs) -> Box:
+        if error:
+            return (None, response, error)
+
+        # Parse the response
+        try:
+            result = CloudApplicationControl(self.form_response_body(response.get_body()))
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
+
+    def add_rule(self, rule_type: str, name: str, **kwargs) -> tuple:
         """
         Adds a new cloud app control filter rule.
 
@@ -295,6 +378,9 @@ class CloudAppControlAPI(APIClient):
                 - `BLOCK_WEBMAIL_SEND`
                 - `ISOLATE_WEBMAIL_VIEW`
         """
+        http_method = "post".upper()
+        api_url = format_url(f"{self._base_url}/webApplicationRules/{rule_type}")
+
         # Convert enabled to API format if present
         if "enabled" in kwargs:
             kwargs["state"] = "ENABLED" if kwargs.pop("enabled") else "DISABLED"
@@ -321,14 +407,23 @@ class CloudAppControlAPI(APIClient):
             if value is not None:
                 camel_payload[snake_to_camel(key)] = value
 
-        response = self.rest.post(f"webApplicationRules/{rule_type}", json=camel_payload)
-        if isinstance(response, Response):
-            status_code = response.status_code
-            if status_code != 200:
-                raise Exception(f"API call failed with status {status_code}: {response.json()}")
-        return response
+        request, error = self._request_executor.create_request(http_method, api_url, payload, {}, {})
+        if error:
+            return (None, None, error)
 
-    def update_rule(self, rule_type: str, rule_id: str, **kwargs) -> Box:
+        response, error = self._request_executor.execute(request, CloudApplicationControl)
+
+        if error:
+            return (None, response, error)
+
+        try:
+            result = CloudApplicationControl(self.form_response_body(response.get_body()))
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
+
+    def update_rule(self, rule_type: str, rule_id: str, **kwargs) -> tuple:
         """
         Updates a new cloud app control filter rule.
 
@@ -492,6 +587,9 @@ class CloudAppControlAPI(APIClient):
                 - `BLOCK_WEBMAIL_SEND`
                 - `ISOLATE_WEBMAIL_VIEW`
         """
+        http_method = "put".upper()
+        api_url = format_url(f"{self._base_url}/webApplicationRules/{rule_type}/{rule_id}")
+
         # Set payload to value of existing record and convert nested dict keys.
         payload = convert_keys(self.get_rule(rule_type, rule_id))
 
@@ -506,12 +604,24 @@ class CloudAppControlAPI(APIClient):
         for key, value in kwargs.items():
             payload[snake_to_camel(key)] = value
 
-        response = self.rest.put(f"webApplicationRules/{rule_type}/{rule_id}", json=payload)
-        if isinstance(response, Response) and not response.ok:
-            raise Exception(f"API call failed with status {response.status_code}: {response.json()}")
-        return self.get_rule(rule_type, rule_id)
+        request, error = self._request_executor.create_request(http_method, api_url, payload, {}, {})
+        if error:
+            return (None, None, error)
 
-    def delete_rule(self, rule_type: str, rule_id: str) -> int:
+        response, error = self._request_executor.execute(request, CloudApplicationControl)
+
+        if error:
+            return (None, response, error)
+
+        try:
+            result = CloudApplicationControl(
+                self.form_response_body(response.get_body())
+            )
+        except Exception as error:
+            return (None, response, error)
+        return (result, response, None)
+
+    def delete_rule(self, rule_type: str, rule_id: int) -> tuple:
         """
         Deletes the specified cloud app control filter rule.
 
@@ -526,9 +636,21 @@ class CloudAppControlAPI(APIClient):
             >>> zia.cloudappcontrol.delete_rule('STREAMING_MEDIA', '278454')
 
         """
-        return self.rest.delete(f"webApplicationRules/{rule_type}/{rule_id}").status_code
+        http_method = "delete".upper()
+        api_url = format_url(f"{self._base_url}/webApplicationRules/{rule_type}/{rule_id}")
 
-    def add_duplicate_rule(self, rule_type: str, rule_id: str, name: str, **kwargs) -> Box:
+        request, error = self._request_executor.create_request(http_method, api_url, {}, {}, {})
+        if error:
+            return (None, error)
+
+        response, error = self._request_executor.execute(request)
+
+        if error:
+            return (None, error)
+
+        return (response, None)
+
+    def add_duplicate_rule(self, rule_type: str, rule_id: str, name: str, **kwargs) -> tuple:
         """
         Adds a new duplicate cloud app control filter rule.
 
@@ -561,7 +683,10 @@ class CloudAppControlAPI(APIClient):
                 ``enforce_time_validity`` must be set to `True` for this to take effect.
 
         Returns:
-            :obj:`Box`: New cloud app control filter rule resource.
+            tuple: A tuple containing:
+                - result (CloudApplicationControl): The newly duplicated cloud app control filter rule.
+                - response (object): The full API response object.
+                - error (object): Any error encountered during the request.
 
         Examples:
             Allow Webmail Application::
@@ -589,6 +714,9 @@ class CloudAppControlAPI(APIClient):
                 ...    groups=['17994591'],
                 )
         """
+        http_method = "post".upper()
+        api_url = format_url(f"{self._base_url}/webApplicationRules/{rule_type}/duplicate/{rule_id}?name={name}")
+
         # Convert enabled to API format if present
         if "enabled" in kwargs:
             kwargs["state"] = "ENABLED" if kwargs.pop("enabled") else "DISABLED"
@@ -612,9 +740,19 @@ class CloudAppControlAPI(APIClient):
         # Convert the entire payload's keys to camelCase before sending
         camel_payload = recursive_snake_to_camel(payload)
 
-        response = self.rest.post(f"webApplicationRules/{rule_type}/duplicate/{rule_id}?name={name}", json=camel_payload)
-        if isinstance(response, Response):
-            status_code = response.status_code
-            if status_code != 200:
-                raise Exception(f"API call failed with status {status_code}: {response.json()}")
-        return response
+        # Use camel_payload in the API request
+        request, error = self._request_executor.create_request(http_method, api_url, camel_payload, {}, {})
+        if error:
+            return (None, None, error)
+
+        response, error = self._request_executor.execute(request, CloudApplicationControl)
+
+        if error:
+            return (None, response, error)
+
+        try:
+            result = CloudApplicationControl(self.form_response_body(response.get_body()))
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
