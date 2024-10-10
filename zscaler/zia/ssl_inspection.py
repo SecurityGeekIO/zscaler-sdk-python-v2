@@ -17,12 +17,13 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from box import Box
 
-from zscaler.zia import ZIAClient
+from zscaler.api_client import APIClient
 
 
-class SSLInspectionAPI:
-    def __init__(self, client: ZIAClient):
-        self.rest = client
+class SSLInspectionAPI(APIClient):
+    def __init__(self):
+        super().__init__()
+        self._base_url = ""
 
     def get_csr(self) -> str:
         """

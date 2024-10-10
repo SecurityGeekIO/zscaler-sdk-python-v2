@@ -43,7 +43,33 @@ from zscaler.zpa.service_edge_schedule import ServiceEdgeSchedule
 from zscaler.zpa.trusted_networks import TrustedNetworksAPI
 
 # Zscaler Internet Access APIs
+from zscaler.zia.activate import ActivationAPI
+from zscaler.zia.admin_roles import AdminRolesAPI
+from zscaler.zia.admin_users import AdminUsersAPI
+from zscaler.zia.apptotal import AppTotalAPI
+from zscaler.zia.audit_logs import AuditLogsAPI
+from zscaler.zia.authentication_settings import AuthenticationSettingsAPI
+from zscaler.zia.cloud_apps import CloudAppsAPI
+from zscaler.zia.cloudappcontrol import CloudAppControlAPI
+from zscaler.zia.device_management import DeviceManagementAPI
+from zscaler.zia.dlp_dictionary import DLPDictionaryAPI
+from zscaler.zia.dlp_engine import DLPEngineAPI
+from zscaler.zia.dlp_resources import DLPResourcesAPI
+from zscaler.zia.dlp_templates import DLPTemplatesAPI
+from zscaler.zia.firewall import FirewallPolicyAPI
+from zscaler.zia.forwarding_control import ForwardingControlAPI
+from zscaler.zia.isolation_profile import CBIProfileAPI
+from zscaler.zia.locations import LocationsAPI
 from zscaler.zia.rule_labels import RuleLabelsAPI
+from zscaler.zia.sandbox import CloudSandboxAPI
+from zscaler.zia.security_policy_settings import SecurityPolicyAPI
+from zscaler.zia.ssl_inspection import SSLInspectionAPI
+from zscaler.zia.traffic import TrafficForwardingAPI
+from zscaler.zia.url_categories import URLCategoriesAPI
+from zscaler.zia.url_filtering import URLFilteringAPI
+from zscaler.zia.user_management import UserManagementAPI
+from zscaler.zia.workload_groups import WorkloadGroupsAPI
+from zscaler.zia.zpa_gateway import ZPAGatewayAPI
 
 # Zscaler Client Connector APIs
 class Client(
@@ -80,7 +106,33 @@ class Client(
     TrustedNetworksAPI,
     
     # ZIA API Resources
-    RuleLabelsAPI
+    ActivationAPI,
+    AdminRolesAPI,
+    AdminUsersAPI,
+    AppTotalAPI,
+    AuditLogsAPI,
+    AuthenticationSettingsAPI,
+    CloudAppsAPI,
+    CloudAppControlAPI,
+    DeviceManagementAPI,
+    DLPDictionaryAPI,
+    DLPEngineAPI,
+    DLPResourcesAPI,
+    DLPTemplatesAPI,
+    FirewallPolicyAPI,
+    ForwardingControlAPI,
+    CBIProfileAPI,
+    LocationsAPI,
+    RuleLabelsAPI,
+    CloudSandboxAPI,
+    SecurityPolicyAPI,
+    SSLInspectionAPI,
+    TrafficForwardingAPI,
+    URLCategoriesAPI,
+    URLFilteringAPI,
+    UserManagementAPI,
+    WorkloadGroupsAPI,
+    ZPAGatewayAPI,
 ):
     """A Zscaler client object"""
 

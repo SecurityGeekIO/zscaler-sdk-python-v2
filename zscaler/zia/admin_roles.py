@@ -56,7 +56,7 @@ class AdminRolesAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/adminRoles/lite")
+        api_url = format_url(f"{self._base_url}/zia/api/v1/adminRoles/lite")
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}

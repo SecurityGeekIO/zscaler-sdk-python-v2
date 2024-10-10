@@ -16,7 +16,6 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from zscaler.api_client import APIClient
 from zscaler.zia.models.dlp_resources import DLPICAPServer
-from zscaler.zia.models.dlp_resources import DLPIncidentReceiver
 from zscaler.zia.models.dlp_resources import DLPIDMProfile
 from zscaler.zia.models.dlp_resources import DLPEDMSchema
 from zscaler.utils import format_url
@@ -64,7 +63,7 @@ class DLPResourcesAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/icapServers")
+        api_url = format_url(f"{self._base_url}/zia/api/v1/icapServers")
 
         query_params = query_params or {}
 
@@ -116,7 +115,7 @@ class DLPResourcesAPI(APIClient):
         http_method = "get".upper()
         api_url = format_url(
             f"""
-            {self._base_url}/icapServers/{icap_server_id}
+            {self._base_url}/zia/api/v1/icapServers/{icap_server_id}
             """
         )
         # Handle optional query parameters
@@ -186,7 +185,7 @@ class DLPResourcesAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/incidentReceiverServers")
+        api_url = format_url(f"{self._base_url}/zia/api/v1/incidentReceiverServers")
 
         query_params = query_params or {}
 
@@ -205,7 +204,7 @@ class DLPResourcesAPI(APIClient):
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request, DLPIncidentReceiver)
+        response, error = self._request_executor.execute(request, DLPICAPServer)
 
         if error:
             return (None, response, error)
@@ -213,7 +212,7 @@ class DLPResourcesAPI(APIClient):
         try:
             result = []
             for item in response.get_body():
-                result.append(DLPIncidentReceiver(
+                result.append(DLPICAPServer(
                     self.form_response_body(item)
                 ))
         except Exception as error:
@@ -238,7 +237,7 @@ class DLPResourcesAPI(APIClient):
         http_method = "get".upper()
         api_url = format_url(
             f"""
-            {self._base_url}/incidentReceiverServers/{receiver_id}
+            {self._base_url}/zia/api/v1/incidentReceiverServers/{receiver_id}
             """
         )
         # Handle optional query parameters
@@ -263,13 +262,13 @@ class DLPResourcesAPI(APIClient):
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, DLPIncidentReceiver)
+        response, error = self._request_executor.execute(request, DLPICAPServer)
 
         if error:
             return (None, response, error)
 
         try:
-            result = DLPIncidentReceiver(
+            result = DLPICAPServer(
                 self.form_response_body(response.get_body())
             )
         except Exception as error:
@@ -308,7 +307,7 @@ class DLPResourcesAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/idmprofile")
+        api_url = format_url(f"{self._base_url}/zia/api/v1/idmprofile")
 
         query_params = query_params or {}
 
@@ -360,7 +359,7 @@ class DLPResourcesAPI(APIClient):
         http_method = "get".upper()
         api_url = format_url(
             f"""
-            {self._base_url}/idmprofile/{profile_id}
+            {self._base_url}/zia/api/v1/idmprofile/{profile_id}
             """
         )
         # Handle optional query parameters
@@ -424,7 +423,7 @@ class DLPResourcesAPI(APIClient):
             >>> pprint(zia.dlp.list_edm_schemas())
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/dlpExactDataMatchSchemas")
+        api_url = format_url(f"{self._base_url}/zia/api/v1/dlpExactDataMatchSchemas")
 
         query_params = query_params or {}
 
@@ -494,7 +493,7 @@ class DLPResourcesAPI(APIClient):
             params["fetchTokens"] = fetch_tokens
 
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/dlpExactDataMatchSchemas/lite")
+        api_url = format_url(f"{self._base_url}/zia/api/v1/dlpExactDataMatchSchemas/lite")
 
         query_params = query_params or {}
 

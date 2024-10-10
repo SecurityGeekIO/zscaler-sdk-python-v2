@@ -14,8 +14,6 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
-from typing import List
-
 from zscaler.api_client import APIClient
 from zscaler.zia.models.cloudappcontrol import CloudApplicationControl
 from zscaler.zia.models.cloudappcontrol import Application
@@ -79,7 +77,7 @@ class CloudAppControlAPI(APIClient):
         """
         # Set the HTTP method and API URL
         http_method = "get".upper()
-        api_url = f"{self._base_url}/webApplicationRules/{rule_type}/availableActions"
+        api_url = f"{self._base_url}/zia/api/v1/webApplicationRules/{rule_type}/availableActions"
 
         # Prepare the request (GET request, no body needed)
         request, error = self._request_executor.create_request(
@@ -127,7 +125,7 @@ class CloudAppControlAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/webApplicationRules/{rule_type}")
+        api_url = format_url(f"{self._base_url}/zia/api/v1/webApplicationRules/{rule_type}")
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
@@ -186,7 +184,7 @@ class CloudAppControlAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/webApplicationRules/{rule_type}/{rule_id}")
+        api_url = format_url(f"{self._base_url}/zia/api/v1/webApplicationRules/{rule_type}/{rule_id}")
 
         body = {}
         headers = {}
@@ -379,7 +377,7 @@ class CloudAppControlAPI(APIClient):
                 - `ISOLATE_WEBMAIL_VIEW`
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._base_url}/webApplicationRules/{rule_type}")
+        api_url = format_url(f"{self._base_url}/zia/api/v1/webApplicationRules/{rule_type}")
 
         # Convert enabled to API format if present
         if "enabled" in kwargs:
@@ -588,7 +586,7 @@ class CloudAppControlAPI(APIClient):
                 - `ISOLATE_WEBMAIL_VIEW`
         """
         http_method = "put".upper()
-        api_url = format_url(f"{self._base_url}/webApplicationRules/{rule_type}/{rule_id}")
+        api_url = format_url(f"{self._base_url}/zia/api/v1/webApplicationRules/{rule_type}/{rule_id}")
 
         # Set payload to value of existing record and convert nested dict keys.
         payload = convert_keys(self.get_rule(rule_type, rule_id))
@@ -637,7 +635,7 @@ class CloudAppControlAPI(APIClient):
 
         """
         http_method = "delete".upper()
-        api_url = format_url(f"{self._base_url}/webApplicationRules/{rule_type}/{rule_id}")
+        api_url = format_url(f"{self._base_url}/zia/api/v1/webApplicationRules/{rule_type}/{rule_id}")
 
         request, error = self._request_executor.create_request(http_method, api_url, {}, {}, {})
         if error:
@@ -715,7 +713,7 @@ class CloudAppControlAPI(APIClient):
                 )
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._base_url}/webApplicationRules/{rule_type}/duplicate/{rule_id}?name={name}")
+        api_url = format_url(f"{self._base_url}/zia/api/v1/webApplicationRules/{rule_type}/duplicate/{rule_id}?name={name}")
 
         # Convert enabled to API format if present
         if "enabled" in kwargs:

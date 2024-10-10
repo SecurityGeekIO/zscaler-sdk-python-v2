@@ -17,12 +17,16 @@
 
 from box import Box
 
-from zscaler.zia import ZIAClient
+from zscaler.api_client import APIClient
 
 
-class AuditLogsAPI:
-    def __init__(self, client: ZIAClient):
-        self.rest = client
+class AuditLogsAPI(APIClient):
+    """
+    A Client object for Audito Logs resource.
+    """
+    def __init__(self):
+        super().__init__()
+        self._base_url = ""
 
     def status(self) -> Box:
         """

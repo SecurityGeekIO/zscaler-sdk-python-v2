@@ -66,42 +66,36 @@ class RuleLabelsAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/ruleLabels")
+        api_url = format_url(f"{self._base_url}/zia/api/v1/ruleLabels")
 
-        # Handle query parameters (including microtenant_id if provided)
-        query_params = query_params or {}
 
         # Build the query string
         if query_params:
             encoded_query_params = urlencode(query_params)
             api_url += f"?{encoded_query_params}"
 
-        # Prepare request body and headers
-        body = {}
+        # Prepare request headers (no need for body or form in a GET request)
         headers = {}
-        form = {}
-
+        
         # Create the request
         request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
+            http_method, api_url, {}, headers, {}, keep_empty_params=keep_empty_params
         )
 
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, RuleLabels)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
 
-        # Parse the response into AppConnectorGroup instances
+        # Parse the response into RuleLabels instances
         try:
             result = []
             for item in response.get_body():
-                result.append(RuleLabels(
-                    self.form_response_body(item)
-                ))
+                result.append(RuleLabels(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
@@ -126,7 +120,7 @@ class RuleLabelsAPI(APIClient):
         http_method = "get".upper()
         api_url = format_url(
             f"""
-            {self._base_url}/ruleLabels/{label_id}
+            {self._base_url}/zia/api/v1/ruleLabels/{label_id}
             """
         )
         # Handle optional query parameters
@@ -179,7 +173,7 @@ class RuleLabelsAPI(APIClient):
             tuple: A tuple containing the newly added Rule Label (Box), response, and error.
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._base_url}/ruleLabels")
+        api_url = format_url(f"{self._base_url}/zia/api/v1/ruleLabels")
 
         # Build the payload
         payload = {"name": name}
@@ -223,7 +217,7 @@ class RuleLabelsAPI(APIClient):
             tuple: A tuple containing the updated Rule Label (Box), response, and error.
         """
         http_method = "put".upper()
-        api_url = format_url(f"{self._base_url}/ruleLabels/{label_id}")
+        api_url = format_url(f"{self._base_url}/zia/api/v1/ruleLabels/{label_id}")
 
         # Construct the payload using the provided kwargs
         payload = {snake_to_camel(key): value for key, value in kwargs.items()}
@@ -257,7 +251,7 @@ class RuleLabelsAPI(APIClient):
             tuple: A tuple containing the response object and error (if any).
         """
         http_method = "delete".upper()
-        api_url = format_url(f"{self._base_url}/ruleLabels/{label_id}")
+        api_url = format_url(f"{self._base_url}/zia/api/v1/ruleLabels/{label_id}")
 
         # Handle query parameters if provided
         if query_params:

@@ -54,7 +54,7 @@ class CBIProfileAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/browserIsolation/profiles")
+        api_url = format_url(f"{self._base_url}/zia/api/v1/browserIsolation/profiles")
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}

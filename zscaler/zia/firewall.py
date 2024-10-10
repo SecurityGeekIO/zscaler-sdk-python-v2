@@ -24,10 +24,10 @@ from zscaler.utils import (
     snake_to_camel,
     transform_common_id_fields,
 )
-from zscaler.zia import ZIAClient
+from zscaler.api_client import APIClient
 
 
-class FirewallPolicyAPI:
+class FirewallPolicyAPI(APIClient):
     # Firewall filter rule keys that only require an ID to be provided.
     reformat_params = [
         ("app_services", "appServices"),
@@ -49,8 +49,9 @@ class FirewallPolicyAPI:
         ("users", "users"),
     ]
 
-    def __init__(self, client: ZIAClient):
-        self.rest = client
+    def __init__(self):
+        super().__init__()
+        self._base_url = ""
 
     def list_rules(self) -> BoxList:
         """

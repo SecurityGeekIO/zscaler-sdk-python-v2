@@ -17,7 +17,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 from zscaler.api_client import APIClient
 from zscaler.zia.models.devices import Devices
 from zscaler.zia.models.device_groups import DeviceGroups
-from zscaler.utils import format_url, snake_to_camel
+from zscaler.utils import format_url
 from urllib.parse import urlencode
 
 
@@ -60,7 +60,7 @@ class DeviceManagementAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/deviceGroups")
+        api_url = format_url(f"{self._base_url}/zia/api/v1/deviceGroups")
 
         query_params = query_params or {}
 
@@ -129,7 +129,7 @@ class DeviceManagementAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/deviceGroups/devices")
+        api_url = format_url(f"{self._base_url}/zia/api/v1/deviceGroups/devices")
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
@@ -186,7 +186,7 @@ class DeviceManagementAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/deviceGroups/devices/lite")
+        api_url = format_url(f"{self._base_url}/zia/api/v1/deviceGroups/devices/lite")
 
         # Prepare the request (GET request, no body needed)
         request, error = self._request_executor.create_request(

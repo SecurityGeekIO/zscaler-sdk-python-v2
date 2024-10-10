@@ -59,7 +59,7 @@ class DLPTemplatesAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/dlpNotificationTemplates")
+        api_url = format_url(f"{self._base_url}/zia/api/v1/dlpNotificationTemplates")
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
@@ -115,7 +115,7 @@ class DLPTemplatesAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/dlpNotificationTemplates/{template_id}")
+        api_url = format_url(f"{self._base_url}/zia/api/v1/dlpNotificationTemplates/{template_id}")
 
         body = {}
         headers = {}
@@ -169,7 +169,7 @@ class DLPTemplatesAPI(APIClient):
             ...                         html_message="<html><body>HTML message content</body></html>")
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._base_url}/dlpNotificationTemplates")
+        api_url = format_url(f"{self._base_url}/zia/api/v1/dlpNotificationTemplates")
         
         payload = {
             "name": name,
@@ -218,7 +218,7 @@ class DLPTemplatesAPI(APIClient):
 
         """
         http_method = "put".upper()
-        api_url = format_url(f"{self._base_url}/dlpNotificationTemplates/{template_id}")
+        api_url = format_url(f"{self._base_url}/zia/api/v1/dlpNotificationTemplates/{template_id}")
 
         # Construct the payload using the provided kwargs
         payload = {snake_to_camel(key): value for key, value in kwargs.items()}
@@ -260,7 +260,7 @@ class DLPTemplatesAPI(APIClient):
 
         """
         http_method = "delete".upper()
-        api_url = format_url(f"{self._base_url}/dlpNotificationTemplates/{template_id}")
+        api_url = format_url(f"{self._base_url}/zia/api/v1/dlpNotificationTemplates/{template_id}")
 
         request, error = self._request_executor.create_request(http_method, api_url, {}, {}, {})
         if error:

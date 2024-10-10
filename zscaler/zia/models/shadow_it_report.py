@@ -240,7 +240,6 @@ class ShadowITReport(ZscalerObject):
         parent_req_format.update(current_obj_format)
         return parent_req_format
 
-
 class CloudapplicationsAndTags(ZscalerObject):
     def __init__(self, config=None):
         super().__init__(config)
@@ -288,3 +287,4 @@ class CloudApplicationBulkUpdate(ZscalerObject):
         }
         parent_req_format.update(current_obj_format)
         return parent_req_format
+    

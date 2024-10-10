@@ -60,7 +60,7 @@ class DLPDictionaryAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/dlpDictionaries")
+        api_url = format_url(f"{self._base_url}/zia/api/v1/dlpDictionaries")
 
         query_params = query_params or {}
 
@@ -110,7 +110,7 @@ class DLPDictionaryAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/dlpDictionaries/{dict_id}")
+        api_url = format_url(f"{self._base_url}/zia/api/v1/dlpDictionaries/{dict_id}")
 
         body = {}
         headers = {}
@@ -203,7 +203,7 @@ class DLPDictionaryAPI(APIClient):
 
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._base_url}/dlpDictionaries")
+        api_url = format_url(f"{self._base_url}/zia/api/v1/dlpDictionaries")
 
         payload = {
             "name": name,
@@ -284,7 +284,7 @@ class DLPDictionaryAPI(APIClient):
 
         """
         http_method = "put".upper()
-        api_url = format_url(f"{self._base_url}/dlpDictionaries/{dict_id}")
+        api_url = format_url(f"{self._base_url}/zia/api/v1/dlpDictionaries/{dict_id}")
 
         # Construct the payload using the provided kwargs
         payload = {snake_to_camel(key): value for key, value in kwargs.items()}
@@ -322,7 +322,7 @@ class DLPDictionaryAPI(APIClient):
         http_method = "delete".upper()
         api_url = format_url(
             f"""
-            {self._base_url}/dlpDictionaries/{dict_id}
+            {self._base_url}/zia/api/v1/dlpDictionaries/{dict_id}
             """
         )
 
@@ -353,7 +353,7 @@ class DLPDictionaryAPI(APIClient):
             tuple: A tuple containing the validation result (DLPPatternValidation instance), response, and error.
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._base_url}/dlpDictionaries/validateDlpPattern")
+        api_url = format_url(f"{self._base_url}/zia/api/v1/dlpDictionaries/validateDlpPattern")
 
         # Construct the payload
         payload = {"data": pattern}
@@ -405,7 +405,7 @@ class DLPDictionaryAPI(APIClient):
         dict_id = dictionary.id
 
         http_method = "get".upper()
-        api_url = f"{self._base_url}/dlpDictionaries/{dict_id}/predefinedIdentifiers"
+        api_url = f"{self._base_url}/zia/api/v1/dlpDictionaries/{dict_id}/predefinedIdentifiers"
         request, error = self._request_executor.create_request(http_method, api_url, {}, {}, {})
         if error:
             return (None, None, error)

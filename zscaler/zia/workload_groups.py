@@ -53,7 +53,7 @@ class WorkloadGroupsAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/workloadGroups")
+        api_url = format_url(f"{self._base_url}/zia/api/v1/workloadGroups")
 
         query_params = query_params or {}
 

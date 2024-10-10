@@ -19,12 +19,13 @@ from box import Box, BoxList
 from requests import Response
 
 from zscaler.utils import Iterator, convert_keys, snake_to_camel
-from zscaler.zia import ZIAClient
+from zscaler.api_client import APIClient
 
 
-class TrafficForwardingAPI:
-    def __init__(self, client: ZIAClient):
-        self.rest = client
+class TrafficForwardingAPI(APIClient):
+    def __init__(self):
+        super().__init__()
+        self._base_url = ""
 
     def list_gre_tunnels(self, **kwargs) -> BoxList:
         """

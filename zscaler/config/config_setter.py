@@ -116,26 +116,35 @@ class ConfigSetter:
             os.environ["ZSCALER_SDK_LOG"] = "false"
 
     def _apply_default_values(self):
-        """Apply default values to default client configuration
-        """
-        # Set defaults
+        """Apply default values to default client configuration"""
+        
+        # Ensure both 'client' and 'testing' dictionaries are initialized
+        if "client" not in self._config:
+            self._config["client"] = {}
+
+        if "testing" not in self._config:
+            self._config["testing"] = {}
+
+        # Set default values for 'client' and 'testing' configurations
         self._config["client"]["connectionTimeout"] = 30
         self._config["client"]["cache"] = {
             "enabled": False,
             "defaultTtl": 300,
             "defaultTti": 300
         }
-
         self._config["client"]["logging"] = {
             "enabled": False,
             "logLevel": logging.INFO
         }
-        
         self._config["client"]["userAgent"] = ""
         self._config["client"]["requestTimeout"] = 0
         self._config["client"]["rateLimit"] = {
             "maxRetries": 2
         }
+
+        # Initialize the 'testing' section with default values
+        self._config["testing"]["testingDisableHttpsCheck"] = False
+
 
         self._config["testing"]["testingDisableHttpsCheck"] = False
 

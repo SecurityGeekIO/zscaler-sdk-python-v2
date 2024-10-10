@@ -1,26 +1,35 @@
-# -*- coding: utf-8 -*-
+"""
+Copyright (c) 2023, Zscaler Inc.
 
-# Copyright (c) 2023, Zscaler Inc.
-#
-# Permission to use, copy, modify, and/or distribute this software for any
-# purpose with or without fee is hereby granted, provided that the above
-# copyright notice and this permission notice appear in all copies.
-#
-# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
 
-from zscaler.utils import convert_keys
-from zscaler.zia import ZIAClient
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+"""
 
 
-class CloudAppsAPI:
-    def __init__(self, client: ZIAClient):
-        self.rest = client
+from zscaler.api_client import APIClient
+from zscaler.zia.models.shadow_it_report import ShadowITReport
+from zscaler.zia.models.shadow_it_report import CloudapplicationsAndTags
+from zscaler.zia.models.shadow_it_report import CloudApplicationBulkUpdate
+from zscaler.utils import format_url, convert_keys
+from urllib.parse import urlencode
+
+
+class CloudAppsAPI(APIClient):
+    """
+    A Client object for the predefined and custom Cloud Applications resource.
+    """
+    def __init__(self):
+        super().__init__()
+        self._base_url = ""
 
     @staticmethod
     def _convert_ids_to_dict_list(id_list):
@@ -34,7 +43,7 @@ class CloudAppsAPI:
         """
         return [{"id": str(id)} for id in id_list]
 
-    def bulk_update(self, sanction_state: str, **kwargs):
+    def bulk_update(self, sanction_state: str, **kwargs) -> tuple: 
         """
         Updates application status and tag information for predefined or custom cloud applications based on the
         IDs specified.
@@ -68,6 +77,9 @@ class CloudAppsAPI:
                 zia.cloud_apps.bulk_update("sanctioned", application_ids=["12345"], custom_tag_ids=["67890"])
 
         """
+        http_method = "put".upper()
+        api_url = format_url(f"{self._base_url}/zia/api/v1/cloudApplications/bulkUpdate")
+
         # Mapping for user-friendly sanction state values to API-expected values
         sanction_state_mapping = {
             "sanctioned": "SANCTIONED",
@@ -94,7 +106,16 @@ class CloudAppsAPI:
         if custom_tag_ids is not None:
             payload["customTags"] = self._convert_ids_to_dict_list(custom_tag_ids)
 
-        return self.rest.put("cloudApplications/bulkUpdate", json=payload).status_code
+        request, error = self._request_executor.create_request(http_method, api_url, payload, {}, {})
+        if error:
+            return (None, None, error)
+
+        response, error = self._request_executor.execute(request)
+
+        if error:
+            return (None, response, error)
+
+        return (response.get_body(), response, None)
 
     def export_shadow_it_report(self, duration: str = "LAST_1_DAYS", **kwargs) -> str:
         """
@@ -290,10 +311,32 @@ class CloudAppsAPI:
             Zscaler has a rate limit of 1 report per-minute, ensure you take this into account when calling this method.
 
         """
+        http_method = "post".upper()
+        api_url = format_url(f"{self._base_url}/zia/api/v1/shadowIT/applications/export")
+
         payload = {"duration": duration}
         convert_keys(payload.update(kwargs))
 
-        return self.rest.post("shadowIT/applications/export", json=payload).text
+        body = {}
+        headers = {"Accept": "text/csv"}  # Explicitly request a CSV response
+        form = {}
+
+        # Creating the request
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body, headers, form
+        )
+
+        if error:
+            return (None, error)
+
+        # Executing the request
+        response, error = self._request_executor.execute(request)
+
+        if error:
+            return (response, error)
+
+        # Return the CSV content directly
+        return (response.content, None)
 
     def export_shadow_it_csv(self, application: str, entity: str, duration: str = "LAST_1_DAYS", **kwargs):
         """
@@ -354,6 +397,8 @@ class CloudAppsAPI:
         Notes:
             Zscaler has a rate limit of 1 report per-minute, ensure you take this into account when calling this method.
         """
+        http_method = "post".upper()
+        api_url = format_url(f"{self._base_url}/zia/api/v1/shadowIT/applications/{entity}/exportCsv")
 
         payload = {"application": application, "duration": duration}
 
@@ -365,7 +410,26 @@ class CloudAppsAPI:
 
         convert_keys(payload.update(kwargs))
 
-        return self.rest.post(f"shadowIT/applications/{entity}/exportCsv", json=payload).text
+        body = {}
+        headers = {"Accept": "text/csv"}  # Explicitly request a CSV response
+        form = {}
+
+        # Creating the request
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body, headers, form
+        )
+
+        if error:
+            return (None, error)
+
+        # Executing the request
+        response, error = self._request_executor.execute(request)
+
+        if error:
+            return (response, error)
+
+        # Return the CSV content directly
+        return (response.content, None)
 
     def list_apps(self):
         """
@@ -382,7 +446,7 @@ class CloudAppsAPI:
                     print(app.name)
 
         """
-        return self.rest.get("cloudApplications/lite")
+        return self.rest.get("/zia/api/v1/cloudApplications/lite")
 
     def list_custom_tags(self):
         """

@@ -20,7 +20,7 @@ from zscaler.utils import format_url
 from zscaler.utils import  snake_to_camel
 from urllib.parse import urlencode
 
-class AdminUsers(APIClient):
+class AdminUsersAPI(APIClient):
     """
     A Client object for the Admin and Role resource.
     """
@@ -111,7 +111,7 @@ class AdminUsers(APIClient):
             >>> admin_user, response, error = zia.admin_and_role_management.get_admin_user('987321202')
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/adminUsers/{user_id}")
+        api_url = format_url(f"{self._base_url}/zia/api/v1/adminUsers/{user_id}")
 
         body = {}
         headers = {}

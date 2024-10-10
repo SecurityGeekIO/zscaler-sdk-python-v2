@@ -19,12 +19,13 @@ import mimetypes
 
 from box import Box
 
-from zscaler.zia import ZIAClient
+from zscaler.api_client import APIClient
 
 
-class CloudSandboxAPI:
-    def __init__(self, client: ZIAClient):
+class CloudSandboxAPI(APIClient):
+    def __init__(self, client: APIClient):
         self.rest = client
+        
         self.sandbox_token = client.sandbox_token
         self.env_cloud = client.env_cloud
 

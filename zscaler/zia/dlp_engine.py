@@ -60,7 +60,7 @@ class DLPEngineAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/dlpEngines")
+        api_url = format_url(f"{self._base_url}/zia/api/v1/dlpEngines")
         
         query_params = query_params or {}
 
@@ -110,7 +110,7 @@ class DLPEngineAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/dlpEngines/{engine_id}")
+        api_url = format_url(f"{self._base_url}/zia/api/v1/dlpEngines/{engine_id}")
 
         body = {}
         headers = {}
@@ -140,7 +140,7 @@ class DLPEngineAPI(APIClient):
         Adds a new dlp engine.
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._base_url}/dlpEngines")
+        api_url = format_url(f"{self._base_url}/zia/api/v1/dlpEngines")
 
         payload = {
             "name": name,
@@ -210,7 +210,7 @@ class DLPEngineAPI(APIClient):
 
         """
         http_method = "put".upper()
-        api_url = format_url(f"{self._base_url}/dlpEngines/{engine_id}")
+        api_url = format_url(f"{self._base_url}/zia/api/v1/dlpEngines/{engine_id}")
 
         # Construct the payload using the provided kwargs
         payload = {snake_to_camel(key): value for key, value in kwargs.items()}
@@ -248,7 +248,7 @@ class DLPEngineAPI(APIClient):
         http_method = "delete".upper()
         api_url = format_url(
             f"""
-            {self._base_url}/dlpEngines/{engine_id}
+            {self._base_url}/zia/api/v1/dlpEngines/{engine_id}
             """
         )
         params = {}
@@ -277,7 +277,7 @@ class DLPEngineAPI(APIClient):
             >>> zia.dlp.validate_dlp_expression("((D63.S > 1) AND (D38.S > 0))")
         """        
         http_method = "post".upper()
-        api_url = format_url(f"{self._base_url}/dlpEngines/validateDlpExpr")
+        api_url = format_url(f"{self._base_url}/zia/api/v1/dlpEngines/validateDlpExpr")
 
         # Construct the payload
         payload = {"data": expression}

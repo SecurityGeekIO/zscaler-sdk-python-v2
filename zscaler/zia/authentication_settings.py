@@ -42,7 +42,7 @@ class AuthenticationSettingsAPI(APIClient):
             >>> exempted_urls, response, error = zia.authentication_settings.get_exempted_urls()
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/authSettings/exemptedUrls")
+        api_url = format_url(f"{self._base_url}/zia/api/v1/authSettings/exemptedUrls")
 
         # Prepare request body and headers
         body = {}
@@ -82,7 +82,7 @@ class AuthenticationSettingsAPI(APIClient):
             >>> exempted_urls, response, error = zia.authentication_settings.add_urls_to_exempt_list(["example.com"])
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._base_url}/authSettings/exemptedUrls?action=ADD_TO_LIST")
+        api_url = format_url(f"{self._base_url}/zia/api/v1/authSettings/exemptedUrls?action=ADD_TO_LIST")
 
         payload = {"urls": url_list}
 
@@ -114,7 +114,7 @@ class AuthenticationSettingsAPI(APIClient):
             >>> exempted_urls, response, error = zia.authentication_settings.delete_urls_from_exempt_list(["example.com"])
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._base_url}/authSettings/exemptedUrls?action=REMOVE_FROM_LIST")
+        api_url = format_url(f"{self._base_url}/zia/api/v1/authSettings/exemptedUrls?action=REMOVE_FROM_LIST")
 
         payload = {"urls": url_list}
 
