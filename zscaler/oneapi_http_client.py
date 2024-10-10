@@ -140,10 +140,12 @@ class HTTPClient:
         print(f"Response Body: {response_body}")
 
         # Retrieve dictionary representation and response status code
-        if response_details.headers.get("Content-Type") == "application/xml":
-            formatted_response = xmltodict.parse(response_body)
-        elif response_details.headers.get("Content-Type") == "application/json":
-            formatted_response = json.loads(response_body)
+        if response_details.headers.get("Content-Type") == "application/json" or response_details.headers.get("Content-Type", "").startswith("application/json"):
+            try:
+                formatted_response = json.loads(response_body)
+            except json.JSONDecodeError as e:
+                print(f"Failed to parse JSON response: {e}")
+                return None, e
         else:
             formatted_response = response_body
 
@@ -152,7 +154,7 @@ class HTTPClient:
         # Check if the call was successful (2xx codes, including 201 for creation)
         if 200 <= status_code <= 299:
             print(f"Successful response received from {url}")
-            return (formatted_response, None)
+            return formatted_response, None
 
         # If it's not a success status code, print and treat it as an error
         print(f"Error response from URL {url}: Status {status_code}, Body {formatted_response}")
@@ -171,7 +173,7 @@ class HTTPClient:
                 raise HTTPException(formatted_response)
 
         print(f"Error: {error}")
-        return (None, error)
+        return None, error
 
     @staticmethod
     def format_binary_data(data):

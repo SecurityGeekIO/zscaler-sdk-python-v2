@@ -4,6 +4,7 @@ import time
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from zscaler.user_agent import UserAgent
+from zscaler.oneapi_http_client import HTTPClient
 
 class OAuth:
     """
@@ -33,14 +34,11 @@ class OAuth:
 
         # Determine whether to authenticate with client secret or JWT
         if private_key:
-            self._access_token = self._authenticate_with_private_key(client_id, private_key)
+            response = self._authenticate_with_private_key(client_id, private_key)
         else:
-            self._access_token = self._authenticate_with_client_secret(client_id, client_secret)
+            response = self._authenticate_with_client_secret(client_id, client_secret)
 
-        # Print token for debugging (optional)
-        print(f"Access Token: {self._access_token}")
-
-        return self._access_token
+        return response
 
     def _authenticate_with_client_secret(self, client_id, client_secret):
         """
@@ -84,12 +82,16 @@ class OAuth:
         # Synchronous HTTP request (with form data in the body)
         response = requests.post(auth_url, data=form_data, headers=headers)
 
+        # Log the response for debugging
+        print(f"Response Status Code: {response.status_code}")
+        print(f"Response Body: {response.text}")
+    
         if response.status_code >= 300:
             print(f"Error Response: {response.text}")  # Log the full error response
             raise Exception(f"Error authenticating: {response.status_code}, {response.text}")
 
-        token_data = response.json()
-        return token_data["access_token"]
+        # Return the full response object for further processing
+        return response
 
     def _authenticate_with_private_key(self, client_id, private_key_path):
         """
@@ -151,24 +153,57 @@ class OAuth:
         # Synchronous HTTP request
         response = requests.post(auth_url, data=form_data, headers=headers)
 
+        # Log the response for debugging
+        print(f"Response Status Code: {response.status_code}")
+        print(f"Response Body: {response.text}")
+
         if response.status_code >= 300:
             print(f"Error Response: {response.text}")  # Log the full error response
             raise Exception(f"Error authenticating: {response.status_code}, {response.text}")
 
-        token_data = response.json()
-        return token_data["access_token"]
+        # Return the full response object for further processing
+        return response
 
     def _get_access_token(self):
         """
         Retrieves or generates the OAuth access token for the Zscaler OneAPI Client
-        
+
         Returns:
-            str, Exception: Tuple of the access token, error that was raised
-            (if any)
+            tuple: OAuth access token and any error encountered.
         """
+        # Return token if already generated
         if not self._access_token:
-            self._access_token = self.authenticate()
-        return self._access_token
+            try:
+                # Call the authenticate function, which now returns the response object
+                response = self.authenticate()
+
+                # Check the response body for error messages using check_response_for_error
+                parsed_response, err = HTTPClient.check_response_for_error(
+                    response.url, response, response.text
+                )
+
+                # If there's an error, return None and the error
+                if err:
+                    return None, err
+
+                # Debug: Print the parsed response to understand its structure
+                print(f"Parsed Response: {parsed_response}")
+
+                # Extract access token from the parsed response
+                if isinstance(parsed_response, dict):
+                    self._access_token = parsed_response.get("access_token")
+                else:
+                    raise ValueError("Parsed response is not a dictionary as expected")
+
+                # Debug: Print the access token after extracting it
+                print(f"Access Token after parsing: {self._access_token}")
+
+            except Exception as e:
+                # Log any unexpected error and return None with the error
+                print(f"Failed to get access token: {e}")
+                return None, e
+
+        return self._access_token, None
     
     def _get_auth_url(self, vanity_domain, cloud):
         """
