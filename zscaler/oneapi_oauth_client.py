@@ -131,6 +131,7 @@ class OAuth:
         # Prepare form data
         form_data = {
             "grant_type": "client_credentials",
+            "client_id":   client_id,
             "client_assertion": assertion,
             "client_assertion_type": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
             "audience": "https://api.zscaler.com",
