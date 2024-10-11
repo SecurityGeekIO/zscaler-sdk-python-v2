@@ -29,28 +29,52 @@ class RuleLabels(ZscalerObject):
             config (dict): A dictionary representing the Rule Labels configuration.
         """
         super().__init__(config)
-        
+
         if config:
-            self.id = config["id"]\
-                if "id" in config else None
-            self.name = config["name"]\
-                if "name" in config else None
-            self.last_modified_time = config["lastModifiedTime"]\
-                if "lastModifiedTime" in config else None
+            # Defensive approach using 'if' conditions
+            if "id" in config:
+                self.id = config["id"]
+            else:
+                self.id = None
 
-            # Directly handle lastModifiedBy and createdBy without a separate function
-            self.last_modified_by = {
-                "id": config["lastModifiedBy"]["id"],
-                "name": config["lastModifiedBy"]["name"]
-            } if "lastModifiedBy" in config else None
+            if "name" in config:
+                self.name = config["name"]
+            else:
+                self.name = None
 
-            self.created_by = {
-                "id": config["createdBy"]["id"],
-                "name": config["createdBy"]["name"]
-            } if "createdBy" in config else None
+            if "lastModifiedTime" in config:
+                self.last_modified_time = config["lastModifiedTime"]
+            else:
+                self.last_modified_time = None
 
-            self.referenced_rule_count = config["referencedRuleCount"] if "referencedRuleCount" in config else 0
+            if "lastModifiedBy" in config:
+                if "id" in config["lastModifiedBy"] and "name" in config["lastModifiedBy"]:
+                    self.last_modified_by = {
+                        "id": config["lastModifiedBy"]["id"],
+                        "name": config["lastModifiedBy"]["name"]
+                    }
+                else:
+                    self.last_modified_by = None
+            else:
+                self.last_modified_by = None
+
+            if "createdBy" in config:
+                if "id" in config["createdBy"] and "name" in config["createdBy"]:
+                    self.created_by = {
+                        "id": config["createdBy"]["id"],
+                        "name": config["createdBy"]["name"]
+                    }
+                else:
+                    self.created_by = None
+            else:
+                self.created_by = None
+
+            if "referencedRuleCount" in config:
+                self.referenced_rule_count = config["referencedRuleCount"]
+            else:
+                self.referenced_rule_count = 0
         else:
+            # Initialize with default None or 0 values
             self.id = None
             self.name = None
             self.last_modified_time = None

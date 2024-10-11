@@ -169,7 +169,7 @@ class OAuth:
         Retrieves or generates the OAuth access token for the Zscaler OneAPI Client
 
         Returns:
-            tuple: OAuth access token and any error encountered.
+            str: OAuth access token.
         """
         # Return token if already generated
         if not self._access_token:
@@ -182,9 +182,8 @@ class OAuth:
                     response.url, response, response.text
                 )
 
-                # If there's an error, return None and the error
                 if err:
-                    return None, err
+                    raise ValueError(f"Error during authentication: {err}")
 
                 # Debug: Print the parsed response to understand its structure
                 print(f"Parsed Response: {parsed_response}")
@@ -199,12 +198,12 @@ class OAuth:
                 print(f"Access Token after parsing: {self._access_token}")
 
             except Exception as e:
-                # Log any unexpected error and return None with the error
                 print(f"Failed to get access token: {e}")
-                return None, e
+                raise  # Re-raise the exception to handle it outside
 
-        return self._access_token, None
-    
+        return self._access_token  # Return just the token, not a tuple
+
+        
     def _get_auth_url(self, vanity_domain, cloud):
         """
         Determines the OAuth2 provider URL based on the vanity domain and cloud.

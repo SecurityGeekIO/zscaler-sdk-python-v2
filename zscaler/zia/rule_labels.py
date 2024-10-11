@@ -160,52 +160,62 @@ class RuleLabelsAPI(APIClient):
 
         return (result, response, None)
 
-    def add_label(self, name: str, query_params=None, keep_empty_params=False) -> tuple:
+    def add_label(
+            self, label
+    ):
         """
         Creates a new ZIA Rule Label.
 
         Args:
-            name (str): The name of the Rule Label.
-            query_params (dict, optional): Optional parameters for the request.
-                [query_params.description] {str}: Additional information about the Rule Label.
-            keep_empty_params (bool, optional): Whether to include empty parameters in the request.
+            label (dict or object):
+                The label data to be sent in the request.
 
         Returns:
             tuple: A tuple containing the newly added Rule Label (Box), response, and error.
         """
-        http_method = "post".upper()
-        api_url = format_url(f"{self._base_url}/ruleLabels")
+        http_method = "POST"
+        api_url = format_url(f"""
+            {self._base_url}
+            ruleLabels
+        """)
 
-        # Build the payload
-        payload = {"name": name}
+        # Ensure the label is in dictionary format
+        if isinstance(label, dict):
+            body = label
+        else:
+            body = label.as_dict()
 
-        # Add optional query parameters to the payload
-        query_params = query_params or {}
-        for key, value in query_params.items():
-            payload[snake_to_camel(key)] = value
+        # Debug: Print the body before sending the request
+        print(f"Final request body: {body}")
 
+        # No form data is needed, so leave this empty
         form = {}
 
-        # Create the request
+        # Create the request with no empty param handling logic
         request, error = self._request_executor.create_request(
-            http_method, api_url, payload, form, keep_empty_params=keep_empty_params
+            method=http_method,
+            endpoint=api_url,
+            body=body,
         )
 
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, RuleLabels)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
 
         try:
-            result = RuleLabels(self.form_response_body(response.get_body()))
+            result = RuleLabels(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
 
         return (result, response, None)
+
 
     def update_label(self, label_id: int, **kwargs) -> tuple:
         """

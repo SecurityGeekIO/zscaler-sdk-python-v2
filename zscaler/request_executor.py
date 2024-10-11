@@ -1,5 +1,6 @@
 import logging
 import time
+import json
 from zscaler.oneapi_http_client import HTTPClient
 from zscaler.oneapi_oauth_client import OAuth
 from zscaler.user_agent import UserAgent
@@ -99,7 +100,6 @@ class RequestExecutor:
         headers: dict = {},
         params: dict = {},
         oauth: bool = False,
-        keep_empty_params: bool = False,
     ):
         print(f"Initial endpoint before modification: {endpoint}")
 
@@ -126,47 +126,29 @@ class RequestExecutor:
         final_url = f"{base_url}/{endpoint.lstrip('/')}"
         print(f"Final URL constructed: {final_url}")
 
-        # OAuth token handling
+        # Set headers and include Authorization if oauth=True
         headers = {**self._default_headers, **headers}
         if oauth:
+            if not self._oauth._get_access_token():
+                raise ValueError("OAuth token is missing. Please call authenticate() before making requests.")
             headers["Authorization"] = f"Bearer {self._oauth._get_access_token()}"
 
         print(f"Request headers: {headers}")
 
-        # Clean empty parameters if required
-        if body and not keep_empty_params:
-            body = self._clean_empty_params(body)
-
-        print(f"Request body after cleaning empty params: {body}")
+        print(f"Final request body (before JSON serialization): {body}")
 
         # Construct the request dictionary
         request = {
             "method": method,
             "url": final_url,
-            "headers": headers,
-            "data": body,
+            "json": body,  # Always use 'json' for JSON payloads
             "params": params,
+            "headers": headers,
         }
 
         print(f"Final request: {request}")
 
         return request, None
-
-    def clear_empty_params(self, body: dict):
-        """
-        Removes all key-value pairs where value is empty (i.e., empty string, list, or dict).
-
-        Args:
-            body (dict): Request body to be cleared.
-
-        Returns:
-            dict: Body without empty values.
-        """
-        if isinstance(body, dict):
-            return {k: v for k, v in ((k, self.clear_empty_params(v)) for k, v in body.items()) if v or v == 0 or v is False}
-        if isinstance(body, list):
-            return [v for v in map(self.clear_empty_params, body) if v or v == 0 or v is False]
-        return body
 
     def execute(self, request):
         """
@@ -181,7 +163,11 @@ class RequestExecutor:
         logger.debug(f"Executing request: {request}")
 
         # Fire the request
-        request, response, response_body, error = self.fire_request(request)
+        try:
+            request, response, response_body, error = self.fire_request(request)
+        except Exception as ex:
+            logger.error(f"Exception during HTTP request: {ex}")
+            return None, ex
 
         # Check for an error during execution
         if error is not None:
@@ -189,17 +175,22 @@ class RequestExecutor:
             return None, error
 
         # Check for any errors in the HTTP response
-        response_data, error = self._http_client.check_response_for_error(request["url"], response, response_body)
+        try:
+            response_data, error = self._http_client.check_response_for_error(request["url"], response, response_body)
+        except Exception as ex:
+            logger.error(f"Exception while checking response for errors: {ex}")
+            return None, ex
 
         # If there was an error in the response, print it
         if error:
-            logger.error(f"Error in response: {error}")
+            logger.error(f"Error in HTTP response: {error}")
             return None, error
 
         logger.debug(f"Successful response from {request['url']}")
         logger.debug(f"Response Data: {response_data}")
 
         return response_data, None
+
 
     def fire_request(self, request):
         """
