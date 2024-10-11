@@ -30,8 +30,7 @@ class RuleLabelsAPI(APIClient):
         self.service = "zia"  # Set the service type explicitly to ZIA
 
     def list_labels(
-            self, query_params=None,
-            keep_empty_params=False
+            self, query_params=None
     ) -> tuple:
         """
         Enumerates rule labels in your organization with pagination.
@@ -80,7 +79,7 @@ class RuleLabelsAPI(APIClient):
         
         # Create the request
         request, error = self._request_executor.create_request(
-            http_method, api_url, {}, headers, {}, keep_empty_params=keep_empty_params
+            http_method, api_url, {}, headers, {}
         )
 
         if error:

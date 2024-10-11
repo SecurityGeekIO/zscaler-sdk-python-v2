@@ -18,7 +18,6 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 from zscaler.api_client import APIClient
 from zscaler.zpa.models.certificates import Certificate
 from zscaler.utils import snake_to_camel, format_url
-from zscaler.api_response import get_paginated_data
 from urllib.parse import urlencode
 
 class CertificatesAPI(APIClient):

@@ -20,7 +20,6 @@ from zscaler.zpa.models.cloudbrowserisolation import ZPACBIProfile
 from zscaler.zpa.models.cloudbrowserisolation import CBIRegion
 from zscaler.zpa.models.cloudbrowserisolation import CBICertificate
 from zscaler.zpa.models.cloudbrowserisolation import CBIBanner
-from zscaler.api_response import get_paginated_data
 from zscaler.utils import format_url, snake_to_camel
 
 

@@ -1,7 +1,7 @@
 import logging
 import time
-import json
 from zscaler.oneapi_http_client import HTTPClient
+from zscaler.oneapi_response import ZscalerAPIResponse
 from zscaler.oneapi_oauth_client import OAuth
 from zscaler.user_agent import UserAgent
 from zscaler.utils import convert_date_time_to_seconds
@@ -150,15 +150,16 @@ class RequestExecutor:
 
         return request, None
 
-    def execute(self, request):
+    def execute(self, request, response_type=None):
         """
-        High-level request execution method. Performs the API call and handles rate limits.
+        High-level request execution method.
 
         Args:
             request (dict): Dictionary object containing request details.
+            response_type (type): The data type to return (e.g., RuleLabels).
 
         Returns:
-            Response object or raises an error.
+            ZscalerAPIResponse or error
         """
         logger.debug(f"Executing request: {request}")
 
@@ -181,7 +182,7 @@ class RequestExecutor:
             logger.error(f"Exception while checking response for errors: {ex}")
             return None, ex
 
-        # If there was an error in the response, print it
+        # If there was an error in the response, return it
         if error:
             logger.error(f"Error in HTTP response: {error}")
             return None, error
@@ -189,8 +190,14 @@ class RequestExecutor:
         logger.debug(f"Successful response from {request['url']}")
         logger.debug(f"Response Data: {response_data}")
 
-        return response_data, None
-
+        # Return the ZscalerAPIResponse object (this will handle pagination)
+        return ZscalerAPIResponse(
+            request_executor=self,
+            req=request,
+            res_details=response,
+            response_body=response_body,
+            data_type=response_type
+        ), None
 
     def fire_request(self, request):
         """
