@@ -1,6 +1,5 @@
 import logging
 import time
-import json
 from zscaler.oneapi_http_client import HTTPClient
 from zscaler.oneapi_response import ZscalerAPIResponse
 from zscaler.oneapi_oauth_client import OAuth
@@ -30,6 +29,7 @@ class RequestExecutor:
             cache (object): Cache object for storing request responses.
             http_client (object, optional): Custom HTTP client for making requests.
         """
+
         # Validate and set request timeout
         self._request_timeout = config["client"].get("requestTimeout", 240)  # Default to 240 seconds
         if self._request_timeout < 0:
@@ -59,9 +59,10 @@ class RequestExecutor:
 
         # Set default headers from config
         self._default_headers = {
-            "User-Agent": str(config["client"].get("userAgent", UserAgent().get_user_agent_string())),  # Ensure it's a string
-            "Accept": "application/json",
-            "Content-Type": "application/json",
+            'User-Agent': UserAgent(config["client"].get("userAgent", None))
+            .get_user_agent_string(),
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
         }
 
         # Initialize the HTTP client, considering proxy and SSL context from config
@@ -331,6 +332,9 @@ class RequestExecutor:
         Set custom headers for all future requests.
         """
         self._custom_headers.update(headers)
+
+    def set_session(self, session):
+        self._http_client.set_session(session)
 
     def clear_custom_headers(self):
         """

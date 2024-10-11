@@ -1,4 +1,4 @@
-import aiohttp
+import requests
 import logging
 import os
 
@@ -191,6 +191,20 @@ class Client(
         self._request_executor._default_headers.update({"Authorization": f"Bearer {self._auth_token}"})
         print(f"Authentication complete. Token set: {self._auth_token}")
 
+    def __enter__(self):
+        """
+        Automatically create and set session within context manager.
+        """
+        # Create and set up a session using 'requests' library for sync.
+        self._session = requests.Session()
+        self._request_executor.set_session(self._session)
+        self.authenticate()  # Authenticate when entering the context
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Automatically close session within context manager."""
+        self._session.close()
+        
     """
     Getters
     """
