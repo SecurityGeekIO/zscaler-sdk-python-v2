@@ -129,8 +129,7 @@ class FirewallPolicyAPI(APIClient):
         return (result, response, None)
 
     def get_rule(
-        self, rule_id: str, 
-        keep_empty_params=False
+        self, rule_id: str,
     ) -> tuple:
         """
         Returns information for the specified firewall filter rule.
@@ -158,7 +157,7 @@ class FirewallPolicyAPI(APIClient):
 
         # Create the request
         request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
+            http_method, api_url, body, headers, form
         )
 
         if error:
@@ -180,8 +179,7 @@ class FirewallPolicyAPI(APIClient):
         return (result, response, None)
 
     def add_rule(
-        self, rule: dict, 
-        keep_empty_params=False
+        self, rule: dict,
     ) -> tuple:
         """
         Adds a new firewall filter rule.
@@ -264,7 +262,7 @@ class FirewallPolicyAPI(APIClient):
 
         # Create the request
         request, error = self._request_executor.create_request(
-            http_method, api_url, camel_payload, {}, keep_empty_params=keep_empty_params
+            http_method, api_url, camel_payload, {}
         )
 
         if error:
@@ -286,7 +284,7 @@ class FirewallPolicyAPI(APIClient):
 
     def update_rule(
         self, rule_id: int, 
-        rule, keep_empty_params=False
+        rule
     ) -> tuple:
         """
         Updates an existing firewall filter rule.
@@ -354,7 +352,7 @@ class FirewallPolicyAPI(APIClient):
 
         transform_common_id_fields(self.reformat_params, payload, payload)
 
-        request, error = self._request_executor.create_request(http_method, api_url, payload, {}, {}, keep_empty_params=keep_empty_params)
+        request, error = self._request_executor.create_request(http_method, api_url, payload, {}, {})
         if error:
             return (None, None, error)
 
@@ -405,8 +403,7 @@ class FirewallPolicyAPI(APIClient):
 
     def list_ip_destination_groups(
         self, exclude_type: str = None,
-        query_params=None,
-        keep_empty_params=False
+        query_params=None
         ) -> tuple:
         """
         Returns a list of IP Destination Groups.
@@ -439,7 +436,7 @@ class FirewallPolicyAPI(APIClient):
         form = {}
 
         request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
+            http_method, api_url, body, headers, form
         )
 
         if error:

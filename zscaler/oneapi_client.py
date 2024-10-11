@@ -9,131 +9,11 @@ from zscaler.cache.no_op_cache import NoOpCache
 from zscaler.cache.zscaler_cache import ZscalerCache
 from zscaler.oneapi_oauth_client import OAuth
 from zscaler.logger import setup_logging
-
-# Zscaler Private Access APIs
-from zscaler.zpa.application_segment import ApplicationSegmentAPI
-from zscaler.zpa.application_segment_inspection import AppSegmentsInspectionAPI
-from zscaler.zpa.application_segment_pra import AppSegmentsPRAAPI
-from zscaler.zpa.app_connector_schedule import AppConnectorScheduleAPI
-from zscaler.zpa.app_connector_groups import AppConnectorGroupAPI
-from zscaler.zpa.app_connectors import AppConnectorControllerAPI
-from zscaler.zpa.authdomains import AuthDomainsAPI
-from zscaler.zpa.certificates import CertificatesAPI
-from zscaler.zpa.cloudbrowserisolation import CloudBrowserIsolationAPI
-from zscaler.zpa.cloud_connector_groups import CloudConnectorGroupsAPI
-from zscaler.zpa.emergency_access import EmergencyAccessAPI
-from zscaler.zpa.idp import IDPControllerAPI
-from zscaler.zpa.inspection import InspectionControllerAPI
-from zscaler.zpa.lss import LSSConfigControllerAPI
-from zscaler.zpa.machine_groups import MachineGroupsAPI
-from zscaler.zpa.microtenants import MicrotenantsAPI
-from zscaler.zpa.policies import PolicySetControllerAPI
-from zscaler.zpa.posture_profiles import PostureProfilesAPI
-from zscaler.zpa.privileged_remote_access import PrivilegedRemoteAccessAPI
-from zscaler.zpa.provisioning import ProvisioningKeyAPI
-from zscaler.zpa.saml_attributes import SAMLAttributesAPI
-from zscaler.zpa.scim_attributes import ScimAttributeHeaderAPI
-from zscaler.zpa.scim_groups import SCIMGroupsAPI
-from zscaler.zpa.segment_groups import SegmentGroupsAPI
-from zscaler.zpa.server_groups import ServerGroupsAPI
-from zscaler.zpa.servers import AppServersAPI
-from zscaler.zpa.service_edges import ServiceEdgeControllerAPI
-from zscaler.zpa.service_edge_groups import ServiceEdgeGroupAPI
-from zscaler.zpa.service_edge_schedule import ServiceEdgeSchedule
-from zscaler.zpa.trusted_networks import TrustedNetworksAPI
-
-# Zscaler Internet Access APIs
-from zscaler.zia.activate import ActivationAPI
-from zscaler.zia.admin_roles import AdminRolesAPI
-from zscaler.zia.admin_users import AdminUsersAPI
-from zscaler.zia.apptotal import AppTotalAPI
-from zscaler.zia.audit_logs import AuditLogsAPI
-from zscaler.zia.authentication_settings import AuthenticationSettingsAPI
-from zscaler.zia.cloud_apps import CloudAppsAPI
-from zscaler.zia.cloudappcontrol import CloudAppControlAPI
-from zscaler.zia.device_management import DeviceManagementAPI
-from zscaler.zia.dlp_dictionary import DLPDictionaryAPI
-from zscaler.zia.dlp_engine import DLPEngineAPI
-from zscaler.zia.dlp_resources import DLPResourcesAPI
-from zscaler.zia.dlp_templates import DLPTemplatesAPI
-from zscaler.zia.firewall import FirewallPolicyAPI
-from zscaler.zia.forwarding_control import ForwardingControlAPI
-from zscaler.zia.isolation_profile import CBIProfileAPI
-from zscaler.zia.locations import LocationsAPI
-from zscaler.zia.rule_labels import RuleLabelsAPI
-from zscaler.zia.sandbox import CloudSandboxAPI
-from zscaler.zia.security_policy_settings import SecurityPolicyAPI
-from zscaler.zia.ssl_inspection import SSLInspectionAPI
-from zscaler.zia.traffic import TrafficForwardingAPI
-from zscaler.zia.url_categories import URLCategoriesAPI
-from zscaler.zia.url_filtering import URLFilteringAPI
-from zscaler.zia.user_management import UserManagementAPI
-from zscaler.zia.workload_groups import WorkloadGroupsAPI
-from zscaler.zia.zpa_gateway import ZPAGatewayAPI
-
+from zscaler.zia.zia_service import ZIAService
+from zscaler.zpa.zpa_service import ZPAService
 
 # Zscaler Client Connector APIs
-class Client(
-    # ZPA API Resources
-    ApplicationSegmentAPI,
-    AppSegmentsInspectionAPI,
-    AppSegmentsPRAAPI,
-    AppConnectorGroupAPI,
-    AppConnectorControllerAPI,
-    AppConnectorScheduleAPI,
-    AuthDomainsAPI,
-    CertificatesAPI,
-    CloudConnectorGroupsAPI,
-    EmergencyAccessAPI,
-    IDPControllerAPI,
-    InspectionControllerAPI,
-    CloudBrowserIsolationAPI,
-    LSSConfigControllerAPI,
-    MachineGroupsAPI,
-    MicrotenantsAPI,
-    PolicySetControllerAPI,
-    PostureProfilesAPI,
-    PrivilegedRemoteAccessAPI,
-    ProvisioningKeyAPI,
-    SAMLAttributesAPI,
-    ScimAttributeHeaderAPI,
-    SCIMGroupsAPI,
-    SegmentGroupsAPI,
-    ServerGroupsAPI,
-    AppServersAPI,
-    ServiceEdgeControllerAPI,
-    ServiceEdgeGroupAPI,
-    ServiceEdgeSchedule,
-    TrustedNetworksAPI,
-    # ZIA API Resources
-    ActivationAPI,
-    AdminRolesAPI,
-    AdminUsersAPI,
-    AppTotalAPI,
-    AuditLogsAPI,
-    AuthenticationSettingsAPI,
-    CloudAppsAPI,
-    CloudAppControlAPI,
-    DeviceManagementAPI,
-    DLPDictionaryAPI,
-    DLPEngineAPI,
-    DLPResourcesAPI,
-    DLPTemplatesAPI,
-    FirewallPolicyAPI,
-    ForwardingControlAPI,
-    CBIProfileAPI,
-    LocationsAPI,
-    RuleLabelsAPI,
-    CloudSandboxAPI,
-    SecurityPolicyAPI,
-    SSLInspectionAPI,
-    TrafficForwardingAPI,
-    URLCategoriesAPI,
-    URLFilteringAPI,
-    UserManagementAPI,
-    WorkloadGroupsAPI,
-    ZPAGatewayAPI,
-):
+class Client():
     """A Zscaler client object"""
 
     def __init__(self, user_config: dict = {}):
@@ -178,7 +58,17 @@ class Client(
         if self._config["client"]["logging"]["enabled"]:
             logger = logging.getLogger("zscaler-sdk-python")
             logger.disabled = False
-        super().__init__()
+
+        # Initialize the request executor
+        self._request_executor = user_config.get("requestExecutor", RequestExecutor)(
+            self._config, cache, user_config.get("httpClient", None)
+        )
+        
+        # Lazy load ZIA and ZPA clients
+        self._zia = None
+        self._zpa = None
+
+        # super().__init__()
 
     def authenticate(self):
         """
@@ -190,6 +80,24 @@ class Client(
         # Update the default headers by setting the Authorization Bearer token
         self._request_executor._default_headers.update({"Authorization": f"Bearer {self._auth_token}"})
         print(f"Authentication complete. Token set: {self._auth_token}")
+
+    @property
+    def zcc(self):
+        if self._zcc is None:
+            self._zcc = ZPAService(self)
+        return self._zcc
+    
+    @property
+    def zia(self):
+        if self._zia is None:
+            self._zia = ZIAService(self)
+        return self._zia
+
+    @property
+    def zpa(self):
+        if self._zpa is None:
+            self._zpa = ZPAService(self)
+        return self._zpa
 
     def __enter__(self):
         """

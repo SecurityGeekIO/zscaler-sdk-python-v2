@@ -30,3 +30,6 @@ __contributors__ = [
     "William Guilherme",
 ]
 __version__ = "1.0.0"
+
+
+from zscaler.oneapi_client import Client as ZscalerClient # noqa

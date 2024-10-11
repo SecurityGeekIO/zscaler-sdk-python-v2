@@ -27,8 +27,9 @@ class RuleLabelsAPI(APIClient):
 
     _zia_base_endpoint = "/zia/api/v1"
 
-    def __init__(self):
+    def __init__(self, request_executor):
         super().__init__()
+        self._request_executor = request_executor
 
     def list_labels(self, query_params=None) -> tuple:
         """
@@ -42,7 +43,6 @@ class RuleLabelsAPI(APIClient):
                 [query_params.search] {str}: Search string for filtering results.
                 [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
                 [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
-            keep_empty_params {bool}: Whether to include empty parameters in the query string.
 
         Returns:
             tuple: A tuple containing (list of Rule Labels instances, Response, error)
@@ -97,14 +97,13 @@ class RuleLabelsAPI(APIClient):
 
         return (result, response, None)
 
-    def get_label(self, label_id: str, query_params=None, keep_empty_params=False) -> tuple:
+    def get_label(self, label_id: str) -> tuple:
         """
         Fetches a specific rule labels by ID.
 
         Args:
             label_id (str): The unique identifier for the connector group.
             query_params (dict, optional): Map of query parameters for the request.
-            keep_empty_params (bool): Whether to include empty parameters in the query string.
 
         Returns:
             tuple: A tuple containing (AppConnectorGroup instance, Response, error).
@@ -115,38 +114,30 @@ class RuleLabelsAPI(APIClient):
             {self._zia_base_endpoint}/ruleLabels/{label_id}
             """
         )
-        # Handle optional query parameters
-        query_params = query_params or {}
-
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
-
-        # Prepare request body, headers, and form (if needed)
+        
         body = {}
         headers = {}
         form = {}
 
-        # Create the request
         request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
+            http_method, api_url, body, headers, form
         )
 
         if error:
             return (None, None, error)
 
-        # Execute the request
-        response, error = self._request_executor.execute(request, RuleLabels)
+        response, error = self._request_executor\
+            .execute(request, RuleLabels)
 
         if error:
             return (None, response, error)
 
         try:
-            result = RuleLabels(self.form_response_body(response.get_body()))
+            result = RuleLabels(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
-
         return (result, response, None)
 
     def add_label(self, label):
@@ -160,11 +151,11 @@ class RuleLabelsAPI(APIClient):
         Returns:
             tuple: A tuple containing the newly added Rule Label (Box), response, and error.
         """
-        http_method = "POST"
+        http_method = "post".upper()
         api_url = format_url(
             f"""
             {self._zia_base_endpoint}
-            ruleLabels
+            /ruleLabels
         """
         )
 
@@ -173,12 +164,6 @@ class RuleLabelsAPI(APIClient):
             body = label
         else:
             body = label.as_dict()
-
-        # Debug: Print the body before sending the request
-        print(f"Final request body: {body}")
-
-        # No form data is needed, so leave this empty
-        form = {}
 
         # Create the request with no empty param handling logic
         request, error = self._request_executor.create_request(
@@ -191,7 +176,7 @@ class RuleLabelsAPI(APIClient):
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor.execute(request, RuleLabels)
 
         if error:
             return (None, response, error)
@@ -203,7 +188,10 @@ class RuleLabelsAPI(APIClient):
 
         return (result, response, None)
 
-    def update_label(self, label_id: int, **kwargs) -> tuple:
+    def update_label(
+        self, label_id: int, 
+        label
+    ) -> tuple:
         """
         Updates information for the specified ZIA Rule Label.
 
@@ -214,63 +202,59 @@ class RuleLabelsAPI(APIClient):
             tuple: A tuple containing the updated Rule Label (Box), response, and error.
         """
         http_method = "put".upper()
-        api_url = format_url(f"{self._zia_base_endpoint}/ruleLabels/{label_id}")
+        api_url = format_url(f"""
+            {self._zia_base_endpoint}
+            /ruleLabels/{label_id}
+        """)
 
-        # Construct the payload using the provided kwargs
-        payload = {snake_to_camel(key): value for key, value in kwargs.items()}
+        # If label is already a dictionary, use it, otherwise convert the label object to a dictionary
+        if isinstance(label, dict):
+            payload = label
+        else:
+            payload = label.as_dict()
 
-        # Create and send the request
+        # Create the request
         request, error = self._request_executor.create_request(http_method, api_url, payload, {}, {})
         if error:
             return (None, None, error)
 
+        # Execute the request
         response, error = self._request_executor.execute(request, RuleLabels)
         if error:
             return (None, response, error)
 
+        # Parse the response into a RuleLabels instance
         try:
-            # Parse and return the updated object from the API response
             result = RuleLabels(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
+
         return (result, response, None)
 
-    def delete_label(self, label_id: str, query_params=None, keep_empty_params=False) -> tuple:
+    def delete_label(self, label_id: int) -> tuple:
         """
         Deletes the specified Rule Label.
 
         Args:
             label_id (str): The unique identifier of the Rule Label.
-            query_params (dict, optional): Optional query parameters for the request.
-            keep_empty_params (bool, optional): Whether to include empty parameters in the request.
 
         Returns:
             tuple: A tuple containing the response object and error (if any).
         """
         http_method = "delete".upper()
-        api_url = format_url(f"{self._zia_base_endpoint}/ruleLabels/{label_id}")
+        api_url = format_url(f"""
+            {self._zia_base_endpoint}
+            /ruleLabels/{label_id}
+        """)
 
-        # Handle query parameters if provided
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
+        params = {}
 
-        body = {}
-        headers = {}
-        form = {}
-
-        # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
-        )
-
+        request, error = self._request_executor.create_request(http_method, api_url, params=params)
         if error:
-            return (None, error)
+            return (None, None, error)
 
-        # Execute the request
         response, error = self._request_executor.execute(request)
-
         if error:
-            return (response, error)
+            return (None, response, error)
 
-        return (response, None)
+        return (None, response, None)
