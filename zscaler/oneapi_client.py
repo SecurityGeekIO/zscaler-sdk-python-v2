@@ -71,6 +71,7 @@ from zscaler.zia.user_management import UserManagementAPI
 from zscaler.zia.workload_groups import WorkloadGroupsAPI
 from zscaler.zia.zpa_gateway import ZPAGatewayAPI
 
+
 # Zscaler Client Connector APIs
 class Client(
     # ZPA API Resources
@@ -104,7 +105,6 @@ class Client(
     ServiceEdgeGroupAPI,
     ServiceEdgeSchedule,
     TrustedNetworksAPI,
-    
     # ZIA API Resources
     ActivationAPI,
     AdminRolesAPI,
@@ -137,9 +137,6 @@ class Client(
     """A Zscaler client object"""
 
     def __init__(self, user_config: dict = {}):
-        super().__init__()
-
-        # Apply user config
         client_config_setter = ConfigSetter()
         client_config_setter._apply_config({"client": user_config})
         self._config = client_config_setter.get_config()
@@ -159,10 +156,9 @@ class Client(
         self._vanity_domain = self._config["client"]["vanityDomain"]
         self._cloud = self._config["client"].get("cloud", "PRODUCTION")
         self._auth_token = None
-        self._service = self._config["client"].get("service", "zia")  # Default to ZIA
         self._api_version = self._config["client"].get("api_version", "v1")
 
-        # Set up cache and request executor
+        # Handle cache
         cache = NoOpCache()
         if self._config["client"]["cache"]["enabled"]:
             if user_config.get("cacheManager") is None:
@@ -182,7 +178,8 @@ class Client(
         if self._config["client"]["logging"]["enabled"]:
             logger = logging.getLogger("zscaler-sdk-python")
             logger.disabled = False
-            
+        super().__init__()
+
     def authenticate(self):
         """
         Handles authentication by using either client_secret or private_key.

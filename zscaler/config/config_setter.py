@@ -25,25 +25,16 @@ class ConfigSetter:
             "connectionTimeout": 30,
             "requestTimeout": 0,
             "cache": {
-                "enabled": False, 
-                "defaultTtl": '', 
-                "defaultTti": '',
-                },
-            "logging": {
-                "enabled": False, 
-                "verbose": False
-                },
-            "proxy": {
-                "port": "",
-                "host": "",
-                "username": "",
-                "password": ""},
+                "enabled": False,
+                "defaultTtl": "",
+                "defaultTti": "",
+            },
+            "logging": {"enabled": False, "verbose": False},
+            "proxy": {"port": "", "host": "", "username": "", "password": ""},
             "rateLimit": {
                 "maxRetries": 2,
-        },
-        "testing": {
-            "disableHttpsCheck": ''
             },
+            "testing": {"disableHttpsCheck": ""},
         }
     }
 
@@ -90,15 +81,15 @@ class ConfigSetter:
         """
         # apply default config values to config
         self._apply_default_values()
-        
+
         # check if GLOBAL yaml exists, apply if true
-        if (os.path.exists(_GLOBAL_YAML_PATH)):
+        if os.path.exists(_GLOBAL_YAML_PATH):
             self._apply_yaml_config(_GLOBAL_YAML_PATH)
-            
+
         # check if LOCAL yaml exists, apply if true
-        if (os.path.exists(_LOCAL_YAML_PATH)):
+        if os.path.exists(_LOCAL_YAML_PATH):
             self._apply_yaml_config(_LOCAL_YAML_PATH)
-            
+
         # apply existing environment variables
         self._apply_env_config()
 
@@ -117,7 +108,7 @@ class ConfigSetter:
 
     def _apply_default_values(self):
         """Apply default values to default client configuration"""
-        
+
         # Ensure both 'client' and 'testing' dictionaries are initialized
         if "client" not in self._config:
             self._config["client"] = {}
@@ -127,25 +118,18 @@ class ConfigSetter:
 
         # Set default values for 'client' and 'testing' configurations
         self._config["client"]["connectionTimeout"] = 30
-        self._config["client"]["cache"] = {
-            "enabled": False,
-            "defaultTtl": 300,
-            "defaultTti": 300
-        }
-        self._config["client"]["logging"] = {
-            "enabled": False,
-            "logLevel": logging.INFO
-        }
+        self._config["client"]["cache"] = {"enabled": False, "defaultTtl": 300, "defaultTti": 300}
+        self._config["client"]["logging"] = {"enabled": False, "logLevel": logging.INFO}
+
         self._config["client"]["userAgent"] = ""
         self._config["client"]["requestTimeout"] = 0
-        self._config["client"]["rateLimit"] = {
-            "maxRetries": 2
-        }
+        self._config["client"]["rateLimit"] = {"maxRetries": 2}
+
+        # Add a check for the 'testing' key before accessing it
+        if "testing" not in self._config:
+            self._config["testing"] = {}
 
         # Initialize the 'testing' section with default values
-        self._config["testing"]["testingDisableHttpsCheck"] = False
-
-
         self._config["testing"]["testingDisableHttpsCheck"] = False
 
     def _apply_config(self, new_config: dict):
@@ -159,8 +143,7 @@ class ConfigSetter:
         flat_current_client.update(flat_new_client)
         flat_current_testing.update(flat_new_testing)
 
-        self._config = {"client": flat_current_client.as_dict(), 
-                        "testing": flat_current_testing.as_dict()}
+        self._config = {"client": flat_current_client.as_dict(), "testing": flat_current_testing.as_dict()}
 
     def _apply_yaml_config(self, path: str):
         """This method applies a YAML configuration to the Zscaler Client Config"""
@@ -194,4 +177,3 @@ class ConfigSetter:
             if env_value is not None:
                 updated_config[key] = env_value
         self._apply_config(updated_config.as_dict())
-

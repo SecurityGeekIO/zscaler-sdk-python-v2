@@ -94,7 +94,7 @@ class HTTPClient:
             response = self._session.request(**params) if self._session else requests.request(**params)
 
             # Return only two values: the response and the response text
-            return (response, response.text)
+            return (response, None)
 
         except (requests.RequestException, requests.Timeout) as error:
             # Log the exception and return the error

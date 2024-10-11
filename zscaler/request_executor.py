@@ -1,5 +1,6 @@
 import logging
 import time
+import json
 from zscaler.oneapi_http_client import HTTPClient
 from zscaler.oneapi_response import ZscalerAPIResponse
 from zscaler.oneapi_oauth_client import OAuth
@@ -91,47 +92,41 @@ class RequestExecutor:
             return f"https://api.{cloud}.zsapi.net"
         return self.BASE_URL
 
+    def get_service_type(self, url):
+        if "/zia" in url:
+            return "zia"
+        elif "/zcc" in url:
+            return "zcc"
+        elif "/zpa" in url:
+            return "zpa"
+        else:
+            raise ValueError(f"Unsupported service: {url}")
+
     def create_request(
         self,
         method: str,
         endpoint: str,
-        api_version: str = None,  # Optional API version for ZPA services
         body: dict = None,
         headers: dict = {},
         params: dict = {},
-        oauth: bool = False,
     ):
         print(f"Initial endpoint before modification: {endpoint}")
 
-        # Detect the service type from the configuration
-        service_type = self.service
-        print(f"Service type detected: {service_type}")
+        # Get the appropriate base URL based on the service and cloud environment
+        base_url = self.get_base_url(self.cloud)
 
-        # Construct the base URL based on the service and cloud environment
-        base_url = self._base_url
-
-        # Construct the endpoint based on the service type and customer ID, if required
-        if service_type == "zpa":
-            if not self.customer_id:
-                raise ValueError("ZPA customer ID is required but not provided in the configuration.")
-            endpoint = f"/zpa/{api_version or self.api_version}/admin/customers/{self.customer_id}/{endpoint.lstrip('/')}"
-        elif service_type == "zia":
-            endpoint = f"/zia/api/v1/{endpoint.lstrip('/')}"
-        elif service_type == "zcc":
-            endpoint = f"/zcc/papi/public/{endpoint.lstrip('/')}"
-        else:
-            raise ValueError(f"Unsupported service: {service_type}")
-
-        # Construct the final URL
+        # Ensure the final URL is constructed by appending the base URL
         final_url = f"{base_url}/{endpoint.lstrip('/')}"
         print(f"Final URL constructed: {final_url}")
 
-        # Set headers and include Authorization if oauth=True
+        logger.debug(f"Final URL after service detection and version handling: {final_url}")
+
+        # OAuth
+        self._oauth = OAuth(self, self._config)
+
+        # Set headers, including OAuth token if required
         headers = {**self._default_headers, **headers}
-        if oauth:
-            if not self._oauth._get_access_token():
-                raise ValueError("OAuth token is missing. Please call authenticate() before making requests.")
-            headers["Authorization"] = f"Bearer {self._oauth._get_access_token()}"
+        headers["Authorization"] = f"Bearer {self._oauth._get_access_token()}"
 
         print(f"Request headers: {headers}")
 
@@ -191,13 +186,17 @@ class RequestExecutor:
         logger.debug(f"Response Data: {response_data}")
 
         # Return the ZscalerAPIResponse object (this will handle pagination)
-        return ZscalerAPIResponse(
-            request_executor=self,
-            req=request,
-            res_details=response,
-            response_body=response_body,
-            data_type=response_type
-        ), None
+        return (
+            ZscalerAPIResponse(
+                request_executor=self,
+                req=request,
+                res_details=response,
+                response_body=response_body,
+                data_type=response_type,
+                service_type=self.get_service_type(request["url"]),
+            ),
+            None,
+        )
 
     def fire_request(self, request):
         """

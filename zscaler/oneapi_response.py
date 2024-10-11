@@ -12,20 +12,34 @@ class ZscalerAPIResponse:
     SERVICE_PAGE_LIMITS = {
         "ZPA": {"default": 20, "max": 500},
         "ZIA": {"default": 100, "max": 1000},
-        "ZDX": {"default": 10, "min": 1}  # ZDX has limit with minimum 1
+        "ZDX": {"default": 10, "min": 1},  # ZDX has limit with minimum 1
     }
 
-    def __init__(self, request_executor, req, service_type, res_details=None, response_body="",
-                 data_type=None, max_items=None, max_pages=None, all_entries=False,
-                 sort_order=None, sort_by=None, sort_dir=None, start_time=None, end_time=None):
+    def __init__(
+        self,
+        request_executor,
+        req,
+        service_type,
+        res_details=None,
+        response_body="",
+        data_type=None,
+        max_items=None,
+        max_pages=None,
+        all_entries=False,
+        sort_order=None,
+        sort_by=None,
+        sort_dir=None,
+        start_time=None,
+        end_time=None,
+    ):
         # Safely handle None values for res_details
-        self._url = res_details.url if res_details and hasattr(res_details, 'url') else None
+        self._url = res_details.url if res_details and hasattr(res_details, "url") else None
         self._headers = req.get("headers", {})  # Headers for the request
         self._params = req.get("params", {})  # Query parameters like filtering and pagination
-        self._resp_headers = res_details.headers if res_details and hasattr(res_details, 'headers') else {}
+        self._resp_headers = res_details.headers if res_details and hasattr(res_details, "headers") else {}
         self._body = None  # First page of results
         self._type = data_type
-        self._status = res_details.status if res_details and hasattr(res_details, 'status') else None
+        self._status = res_details.status if res_details and hasattr(res_details, "status") else None
         self._request_executor = request_executor  # Request Executor for future calls
 
         # Custom options
@@ -43,24 +57,37 @@ class ZscalerAPIResponse:
 
         # Adding optional query parameters for ZPA
         if all_entries:
-            self._params['allEntries'] = True
+            self._params["allEntries"] = True
         if sort_order:
-            self._params['sortOrder'] = sort_order
+            self._params["sortOrder"] = sort_order
         if sort_by:
-            self._params['sortBy'] = sort_by
+            self._params["sortBy"] = sort_by
         if sort_dir:
-            self._params['sortDir'] = sort_dir
+            self._params["sortDir"] = sort_dir
         if start_time:
-            self._params['startTime'] = start_time
+            self._params["startTime"] = start_time
         if end_time:
-            self._params['endTime'] = end_time
+            self._params["endTime"] = end_time
 
         # Build response body based on content type (supports only JSON)
-        if res_details and hasattr(res_details, 'content_type') and "application/json" in res_details.content_type:
-            self.build_json_response(response_body)
+        if res_details:
+            content_type = res_details.headers.get("Content-Type", "").lower()
+            if "application/json" in content_type:
+                self.build_json_response(response_body)
+            else:
+                # Attempt to parse as JSON, if fails, save as plain text
+                try:
+                    self.build_json_response(response_body)
+                except json.JSONDecodeError:
+                    # Save response as plain text if not JSON
+                    self._body = response_body
         else:
-            # Save response as plain text if not JSON
-            self._body = response_body
+            # If no res_details, assume it's JSON and try to parse
+            try:
+                self.build_json_response(response_body)
+            except json.JSONDecodeError:
+                # Save response as plain text if not JSON
+                self._body = response_body
 
     def validate_page_size(self, page_size, service_type):
         """
@@ -156,40 +183,33 @@ class ZscalerAPIResponse:
         - Custom: Stops if max_items or max_pages limits are reached.
         """
         if not self.has_next():
-            return None  # No more pages to fetch
+            return []  # No more pages to fetch
 
         # Update the request with the next_offset for ZDX or page for ZPA/ZIA/ZCC
         if self._service_type == "ZDX":
-            self._params['offset'] = self._next_offset
+            self._params["offset"] = self._next_offset
         else:
             self._page += 1
-            self._params['page'] = self._page
+            self._params["page"] = self._page
 
-        req = {
-            "headers": self._headers,
-            "params": self._params  # Include filters like search, sort, etc.
-        }
+        req = {"headers": self._headers, "params": self._params}  # Include filters like search, sort, etc.
 
         # Fire the request for the next page
         next_response = self._request_executor.fire_request("GET", req)
         response_body = next_response.get("body", {})
-        
+
         # Update the response with the new page's data
         self.build_json_response(response_body)
 
         # Stop if no data was returned (especially for ZIA and ZDX)
         if not self._list:
-            return None
+            return []
 
         return self._list
 
 
-
-
-
-
-
 # Move the pagination function outside of the class as a standalone function
+
 
 def get_paginated_data(
     request_executor,
@@ -262,7 +282,7 @@ def get_paginated_data(
                 request_executor=request_executor,
                 req={"headers": response.get("headers")},
                 res_details=response,
-                response_body=response.get("body")
+                response_body=response.get("body"),
             )
 
             # Collect response data for this page

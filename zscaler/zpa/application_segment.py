@@ -27,12 +27,10 @@ class ApplicationSegmentAPI(APIClient):
 
     def __init__(self):
         super().__init__()  # Inherit initialization from APIClient
-        self._base_url = ""
+        customer_id = self._config["client"].get("customerId")
+        self._base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
-    def list_segments(
-            self, query_params=None,
-            keep_empty_params=False
-    ) -> tuple:
+    def list_segments(self, query_params=None, keep_empty_params=False) -> tuple:
         """
         Enumerates application segments in your organization with pagination.
         A subset of application segments can be returned that match a supported
@@ -52,7 +50,12 @@ class ApplicationSegmentAPI(APIClient):
         """
         # Initialize URL and HTTP method
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/application")
+        api_url = format_url(
+            f"""
+            {self._base_endpoint}
+            /application
+        """
+        )
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
@@ -79,7 +82,7 @@ class ApplicationSegmentAPI(APIClient):
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, ApplicationSegment)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
@@ -87,15 +90,13 @@ class ApplicationSegmentAPI(APIClient):
         # Parse the response into ApplicationSegment instances
         try:
             result = []
-            for item in response.get_body():
-                result.append(ApplicationSegment(
-                    self.form_response_body(item)
-                ))
+            for item in response.next():
+                result.append(ApplicationSegment(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
         return (result, response, None)
-    
+
     def get_segment(self, segment_id: str, **kwargs) -> tuple:
         """
         Retrieve an application segment by its ID.
@@ -110,10 +111,12 @@ class ApplicationSegmentAPI(APIClient):
             tuple: A tuple containing the `ApplicationSegment` instance, response object, and error if any.
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
-            {self._base_url}
+        api_url = format_url(
+            f"""
+            {self._base_endpoint}
             /application/{segment_id}
-        """)
+        """
+        )
 
         # Handle microtenant_id if provided
         microtenant_id = kwargs.pop("microtenant_id", None)
@@ -146,10 +149,12 @@ class ApplicationSegmentAPI(APIClient):
             tuple: A tuple containing the `ApplicationSegment` instance, response object, and error if any.
         """
         http_method = "post".upper()
-        api_url = format_url(f"""
-            {self._base_url}
+        api_url = format_url(
+            f"""
+            {self._base_endpoint}
             /application
-        """)
+        """
+        )
 
         payload = {
             "name": name,
@@ -187,10 +192,12 @@ class ApplicationSegmentAPI(APIClient):
             tuple: A tuple containing the updated `ApplicationSegment` instance, response object, and error if any.
         """
         http_method = "put".upper()
-        api_url = format_url(f"""
-            {self._base_url}
+        api_url = format_url(
+            f"""
+            {self._base_endpoint}
             /application/{segment_id}
-        """)
+        """
+        )
 
         # Get the current segment data and update it with the provided kwargs
         existing_segment, response, error = self.get_segment(segment_id)
@@ -229,10 +236,12 @@ class ApplicationSegmentAPI(APIClient):
             tuple: A tuple containing the status code, response object, and error if any.
         """
         http_method = "delete".upper()
-        api_url = format_url(f"""
-            {self._base_url}
+        api_url = format_url(
+            f"""
+            {self._base_endpoint}
             /application/{segment_id}
-        """)
+        """
+        )
 
         query = "forceDelete=true" if force_delete else ""
 
