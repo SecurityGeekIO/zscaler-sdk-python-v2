@@ -20,57 +20,6 @@ class ConfigValidator:
         self._config = config
         self.validate_config()
 
-    """
-    Configuration Validators
-    """
-
-    def validate_config(self):
-        """
-        This method validates the client configuration and validates
-        the values provided. Throws a ValueError if anything is invalid.
-
-        Raises:
-            ValueError: A configuration provided needs to be corrected.
-        """
-        errors = []
-        client = self._config.get('client')
-
-        # Validate vanity domain (if required in your SDK)
-        errors += self._validate_vanity_domain(client.get('vanityDomain'))
-
-        # Validate proxy settings (if provided)
-        if "proxy" in client:
-            errors += self._validate_proxy_settings(client["proxy"])
-
-        # Validate OAuth2 Client ID and Client Secret or PrivateKey
-        client_id = client.get('clientId', "")
-        client_secret = client.get('clientSecret', "")
-        private_key = client.get('privateKey', "")
-
-        if not client_secret and not private_key:
-            errors.append(ERROR_MESSAGE_CLIENT_SECRET_MISSING)
-
-        errors += self._validate_client_id(client_id)
-
-        # Validate ZPA-specific fields independently
-        zpa_customer_id = client.get('customerId', "")
-        zpa_microtenant_id = client.get('microtenantId', "")
-
-        if zpa_customer_id:
-            errors += self._validate_zpa_customer_id(zpa_customer_id)
-        if zpa_microtenant_id:
-            errors += self._validate_zpa_microtenant_id(zpa_microtenant_id)
-
-        # Validate cloud (optional parameter)
-        errors += self._validate_cloud(client.get('cloud', ""))
-
-        # Raise exception if errors exist
-        if errors:
-            newline = '\n'
-            raise ValueError(f"{newline}Errors:"
-                             f"{newline + newline.join(errors) + 2*newline}"
-                             f"Please check your configuration.")
-
     def validate_config(self):
         """
         This method validates the client configuration and validates
@@ -105,18 +54,20 @@ class ConfigValidator:
         print(f"Client ID errors: {client_id_errors}")  # Add log
         errors += client_id_errors
 
-        # Validate ZPA-specific fields independently
-        zpa_customer_id = client.get("customerId", "")
-        zpa_microtenant_id = client.get("microtenantId", "")
+        # # Validate ZPA-specific fields independently, only for ZPA services
+        # if self._config.get("service_type") == "zpa":  # Assuming service_type is passed in the config
+        #     zpa_customer_id = client.get("customerId", "")
+        #     zpa_microtenant_id = client.get("microtenantId", "")
 
-        if zpa_customer_id:
-            zpa_customer_id_errors = self._validate_zpa_customer_id(zpa_customer_id)
-            print(f"ZPA customer ID errors: {zpa_customer_id_errors}")  # Add log
-            errors += zpa_customer_id_errors
-        if zpa_microtenant_id:
-            zpa_microtenant_id_errors = self._validate_zpa_microtenant_id(zpa_microtenant_id)
-            print(f"ZPA microtenant ID errors: {zpa_microtenant_id_errors}")  # Add log
-            errors += zpa_microtenant_id_errors
+        #     if not zpa_customer_id:
+        #         zpa_customer_id_errors = self._validate_zpa_customer_id(zpa_customer_id)
+        #         print(f"ZPA customer ID errors: {zpa_customer_id_errors}")  # Add log
+        #         errors += zpa_customer_id_errors
+
+        #     if zpa_microtenant_id:
+        #         zpa_microtenant_id_errors = self._validate_zpa_microtenant_id(zpa_microtenant_id)
+        #         print(f"ZPA microtenant ID errors: {zpa_microtenant_id_errors}")  # Add log
+        #         errors += zpa_microtenant_id_errors
 
         # Validate cloud (optional parameter)
         cloud_errors = self._validate_cloud(client.get("cloud", ""))

@@ -78,7 +78,7 @@ class CBIProfileAPI(APIClient):
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, CBIProfile)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)

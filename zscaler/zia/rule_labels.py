@@ -26,7 +26,8 @@ class RuleLabelsAPI(APIClient):
     """
     def __init__(self):
         super().__init__()
-        self._base_url = ""
+        self._base_url = ""  # Keep as needed
+        self.service = "zia"  # Set the service type explicitly to ZIA
 
     def list_labels(
             self, query_params=None,
@@ -66,7 +67,7 @@ class RuleLabelsAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/ruleLabels")
+        api_url = format_url(f"{self._base_url}/ruleLabels")
 
 
         # Build the query string
@@ -120,7 +121,7 @@ class RuleLabelsAPI(APIClient):
         http_method = "get".upper()
         api_url = format_url(
             f"""
-            {self._base_url}/zia/api/v1/ruleLabels/{label_id}
+            {self._base_url}/ruleLabels/{label_id}
             """
         )
         # Handle optional query parameters
@@ -173,7 +174,7 @@ class RuleLabelsAPI(APIClient):
             tuple: A tuple containing the newly added Rule Label (Box), response, and error.
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/ruleLabels")
+        api_url = format_url(f"{self._base_url}/ruleLabels")
 
         # Build the payload
         payload = {"name": name}
@@ -217,7 +218,7 @@ class RuleLabelsAPI(APIClient):
             tuple: A tuple containing the updated Rule Label (Box), response, and error.
         """
         http_method = "put".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/ruleLabels/{label_id}")
+        api_url = format_url(f"{self._base_url}/ruleLabels/{label_id}")
 
         # Construct the payload using the provided kwargs
         payload = {snake_to_camel(key): value for key, value in kwargs.items()}
@@ -251,7 +252,7 @@ class RuleLabelsAPI(APIClient):
             tuple: A tuple containing the response object and error (if any).
         """
         http_method = "delete".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/ruleLabels/{label_id}")
+        api_url = format_url(f"{self._base_url}/ruleLabels/{label_id}")
 
         # Handle query parameters if provided
         if query_params:

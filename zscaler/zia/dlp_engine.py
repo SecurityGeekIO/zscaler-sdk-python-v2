@@ -135,30 +135,33 @@ class DLPEngineAPI(APIClient):
 
         return (result, response, None)
 
-    def add_dlp_engine(self, name: str, engine_expression=None, custom_dlp_engine=None, **kwargs) -> tuple:
+    def add_dlp_engine(
+        self, rule: dict, 
+        keep_empty_params=False
+    ) -> tuple:
         """
         Adds a new dlp engine.
         """
         http_method = "post".upper()
         api_url = format_url(f"{self._base_url}/zia/api/v1/dlpEngines")
 
-        payload = {
-            "name": name,
-        }
-
-        if engine_expression is not None:
-            payload["engineExpression"] = engine_expression
-
-        if custom_dlp_engine is not None:
-            payload["customDlpEngine"] = custom_dlp_engine
+        # Ensure the rule is passed as a dictionary
+        if isinstance(rule, dict):
+            payload = rule
+        else:
+            payload = rule.as_dict()
 
         # Process additional keyword arguments
-        for key, value in kwargs.items():
+        for key, value in payload.items():
             # Convert the key to camelCase and assign the value
             camel_key = snake_to_camel(key)
             payload[camel_key] = value
 
-        request, error = self._request_executor.create_request(http_method, api_url, payload, {}, {})
+                # Create the request
+        request, error = self._request_executor.create_request(
+            http_method, api_url, payload, {}, keep_empty_params=keep_empty_params
+        )
+
         if error:
             return (None, None, error)
 
@@ -174,7 +177,9 @@ class DLPEngineAPI(APIClient):
 
         return (result, response, None)
 
-    def update_dlp_engine(self, engine_id: int, **kwargs) -> tuple:
+    def update_dlp_engine(
+        self, engine_id: int, 
+        engine, keep_empty_params=False) -> tuple:
         """
         Updates an existing dlp engine.
 
@@ -210,13 +215,21 @@ class DLPEngineAPI(APIClient):
 
         """
         http_method = "put".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/dlpEngines/{engine_id}")
+        api_url = format_url(f"""
+            {self._base_url}
+            /zia/api/v1/dlpEngines/{engine_id}
+        """)
 
+        if isinstance(engine, dict):
+            payload = engine
+        else:
+            payload = engine.as_dict()
+            
         # Construct the payload using the provided kwargs
-        payload = {snake_to_camel(key): value for key, value in kwargs.items()}
+        payload = {snake_to_camel(key): value for key, value in payload.items()}
 
         # Create and send the request
-        request, error = self._request_executor.create_request(http_method, api_url, payload, {}, {})
+        request, error = self._request_executor.create_request(http_method, api_url, payload, {}, {}, keep_empty_params=keep_empty_params)
         if error:
             return (None, None, error)
 
