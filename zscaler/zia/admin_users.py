@@ -25,9 +25,11 @@ class AdminUsersAPI(APIClient):
     A Client object for the Admin and Role resource.
     """
 
-    def __init__(self):
+    _zia_base_endpoint = "/zia/api/v1"
+    
+    def __init__(self, request_executor):
         super().__init__()
-        self._base_url = ""
+        self._request_executor = request_executor
 
     def list_admin_users(
             self, query_params=None,
@@ -55,7 +57,7 @@ class AdminUsersAPI(APIClient):
             ...    query_params={'include_auditor_users': True, 'page': 2, 'pagesize': 100})
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/adminUsers")
+        api_url = format_url(f"{self._zia_base_endpoint}/adminUsers")
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
@@ -111,7 +113,7 @@ class AdminUsersAPI(APIClient):
             >>> admin_user, response, error = zia.admin_and_role_management.get_admin_user('987321202')
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/adminUsers/{user_id}")
+        api_url = format_url(f"{self._zia_base_endpoint}/adminUsers/{user_id}")
 
         body = {}
         headers = {}
@@ -208,7 +210,7 @@ class AdminUsersAPI(APIClient):
 
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._base_url}/adminUsers")
+        api_url = format_url(f"{self._zia_base_endpoint}/adminUsers")
 
         payload = {
             "userName": name,
@@ -305,7 +307,7 @@ class AdminUsersAPI(APIClient):
 
         """
         http_method = "put".upper()
-        api_url = format_url(f"{self._base_url}/adminUsers/{user_id}")
+        api_url = format_url(f"{self._zia_base_endpoint}/adminUsers/{user_id}")
 
         # Get the admin user record for the provided user id
         payload = {snake_to_camel(k): v for k, v in self.get_admin_user(user_id)[0].__dict__.items()}
@@ -355,7 +357,7 @@ class AdminUsersAPI(APIClient):
 
         """
         http_method = "delete".upper()
-        api_url = format_url(f"{self._base_url}/adminUsers/{user_id}")
+        api_url = format_url(f"{self._zia_base_endpoint}/adminUsers/{user_id}")
 
         request, error = self._request_executor.create_request(http_method, api_url, {}, {}, {}, keep_empty_params=False)
 

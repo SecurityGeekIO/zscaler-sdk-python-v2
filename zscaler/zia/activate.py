@@ -23,9 +23,11 @@ class ActivationAPI(APIClient):
     A Client object for the Activation resource.
     """
 
-    def __init__(self):
+    _zia_base_endpoint = "/zia/api/v1"
+    
+    def __init__(self, request_executor):
         super().__init__()
-        self._base_url = ""
+        self._request_executor = request_executor
 
     def status(self) -> tuple:
         """
@@ -38,7 +40,7 @@ class ActivationAPI(APIClient):
             >>> config_status, response, error = zia.config.status()
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/status")
+        api_url = format_url(f"{self._zia_base_endpoint}/status")
 
         # Create the request
         request, error = self._request_executor.create_request(
@@ -72,7 +74,7 @@ class ActivationAPI(APIClient):
             >>> config_activate, response, error = zia.config.activate()
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/status/activate")
+        api_url = format_url(f"{self._zia_base_endpoint}/status/activate")
 
         # Create the request
         request, error = self._request_executor.create_request(

@@ -25,9 +25,12 @@ class CBIProfileAPI(APIClient):
     """
     A Client object for the Cloud Browser Isolation Profile resource.
     """
-    def __init__(self):
+
+    _zia_base_endpoint = "/zia/api/v1"
+    
+    def __init__(self, request_executor):
         super().__init__()
-        self._base_url = ""
+        self._request_executor = request_executor
 
     def list_isolation_profiles(
             self, query_params=None,
@@ -54,7 +57,7 @@ class CBIProfileAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/browserIsolation/profiles")
+        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/browserIsolation/profiles")
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}

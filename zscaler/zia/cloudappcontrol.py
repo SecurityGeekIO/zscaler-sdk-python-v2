@@ -46,9 +46,11 @@ class CloudAppControlAPI(APIClient):
         ("users", "users"),
     ]
 
-    def __init__(self):
+    _zia_base_endpoint = "/zia/api/v1"
+    
+    def __init__(self, request_executor):
         super().__init__()
-        self._base_url = ""
+        self._request_executor = request_executor
 
     def list_available_actions(self, rule_type: str) -> tuple:
         """
@@ -75,20 +77,26 @@ class CloudAppControlAPI(APIClient):
                 ...         print(action)
 
         """
-        # Set the HTTP method and API URL
-        http_method = "get".upper()
-        api_url = f"{self._base_url}/zia/api/v1/webApplicationRules/{rule_type}/availableActions"
+        http_method = "post".upper()
+        api_url = format_url(f"""
+            {self._zia_base_endpoint}
+            /webApplicationRules/{rule_type}/availableActions"
+        """)
 
+        # Prepare request body and headers
+        body = {}
+        headers = {}
+        
         # Prepare the request (GET request, no body needed)
         request, error = self._request_executor.create_request(
-            http_method, api_url, body=None, headers={}, form=None, keep_empty_params=False
+            http_method, api_url, body, headers
         )
 
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, Application)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
@@ -97,7 +105,9 @@ class CloudAppControlAPI(APIClient):
         try:
             result = []
             for item in response.get_body():
-                result.append(Application(self.form_response_body(item)))
+                result.append(Application(
+                    self.form_response_body(item)
+                ))
         except Exception as error:
             return (None, response, error)
 
@@ -106,7 +116,6 @@ class CloudAppControlAPI(APIClient):
     def list_rules(
         self, rule_type: str,
         query_params=None,
-        keep_empty_params=False
         ) -> tuple:
         """
         Returns a list of all Cloud App Control rules for the specified rule type.
@@ -125,10 +134,10 @@ class CloudAppControlAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/webApplicationRules/{rule_type}")
-
-        # Handle query parameters (including microtenant_id if provided)
-        query_params = query_params or {}
+        api_url = format_url(f"""
+            {self._zia_base_endpoint}
+            /webApplicationRules/{rule_type}
+        """)
 
         # Build the query string
         if query_params:
@@ -138,18 +147,17 @@ class CloudAppControlAPI(APIClient):
         # Prepare request body and headers
         body = {}
         headers = {}
-        form = {}
 
         # Create the request
         request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
+            http_method, api_url, body, headers
         )
 
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, CloudApplicationControl)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
@@ -184,32 +192,36 @@ class CloudAppControlAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/webApplicationRules/{rule_type}/{rule_id}")
+        api_url = format_url(f"""
+            {self._zia_base_endpoint}
+            /webApplicationRules/{rule_type}/{rule_id}
+        """)
 
         body = {}
         headers = {}
-        form = {}
 
-        # Create the request
+        # Create the reques
         request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form
+            http_method, api_url, body, headers
         )
 
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, CloudApplicationControl)
+        response, error = self._request_executor\
+            .execute(request, CloudApplicationControl)
 
         if error:
             return (None, response, error)
 
         # Parse the response
         try:
-            result = CloudApplicationControl(self.form_response_body(response.get_body()))
+            result = CloudApplicationControl(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
-
         return (result, response, None)
 
     def add_rule(self, rule_type: str, name: str, **kwargs) -> tuple:
@@ -377,7 +389,10 @@ class CloudAppControlAPI(APIClient):
                 - `ISOLATE_WEBMAIL_VIEW`
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/webApplicationRules/{rule_type}")
+        api_url = format_url(f"""
+            {self._zia_base_endpoint}
+            /webApplicationRules/{rule_type}
+        """)
 
         # Convert enabled to API format if present
         if "enabled" in kwargs:
@@ -586,7 +601,10 @@ class CloudAppControlAPI(APIClient):
                 - `ISOLATE_WEBMAIL_VIEW`
         """
         http_method = "put".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/webApplicationRules/{rule_type}/{rule_id}")
+        api_url = format_url(f"""
+            {self._zia_base_endpoint}
+            /webApplicationRules/{rule_type}/{rule_id}
+        """)
 
         # Set payload to value of existing record and convert nested dict keys.
         payload = convert_keys(self.get_rule(rule_type, rule_id))
@@ -606,7 +624,7 @@ class CloudAppControlAPI(APIClient):
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request, CloudApplicationControl)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
@@ -635,7 +653,7 @@ class CloudAppControlAPI(APIClient):
 
         """
         http_method = "delete".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/webApplicationRules/{rule_type}/{rule_id}")
+        api_url = format_url(f"{self._zia_base_endpoint}/webApplicationRules/{rule_type}/{rule_id}")
 
         request, error = self._request_executor.create_request(http_method, api_url, {}, {}, {})
         if error:
@@ -713,7 +731,7 @@ class CloudAppControlAPI(APIClient):
                 )
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/webApplicationRules/{rule_type}/duplicate/{rule_id}?name={name}")
+        api_url = format_url(f"{self._zia_base_endpoint}/webApplicationRules/{rule_type}/duplicate/{rule_id}?name={name}")
 
         # Convert enabled to API format if present
         if "enabled" in kwargs:

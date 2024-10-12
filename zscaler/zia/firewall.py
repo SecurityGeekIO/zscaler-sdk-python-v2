@@ -59,9 +59,11 @@ class FirewallPolicyAPI(APIClient):
         ("users", "users"),
     ]
 
-    def __init__(self):
+    _zia_base_endpoint = "/zia/api/v1"
+    
+    def __init__(self, request_executor):
         super().__init__()
-        self._base_url = ""
+        self._request_executor = request_executor
 
     def list_rules(
             self, query_params=None,
@@ -89,7 +91,7 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/firewallFilteringRules")
+        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/firewallFilteringRules")
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
@@ -146,7 +148,7 @@ class FirewallPolicyAPI(APIClient):
         """
         http_method = "get".upper()
         api_url = format_url(f"""
-            {self._base_url}
+            {self._zia_base_endpoint}
             /zia/api/v1/firewallFilteringRules/{rule_id}
             """)
 
@@ -234,7 +236,7 @@ class FirewallPolicyAPI(APIClient):
             ...    description='TT#1965432122')
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/firewallFilteringRules")
+        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/firewallFilteringRules")
 
         # Ensure the rule is passed as a dictionary
         if isinstance(rule, dict):
@@ -338,7 +340,7 @@ class FirewallPolicyAPI(APIClient):
         """
         http_method = "put".upper()
         api_url = format_url(f"""
-            {self._base_url}
+            {self._zia_base_endpoint}
             /zia/api/v1/firewallFilteringRules/{rule_id}
         """)
 
@@ -386,7 +388,7 @@ class FirewallPolicyAPI(APIClient):
         http_method = "delete".upper()
         api_url = format_url(
             f"""
-            {self._base_url}/zia/api/v1/firewallFilteringRules/{rule_id}
+            {self._zia_base_endpoint}/zia/api/v1/firewallFilteringRules/{rule_id}
             """
         )
         params = {}
@@ -421,7 +423,7 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/ipDestinationGroups")
+        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/ipDestinationGroups")
         
         payload = {"excludeType": exclude_type}
 
@@ -473,7 +475,7 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/ipDestinationGroups/{group_id}")
+        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/ipDestinationGroups/{group_id}")
 
         body = {}
         headers = {}
@@ -540,7 +542,7 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/ipDestinationGroups")
+        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/ipDestinationGroups")
 
         payload = {"name": name}
 
@@ -601,7 +603,7 @@ class FirewallPolicyAPI(APIClient):
         """
         http_method = "put".upper()
         api_url = format_url(f"""
-            {self._base_url}
+            {self._zia_base_endpoint}
             /zia/api/v1/ipDestinationGroups/{group_id}
         """)
 
@@ -650,7 +652,7 @@ class FirewallPolicyAPI(APIClient):
         http_method = "delete".upper()
         api_url = format_url(
             f"""
-            {self._base_url}/zia/api/v1/ipDestinationGroups/{group_id}
+            {self._zia_base_endpoint}/zia/api/v1/ipDestinationGroups/{group_id}
             """
         )
         params = {}
@@ -696,7 +698,7 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/ipSourceGroups")
+        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/ipSourceGroups")
         
         query_params = query_params or {}
 
@@ -746,7 +748,7 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/ipSourceGroups/{group_id}")
+        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/ipSourceGroups/{group_id}")
         body = {}
         headers = {}
         form = {}
@@ -791,7 +793,7 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/ipSourceGroups")
+        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/ipSourceGroups")
 
         payload = {
             "name": name,
@@ -852,7 +854,7 @@ class FirewallPolicyAPI(APIClient):
         """
         http_method = "put".upper()
         api_url = format_url(f"""
-            {self._base_url}
+            {self._zia_base_endpoint}
             /zia/api/v1/ipSourceGroups/{group_id}
         """)
 
@@ -901,7 +903,7 @@ class FirewallPolicyAPI(APIClient):
         http_method = "delete".upper()
         api_url = format_url(
             f"""
-            {self._base_url}/zia/api/v1/ipSourceGroups/{group_id}
+            {self._zia_base_endpoint}/zia/api/v1/ipSourceGroups/{group_id}
             """
         )
         params = {}
@@ -940,7 +942,7 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/networkApplicationGroups")
+        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/networkApplicationGroups")
         
         query_params = query_params or {}
 
@@ -995,7 +997,7 @@ class FirewallPolicyAPI(APIClient):
         """
         http_method = "get".upper()
         api_url = format_url(f"""
-            {self._base_url}
+            {self._zia_base_endpoint}
             /zia/api/v1/networkApplicationGroups/{group_id}
             """)
         # Prepare request body, headers, and form (if needed)
@@ -1048,7 +1050,7 @@ class FirewallPolicyAPI(APIClient):
         """
         http_method = "post".upper()
         api_url = format_url(f"""
-            {self._base_url}
+            {self._zia_base_endpoint}
             /zia/api/v1/networkApplicationGroups
         """)
 
@@ -1113,7 +1115,7 @@ class FirewallPolicyAPI(APIClient):
         """
         http_method = "put".upper()
         api_url = format_url(f"""
-            {self._base_url}
+            {self._zia_base_endpoint}
             /zia/api/v1/networkApplicationGroups/{group_id}
         """)
 
@@ -1165,7 +1167,7 @@ class FirewallPolicyAPI(APIClient):
         http_method = "delete".upper()
         api_url = format_url(
             f"""
-            {self._base_url}
+            {self._zia_base_endpoint}
             /zia/api/v1/networkApplicationGroups/{group_id}
             """)
 
@@ -1216,7 +1218,7 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/networkApplications")
+        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/networkApplications")
 
         query_params = query_params or {}
 
@@ -1270,7 +1272,7 @@ class FirewallPolicyAPI(APIClient):
         """
         http_method = "get".upper()
         api_url = format_url(f"""
-            {self._base_url}
+            {self._zia_base_endpoint}
             /zia/api/v1/networkApplications/{app_id}
         """)
 
@@ -1325,7 +1327,7 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/networkServiceGroups")
+        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/networkServiceGroups")
 
         query_params = query_params or {}
 
@@ -1381,7 +1383,7 @@ class FirewallPolicyAPI(APIClient):
         """
         http_method = "get".upper()
         api_url = format_url(f"""
-            {self._base_url}
+            {self._zia_base_endpoint}
             /zia/api/v1/networkServiceGroups/{group_id}
             """)
 
@@ -1489,7 +1491,7 @@ class FirewallPolicyAPI(APIClient):
         """
         http_method = "put".upper()
         api_url = format_url(f"""
-            {self._base_url}
+            {self._zia_base_endpoint}
             /zia/api/v1/networkServiceGroups/{group_id}
         """)
         if isinstance(svc_group, dict):
@@ -1690,7 +1692,7 @@ class FirewallPolicyAPI(APIClient):
         """
         http_method = "put".upper()
         api_url = format_url(f"""
-            {self._base_url}
+            {self._zia_base_endpoint}
             /zia/api/v1/networkServices/{service_id}
         """)
 
@@ -1743,7 +1745,7 @@ class FirewallPolicyAPI(APIClient):
         """
         http_method = "get".upper()
         api_url = format_url(f"""
-            {self._base_url}
+            {self._zia_base_endpoint}
             /zia/api/v1/timeWindows
             """)
 
@@ -1789,7 +1791,7 @@ class FirewallPolicyAPI(APIClient):
         """
         http_method = "get".upper()
         api_url = format_url(f"""
-            {self._base_url}
+            {self._zia_base_endpoint}
             /zia/api/v1/timeWindows/lite
             """)
 

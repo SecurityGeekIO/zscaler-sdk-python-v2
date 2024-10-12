@@ -1,41 +1,55 @@
-# -*- coding: utf-8 -*-
+"""
+Copyright (c) 2023, Zscaler Inc.
 
-# Copyright (c) 2023, Zscaler Inc.
-#
-# Permission to use, copy, modify, and/or distribute this software for any
-# purpose with or without fee is hereby granted, provided that the above
-# copyright notice and this permission notice appear in all copies.
-#
-# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+"""
 
 from box import Box, BoxList
 from requests import Response
 
-from zscaler.utils import convert_keys, snake_to_camel, transform_common_id_fields
 from zscaler.api_client import APIClient
-
+from zscaler.zia.models.zpa_gateway import ZPAGateway
+from zscaler.utils import format_url, convert_keys, snake_to_camel, transform_common_id_fields
+from urllib.parse import urlencode
 
 class ZPAGatewayAPI(APIClient):
-    def __init__(self):
+    """
+    A Client object for the ZPA Gateway API resource.
+    """
+
+    _zia_base_endpoint = "/zia/api/v1"
+    
+    def __init__(self, request_executor):
         super().__init__()
-        self._base_url = ""
+        self._request_executor = request_executor
 
 
-    def list_gateways(self, **kwargs) -> BoxList:
+    def list_gateways(self, query_params=None) -> tuple:
         """
-        Returns a list of all ZPA Gateways.
+        Lists ZPA Gateways in your organization with pagination.
+        A subset of ZPA Gateways can be returned that match a supported
+        filter expression or query.
+
+        Args:
+            query_params {dict}: Map of query parameters for the request.
+                [query_params.pagesize] {int}: Page size for pagination.
+                [query_params.search] {str}: Search string for filtering results.
+                [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
+                [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
 
         Returns:
-            :obj:`BoxList`: The list of all ZPA Gateways Items
+            tuple: A tuple containing (list of ZPA Gateways instances, Response, error)
 
-        Returns:
-            :obj:`BoxList`: The list of all ZPA Gateways Items
 
         Examples:
             Get a list of all  ZPA Gateways Items
@@ -44,9 +58,45 @@ class ZPAGatewayAPI(APIClient):
             ... for item in results:
             ...    print(item)
         """
-        return self.rest.get("zpaGateways")
+        http_method = "get".upper()
+        api_url = format_url(f"""
+            {self._zia_base_endpoint}/zpaGateways
+        """)
 
-    def get_gateway(self, gateway_id: str) -> Box:
+        # Build the query string
+        if query_params:
+            encoded_query_params = urlencode(query_params)
+            api_url += f"?{encoded_query_params}"
+
+        # Prepare request body and headers
+        body = {}
+        headers = {}
+
+        # Create the request
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body, headers)
+        if error:
+            return (None, None, error)
+
+        # Execute the request
+        response, error = self._request_executor.execute(request)
+
+        if error:
+            return (None, response, error)
+
+        # Parse the response into RuleLabels instances
+        try:
+            result = []
+            for item in response.get_body():
+                result.append(ZPAGateway(
+                    self.form_response_body(item)
+                ))
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
+
+    def get_gateway(self, gateway_id: int) -> Box:
         """
         Returns the zpa gateway details for a given ZPA Gateway.
 
@@ -54,17 +104,41 @@ class ZPAGatewayAPI(APIClient):
             gatewayId (str): The unique identifier for the ZPA Gateway.
 
         Returns:
-            :obj:`Box`: The ZPA Gateway resource record.
+            tuple: A tuple containing (ZPA Gateway instance, Response, error).
 
         Examples:
             >>> gw = zia.zpa_gateway.get_gateway('99999')
         """
-        response = self.rest.get("/zpaGateways/%s" % (gateway_id))
-        if isinstance(response, Response):
-            status_code = response.status_code
-            if status_code != 200:
-                return None
-        return response
+        http_method = "get".upper()
+        api_url = format_url(
+            f"""
+            {self._zia_base_endpoint}/zpaGateways/{gateway_id}
+            """
+        )
+        
+        body = {}
+        headers = {}
+
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body, headers
+        )
+
+        if error:
+            return (None, None, error)
+
+        response, error = self._request_executor\
+            .execute(request, ZPAGateway)
+
+        if error:
+            return (None, response, error)
+
+        try:
+            result = ZPAGateway(
+                self.form_response_body(response.get_body())
+            )
+        except Exception as error:
+            return (None, response, error)
+        return (result, response, None)
 
     def add_gateway(
         self,

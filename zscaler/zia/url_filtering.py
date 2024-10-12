@@ -28,7 +28,10 @@ from zscaler.api_client import APIClient
 
 
 class URLFilteringAPI(APIClient):
-    # URL Filtering Policy rule keys that only require an ID to be provided.
+    """
+    A Client object for the URL Filtering Rule resources.
+    """
+
     reformat_params = [
         ("cbi_profile", "cbiProfile"),
         ("departments", "departments"),
@@ -45,9 +48,11 @@ class URLFilteringAPI(APIClient):
         ("users", "users"),
     ]
 
-    def __init__(self):
+    _zia_base_endpoint = "/zia/api/v1"
+    
+    def __init__(self, request_executor):
         super().__init__()
-        self._base_url = ""
+        self._request_executor = request_executor
 
     def list_rules(self) -> BoxList:
         """

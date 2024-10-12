@@ -23,9 +23,15 @@ from zscaler.api_client import APIClient
 
 
 class TrafficForwardingAPI(APIClient):
-    def __init__(self):
+    """
+    A Client object for the Traffic Forwarding resources.
+    """
+
+    _zia_base_endpoint = "/zia/api/v1"
+    
+    def __init__(self, request_executor):
         super().__init__()
-        self._base_url = ""
+        self._request_executor = request_executor
 
     def list_gre_tunnels(self, **kwargs) -> BoxList:
         """

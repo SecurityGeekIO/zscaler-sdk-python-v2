@@ -16,7 +16,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from zscaler.api_client import APIClient
 from zscaler.zia.models.rule_labels import RuleLabels
-from zscaler.utils import format_url, snake_to_camel
+from zscaler.utils import format_url
 from urllib.parse import urlencode
 
 
@@ -33,7 +33,7 @@ class RuleLabelsAPI(APIClient):
 
     def list_labels(self, query_params=None) -> tuple:
         """
-        Enumerates rule labels in your organization with pagination.
+        Lists rule labels in your organization with pagination.
         A subset of rule labels  can be returned that match a supported
         filter expression or query.
 
@@ -65,39 +65,48 @@ class RuleLabelsAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._zia_base_endpoint}/ruleLabels")
+        api_url = format_url(f"""
+            {self._zia_base_endpoint}
+            /ruleLabels
+        """)
+
+        query_params = query_params or {}
 
         # Build the query string
         if query_params:
             encoded_query_params = urlencode(query_params)
             api_url += f"?{encoded_query_params}"
 
-        # Prepare request headers (no need for body or form in a GET request)
+        # Prepare request body and headers
+        body = {}
         headers = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, {}, headers, {})
-
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body, headers
+        )
+        
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
 
         if error:
             return (None, response, error)
 
-        # Parse the response into RuleLabels instances
         try:
             result = []
             for item in response.get_body():
-                result.append(RuleLabels(self.form_response_body(item)))
+                result.append(RuleLabels(
+                    self.form_response_body(item)
+                ))
         except Exception as error:
             return (None, response, error)
-
         return (result, response, None)
 
-    def get_label(self, label_id: str) -> tuple:
+    def get_label(self, label_id: int) -> tuple:
         """
         Fetches a specific rule labels by ID.
 
@@ -109,18 +118,16 @@ class RuleLabelsAPI(APIClient):
             tuple: A tuple containing (AppConnectorGroup instance, Response, error).
         """
         http_method = "get".upper()
-        api_url = format_url(
-            f"""
-            {self._zia_base_endpoint}/ruleLabels/{label_id}
-            """
-        )
+        api_url = format_url(f"""
+            {self._zia_base_endpoint}
+            /ruleLabels/{label_id}
+        """)
         
         body = {}
         headers = {}
-        form = {}
 
         request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form
+            http_method, api_url, body, headers
         )
 
         if error:

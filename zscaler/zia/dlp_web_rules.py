@@ -49,9 +49,11 @@ class DLPWebRuleAPI(APIClient):
         ("url_categories", "urlCategories"),
     ]
 
-    def __init__(self):
+    _zia_base_endpoint = "/zia/api/v1"
+    
+    def __init__(self, request_executor):
         super().__init__()
-        self._base_url = ""
+        self._request_executor = request_executor
 
     def list_rules(
             self, query_params=None,
@@ -83,7 +85,7 @@ class DLPWebRuleAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/ruleLabels")
+        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/ruleLabels")
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
@@ -142,7 +144,7 @@ class DLPWebRuleAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/webDlpRules/{rule_id}")
+        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/webDlpRules/{rule_id}")
 
         body = {}
         headers = {}
@@ -186,7 +188,7 @@ class DLPWebRuleAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/webDlpRules/lite")
+        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/webDlpRules/lite")
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
@@ -287,7 +289,7 @@ class DLPWebRuleAPI(APIClient):
             ...    description='TT#1965432122')
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/webDlpRules")
+        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/webDlpRules")
 
         # Convert enabled to API format if present
         if "enabled" in kwargs:
@@ -381,7 +383,7 @@ class DLPWebRuleAPI(APIClient):
                 >>> zia.web_dlp.update_rule('976597', description="TT#1965232866")
         """
         http_method = "put".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/webDlpRules/{rule_id}")
+        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/webDlpRules/{rule_id}")
 
         # Set payload to value of existing record and convert nested dict keys.
         payload = convert_keys(self.get_rule(rule_id))
@@ -433,7 +435,7 @@ class DLPWebRuleAPI(APIClient):
 
         """
         http_method = "delete".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/webDlpRules/{rule_id}")
+        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/webDlpRules/{rule_id}")
 
         request, error = self._request_executor.create_request(http_method, api_url, {}, {}, {})
         if error:

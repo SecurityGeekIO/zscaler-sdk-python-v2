@@ -19,6 +19,7 @@ from zscaler.api_client import APIClient
 from zscaler.zia.models.shadow_it_report import ShadowITReport
 from zscaler.zia.models.shadow_it_report import CloudapplicationsAndTags
 from zscaler.zia.models.shadow_it_report import CloudApplicationBulkUpdate
+
 from zscaler.utils import format_url, convert_keys
 from urllib.parse import urlencode
 
@@ -27,9 +28,11 @@ class CloudAppsAPI(APIClient):
     """
     A Client object for the predefined and custom Cloud Applications resource.
     """
-    def __init__(self):
+    _zia_base_endpoint = "/zia/api/v1"
+    
+    def __init__(self, request_executor):
         super().__init__()
-        self._base_url = ""
+        self._request_executor = request_executor
 
     @staticmethod
     def _convert_ids_to_dict_list(id_list):
@@ -42,6 +45,108 @@ class CloudAppsAPI(APIClient):
             list: A list of dictionaries, each with an 'id' key.
         """
         return [{"id": str(id)} for id in id_list]
+
+    def list_apps(self, query_params=None) -> tuple:
+        """
+        List all predefined and custom cloud applications by name and id.
+
+        Returns:
+            :obj:`BoxList` of :obj:`Box`: A list of cloud applications.
+
+        Examples:
+            List all cloud applications::
+
+                apps = zia.cloud_apps.list_apps()
+                for app in apps:
+                    print(app.name)
+
+        """
+        http_method = "get".upper()
+        api_url = format_url(f"""
+            {self._zia_base_endpoint}
+            /cloudApplications/lite
+        """)
+
+        # Build the query string
+        if query_params:
+            encoded_query_params = urlencode(query_params)
+            api_url += f"?{encoded_query_params}"
+
+        # Prepare request headers (no need for body or form in a GET request)
+        headers = {}
+
+        # Create the request
+        request, error = self._request_executor.create_request(http_method, api_url, {}, headers, {})
+
+        if error:
+            return (None, None, error)
+
+        # Execute the request
+        response, error = self._request_executor.execute(request)
+
+        if error:
+            return (None, response, error)
+
+        # Parse the response into RuleLabels instances
+        try:
+            result = []
+            for item in response.get_body():
+                result.append(CloudapplicationsAndTags(self.form_response_body(item)))
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
+
+    def list_custom_tags(self, query_params=None) -> tuple:
+        """
+        List all custom tags by name and id.
+
+        Returns:
+            :obj:`BoxList` of :obj:`Box`: A list of custom tags available to assign to cloud applications.
+
+        Examples:
+            List all custom tags::
+
+                tags = zia.cloud_apps.list_custom_tags()
+                for tag in tags:
+                    print(tag.name)
+
+        """
+        http_method = "get".upper()
+        api_url = format_url(f"""
+            {self._zia_base_endpoint}
+            /customTags
+        """)
+
+        # Build the query string
+        if query_params:
+            encoded_query_params = urlencode(query_params)
+            api_url += f"?{encoded_query_params}"
+
+        # Prepare request headers (no need for body or form in a GET request)
+        headers = {}
+
+        # Create the request
+        request, error = self._request_executor.create_request(http_method, api_url, {}, headers, {})
+
+        if error:
+            return (None, None, error)
+
+        # Execute the request
+        response, error = self._request_executor.execute(request)
+
+        if error:
+            return (None, response, error)
+
+        # Parse the response into RuleLabels instances
+        try:
+            result = []
+            for item in response.get_body():
+                result.append(CloudapplicationsAndTags(self.form_response_body(item)))
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
 
     def bulk_update(self, sanction_state: str, **kwargs) -> tuple: 
         """
@@ -78,7 +183,10 @@ class CloudAppsAPI(APIClient):
 
         """
         http_method = "put".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/cloudApplications/bulkUpdate")
+        api_url = format_url(f"""
+            {self._zia_base_endpoint}
+            /cloudApplications/bulkUpdate
+        """)
 
         # Mapping for user-friendly sanction state values to API-expected values
         sanction_state_mapping = {
@@ -312,7 +420,10 @@ class CloudAppsAPI(APIClient):
 
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/shadowIT/applications/export")
+        api_url = format_url(f"""
+            {self._zia_base_endpoint}
+            /shadowIT/applications/export
+        """)
 
         payload = {"duration": duration}
         convert_keys(payload.update(kwargs))
@@ -398,7 +509,7 @@ class CloudAppsAPI(APIClient):
             Zscaler has a rate limit of 1 report per-minute, ensure you take this into account when calling this method.
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/shadowIT/applications/{entity}/exportCsv")
+        api_url = format_url(f"{self._zia_base_endpoint}/shadowIT/applications/{entity}/exportCsv")
 
         payload = {"application": application, "duration": duration}
 
@@ -430,37 +541,3 @@ class CloudAppsAPI(APIClient):
 
         # Return the CSV content directly
         return (response.content, None)
-
-    def list_apps(self):
-        """
-        List all predefined and custom cloud applications by name and id.
-
-        Returns:
-            :obj:`BoxList` of :obj:`Box`: A list of cloud applications.
-
-        Examples:
-            List all cloud applications::
-
-                apps = zia.cloud_apps.list_apps()
-                for app in apps:
-                    print(app.name)
-
-        """
-        return self.rest.get("/zia/api/v1/cloudApplications/lite")
-
-    def list_custom_tags(self):
-        """
-        List all custom tags by name and id.
-
-        Returns:
-            :obj:`BoxList` of :obj:`Box`: A list of custom tags available to assign to cloud applications.
-
-        Examples:
-            List all custom tags::
-
-                tags = zia.cloud_apps.list_custom_tags()
-                for tag in tags:
-                    print(tag.name)
-
-        """
-        return self.rest.get("customTags")

@@ -25,9 +25,11 @@ class SecurityPolicyAPI(APIClient):
     A Client object for the Security Policy Settings resource.
     """
 
-    def __init__(self):
+    _zia_base_endpoint = "/zia/api/v1"
+    
+    def __init__(self, request_executor):
         super().__init__()
-        self._base_url = ""
+        self._request_executor = request_executor
 
     def get_whitelist(self) -> tuple:
         """
@@ -40,7 +42,7 @@ class SecurityPolicyAPI(APIClient):
             >>> whitelist, response, error = zia.security.get_whitelist()
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/security")
+        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/security")
 
         request, error = self._request_executor.create_request(http_method, api_url)
         if error:
@@ -68,7 +70,7 @@ class SecurityPolicyAPI(APIClient):
             >>> blacklist, response, error = zia.security.get_blacklist()
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/security/advanced")
+        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/security/advanced")
 
         request, error = self._request_executor.create_request(http_method, api_url)
         if error:
@@ -99,7 +101,7 @@ class SecurityPolicyAPI(APIClient):
             >>> whitelist, response, error = zia.security.replace_whitelist(['example.com'])
         """
         http_method = "put".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/security")
+        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/security")
 
         payload = {"whitelistUrls": url_list}
 
@@ -163,7 +165,7 @@ class SecurityPolicyAPI(APIClient):
             >>> blacklist, response, error = zia.security.add_urls_to_blacklist(['example.com'])
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/security/advanced/blacklistUrls?action=ADD_TO_LIST")
+        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/security/advanced/blacklistUrls?action=ADD_TO_LIST")
 
         payload = {"blacklistUrls": url_list}
 
@@ -191,7 +193,7 @@ class SecurityPolicyAPI(APIClient):
             >>> blacklist, response, error = zia.security.delete_urls_from_blacklist(['example.com'])
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/security/advanced/blacklistUrls?action=REMOVE_FROM_LIST")
+        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/security/advanced/blacklistUrls?action=REMOVE_FROM_LIST")
 
         payload = {"blacklistUrls": url_list}
 
@@ -219,7 +221,7 @@ class SecurityPolicyAPI(APIClient):
             >>> blacklist, response, error = zia.security.replace_blacklist(['example.com'])
         """
         http_method = "put".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/security/advanced")
+        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/security/advanced")
 
         payload = {"blacklistUrls": url_list}
 

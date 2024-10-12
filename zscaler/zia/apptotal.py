@@ -24,9 +24,12 @@ class AppTotalAPI(APIClient):
     """
     A Client object for the predefined and custom Cloud Applications resource.
     """
-    def __init__(self):
+
+    _zia_base_endpoint = "/zia/api/v1"
+    
+    def __init__(self, request_executor):
         super().__init__()
-        self._base_url = ""
+        self._request_executor = request_executor
 
     def get_app(self, app_id: str, verbose: bool = False) -> tuple:
         """
@@ -48,7 +51,7 @@ class AppTotalAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/apps/app")
+        api_url = format_url(f"{self._zia_base_endpoint}/apps/app")
 
         # Pass app_id and verbose as query parameters
         query_params = {
@@ -102,7 +105,7 @@ class AppTotalAPI(APIClient):
 
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/apps/app")
+        api_url = format_url(f"{self._zia_base_endpoint}/apps/app")
 
         payload = {
             "appId": app_id,
@@ -142,7 +145,7 @@ class AppTotalAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/apps/search")
+        api_url = format_url(f"{self._zia_base_endpoint}/apps/search")
 
         # Include app_name in query parameters
         query_params = {
@@ -195,7 +198,7 @@ class AppTotalAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/app_views/{app_view_id}/apps")
+        api_url = format_url(f"{self._zia_base_endpoint}/app_views/{app_view_id}/apps")
 
         # Include app_name in query parameters
         query_params = {

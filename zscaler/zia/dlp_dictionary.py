@@ -25,14 +25,15 @@ class DLPDictionaryAPI(APIClient):
     """
     A Client object for the DLP Dictionary resource.
     """
-
-    def __init__(self):
+    _zia_base_endpoint = "/zia/api/v1"
+    
+    def __init__(self, request_executor):
         super().__init__()
-        self._base_url = ""
+        self._request_executor = request_executor
         
     def list_dicts(
-            self, query_params=None,
-            keep_empty_params=False
+            self,
+            query_params=None,
     ) -> tuple:
         """
         Returns a list of all custom and predefined ZIA DLP Dictionaries.
@@ -43,7 +44,6 @@ class DLPDictionaryAPI(APIClient):
                 [query_params.pagesize] {int}: Specifies the page size. The default size is 100, but the maximum size is 1000.
                 [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
                 [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
-            keep_empty_params {bool}: Whether to include empty parameters in the query string.
 
         Returns:
             tuple: A tuple containing (list of DLPTemplates instances, Response, error)
@@ -60,26 +60,29 @@ class DLPDictionaryAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/dlpDictionaries")
+        api_url = format_url(f"""
+            {self._zia_base_endpoint}
+            /dlpDictionaries
+        """)
 
-        query_params = query_params or {}
-
+        # Build the query string
         if query_params:
             encoded_query_params = urlencode(query_params)
             api_url += f"?{encoded_query_params}"
 
+        # Prepare request body and headers
         body = {}
         headers = {}
-        form = {}
 
+        # Create the request
         request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
+            http_method, api_url, body, headers
         )
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request, DLPDictionary)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
@@ -92,10 +95,9 @@ class DLPDictionaryAPI(APIClient):
                 ))
         except Exception as error:
             return (None, response, error)
-
         return (result, response, None)
 
-    def get_dict(self, dict_id: str) -> tuple:
+    def get_dict(self, dict_id: int) -> tuple:
         """
         Returns the DLP Dictionary that matches the specified DLP Dictionary id.
 
@@ -110,29 +112,32 @@ class DLPDictionaryAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/dlpDictionaries/{dict_id}")
+        api_url = format_url(f"""
+            {self._zia_base_endpoint}
+            /dlpDictionaries/{dict_id}
+        """)
 
         body = {}
         headers = {}
-        form = {}
-
+        
         request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form
+            http_method, api_url, body, headers
         )
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request, DLPDictionary)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
 
         try:
-            result = DLPDictionary(self.form_response_body(response.get_body()))
+            result = DLPDictionary(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
-
         return (result, response, None)
 
     def add_dict(self, name: str, custom_phrase_match_type: str, dictionary_type: str, **kwargs) -> tuple:
@@ -203,7 +208,7 @@ class DLPDictionaryAPI(APIClient):
 
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/dlpDictionaries")
+        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/dlpDictionaries")
 
         payload = {
             "name": name,
@@ -284,7 +289,7 @@ class DLPDictionaryAPI(APIClient):
 
         """
         http_method = "put".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/dlpDictionaries/{dict_id}")
+        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/dlpDictionaries/{dict_id}")
 
         # Construct the payload using the provided kwargs
         payload = {snake_to_camel(key): value for key, value in kwargs.items()}
@@ -322,7 +327,7 @@ class DLPDictionaryAPI(APIClient):
         http_method = "delete".upper()
         api_url = format_url(
             f"""
-            {self._base_url}/zia/api/v1/dlpDictionaries/{dict_id}
+            {self._zia_base_endpoint}/zia/api/v1/dlpDictionaries/{dict_id}
             """
         )
 
@@ -353,7 +358,7 @@ class DLPDictionaryAPI(APIClient):
             tuple: A tuple containing the validation result (DLPPatternValidation instance), response, and error.
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/dlpDictionaries/validateDlpPattern")
+        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/dlpDictionaries/validateDlpPattern")
 
         # Construct the payload
         payload = {"data": pattern}
@@ -405,7 +410,7 @@ class DLPDictionaryAPI(APIClient):
         dict_id = dictionary.id
 
         http_method = "get".upper()
-        api_url = f"{self._base_url}/zia/api/v1/dlpDictionaries/{dict_id}/predefinedIdentifiers"
+        api_url = f"{self._zia_base_endpoint}/zia/api/v1/dlpDictionaries/{dict_id}/predefinedIdentifiers"
         request, error = self._request_executor.create_request(http_method, api_url, {}, {}, {})
         if error:
             return (None, None, error)

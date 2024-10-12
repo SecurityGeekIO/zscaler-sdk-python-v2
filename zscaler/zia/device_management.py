@@ -26,13 +26,15 @@ class DeviceManagementAPI(APIClient):
     A Client object for the Device Management resource.
     """
 
-    def __init__(self):
+    _zia_base_endpoint = "/zia/api/v1"
+    
+    def __init__(self, request_executor):
         super().__init__()
-        self._base_url = ""
+        self._request_executor = request_executor
 
     def list_device_groups(
-            self, query_params=None,
-            keep_empty_params=False
+            self,
+            query_params=None,
     ) -> tuple:
         """
         Returns the list of ZIA Device Groups.
@@ -43,7 +45,6 @@ class DeviceManagementAPI(APIClient):
                 [query_params.pagesize] {int}: Specifies the page size. The default size is 100, but the maximum size is 1000.
                 [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
                 [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
-            keep_empty_params {bool}: Whether to include empty parameters in the query string.
 
         Returns:
             tuple: A tuple containing (list of Device Group instances, Response, error)
@@ -60,26 +61,29 @@ class DeviceManagementAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/deviceGroups")
+        api_url = format_url(f"""
+            {self._zia_base_endpoint}
+            /deviceGroups
+        """)
 
-        query_params = query_params or {}
-
+        # Build the query string
         if query_params:
             encoded_query_params = urlencode(query_params)
             api_url += f"?{encoded_query_params}"
 
+        # Prepare request body and headers
         body = {}
         headers = {}
-        form = {}
 
+        # Create the request
         request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
+            http_method, api_url, body, headers
         )
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request, DeviceGroups)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
@@ -96,8 +100,8 @@ class DeviceManagementAPI(APIClient):
         return (result, response, None)
 
     def list_devices(
-            self, query_params=None,
-            keep_empty_params=False
+            self,
+            query_params=None,
     ) -> tuple:
         """
         Returns the list of Devices.
@@ -105,8 +109,8 @@ class DeviceManagementAPI(APIClient):
         Args:
             query_params {dict}: Map of query parameters for the request.
                 [query_params.name] {str}: The device group name. This is a `starts with` match.
-                [query_params.userIds] {list}: Used to list devices for specific users.
-                [query_params.includeAll] {bool}: Used to include or exclude Cloud Browser Isolation devices.                       
+                [query_params.user_ids] {list}: Used to list devices for specific users.
+                [query_params.include_all] {bool}: Used to include or exclude Cloud Browser Isolation devices.                       
                 [query_params.page] {int}: Specifies the page offset.
                 [query_params.pagesize] {int}: Specifies the page size. The default size is 100, but the maximum size is 1000.
                 [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
@@ -115,7 +119,6 @@ class DeviceManagementAPI(APIClient):
 
         Returns:
             tuple: A tuple containing (list of Devices instances, Response, error)
-
 
         Examples:
             Print all devices
@@ -129,7 +132,10 @@ class DeviceManagementAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/deviceGroups/devices")
+        api_url = format_url(f"""
+            {self._zia_base_endpoint}
+            /deviceGroups/devices
+        """)
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
@@ -142,23 +148,20 @@ class DeviceManagementAPI(APIClient):
         # Prepare request body and headers
         body = {}
         headers = {}
-        form = {}
 
         # Create the request
         request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
+            http_method, api_url, body, headers
         )
 
         if error:
             return (None, None, error)
 
-        # Execute the request
-        response, error = self._request_executor.execute(request, Devices)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
 
-        # Parse the response into AdminUser instances
         try:
             result = []
             for item in response.get_body():
@@ -167,7 +170,6 @@ class DeviceManagementAPI(APIClient):
                 ))
         except Exception as error:
             return (None, response, error)
-
         return (result, response, None)
 
     def list_device_lite(self) -> tuple:
@@ -186,27 +188,32 @@ class DeviceManagementAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/deviceGroups/devices/lite")
+        api_url = format_url(f"""
+            {self._zia_base_endpoint}
+            /deviceGroups/devices/lite
+        """)
 
+        body = {}
+        headers = {}
+        
         # Prepare the request (GET request, no body needed)
         request, error = self._request_executor.create_request(
-            http_method, api_url, body=None, headers={}, form=None, keep_empty_params=False
+            http_method, api_url, body, headers 
         )
 
         if error:
             return (None, None, error)
 
-        # Execute the request
-        response, error = self._request_executor.execute(request, DeviceGroups)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
 
-        # Parse the response into Application instances
         try:
             result = []
             for item in response.get_body():
-                result.append(DeviceGroups(self.form_response_body(item)))
+                result.append(DeviceGroups(self.form_response_body(item))
+                )
         except Exception as error:
             return (None, response, error)
 

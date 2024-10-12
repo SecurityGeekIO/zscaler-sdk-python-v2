@@ -53,9 +53,11 @@ class ForwardingControlAPI(APIClient):
         ("zpa_application_segment_groups", "zpaApplicationSegmentGroups"),
     ]
 
-    def __init__(self):
+    _zia_base_endpoint = "/zia/api/v1"
+    
+    def __init__(self, request_executor):
         super().__init__()
-        self._base_url = ""
+        self._request_executor = request_executor
 
     def list_rules(self) -> BoxList:
         """

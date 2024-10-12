@@ -25,13 +25,15 @@ class DLPEngineAPI(APIClient):
     A Client object for the DLP Engine resource.
     """
 
-    def __init__(self):
+    _zia_base_endpoint = "/zia/api/v1"
+    
+    def __init__(self, request_executor):
         super().__init__()
-        self._base_url = ""
+        self._request_executor = request_executor
         
     def list_dlp_engines(
-            self, query_params=None,
-            keep_empty_params=False
+            self,
+            query_params=None
     ) -> tuple:
         """
         Returns a list of all DLP Engines.
@@ -42,11 +44,9 @@ class DLPEngineAPI(APIClient):
                 [query_params.pagesize] {int}: Specifies the page size. The default size is 100, but the maximum size is 1000.
                 [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
                 [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
-            keep_empty_params {bool}: Whether to include empty parameters in the query string.
 
         Returns:
             tuple: A tuple containing (list of DLP Engines instances, Response, error)
-
 
         Examples:
             Print all dlp engines
@@ -60,26 +60,35 @@ class DLPEngineAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/dlpEngines")
+        api_url = format_url(f"""
+            {self._zia_base_endpoint}
+            /dlpEngines
+        """)
         
-        query_params = query_params or {}
-
+        # Build the query string
         if query_params:
             encoded_query_params = urlencode(query_params)
             api_url += f"?{encoded_query_params}"
 
+        # Prepare request body and headers
         body = {}
         headers = {}
-        form = {}
 
+        # Create the request
         request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
+            http_method, api_url, body, headers
         )
 
         if error:
             return (None, None, error)
+        
+        # Execute the request
+        response, error = self._request_executor.execute(request)
 
-        response, error = self._request_executor.execute(request, DLPEngine)
+        if error:
+            return (None, response, error)
+
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
@@ -95,7 +104,7 @@ class DLPEngineAPI(APIClient):
 
         return (result, response, None)
 
-    def get_dlp_engines(self, engine_id: str) -> tuple:
+    def get_dlp_engines(self, engine_id: int) -> tuple:
         """
         Returns the dlp engine details for a given DLP Engine.
 
@@ -110,40 +119,46 @@ class DLPEngineAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/dlpEngines/{engine_id}")
+        api_url = format_url(f"""
+            {self._zia_base_endpoint}
+            /dlpEngines/{engine_id}
+        """)
 
         body = {}
         headers = {}
-        form = {}
 
         request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form
+            http_method, api_url, body, headers
         )
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request, DLPEngine)
+        response, error = self._request_executor\
+            .execute(request, DLPEngine)
 
         if error:
             return (None, response, error)
 
         try:
-            result = DLPEngine(self.form_response_body(response.get_body()))
+            result = DLPEngine(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
-
         return (result, response, None)
 
     def add_dlp_engine(
         self, rule: dict, 
-        keep_empty_params=False
     ) -> tuple:
         """
         Adds a new dlp engine.
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/dlpEngines")
+        api_url = format_url(f"""
+            {self._zia_base_endpoint}
+            /dlpEngines
+        """)
 
         # Ensure the rule is passed as a dictionary
         if isinstance(rule, dict):
@@ -159,7 +174,7 @@ class DLPEngineAPI(APIClient):
 
                 # Create the request
         request, error = self._request_executor.create_request(
-            http_method, api_url, payload, {}, keep_empty_params=keep_empty_params
+            http_method, api_url, payload, {}
         )
 
         if error:
@@ -179,7 +194,8 @@ class DLPEngineAPI(APIClient):
 
     def update_dlp_engine(
         self, engine_id: int, 
-        engine, keep_empty_params=False) -> tuple:
+        engine
+    ) -> tuple:
         """
         Updates an existing dlp engine.
 
@@ -216,8 +232,8 @@ class DLPEngineAPI(APIClient):
         """
         http_method = "put".upper()
         api_url = format_url(f"""
-            {self._base_url}
-            /zia/api/v1/dlpEngines/{engine_id}
+            {self._zia_base_endpoint}
+            /dlpEngines/{engine_id}
         """)
 
         if isinstance(engine, dict):
@@ -229,7 +245,7 @@ class DLPEngineAPI(APIClient):
         payload = {snake_to_camel(key): value for key, value in payload.items()}
 
         # Create and send the request
-        request, error = self._request_executor.create_request(http_method, api_url, payload, {}, {}, keep_empty_params=keep_empty_params)
+        request, error = self._request_executor.create_request(http_method, api_url, payload, {}, {})
         if error:
             return (None, None, error)
 
@@ -261,7 +277,7 @@ class DLPEngineAPI(APIClient):
         http_method = "delete".upper()
         api_url = format_url(
             f"""
-            {self._base_url}/zia/api/v1/dlpEngines/{engine_id}
+            {self._zia_base_endpoint}/dlpEngines/{engine_id}
             """
         )
         params = {}
@@ -290,7 +306,10 @@ class DLPEngineAPI(APIClient):
             >>> zia.dlp.validate_dlp_expression("((D63.S > 1) AND (D38.S > 0))")
         """        
         http_method = "post".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/dlpEngines/validateDlpExpr")
+        api_url = format_url(f"""
+            {self._zia_base_endpoint}
+            /dlpEngines/validateDlpExpr
+        """)
 
         # Construct the payload
         payload = {"data": expression}

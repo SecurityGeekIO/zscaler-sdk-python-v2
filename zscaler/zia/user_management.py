@@ -26,9 +26,11 @@ class UserManagementAPI(APIClient):
     A Client object for the User Management API resource.
     """
 
-    def __init__(self):
+    _zia_base_endpoint = "/zia/api/v1"
+    
+    def __init__(self, request_executor):
         super().__init__()
-        self._base_url = ""
+        self._request_executor = request_executor
 
     def list_users(
             self, query_params=None,
@@ -69,7 +71,7 @@ class UserManagementAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/users")
+        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/users")
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
@@ -128,7 +130,7 @@ class UserManagementAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/users/{user_id}")
+        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/users/{user_id}")
 
         body = {}
         headers = {}
@@ -194,7 +196,7 @@ class UserManagementAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/users/references")
+        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/users/references")
 
         query_params = query_params or {}
 
@@ -280,7 +282,7 @@ class UserManagementAPI(APIClient):
 
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/users")
+        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/users")
 
         # Build payload with required and optional fields
         payload = {
@@ -346,7 +348,7 @@ class UserManagementAPI(APIClient):
 
         """
         http_method = "put".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/users/{user_id}")
+        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/users/{user_id}")
 
         payload = {snake_to_camel(key): value for key, value in kwargs.items()}
         
@@ -382,7 +384,7 @@ class UserManagementAPI(APIClient):
             >>> user = zia.users.delete_user('99999')
         """
         http_method = "delete".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/users/{user_id}")
+        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/users/{user_id}")
 
         request, error = self._request_executor.create_request(http_method, api_url, {}, {}, {})
         if error:
@@ -410,7 +412,7 @@ class UserManagementAPI(APIClient):
 
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/users/bulkDelete")
+        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/users/bulkDelete")
 
         payload = {"ids": user_ids}
 
@@ -462,7 +464,7 @@ class UserManagementAPI(APIClient):
             ...    print(department)
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/departments")
+        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/departments")
 
         query_params = query_params or {}
 
@@ -517,7 +519,7 @@ class UserManagementAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/departments/{department_id}")
+        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/departments/{department_id}")
 
         body = {}
         headers = {}
@@ -582,7 +584,7 @@ class UserManagementAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/groups")
+        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/groups")
 
         query_params = query_params or {}
 
@@ -637,7 +639,7 @@ class UserManagementAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/zia/api/v1/groups/{group_id}")
+        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/groups/{group_id}")
 
         body = {}
         headers = {}
