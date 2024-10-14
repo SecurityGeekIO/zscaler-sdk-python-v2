@@ -25,10 +25,12 @@ class ServiceEdgeScheduleAPI(APIClient):
     A Client object for the Service Edge Schedule resource.
     """
 
-    def __init__(self):
+    def __init__(self, request_executor, config):
         super().__init__()
-        self._base_url = ""
-    
+        self._request_executor = request_executor
+        customer_id = config["client"].get("customerId")
+        self._base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
+
     def get_service_edge_schedule(self, customer_id=None, **kwargs) -> tuple:
         """
         Returns the configured Service Edge Schedule frequency.
@@ -51,7 +53,7 @@ class ServiceEdgeScheduleAPI(APIClient):
         http_method = "get".upper()
         api_url = format_url(
             f"""
-            {self._base_url}
+            {self._base_endpoint}
             /connectorSchedule
         """
         )
@@ -95,7 +97,7 @@ class ServiceEdgeScheduleAPI(APIClient):
         http_method = "post".upper()
         api_url = format_url(
             f"""
-            {self._base_url}
+            {self._base_endpoint}
             /connectorSchedule
         """
         )
@@ -149,11 +151,11 @@ class ServiceEdgeScheduleAPI(APIClient):
         http_method = "put".upper()
         api_url = format_url(
             f"""
-            {self._base_url}
+            {self._base_endpoint}
             /connectorSchedule/{scheduler_id}
         """
         )
-        
+
         payload = {
             "customerId": customer_id,
             "frequency": frequency,
@@ -175,5 +177,3 @@ class ServiceEdgeScheduleAPI(APIClient):
 
         updated_schedule, _, error = self.get_connector_schedule(customer_id=customer_id)
         return (updated_schedule, response, None)
-
-

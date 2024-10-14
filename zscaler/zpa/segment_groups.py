@@ -19,19 +19,19 @@ from zscaler.zpa.models.segment_group import SegmentGroup
 from zscaler.utils import format_url
 from urllib.parse import urlencode
 
+
 class SegmentGroupsAPI(APIClient):
     """
     A client object for the Segment Groups resource.
     """
 
-    def __init__(self):
+    def __init__(self, request_executor, config):
         super().__init__()
-        self._base_url = ""
+        self._request_executor = request_executor
+        customer_id = config["client"].get("customerId")
+        self._base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
-    def list_groups(
-            self, query_params=None,
-            keep_empty_params=False
-    ) -> tuple:
+    def list_groups(self, query_params=None, keep_empty_params=False) -> tuple:
         """
         Enumerates segment groups in your organization with pagination.
         A subset of segment groups can be returned that match a supported
@@ -48,12 +48,12 @@ class SegmentGroupsAPI(APIClient):
 
         Returns:
             tuple: A tuple containing (list of AppConnectorGroup instances, Response, error)
-        
+
         Example:
             >>> segment_groups = zpa.segment_groups.list_groups(search="example", pagesize=100)
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/segmentGroup")
+        api_url = format_url(f"{self._base_endpoint}/segmentGroup")
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
@@ -89,9 +89,7 @@ class SegmentGroupsAPI(APIClient):
         try:
             result = []
             for item in response.get_body():
-                result.append(SegmentGroup(
-                    self.form_response_body(item)
-                ))
+                result.append(SegmentGroup(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
@@ -110,7 +108,7 @@ class SegmentGroupsAPI(APIClient):
         http_method = "get".upper()
         api_url = format_url(
             f"""
-            {self._base_url}
+            {self._base_endpoint}
             /segmentGroup/{group_id}
             """
         )
@@ -144,7 +142,7 @@ class SegmentGroupsAPI(APIClient):
         http_method = "post".upper()
         api_url = format_url(
             f"""
-            {self._base_url}
+            {self._base_endpoint}
             /segmentGroup
         """
         )
@@ -187,7 +185,7 @@ class SegmentGroupsAPI(APIClient):
         http_method = "put".upper()
         api_url = format_url(
             f"""
-            {self._base_url}
+            {self._base_endpoint}
             /segmentGroup/{group_id}
         """
         )
@@ -223,11 +221,11 @@ class SegmentGroupsAPI(APIClient):
         http_method = "delete".upper()
         api_url = format_url(
             f"""
-            {self._base_url}
+            {self._base_endpoint}
             /segmentGroup/{group_id}
         """
         )
-        
+
         # Add microtenant_id to kwargs if provided
         microtenant_id = kwargs.pop("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}

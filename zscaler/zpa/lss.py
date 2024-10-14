@@ -19,6 +19,7 @@ from zscaler.zpa.models.lss import LSSConfig
 from zscaler.utils import format_url, snake_to_camel, keys_exists
 from urllib.parse import urlencode
 
+
 class LSSConfigControllerAPI(APIClient):
     source_log_map = {
         "app_connector_metrics": "zpn_ast_comprehensive_stats",
@@ -30,6 +31,12 @@ class LSSConfigControllerAPI(APIClient):
         "user_status": "zpn_auth_log",
         "web_inspection": "zpn_waf_http_exchanges_log",
     }
+
+    def __init__(self, request_executor, config):
+        super().__init__()
+        self._request_executor = request_executor
+        customer_id = config["client"].get("customerId")
+        self._base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
     def _create_policy(self, conditions: list) -> list:
         """
@@ -79,15 +86,12 @@ class LSSConfigControllerAPI(APIClient):
 
         return template
 
-    def list_configs(
-        self, query_params=None,
-            keep_empty_params=False
-        ) -> tuple:
+    def list_configs(self, query_params=None, keep_empty_params=False) -> tuple:
         """
         Enumerates log receivers in your organization with pagination.
         A subset of log receivers can be returned that match a supported
         filter expression or query.
-        
+
         Args:
             query_params {dict}: Map of query parameters for the request.
                 [query_params.pagesize] {int}: Page size for pagination.
@@ -99,12 +103,12 @@ class LSSConfigControllerAPI(APIClient):
 
         Returns:
             tuple: A tuple containing (list of AppConnectorGroup instances, Response, error)
-        
+
         Example:
             >>> lss_configs = zpa.lss.list_configs(search="example", pagesize=100)
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/lssConfig")
+        api_url = format_url(f"{self._base_endpoint}/lssConfig")
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
@@ -140,9 +144,7 @@ class LSSConfigControllerAPI(APIClient):
         try:
             result = []
             for item in response.get_body():
-                result.append(LSSConfig(
-                    self.form_response_body(item)
-                ))
+                result.append(LSSConfig(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
@@ -161,7 +163,7 @@ class LSSConfigControllerAPI(APIClient):
         http_method = "get".upper()
         api_url = format_url(
             f"""
-            {self._base_url}
+            {self._base_endpoint}
             /lssConfig/{lss_config_id}
             """
         )
@@ -239,11 +241,11 @@ class LSSConfigControllerAPI(APIClient):
                 )
         """
         http_method = "post".upper()
-        
+
         # Construct the API URL
         api_url = format_url(
             f"""
-            {self._base_url}
+            {self._base_endpoint}
             /lssConfig
             """
         )
@@ -335,11 +337,11 @@ class LSSConfigControllerAPI(APIClient):
                     source_log_type="user_status")
         """
         http_method = "put".upper()
-        
+
         # Construct the API URL using the format_url pattern
         api_url = format_url(
             f"""
-            {self._base_url}
+            {self._base_endpoint}
             /lssConfig/{lss_config_id}
             """
         )
@@ -392,7 +394,7 @@ class LSSConfigControllerAPI(APIClient):
         # Return the updated configuration if successful
         if response.get_status_code() == 204:
             return self.get_config(lss_config_id)
-        
+
         return None
 
     def delete_lss_config(self, lss_config_id: str, **kwargs) -> int:
@@ -406,7 +408,7 @@ class LSSConfigControllerAPI(APIClient):
             int: Status code of the delete operation.
         """
         http_method = "delete".upper()
-        api_url = format_url(f"{self._base_url}/lssConfig/{lss_config_id}")
+        api_url = format_url(f"{self._base_endpoint}/lssConfig/{lss_config_id}")
 
         request, error = self._request_executor.create_request(http_method, api_url, {})
         if error:
@@ -417,7 +419,7 @@ class LSSConfigControllerAPI(APIClient):
             return None
 
         return response.status_code
-    
+
     def get_client_types(self, client_type=None) -> dict:
         """
         Returns all available LSS Client Types or a specific Client Type if specified.
@@ -432,16 +434,16 @@ class LSSConfigControllerAPI(APIClient):
             >>> client_types = zpa.lss.get_client_types()
             >>> web_browser_type = zpa.lss.get_client_types('web_browser')
         """
-        
+
         http_method = "get".upper()
         api_url = format_url(
             f"""
-            {self._base_url}
+            {self._base_endpoint}
             /clientTypes"
         """,
-        api_version="v2_lss"
-        ) 
-        
+            api_version="v2_lss",
+        )
+
         request, error = self._request_executor.create_request(http_method, api_url)
         if error:
             return None
@@ -475,11 +477,11 @@ class LSSConfigControllerAPI(APIClient):
         http_method = "get".upper()
         api_url = format_url(
             f"""
-            {self._base_url}
+            {self._base_endpoint}
             /lssConfig/logType/formats"
         """,
-        api_version="v2"
-        ) 
+            api_version="v2",
+        )
 
         request, error = self._request_executor.create_request(http_method, api_url)
         if error:
@@ -514,11 +516,11 @@ class LSSConfigControllerAPI(APIClient):
         http_method = "get".upper()
         api_url = format_url(
             f"""
-            {self._base_url}
+            {self._base_endpoint}
             /statusCodes"
         """,
-        api_version="v2"
-        ) 
+            api_version="v2",
+        )
 
         request, error = self._request_executor.create_request(http_method, api_url)
         if error:
@@ -538,7 +540,6 @@ class LSSConfigControllerAPI(APIClient):
                 raise ValueError("Incorrect log_type provided.")
 
             filtered_status_codes = {
-                code: details for code, details in all_status_codes.items()
-                if log_type_key in details.get("log_types", [])
+                code: details for code, details in all_status_codes.items() if log_type_key in details.get("log_types", [])
             }
             return filtered_status_codes

@@ -20,19 +20,19 @@ from zscaler.zpa.models.certificates import Certificate
 from zscaler.utils import snake_to_camel, format_url
 from urllib.parse import urlencode
 
+
 class CertificatesAPI(APIClient):
     """
     A Client object for the Certificates resource.
     """
 
-    def __init__(self):
-        super().__init__()  # Inherit the request executor from APIClient
-        self._base_url = ""
+    def __init__(self, request_executor, config):
+        super().__init__()
+        self._request_executor = request_executor
+        customer_id = config["client"].get("customerId")
+        self._base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
-    def list_certificates(
-            self, query_params=None,
-            keep_empty_params=False
-    ) -> tuple:
+    def list_certificates(self, query_params=None, keep_empty_params=False) -> tuple:
         """
         Fetches a list of all certificates with pagination support.
 
@@ -53,7 +53,7 @@ class CertificatesAPI(APIClient):
         """
         # Initialize URL and HTTP method
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/certificate")
+        api_url = format_url(f"{self._base_endpoint}/certificate")
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
@@ -89,18 +89,13 @@ class CertificatesAPI(APIClient):
         try:
             result = []
             for item in response.get_body():
-                result.append(Certificate(
-                    self.form_response_body(item)
-                ))
+                result.append(Certificate(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
         return (result, response, None)
 
-    def list_issued_certificates(
-            self, query_params=None,
-            keep_empty_params=False
-    ) -> tuple:
+    def list_issued_certificates(self, query_params=None, keep_empty_params=False) -> tuple:
         """
         Fetches a list of all issued certificates with pagination support.
 
@@ -120,7 +115,7 @@ class CertificatesAPI(APIClient):
             >>> certificates = zpa.certificates.list_issued_certificates(search="example")
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/clientlessCertificate/issued")
+        api_url = format_url(f"{self._base_endpoint}/clientlessCertificate/issued")
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
@@ -156,9 +151,7 @@ class CertificatesAPI(APIClient):
         try:
             result = []
             for item in response.get_body():
-                result.append(Certificate(
-                    self.form_response_body(item)
-                ))
+                result.append(Certificate(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
@@ -178,7 +171,7 @@ class CertificatesAPI(APIClient):
         http_method = "get".upper()
         api_url = format_url(
             f"""
-            {self._base_url}
+            {self._base_endpoint}
             /certificate/{certificate_id}
         """
         )
@@ -214,7 +207,7 @@ class CertificatesAPI(APIClient):
         http_method = "post".upper()
         api_url = format_url(
             f"""
-            {self._base_url}
+            {self._base_endpoint}
             /certificate
         """
         )
@@ -226,9 +219,7 @@ class CertificatesAPI(APIClient):
 
         body = {snake_to_camel(k): v for k, v in body.items()}
 
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, keep_empty_params=keep_empty_params
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, keep_empty_params=keep_empty_params)
         if error:
             return (None, None, error)
 
@@ -252,7 +243,7 @@ class CertificatesAPI(APIClient):
         http_method = "put".upper()
         api_url = format_url(
             f"""
-            {self._base_url}
+            {self._base_endpoint}
             /certificate/{certificate_id}
         """
         )
@@ -264,9 +255,7 @@ class CertificatesAPI(APIClient):
 
         body = {snake_to_camel(k): v for k, v in body.items()}
 
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, keep_empty_params=keep_empty_params
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, keep_empty_params=keep_empty_params)
         if error:
             return (None, None, error)
 
@@ -289,7 +278,7 @@ class CertificatesAPI(APIClient):
         http_method = "delete".upper()
         api_url = format_url(
             f"""
-            {self._base_url}
+            {self._base_endpoint}
             /certificate/{certificate_id}
         """
         )

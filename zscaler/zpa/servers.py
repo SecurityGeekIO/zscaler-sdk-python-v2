@@ -23,13 +23,13 @@ from urllib.parse import urlencode
 
 class AppServersAPI(APIClient):
 
-    def __init__(self):
-        self._base_url = ""
+    def __init__(self, request_executor, config):
+        super().__init__()
+        self._request_executor = request_executor
+        customer_id = config["client"].get("customerId")
+        self._base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
-    def list_servers(
-            self, query_params=None,
-            keep_empty_params=False
-    ) -> tuple:
+    def list_servers(self, query_params=None, keep_empty_params=False) -> tuple:
         """
         Enumerates application servers in your organization with pagination.
         A subset of application servers can be returned that match a supported
@@ -54,7 +54,7 @@ class AppServersAPI(APIClient):
         http_method = "get".upper()
         api_url = format_url(
             f"""
-            {self._base_url}
+            {self._base_endpoint}
             /server
         """
         )
@@ -92,9 +92,7 @@ class AppServersAPI(APIClient):
         try:
             result = []
             for item in response.get_body():
-                result.append(AppServers(
-                    self.form_response_body(item)
-                ))
+                result.append(AppServers(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
@@ -113,7 +111,7 @@ class AppServersAPI(APIClient):
         http_method = "get".upper()
         api_url = format_url(
             f"""
-            {self._base_url}
+            {self._base_endpoint}
             /server/{server_id}
             """
         )
@@ -145,7 +143,7 @@ class AppServersAPI(APIClient):
         http_method = "post".upper()
         api_url = format_url(
             f"""
-            {self._base_url}
+            {self._base_endpoint}
             /server
         """
         )
@@ -181,7 +179,7 @@ class AppServersAPI(APIClient):
         http_method = "put".upper()
         api_url = format_url(
             f"""
-            {self._base_url}
+            {self._base_endpoint}
             /server/{server_id}
         """
         )
@@ -217,7 +215,7 @@ class AppServersAPI(APIClient):
         http_method = "delete".upper()
         api_url = format_url(
             f"""
-            {self._base_url}
+            {self._base_endpoint}
             /server/{server_id}
         """
         )

@@ -20,19 +20,19 @@ from zscaler.zpa.models.service_edge_groups import ServiceEdgeGroup
 from zscaler.utils import format_url, snake_to_camel, pick_version_profile, add_id_groups
 from urllib.parse import urlencode
 
+
 class ServiceEdgeGroupAPI(APIClient):
     """
     A Client object for the Service Edge Group resource.
     """
 
-    def __init__(self):
+    def __init__(self, request_executor, config):
         super().__init__()
-        self._base_url = ""
+        self._request_executor = request_executor
+        customer_id = config["client"].get("customerId")
+        self._base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
-    def list_service_edge_groups(
-            self, query_params=None,
-            keep_empty_params=False
-    ) -> tuple:
+    def list_service_edge_groups(self, query_params=None, keep_empty_params=False) -> tuple:
         """
         Enumerates connector groups in your organization with pagination.
         A subset of connector groups can be returned that match a supported
@@ -52,8 +52,8 @@ class ServiceEdgeGroupAPI(APIClient):
         """
         # Initialize URL and HTTP method
         http_method = "get".upper()
-        api_url = f"{self._base_url}/serviceEdgeGroup"
-        
+        api_url = f"{self._base_endpoint}/serviceEdgeGroup"
+
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
         microtenant_id = query_params.pop("microtenant_id", None)
@@ -88,9 +88,7 @@ class ServiceEdgeGroupAPI(APIClient):
         try:
             result = []
             for item in response.get_body():
-                result.append(ServiceEdgeGroup(
-                    self.form_response_body(item)
-                ))
+                result.append(ServiceEdgeGroup(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
@@ -109,7 +107,7 @@ class ServiceEdgeGroupAPI(APIClient):
         http_method = "get".upper()
         api_url = format_url(
             f"""
-            {self._base_url}/serviceEdgeGroup/{group_id}
+            {self._base_endpoint}/serviceEdgeGroup/{group_id}
             """
         )
 
@@ -142,7 +140,7 @@ class ServiceEdgeGroupAPI(APIClient):
         http_method = "post".upper()
         api_url = format_url(
             f"""
-            {self._base_url}/serviceEdgeGroup
+            {self._base_endpoint}/serviceEdgeGroup
             """
         )
 
@@ -185,9 +183,9 @@ class ServiceEdgeGroupAPI(APIClient):
         http_method = "put".upper()
         api_url = format_url(
             f"""
-            {self._base_url}/serviceEdgeGroup/{group_id}
+            {self._base_endpoint}/serviceEdgeGroup/{group_id}
             """
-        )        
+        )
 
         # Fetch the existing service edge group data
         existing_group = self.get_service_edge_group(group_id)
@@ -225,9 +223,9 @@ class ServiceEdgeGroupAPI(APIClient):
         http_method = "delete".upper()
         api_url = format_url(
             f"""
-            {self._base_url}/serviceEdgeGroup/{group_id}
+            {self._base_endpoint}/serviceEdgeGroup/{group_id}
             """
-        )        
+        )
 
         microtenant_id = kwargs.pop("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}

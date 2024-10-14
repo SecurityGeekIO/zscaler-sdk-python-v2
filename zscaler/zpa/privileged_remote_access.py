@@ -28,11 +28,13 @@ from zscaler.utils import is_valid_ssh_key, snake_to_camel, validate_and_convert
 
 
 class PrivilegedRemoteAccessAPI(APIClient):
+    def __init__(self, request_executor, config):
+        super().__init__()
+        self._request_executor = request_executor
+        customer_id = config["client"].get("customerId")
+        self._base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
-    def list_portals(
-            self, query_params=None,
-            keep_empty_params=False
-    ) -> tuple:
+    def list_portals(self, query_params=None, keep_empty_params=False) -> tuple:
         """
         Returns a list of all configured PRA portals with pagination support.
 
@@ -49,7 +51,7 @@ class PrivilegedRemoteAccessAPI(APIClient):
             tuple: A list of `PrivilegedRemoteAccessPortal` instances.
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/praPortal")
+        api_url = format_url(f"{self._base_endpoint}/praPortal")
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
@@ -85,9 +87,7 @@ class PrivilegedRemoteAccessAPI(APIClient):
         try:
             result = []
             for item in response.get_body():
-                result.append(PrivilegedRemoteAccessPortal(
-                    self.form_response_body(item)
-                ))
+                result.append(PrivilegedRemoteAccessPortal(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
@@ -104,7 +104,7 @@ class PrivilegedRemoteAccessAPI(APIClient):
             PrivilegedRemoteAccessPortal: The corresponding portal object.
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/praPortal/{portal_id}")
+        api_url = format_url(f"{self._base_endpoint}/praPortal/{portal_id}")
 
         # Optional parameters such as microtenant_id
         microtenant_id = kwargs.pop("microtenant_id", None)
@@ -120,7 +120,9 @@ class PrivilegedRemoteAccessAPI(APIClient):
 
         return PrivilegedRemoteAccessPortal(response.get_body())
 
-    def add_portal(self, name: str, certificate_id: str, domain: str, enabled: bool = True, **kwargs) -> PrivilegedRemoteAccessPortal:
+    def add_portal(
+        self, name: str, certificate_id: str, domain: str, enabled: bool = True, **kwargs
+    ) -> PrivilegedRemoteAccessPortal:
         """
         Adds a new PRA portal.
 
@@ -134,7 +136,7 @@ class PrivilegedRemoteAccessAPI(APIClient):
             PrivilegedRemoteAccessPortal: The newly created portal object.
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._base_url}/praPortal")
+        api_url = format_url(f"{self._base_endpoint}/praPortal")
 
         payload = {
             "name": name,
@@ -172,7 +174,7 @@ class PrivilegedRemoteAccessAPI(APIClient):
             PrivilegedRemoteAccessPortal: The updated portal object.
         """
         http_method = "put".upper()
-        api_url = format_url(f"{self._base_url}/praPortal/{portal_id}")
+        api_url = format_url(f"{self._base_endpoint}/praPortal/{portal_id}")
 
         # Get the current portal data and update it with new kwargs
         current_portal = self.get_portal(portal_id)
@@ -204,7 +206,7 @@ class PrivilegedRemoteAccessAPI(APIClient):
             int: Status code of the delete operation.
         """
         http_method = "delete".upper()
-        api_url = format_url(f"{self._base_url}/praPortal/{portal_id}")
+        api_url = format_url(f"{self._base_endpoint}/praPortal/{portal_id}")
 
         # Handle microtenant_id
         microtenant_id = kwargs.pop("microtenant_id", None)
@@ -220,10 +222,7 @@ class PrivilegedRemoteAccessAPI(APIClient):
 
         return response.get_status_code()
 
-    def list_consoles(
-            self, query_params=None,
-            keep_empty_params=False
-    ) -> tuple:
+    def list_consoles(self, query_params=None, keep_empty_params=False) -> tuple:
         """
         Returns a list of all Privileged Remote Access (PRA) consoles.
 
@@ -241,7 +240,7 @@ class PrivilegedRemoteAccessAPI(APIClient):
         """
         # Initialize URL and HTTP method
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/praConsole")
+        api_url = format_url(f"{self._base_endpoint}/praConsole")
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
@@ -277,9 +276,7 @@ class PrivilegedRemoteAccessAPI(APIClient):
         try:
             result = []
             for item in response.get_body():
-                result.append(PrivilegedRemoteAccessConsole(
-                    self.form_response_body(item)
-                ))
+                result.append(PrivilegedRemoteAccessConsole(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
@@ -296,7 +293,7 @@ class PrivilegedRemoteAccessAPI(APIClient):
             PrivilegedRemoteAccessConsole: The corresponding console object.
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/praConsole/{console_id}")
+        api_url = format_url(f"{self._base_endpoint}/praConsole/{console_id}")
 
         # Add microtenant_id to kwargs if provided
         microtenant_id = kwargs.pop("microtenant_id", None)
@@ -313,12 +310,8 @@ class PrivilegedRemoteAccessAPI(APIClient):
         return PrivilegedRemoteAccessConsole(response.get_body())
 
     def add_console(
-        self,
-        name: str,
-        pra_application_id: str,
-        pra_portal_ids: list,
-        enabled: bool = True,
-        **kwargs) -> PrivilegedRemoteAccessConsole:
+        self, name: str, pra_application_id: str, pra_portal_ids: list, enabled: bool = True, **kwargs
+    ) -> PrivilegedRemoteAccessConsole:
         """
         Adds a new Privileged Remote Access (PRA) console.
 
@@ -335,14 +328,14 @@ class PrivilegedRemoteAccessAPI(APIClient):
             PrivilegedRemoteAccessConsole: The newly created console.
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._base_url}/praConsole")
+        api_url = format_url(f"{self._base_endpoint}/praConsole")
 
         # Build the payload
         payload = {
             "name": name,
             "enabled": enabled,
             "praApplication": {"id": pra_application_id},
-            "praPortals": [{"id": portal_id} for portal_id in pra_portal_ids]
+            "praPortals": [{"id": portal_id} for portal_id in pra_portal_ids],
         }
 
         # Add optional params
@@ -360,11 +353,8 @@ class PrivilegedRemoteAccessAPI(APIClient):
         return PrivilegedRemoteAccessConsole(response.get_body())
 
     def update_console(
-        self, 
-        console_id: str,
-        pra_application_id: str = None,
-        pra_portal_ids: list = None,
-        **kwargs) -> PrivilegedRemoteAccessConsole:
+        self, console_id: str, pra_application_id: str = None, pra_portal_ids: list = None, **kwargs
+    ) -> PrivilegedRemoteAccessConsole:
         """
         Updates the specified PRA console.
 
@@ -377,7 +367,7 @@ class PrivilegedRemoteAccessAPI(APIClient):
             PrivilegedRemoteAccessConsole: The updated console.
         """
         http_method = "put".upper()
-        api_url = format_url(f"{self._base_url}/praConsole/{console_id}")
+        api_url = format_url(f"{self._base_endpoint}/praConsole/{console_id}")
 
         # Get existing data to merge changes
         console_data = self.get_console(console_id).request_format()
@@ -413,7 +403,7 @@ class PrivilegedRemoteAccessAPI(APIClient):
             int: The status code of the delete operation.
         """
         http_method = "delete".upper()
-        api_url = format_url(f"{self._base_url}/praConsole/{console_id}")
+        api_url = format_url(f"{self._base_endpoint}/praConsole/{console_id}")
 
         # Add microtenant_id to params if provided
         microtenant_id = kwargs.pop("microtenant_id", None)
@@ -440,7 +430,7 @@ class PrivilegedRemoteAccessAPI(APIClient):
             list: A list of newly created PRA consoles.
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._base_url}/praConsole/bulk")
+        api_url = format_url(f"{self._base_endpoint}/praConsole/bulk")
 
         # Build the payload
         payload = [
@@ -449,7 +439,7 @@ class PrivilegedRemoteAccessAPI(APIClient):
                 "enabled": console.get("enabled", True),
                 "praApplication": {"id": console.get("pra_application_id")},
                 "praPortals": [{"id": id} for id in console.get("pra_portal_ids", [])],
-                "description": console.get("description", "")
+                "description": console.get("description", ""),
             }
             for console in consoles
         ]
@@ -464,10 +454,7 @@ class PrivilegedRemoteAccessAPI(APIClient):
 
         return [PrivilegedRemoteAccessConsole(console) for console in response.get_body()]
 
-    def list_credentials(
-            self, query_params=None,
-            keep_empty_params=False
-    ) -> tuple:
+    def list_credentials(self, query_params=None, keep_empty_params=False) -> tuple:
         """
         Returns a list of all privileged remote access credentials.
 
@@ -484,7 +471,7 @@ class PrivilegedRemoteAccessAPI(APIClient):
             tuple: A tuple containing (list of PrivilegedRemoteAccessCredential instances, Response, error)
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/credential")
+        api_url = format_url(f"{self._base_endpoint}/credential")
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
@@ -520,14 +507,12 @@ class PrivilegedRemoteAccessAPI(APIClient):
         try:
             result = []
             for item in response.get_body():
-                result.append(PrivilegedRemoteAccessCredential(
-                    self.form_response_body(item)
-                ))
+                result.append(PrivilegedRemoteAccessCredential(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
         return (result, response, None)
-    
+
     def get_credential(self, credential_id: str, **kwargs) -> PrivilegedRemoteAccessCredential:
         """
         Returns information on the specified privileged remote access credential.
@@ -539,7 +524,7 @@ class PrivilegedRemoteAccessAPI(APIClient):
             PrivilegedRemoteAccessCredential: The resource record for the credential.
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/credential/{credential_id}")
+        api_url = format_url(f"{self._base_endpoint}/credential/{credential_id}")
 
         request, error = self._request_executor.create_request(http_method, api_url, params=kwargs)
         if error:
@@ -596,7 +581,7 @@ class PrivilegedRemoteAccessAPI(APIClient):
         for key, value in kwargs.items():
             payload[snake_to_camel(key)] = value
 
-        request, error = self._request_executor.create_request("POST", f"{self._base_url}/credential", json=payload)
+        request, error = self._request_executor.create_request("POST", f"{self._base_endpoint}/credential", json=payload)
         if error:
             return None
 
@@ -627,7 +612,7 @@ class PrivilegedRemoteAccessAPI(APIClient):
             payload[snake_to_camel(key)] = value
 
         request, error = self._request_executor.create_request(
-            "PUT", f"{self._base_url}/credential/{credential_id}", json=payload
+            "PUT", f"{self._base_endpoint}/credential/{credential_id}", json=payload
         )
         if error:
             return None
@@ -648,7 +633,7 @@ class PrivilegedRemoteAccessAPI(APIClient):
         Returns:
             int: The HTTP status code of the delete operation.
         """
-        request, error = self._request_executor.create_request("DELETE", f"{self._base_url}/credential/{credential_id}")
+        request, error = self._request_executor.create_request("DELETE", f"{self._base_endpoint}/credential/{credential_id}")
         if error:
             return None
 
@@ -675,7 +660,7 @@ class PrivilegedRemoteAccessAPI(APIClient):
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         request, error = self._request_executor.create_request(
-            "POST", f"{self._base_url}/credential/{credential_id}/move", json=payload, params=params
+            "POST", f"{self._base_endpoint}/credential/{credential_id}/move", json=payload, params=params
         )
         if error:
             return None
@@ -686,10 +671,7 @@ class PrivilegedRemoteAccessAPI(APIClient):
 
         return {}
 
-    def list_approval(
-            self, query_params=None,
-            keep_empty_params=False
-    ) -> tuple:
+    def list_approval(self, query_params=None, keep_empty_params=False) -> tuple:
         """
         Returns a list of all privileged remote access approvals.
 
@@ -706,8 +688,8 @@ class PrivilegedRemoteAccessAPI(APIClient):
             tuple: A tuple containing (list of PrivilegedRemoteAccessApproval instances, Response, error)
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/approval")
-        
+        api_url = format_url(f"{self._base_endpoint}/approval")
+
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
         microtenant_id = query_params.pop("microtenant_id", None)
@@ -742,9 +724,7 @@ class PrivilegedRemoteAccessAPI(APIClient):
         try:
             result = []
             for item in response.get_body():
-                result.append(PrivilegedRemoteAccessApproval(
-                    self.form_response_body(item)
-                ))
+                result.append(PrivilegedRemoteAccessApproval(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
@@ -760,7 +740,7 @@ class PrivilegedRemoteAccessAPI(APIClient):
         Returns:
             PrivilegedRemoteAccessApproval: The resource record for the PRA approval.
         """
-        api_url = format_url(f"{self._base_url}/approval/{approval_id}")
+        api_url = format_url(f"{self._base_endpoint}/approval/{approval_id}")
         request, error = self._request_executor.create_request("GET", api_url)
         if error:
             return None
@@ -779,7 +759,7 @@ class PrivilegedRemoteAccessAPI(APIClient):
         end_time: str,
         status: str,
         working_hours: dict,
-        **kwargs
+        **kwargs,
     ) -> PrivilegedRemoteAccessApproval:
         """
         Adds a privileged remote access approval.
@@ -809,15 +789,15 @@ class PrivilegedRemoteAccessAPI(APIClient):
                 "startTime": working_hours["start_time"],
                 "endTime": working_hours["end_time"],
                 "days": working_hours["days"],
-                "timeZone": working_hours["time_zone"]
-            }
+                "timeZone": working_hours["time_zone"],
+            },
         }
 
         # Add optional parameters
         for key, value in kwargs.items():
             payload[snake_to_camel(key)] = value
 
-        api_url = format_url(f"{self._base_url}/approval")
+        api_url = format_url(f"{self._base_endpoint}/approval")
         request, error = self._request_executor.create_request("POST", api_url, json=payload)
         if error:
             return None
@@ -857,7 +837,7 @@ class PrivilegedRemoteAccessAPI(APIClient):
         for key, value in kwargs.items():
             payload[snake_to_camel(key)] = value
 
-        api_url = format_url(f"{self._base_url}/approval/{approval_id}")
+        api_url = format_url(f"{self._base_endpoint}/approval/{approval_id}")
         request, error = self._request_executor.create_request("PUT", api_url, json=payload)
         if error:
             return None
@@ -878,7 +858,7 @@ class PrivilegedRemoteAccessAPI(APIClient):
         Returns:
             int: Status code of the delete operation.
         """
-        api_url = format_url(f"{self._base_url}/approval/{approval_id}")
+        api_url = format_url(f"{self._base_endpoint}/approval/{approval_id}")
         request, error = self._request_executor.create_request("DELETE", api_url)
         if error:
             return None
@@ -896,7 +876,7 @@ class PrivilegedRemoteAccessAPI(APIClient):
         Returns:
             int: Status code of the delete operation.
         """
-        api_url = format_url(f"{self._base_url}/approval/expired")
+        api_url = format_url(f"{self._base_endpoint}/approval/expired")
         request, error = self._request_executor.create_request("DELETE", api_url)
         if error:
             return None

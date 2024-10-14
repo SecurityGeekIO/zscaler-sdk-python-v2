@@ -24,8 +24,11 @@ class AuthDomainsAPI(APIClient):
     A Client object for the Auth Domains resource.
     """
 
-    def __init__(self):
-        self._base_url = ""
+    def __init__(self, request_executor, config):
+        super().__init__()
+        self._request_executor = request_executor
+        customer_id = config["client"].get("customerId")
+        self._base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
     def get_auth_domains(self):
         """
@@ -42,7 +45,7 @@ class AuthDomainsAPI(APIClient):
         http_method = "get".upper()
         api_url = format_url(
             f"""
-            {self._base_url}
+            {self._base_endpoint}
             /authDomains
             """
         )
@@ -52,9 +55,7 @@ class AuthDomainsAPI(APIClient):
         form = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, form)
 
         if error:
             return (None, None, error)

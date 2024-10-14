@@ -25,15 +25,13 @@ class SCIMGroupsAPI(APIClient):
     A client object for the SCIM Groups resource.
     """
 
-    def __init__(self):
+    def __init__(self, request_executor, config):
         super().__init__()
-        self._base_url = ""
+        self._request_executor = request_executor
+        customer_id = config["client"].get("customerId")
+        self._base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
-    def list_groups(
-        self, idp_id: str, 
-        query_params=None,
-        keep_empty_params=False
-        ) -> tuple:
+    def list_groups(self, idp_id: str, query_params=None, keep_empty_params=False) -> tuple:
         """
         Returns a list of all configured SCIM groups for the specified IdP.
 
@@ -77,7 +75,7 @@ class SCIMGroupsAPI(APIClient):
             ...    pprint(scim_group)
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/scimgroup/idpId/{idp_id}", api_version="userconfig_v1")
+        api_url = format_url(f"{self._base_endpoint}/scimgroup/idpId/{idp_id}", api_version="userconfig_v1")
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
@@ -110,9 +108,7 @@ class SCIMGroupsAPI(APIClient):
         try:
             result = []
             for item in response.get_body():
-                result.append(SCIMGroup(
-                    self.form_response_body(item)
-                ))
+                result.append(SCIMGroup(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
@@ -131,7 +127,7 @@ class SCIMGroupsAPI(APIClient):
         Examples:
             >>> group = zpa.scim_groups.get_group('99999')
         """
-        api_url = format_url(f"{self._base_url}/scimgroup/{group_id}", api_version="userconfig_v1")
+        api_url = format_url(f"{self._base_endpoint}/scimgroup/{group_id}", api_version="userconfig_v1")
 
         # Fetch SCIM group data
         request, error = self._request_executor.create_request("get", api_url, params=kwargs)

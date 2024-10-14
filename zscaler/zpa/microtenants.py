@@ -25,14 +25,13 @@ class MicrotenantsAPI(APIClient):
     A client object for the Microtenants resource.
     """
 
-    def __init__(self):
+    def __init__(self, request_executor, config):
         super().__init__()
-        self._base_url = ""
+        self._request_executor = request_executor
+        customer_id = config["client"].get("customerId")
+        self._base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
-    def list_microtenants(
-            self, query_params=None,
-            keep_empty_params=False
-    ) -> tuple:
+    def list_microtenants(self, query_params=None, keep_empty_params=False) -> tuple:
         """
         Enumerates microtenants in your organization with pagination.
         A subset of microtenants can be returned that match a supported
@@ -51,7 +50,7 @@ class MicrotenantsAPI(APIClient):
             tuple: A tuple containing (list of Microtenants instances, Response, error)
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/microtenants")
+        api_url = format_url(f"{self._base_endpoint}/microtenants")
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
@@ -87,9 +86,7 @@ class MicrotenantsAPI(APIClient):
         try:
             result = []
             for item in response.get_body():
-                result.append(Microtenant(
-                    self.form_response_body(item)
-                ))
+                result.append(Microtenant(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
@@ -109,7 +106,7 @@ class MicrotenantsAPI(APIClient):
             >>> microtenant = zpa.microtenants.get_microtenant('216199618143364393')
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/microtenants/{microtenant_id}")
+        api_url = format_url(f"{self._base_endpoint}/microtenants/{microtenant_id}")
 
         request, error = self._request_executor.create_request(http_method, api_url)
         if error:
@@ -132,7 +129,7 @@ class MicrotenantsAPI(APIClient):
             >>> summary = zpa.microtenants.get_microtenant_summary()
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/microtenants/summary")
+        api_url = format_url(f"{self._base_endpoint}/microtenants/summary")
 
         request, error = self._request_executor.create_request(http_method, api_url)
         if error:
@@ -188,7 +185,7 @@ class MicrotenantsAPI(APIClient):
                 )
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._base_url}/microtenants")
+        api_url = format_url(f"{self._base_endpoint}/microtenants")
 
         payload = {
             "name": name,
@@ -236,7 +233,7 @@ class MicrotenantsAPI(APIClient):
                 )
         """
         http_method = "put".upper()
-        api_url = format_url(f"{self._base_url}/microtenants/{microtenant_id}")
+        api_url = format_url(f"{self._base_endpoint}/microtenants/{microtenant_id}")
 
         # Get the current microtenant data and update it with the new kwargs
         microtenant_data = self.get_microtenant(microtenant_id).request_format()
@@ -266,7 +263,7 @@ class MicrotenantsAPI(APIClient):
             >>> zpa.microtenants.delete_microtenant('99999')
         """
         http_method = "delete".upper()
-        api_url = format_url(f"{self._base_url}/microtenants/{microtenant_id}")
+        api_url = format_url(f"{self._base_endpoint}/microtenants/{microtenant_id}")
 
         request, error = self._request_executor.create_request(http_method, api_url)
         if error:

@@ -25,14 +25,13 @@ class ScimAttributeHeaderAPI(APIClient):
     A client object for the SCIM Attribute Header resource.
     """
 
-    def __init__(self):
+    def __init__(self, request_executor, config):
         super().__init__()
-        self._base_url = ""
+        self._request_executor = request_executor
+        customer_id = config["client"].get("customerId")
+        self._base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
-    def list_attributes_by_idp(
-        self, idp_id: str,
-        query_params=None,
-        keep_empty_params=False) -> tuple:
+    def list_attributes_by_idp(self, idp_id: str, query_params=None, keep_empty_params=False) -> tuple:
         """
         Returns a list of all configured SCIM attributes for the specified IdP.
 
@@ -54,7 +53,7 @@ class ScimAttributeHeaderAPI(APIClient):
             ...    pprint(scim_attribute)
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/idp/{idp_id}/scimattribute")
+        api_url = format_url(f"{self._base_endpoint}/idp/{idp_id}/scimattribute")
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
@@ -87,16 +86,13 @@ class ScimAttributeHeaderAPI(APIClient):
         try:
             result = []
             for item in response.get_body():
-                result.append(SCIMAttributeHeader(
-                    self.form_response_body(item)
-                ))
+                result.append(SCIMAttributeHeader(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
         return (result, response, None)
 
-    def get_attribute(
-        self, idp_id: str, attribute_id: str, **kwargs) -> SCIMAttributeHeader:
+    def get_attribute(self, idp_id: str, attribute_id: str, **kwargs) -> SCIMAttributeHeader:
         """
         Returns information on the specified SCIM attribute.
 
@@ -113,10 +109,10 @@ class ScimAttributeHeaderAPI(APIClient):
         http_method = "get".upper()
         api_url = format_url(
             f"""
-            {self._base_url}
+            {self._base_endpoint}
             /idp/{idp_id}/scimattribute/{attribute_id}
             """,
-            api_version="v1"
+            api_version="v1",
         )
 
         # Fetch SCIM attribute data
@@ -131,11 +127,7 @@ class ScimAttributeHeaderAPI(APIClient):
         # Convert the response to SCIMAttributeHeader object
         return SCIMAttributeHeader(response.get_body())
 
-    def get_values(
-        self, idp_id: str, 
-        attribute_id: str, 
-        query_params=None, 
-        keep_empty_params=False) -> tuple:
+    def get_values(self, idp_id: str, attribute_id: str, query_params=None, keep_empty_params=False) -> tuple:
         """
         Returns information on the specified SCIM attribute values.
 
@@ -157,7 +149,9 @@ class ScimAttributeHeaderAPI(APIClient):
             >>> values = zpa.scim_attributes.get_values('99999', '88888')
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/scimattribute/idpId/{idp_id}/attributeId/{attribute_id}", api_version="userconfig_v1")
+        api_url = format_url(
+            f"{self._base_endpoint}/scimattribute/idpId/{idp_id}/attributeId/{attribute_id}", api_version="userconfig_v1"
+        )
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
@@ -190,9 +184,7 @@ class ScimAttributeHeaderAPI(APIClient):
         try:
             result = []
             for item in response.get_body():
-                result.append(SCIMAttributeHeader(
-                    self.form_response_body(item)
-                ))
+                result.append(SCIMAttributeHeader(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 

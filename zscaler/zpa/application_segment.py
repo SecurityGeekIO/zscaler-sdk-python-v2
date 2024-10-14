@@ -25,9 +25,10 @@ class ApplicationSegmentAPI(APIClient):
     A client object for the Application Segments resource.
     """
 
-    def __init__(self):
-        super().__init__()  # Inherit initialization from APIClient
-        customer_id = self._config["client"].get("customerId")
+    def __init__(self, request_executor, config):
+        super().__init__()
+        self._request_executor = request_executor
+        customer_id = config["client"].get("customerId")
         self._base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
     def list_segments(self, query_params=None, keep_empty_params=False) -> tuple:

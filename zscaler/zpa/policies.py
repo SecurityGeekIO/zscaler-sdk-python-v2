@@ -19,14 +19,17 @@ from zscaler.zpa.models.policyset_controller_v1 import PolicySetControllerV1
 from zscaler.utils import format_url, snake_to_camel, convert_keys, add_id_groups
 from urllib.parse import urlencode
 
+
 class PolicySetControllerAPI(APIClient):
     """
     A client object for the Policy Set Controller resource.
     """
 
-    def __init__(self):
+    def __init__(self, request_executor, config):
         super().__init__()
-        self._base_url = ""
+        self._request_executor = request_executor
+        customer_id = config["client"].get("customerId")
+        self._base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
     # Mapping policy types to their ZPA API equivalents
     POLICY_MAP = {
@@ -173,7 +176,7 @@ class PolicySetControllerAPI(APIClient):
 
         Returns:
             PolicySetControllerV1: The resource record of the specified policy type.
-        
+
         Raises:
             ValueError: If the policy_type is invalid.
 
@@ -184,7 +187,7 @@ class PolicySetControllerAPI(APIClient):
         if not mapped_policy_type:
             raise ValueError(f"Incorrect policy type provided: {policy_type}")
 
-        api_url = format_url(f"{self._base_url}/policySet/policyType/{mapped_policy_type}")
+        api_url = format_url(f"{self._base_endpoint}/policySet/policyType/{mapped_policy_type}")
         microtenant_id = kwargs.pop("microtenant_id", None)
         if microtenant_id:
             kwargs["microtenantId"] = microtenant_id
@@ -198,7 +201,6 @@ class PolicySetControllerAPI(APIClient):
             return None
 
         return PolicySetControllerV1(response.get_body())
-
 
     def get_rule(self, policy_type: str, rule_id: str, **kwargs) -> PolicySetControllerV1:
         """
@@ -227,7 +229,7 @@ class PolicySetControllerAPI(APIClient):
             >>> rule = zpa.policies.get_rule('access', rule_id='12345')
         """
         policy_id = self.get_policy(policy_type).id
-        api_url = format_url(f"{self._base_url}/policySet/{policy_id}/rule/{rule_id}")
+        api_url = format_url(f"{self._base_endpoint}/policySet/{policy_id}/rule/{rule_id}")
 
         microtenant_id = kwargs.pop("microtenant_id", None)
         if microtenant_id:
@@ -270,9 +272,7 @@ class PolicySetControllerAPI(APIClient):
 
         return None
 
-    def list_rules(
-            self, policy_type: str, query_params=None, keep_empty_params=False
-    ) -> tuple:
+    def list_rules(self, policy_type: str, query_params=None, keep_empty_params=False) -> tuple:
         """
         Returns policy rules for a given policy type.
 
@@ -301,7 +301,7 @@ class PolicySetControllerAPI(APIClient):
             raise ValueError(f"Incorrect policy type provided: {policy_type}")
 
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/policySet/rules/policyType/{mapped_policy_type}")
+        api_url = format_url(f"{self._base_endpoint}/policySet/rules/policyType/{mapped_policy_type}")
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
@@ -335,6 +335,7 @@ class PolicySetControllerAPI(APIClient):
             return (None, response, error)
 
         return (result, response, None)
+
     def add_access_rule(
         self,
         name: str,
@@ -388,7 +389,7 @@ class PolicySetControllerAPI(APIClient):
 
         """
         policy_id = self.get_policy("access").id
-        api_url = format_url(f"{self._base_url}/policySet/{policy_id}/rule")
+        api_url = format_url(f"{self._base_endpoint}/policySet/{policy_id}/rule")
 
         payload = {
             "name": name,
@@ -461,7 +462,7 @@ class PolicySetControllerAPI(APIClient):
             ... )
         """
         policy_id = self.get_policy("access").id
-        api_url = format_url(f"{self._base_url}/policySet/{policy_id}/rule/{rule_id}")
+        api_url = format_url(f"{self._base_endpoint}/policySet/{policy_id}/rule/{rule_id}")
 
         current_rule = self.get_rule("access", rule_id)
         payload = current_rule.request_format()
@@ -470,7 +471,7 @@ class PolicySetControllerAPI(APIClient):
         payload["appServerGroups"] = [{"id": group_id} for group_id in app_server_group_ids or []]
 
         add_id_groups(self.reformat_params, kwargs, payload)
-        
+
         for key, value in kwargs.items():
             if key == "conditions":
                 payload["conditions"] = self._create_conditions_v1(value)
@@ -528,7 +529,7 @@ class PolicySetControllerAPI(APIClient):
         """
         http_method = "post".upper()
         policy_id = self.get_policy("timeout").id
-        api_url = format_url(f"{self._base_url}/policySet/{policy_id}/rule")
+        api_url = format_url(f"{self._base_endpoint}/policySet/{policy_id}/rule")
 
         payload = {
             "name": name,
@@ -602,7 +603,7 @@ class PolicySetControllerAPI(APIClient):
         """
         http_method = "put".upper()
         policy_id = self.get_policy("timeout").id
-        api_url = format_url(f"{self._base_url}/policySet/{policy_id}/rule/{rule_id}")
+        api_url = format_url(f"{self._base_endpoint}/policySet/{policy_id}/rule/{rule_id}")
 
         current_rule = self.get_rule("timeout", rule_id)
         payload = convert_keys(current_rule)
@@ -689,7 +690,7 @@ class PolicySetControllerAPI(APIClient):
         """
         http_method = "post".upper()
         policy_id = self.get_policy("client_forwarding").id
-        api_url = format_url(f"{self._base_url}/policySet/{policy_id}/rule")
+        api_url = format_url(f"{self._base_endpoint}/policySet/{policy_id}/rule")
 
         payload = {
             "name": name,
@@ -773,7 +774,7 @@ class PolicySetControllerAPI(APIClient):
         """
         http_method = "put".upper()
         policy_id = self.get_policy("client_forwarding").id
-        api_url = format_url(f"{self._base_url}/policySet/{policy_id}/rule/{rule_id}")
+        api_url = format_url(f"{self._base_endpoint}/policySet/{policy_id}/rule/{rule_id}")
 
         current_rule = self.get_rule("client_forwarding", rule_id)
         payload = convert_keys(current_rule)
@@ -798,7 +799,7 @@ class PolicySetControllerAPI(APIClient):
             return None
 
         return response.get_body()
-    
+
     def add_isolation_rule(self, name: str, action: str, zpn_isolation_profile_id: str, **kwargs) -> dict:
         """
         Add a new Isolation Policy rule.
@@ -841,7 +842,7 @@ class PolicySetControllerAPI(APIClient):
         """
         http_method = "post".upper()
         policy_id = self.get_policy("isolation").id
-        api_url = format_url(f"{self._base_url}/policySet/{policy_id}/rule")
+        api_url = format_url(f"{self._base_endpoint}/policySet/{policy_id}/rule")
 
         payload = {
             "name": name,
@@ -932,7 +933,7 @@ class PolicySetControllerAPI(APIClient):
         """
         http_method = "put".upper()
         policy_id = self.get_policy("isolation").id
-        api_url = format_url(f"{self._base_url}/policySet/{policy_id}/rule/{rule_id}")
+        api_url = format_url(f"{self._base_endpoint}/policySet/{policy_id}/rule/{rule_id}")
 
         current_rule = self.get_rule("isolation", rule_id)
         payload = convert_keys(current_rule)
@@ -970,7 +971,7 @@ class PolicySetControllerAPI(APIClient):
         """
         http_method = "post".upper()
         policy_id = self.get_policy("inspection").id
-        api_url = format_url(f"{self._base_url}/policySet/{policy_id}/rule")
+        api_url = format_url(f"{self._base_endpoint}/policySet/{policy_id}/rule")
 
         payload = {
             "name": name,
@@ -1054,7 +1055,7 @@ class PolicySetControllerAPI(APIClient):
         """
         http_method = "put".upper()
         policy_id = self.get_policy("inspection").id
-        api_url = format_url(f"{self._base_url}/policySet/{policy_id}/rule/{rule_id}")
+        api_url = format_url(f"{self._base_endpoint}/policySet/{policy_id}/rule/{rule_id}")
 
         current_rule = self.get_rule("inspection", rule_id)
         payload = convert_keys(current_rule)
@@ -1077,7 +1078,7 @@ class PolicySetControllerAPI(APIClient):
             return None
 
         return response.get_body()
-    
+
     def add_access_rule_v2(self, name: str, action: str, **kwargs) -> dict:
         """
         Add a new Access Policy rule.
@@ -1126,7 +1127,7 @@ class PolicySetControllerAPI(APIClient):
         """
         http_method = "post".upper()
         policy_id = self.get_policy("access").id
-        api_url = format_url(f"{self._base_url}/policySet/{policy_id}/rule")
+        api_url = format_url(f"{self._base_endpoint}/policySet/{policy_id}/rule")
 
         payload = {
             "name": name,
@@ -1199,7 +1200,7 @@ class PolicySetControllerAPI(APIClient):
         """
         http_method = "put".upper()
         policy_id = self.get_policy("access").id
-        api_url = format_url(f"{self._base_url}/policySet/{policy_id}/rule/{rule_id}")
+        api_url = format_url(f"{self._base_endpoint}/policySet/{policy_id}/rule/{rule_id}")
 
         current_rule = self.get_rule("access", rule_id)
         payload = convert_keys(current_rule)
@@ -1277,7 +1278,7 @@ class PolicySetControllerAPI(APIClient):
         """
         http_method = "post".upper()
         policy_id = self.get_policy("timeout").id
-        api_url = format_url(f"{self._base_url}/policySet/{policy_id}/rule")
+        api_url = format_url(f"{self._base_endpoint}/policySet/{policy_id}/rule")
 
         payload = {
             "name": name,
@@ -1351,7 +1352,7 @@ class PolicySetControllerAPI(APIClient):
         """
         http_method = "put".upper()
         policy_id = self.get_policy("timeout").id
-        api_url = format_url(f"{self._base_url}/policySet/{policy_id}/rule/{rule_id}")
+        api_url = format_url(f"{self._base_endpoint}/policySet/{policy_id}/rule/{rule_id}")
 
         current_rule = self.get_rule("timeout", rule_id)
         payload = convert_keys(current_rule)
@@ -1421,7 +1422,7 @@ class PolicySetControllerAPI(APIClient):
         """
         http_method = "post".upper()
         policy_id = self.get_policy("client_forwarding").id
-        api_url = format_url(f"{self._base_url}/policySet/{policy_id}/rule")
+        api_url = format_url(f"{self._base_endpoint}/policySet/{policy_id}/rule")
 
         payload = {
             "name": name,
@@ -1507,7 +1508,7 @@ class PolicySetControllerAPI(APIClient):
         """
         http_method = "put".upper()
         policy_id = self.get_policy("client_forwarding").id
-        api_url = format_url(f"{self._base_url}/policySet/{policy_id}/rule/{rule_id}")
+        api_url = format_url(f"{self._base_endpoint}/policySet/{policy_id}/rule/{rule_id}")
 
         current_rule = self.get_rule("client_forwarding", rule_id)
         payload = convert_keys(current_rule)
@@ -1535,7 +1536,7 @@ class PolicySetControllerAPI(APIClient):
             return None
 
         return response.get_body()
-    
+
     def add_isolation_rule_v2(self, name: str, action: str, zpn_isolation_profile_id: str, **kwargs) -> dict:
         """
         Add a new Isolation Policy rule.
@@ -1575,7 +1576,7 @@ class PolicySetControllerAPI(APIClient):
         """
         http_method = "post".upper()
         policy_id = self.get_policy("isolation").id
-        api_url = format_url(f"{self._base_url}/policySet/{policy_id}/rule")
+        api_url = format_url(f"{self._base_endpoint}/policySet/{policy_id}/rule")
 
         payload = {
             "name": name,
@@ -1659,7 +1660,7 @@ class PolicySetControllerAPI(APIClient):
         """
         http_method = "put".upper()
         policy_id = self.get_policy("isolation").id
-        api_url = format_url(f"{self._base_url}/policySet/{policy_id}/rule/{rule_id}")
+        api_url = format_url(f"{self._base_endpoint}/policySet/{policy_id}/rule/{rule_id}")
 
         current_rule = self.get_rule("isolation", rule_id)
         payload = convert_keys(current_rule)
@@ -1727,7 +1728,7 @@ class PolicySetControllerAPI(APIClient):
                     ('app', 'id', '926196382959075417'),
                     ('app_group', 'id', '926196382959075332),
                     ('client_type', 'zpn_client_type_exporter')]
-                    
+
         Examples:
             Updates the name only for an Inspection Policy rule:
 
@@ -1746,7 +1747,7 @@ class PolicySetControllerAPI(APIClient):
         """
         http_method = "post".upper()
         policy_id = self.get_policy("inspection").id
-        api_url = format_url(f"{self._base_url}/policySet/{policy_id}/rule")
+        api_url = format_url(f"{self._base_endpoint}/policySet/{policy_id}/rule")
 
         payload = {
             "name": name,
@@ -1821,7 +1822,7 @@ class PolicySetControllerAPI(APIClient):
         """
         http_method = "put".upper()
         policy_id = self.get_policy("inspection").id
-        api_url = format_url(f"{self._base_url}/policySet/{policy_id}/rule/{rule_id}")
+        api_url = format_url(f"{self._base_endpoint}/policySet/{policy_id}/rule/{rule_id}")
 
         current_rule = self.get_rule("inspection", rule_id)
         payload = convert_keys(current_rule)
@@ -1847,14 +1848,14 @@ class PolicySetControllerAPI(APIClient):
             return None
 
         return response.get_body()
-    
+
     def add_privileged_credential_rule_v2(self, name: str, credential_id: str, **kwargs) -> dict:
         """
         Add a new Privileged Remote Access Credential Policy rule.
         """
         http_method = "post".upper()
         policy_id = self.get_policy("credential").id
-        api_url = format_url(f"{self._base_url}/policySet/{policy_id}/rule")
+        api_url = format_url(f"{self._base_endpoint}/policySet/{policy_id}/rule")
 
         payload = {
             "name": name,
@@ -1922,7 +1923,7 @@ class PolicySetControllerAPI(APIClient):
         """
         http_method = "put".upper()
         policy_id = self.get_policy("credential").id
-        api_url = format_url(f"{self._base_url}/policySet/{policy_id}/rule/{rule_id}")
+        api_url = format_url(f"{self._base_endpoint}/policySet/{policy_id}/rule/{rule_id}")
 
         current_rule = self.get_rule("credential", rule_id)
         payload = convert_keys(current_rule)
@@ -1957,7 +1958,7 @@ class PolicySetControllerAPI(APIClient):
     def delete_rule(self, policy_type: str, rule_id: str, **kwargs) -> int:
         """
         Deletes the specified policy rule.
-        
+
         Args:
             policy_type (str):
                 The type of policy the rule belongs to. Accepted values are:
@@ -1975,14 +1976,14 @@ class PolicySetControllerAPI(APIClient):
 
             rule_id (str):
                 The unique identifier for the policy rule.
-                
+
         Examples:
             >>> zpa.policies.delete_rule(policy_type='access',
             ...    rule_id='88888')
         """
         http_method = "delete".upper()
         policy_id = self.get_policy(policy_type).id
-        api_url = format_url(f"{self._base_url}/policySet/{policy_id}/rule/{rule_id}")
+        api_url = format_url(f"{self._base_endpoint}/policySet/{policy_id}/rule/{rule_id}")
 
         microtenant_id = kwargs.pop("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
@@ -1996,7 +1997,7 @@ class PolicySetControllerAPI(APIClient):
             return None
 
         return response.get_status_code()
-    
+
     def reorder_rule(self, policy_type: str, rule_id: str, rule_order: str, **kwargs) -> tuple:
         """
         Change the order of an existing policy rule.
@@ -2018,7 +2019,7 @@ class PolicySetControllerAPI(APIClient):
                 microtenant_id (str): The ID of the microtenant, if applicable.
         Returns:
             tuple: (Updated rule, response, error)
-            
+
         Examples:
             Updates the order for an existing access policy rule:
 
@@ -2039,7 +2040,7 @@ class PolicySetControllerAPI(APIClient):
         """
         http_method = "put".upper()
         policy_id = self.get_policy(policy_type).id
-        api_url = format_url(f"{self._base_url}/policySet/{policy_id}/rule/{rule_id}/reorder/{rule_order}")
+        api_url = format_url(f"{self._base_endpoint}/policySet/{policy_id}/rule/{rule_id}/reorder/{rule_order}")
 
         microtenant_id = kwargs.pop("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
@@ -2112,7 +2113,7 @@ class PolicySetControllerAPI(APIClient):
         """
         http_method = "put".upper()
         policy_set = self.get_policy(policy_type).id
-        api_url = format_url(f"{self._base_url}/policySet/{policy_set}/reorder")
+        api_url = format_url(f"{self._base_endpoint}/policySet/{policy_set}/reorder")
 
         microtenant_id = kwargs.pop("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}

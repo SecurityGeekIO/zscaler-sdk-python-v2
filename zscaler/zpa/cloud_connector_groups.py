@@ -19,19 +19,19 @@ from zscaler.zpa.models.cloud_connector_groups import CloudConnectorGroup
 from zscaler.utils import format_url
 from urllib.parse import urlencode
 
+
 class CloudConnectorGroupsAPI(APIClient):
     """
     A Client object for the Cloud Connector Groups resource.
     """
 
-    def __init__(self):
-        super().__init__()  # Inherit initialization from APIClient
-        self._base_url = ""
+    def __init__(self, request_executor, config):
+        super().__init__()
+        self._request_executor = request_executor
+        customer_id = config["client"].get("customerId")
+        self._base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
-    def list_cloud_connector_groups(
-            self, query_params=None,
-            keep_empty_params=False
-    ) -> tuple:
+    def list_cloud_connector_groups(self, query_params=None, keep_empty_params=False) -> tuple:
         """
         Returns a list of all configured cloud connector groups.
 
@@ -46,12 +46,12 @@ class CloudConnectorGroupsAPI(APIClient):
 
         Returns:
             list: A list of `CloudConnectorGroup` instances.
-        
+
         Example:
             >>> cloud_connector_groups = zpa.cloud_connector_groups.list_cloud_connector_groups(search="example")
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/cloudConnectorGroup")
+        api_url = format_url(f"{self._base_endpoint}/cloudConnectorGroup")
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
@@ -83,14 +83,12 @@ class CloudConnectorGroupsAPI(APIClient):
         try:
             result = []
             for item in response.get_body():
-                result.append(CloudConnectorGroup(
-                    self.form_response_body(item)
-                ))
+                result.append(CloudConnectorGroup(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
         return (result, response, None)
-    
+
     def get_cloud_connector_groups(self, group_id: str, query_params={}, keep_empty_params=False):
         """
         Returns information on the specified cloud connector group.
@@ -111,7 +109,7 @@ class CloudConnectorGroupsAPI(APIClient):
         http_method = "get".upper()
         api_url = format_url(
             f"""
-            {self._base_url}/cloudConnectorGroup/{group_id}
+            {self._base_endpoint}/cloudConnectorGroup/{group_id}
         """
         )
 

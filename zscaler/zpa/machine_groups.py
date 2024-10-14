@@ -19,19 +19,19 @@ from zscaler.zpa.models.machine_groups import MachineGroup
 from zscaler.utils import format_url
 from urllib.parse import urlencode
 
+
 class MachineGroupsAPI(APIClient):
     """
     A Client object for the Machine Groups resource.
     """
 
-    def __init__(self):
-        super().__init__()  # Inherit the request executor from APIClient
-        self._base_url = ""
+    def __init__(self, request_executor, config):
+        super().__init__()
+        self._request_executor = request_executor
+        customer_id = config["client"].get("customerId")
+        self._base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
-    def list_machine_groups(
-            self, query_params=None,
-            keep_empty_params=False
-    ) -> tuple:
+    def list_machine_groups(self, query_params=None, keep_empty_params=False) -> tuple:
         """
         Enumerates machine groups in your organization with pagination.
         A subset of machine groups can be returned that match a supported
@@ -48,13 +48,13 @@ class MachineGroupsAPI(APIClient):
 
         Returns:
             tuple: A tuple containing (list of AppConnectorGroup instances, Response, error)
-        
+
         Example:
             >>> machine_groups = zpa.machine_groups.list_machine_groups(search="example")
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/appConnectorGroup")
-        
+        api_url = format_url(f"{self._base_endpoint}/appConnectorGroup")
+
         query_params = query_params or {}
         microtenant_id = query_params.pop("microtenant_id", None)
         if microtenant_id:
@@ -88,9 +88,7 @@ class MachineGroupsAPI(APIClient):
         try:
             result = []
             for item in response.get_body():
-                result.append(MachineGroup(
-                    self.form_response_body(item)
-                ))
+                result.append(MachineGroup(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
@@ -111,7 +109,7 @@ class MachineGroupsAPI(APIClient):
         http_method = "get".upper()
         api_url = format_url(
             f"""
-            {self._base_url}
+            {self._base_endpoint}
             /machineGroup/{group_id}
             """
         )

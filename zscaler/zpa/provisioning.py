@@ -43,14 +43,13 @@ class ProvisioningKeyAPI(APIClient):
     A client object for the Provisioning Keys resource.
     """
 
-    def __init__(self):
+    def __init__(self, request_executor, config):
         super().__init__()
-        self._base_url = ""
+        self._request_executor = request_executor
+        customer_id = config["client"].get("customerId")
+        self._base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
-    def list_provisioning_keys(
-            self, key_type: str, query_params=None,
-            keep_empty_params=False
-    ) -> tuple:
+    def list_provisioning_keys(self, key_type: str, query_params=None, keep_empty_params=False) -> tuple:
         """
         Returns a list of all configured provisioning keys that match the specified ``key_type``.
 
@@ -80,7 +79,7 @@ class ProvisioningKeyAPI(APIClient):
             ...    print(key)
         """
         # Ensure the key_type is correctly formatted
-        api_url = format_url(f"{self._base_url}/associationType/{simplify_key_type(key_type)}/provisioningKey")
+        api_url = format_url(f"{self._base_endpoint}/associationType/{simplify_key_type(key_type)}/provisioningKey")
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
@@ -155,7 +154,7 @@ class ProvisioningKeyAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/associationType/{simplify_key_type(key_type)}/provisioningKey/{key_id}")
+        api_url = format_url(f"{self._base_endpoint}/associationType/{simplify_key_type(key_type)}/provisioningKey/{key_id}")
 
         params = {}
         if "microtenant_id" in kwargs:
@@ -221,7 +220,7 @@ class ProvisioningKeyAPI(APIClient):
 
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._base_url}/associationType/{simplify_key_type(key_type)}/provisioningKey")
+        api_url = format_url(f"{self._base_endpoint}/associationType/{simplify_key_type(key_type)}/provisioningKey")
 
         payload = {
             "name": name,
@@ -289,7 +288,7 @@ class ProvisioningKeyAPI(APIClient):
 
         """
         http_method = "put".upper()
-        api_url = format_url(f"{self._base_url}/associationType/{simplify_key_type(key_type)}/provisioningKey/{key_id}")
+        api_url = format_url(f"{self._base_endpoint}/associationType/{simplify_key_type(key_type)}/provisioningKey/{key_id}")
 
         existing_key, _, _ = self.get_provisioning_key(key_id, key_type)
 
@@ -346,7 +345,7 @@ class ProvisioningKeyAPI(APIClient):
 
         """
         http_method = "delete".upper()
-        api_url = format_url(f"{self._base_url}/associationType/{simplify_key_type(key_type)}/provisioningKey/{key_id}")
+        api_url = format_url(f"{self._base_endpoint}/associationType/{simplify_key_type(key_type)}/provisioningKey/{key_id}")
 
         params = {}
         if "microtenant_id" in kwargs:

@@ -60,10 +60,9 @@ class RequestExecutor:
 
         # Set default headers from config
         self._default_headers = {
-            'User-Agent': UserAgent(config["client"].get("userAgent", None))
-            .get_user_agent_string(),
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
+            "User-Agent": UserAgent(config["client"].get("userAgent", None)).get_user_agent_string(),
+            "Accept": "application/json",
+            "Content-Type": "application/json",
         }
 
         # Initialize the HTTP client, considering proxy and SSL context from config
@@ -111,6 +110,7 @@ class RequestExecutor:
         body: dict = None,
         headers: dict = {},
         params: dict = {},
+        keep_empty_params={},
     ):
         print(f"Initial endpoint before modification: {endpoint}")
 
@@ -190,7 +190,7 @@ class RequestExecutor:
         if error:
             logger.error(f"Error in HTTP response: {error}")
             return None, error
-            
+
         logger.debug(f"Successful response from {request['url']}")
         logger.debug(f"Response Data: {response_data}")
 
@@ -210,7 +210,7 @@ class RequestExecutor:
             ),
             None,
         )
-            
+
     def fire_request(self, request):
         """
         Send request using HTTP client.

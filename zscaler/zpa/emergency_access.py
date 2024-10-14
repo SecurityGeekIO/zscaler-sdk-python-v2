@@ -25,14 +25,13 @@ class EmergencyAccessAPI(APIClient):
     A Client object for the Emergency Access Users resource.
     """
 
-    def __init__(self):
+    def __init__(self, request_executor, config):
         super().__init__()
-        self._base_url = ""
+        self._request_executor = request_executor
+        customer_id = config["client"].get("customerId")
+        self._base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
-    def list_users(
-            self, query_params=None,
-            keep_empty_params=False
-    ) -> tuple:
+    def list_users(self, query_params=None, keep_empty_params=False) -> tuple:
         """
         Enumerates emergency access in your organization with pagination.
         A subset of emergency access can be returned that match a supported
@@ -51,7 +50,7 @@ class EmergencyAccessAPI(APIClient):
             tuple: A tuple containing (list of AppConnectorGroup instances, Response, error)
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/emergencyAccess/users")
+        api_url = format_url(f"{self._base_endpoint}/emergencyAccess/users")
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
@@ -87,9 +86,7 @@ class EmergencyAccessAPI(APIClient):
         try:
             result = []
             for item in response.get_body():
-                result.append(EmergencyAccessUser(
-                    self.form_response_body(item)
-                ))
+                result.append(EmergencyAccessUser(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
@@ -108,7 +105,7 @@ class EmergencyAccessAPI(APIClient):
         http_method = "get".upper()
         api_url = format_url(
             f"""
-            {self._base_url}
+            {self._base_endpoint}
             /emergencyAccess/user/{user_id}
         """
         )
@@ -123,7 +120,9 @@ class EmergencyAccessAPI(APIClient):
 
         return (EmergencyAccessUser(response.get_body()), response, None)
 
-    def add_user(self, email_id: str, first_name: str, last_name: str, user_id: str, activate_now: bool = True, **kwargs) -> tuple:
+    def add_user(
+        self, email_id: str, first_name: str, last_name: str, user_id: str, activate_now: bool = True, **kwargs
+    ) -> tuple:
         """
         Add an emergency access user.
 
@@ -140,7 +139,7 @@ class EmergencyAccessAPI(APIClient):
         http_method = "post".upper()
         api_url = format_url(
             f"""
-            {self._base_url}
+            {self._base_endpoint}
             /emergencyAccess/user
         """
         )
@@ -186,7 +185,7 @@ class EmergencyAccessAPI(APIClient):
         http_method = "put".upper()
         api_url = format_url(
             f"""
-            {self._base_url}
+            {self._base_endpoint}
             /emergencyAccess/user/{user_id}
         """
         )
@@ -222,7 +221,7 @@ class EmergencyAccessAPI(APIClient):
         http_method = "put".upper()
         api_url = format_url(
             f"""
-            {self._base_url}
+            {self._base_endpoint}
             /emergencyAccess/user/{user_id}/activate
         """
         )
@@ -252,7 +251,7 @@ class EmergencyAccessAPI(APIClient):
         http_method = "put".upper()
         api_url = format_url(
             f"""
-            {self._base_url}
+            {self._base_endpoint}
             /emergencyAccess/user/{user_id}/deactivate
         """
         )

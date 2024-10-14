@@ -14,25 +14,24 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
-
 from zscaler.api_client import APIClient
 from zscaler.zpa.models.application_segment_pra import ApplicationSegmentPRA
 from urllib.parse import urlencode
 from zscaler.utils import format_url, snake_to_camel, recursive_snake_to_camel, add_id_groups
+
 
 class AppSegmentsPRAAPI(APIClient):
     """
     A client object for Application Segments PRA (Privileged Remote Access).
     """
 
-    def __init__(self):
+    def __init__(self, request_executor, config):
         super().__init__()
-        self._base_url = ""
-        
-    def list_segments_pra(
-            self, query_params=None,
-            keep_empty_params=False
-    ) -> tuple:
+        self._request_executor = request_executor
+        customer_id = config["client"].get("customerId")
+        self._base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
+
+    def list_segments_pra(self, query_params=None, keep_empty_params=False) -> tuple:
         """
         Enumerates application segment pra in your organization with pagination.
         A subset of application segment pra can be returned that match a supported
@@ -52,7 +51,7 @@ class AppSegmentsPRAAPI(APIClient):
         """
         # Initialize URL and HTTP method
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/application")
+        api_url = format_url(f"{self._base_endpoint}/application")
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
@@ -88,14 +87,11 @@ class AppSegmentsPRAAPI(APIClient):
         try:
             result = []
             for item in response.get_body():
-                result.append(ApplicationSegmentPRA(
-                    self.form_response_body(item)
-                ))
+                result.append(ApplicationSegmentPRA(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
         return (result, response, None)
-
 
     def get_segment_pra(self, segment_id: str, **kwargs) -> tuple:
         """
@@ -108,7 +104,7 @@ class AppSegmentsPRAAPI(APIClient):
             tuple: A tuple containing (ApplicationSegment, Response, error)
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/application/{segment_id}")
+        api_url = format_url(f"{self._base_endpoint}/application/{segment_id}")
 
         # Optional parameters such as microtenant_id
         microtenant_id = kwargs.pop("microtenant_id", None)
@@ -126,14 +122,16 @@ class AppSegmentsPRAAPI(APIClient):
         return (result, response, None)
 
     def add_segment_pra(
-        self, name: str, 
-        domain_names: list, 
-        segment_group_id: str, 
-        server_group_ids: list, 
+        self,
+        name: str,
+        domain_names: list,
+        segment_group_id: str,
+        server_group_ids: list,
         tcp_port_ranges: list = None,
         udp_port_ranges: list = None,
         common_apps_dto: dict = None,
-        **kwargs) -> tuple:
+        **kwargs,
+    ) -> tuple:
         """
         Add a new application segment.
 
@@ -182,7 +180,7 @@ class AppSegmentsPRAAPI(APIClient):
 
         Returns:
             tuple: A tuple containing (ApplicationSegment, Response, error)
-        
+
         Examples:
             Add a new application segment for example.com, ports 8080-8085.
 
@@ -193,7 +191,7 @@ class AppSegmentsPRAAPI(APIClient):
             ...    server_group_ids=['99999', '88888'])
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._base_url}/application")
+        api_url = format_url(f"{self._base_endpoint}/application")
 
         payload = {
             "name": name,
@@ -241,7 +239,7 @@ class AppSegmentsPRAAPI(APIClient):
             tuple: A tuple containing (ApplicationSegment, Response, error)
         """
         http_method = "put".upper()
-        api_url = format_url(f"{self._base_url}/application/{segment_id}")
+        api_url = format_url(f"{self._base_endpoint}/application/{segment_id}")
 
         # Fetch existing data
         existing_segment, _, error = self.get_segment_pra(segment_id, **kwargs)
@@ -292,7 +290,7 @@ class AppSegmentsPRAAPI(APIClient):
             tuple: A tuple containing (None, Response, error)
         """
         http_method = "delete".upper()
-        api_url = format_url(f"{self._base_url}/application/{segment_id}")
+        api_url = format_url(f"{self._base_endpoint}/application/{segment_id}")
 
         params = {}
         if force_delete:

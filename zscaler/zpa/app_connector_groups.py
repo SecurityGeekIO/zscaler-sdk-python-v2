@@ -30,14 +30,13 @@ class AppConnectorGroupAPI(APIClient):
         ("server_group_ids", "serverGroups"),
     ]
 
-    def __init__(self):
+    def __init__(self, request_executor, config):
         super().__init__()
-        self._base_url = ""
+        self._request_executor = request_executor
+        customer_id = config["client"].get("customerId")
+        self._base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
-    def list_connector_groups(
-            self, query_params=None,
-            keep_empty_params=False
-    ) -> tuple:
+    def list_connector_groups(self, query_params=None, keep_empty_params=False) -> tuple:
         """
         Enumerates connector groups in your organization with pagination.
         A subset of connector groups can be returned that match a supported
@@ -57,7 +56,7 @@ class AppConnectorGroupAPI(APIClient):
         """
         # Initialize URL and HTTP method
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/appConnectorGroup")
+        api_url = format_url(f"{self._base_endpoint}/appConnectorGroup")
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
@@ -93,17 +92,13 @@ class AppConnectorGroupAPI(APIClient):
         try:
             result = []
             for item in response.get_body():
-                result.append(AppConnectorGroup(
-                    self.form_response_body(item)
-                ))
+                result.append(AppConnectorGroup(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
         return (result, response, None)
 
-    def get_connector_group(
-        self, group_id: str, query_params=None, keep_empty_params=False
-) -> tuple:
+    def get_connector_group(self, group_id: str, query_params=None, keep_empty_params=False) -> tuple:
         """
         Fetches a specific connector group by ID.
 
@@ -120,7 +115,7 @@ class AppConnectorGroupAPI(APIClient):
         http_method = "get".upper()
 
         # Construct the API URL
-        api_url = format_url(f"{self._base_url}/appConnectorGroup/{group_id}")
+        api_url = format_url(f"{self._base_endpoint}/appConnectorGroup/{group_id}")
 
         # Handle optional query parameters
         query_params = query_params or {}
@@ -154,9 +149,7 @@ class AppConnectorGroupAPI(APIClient):
 
         # Parse the response into an AppConnectorGroup instance
         try:
-            result = AppConnectorGroup(
-                self.form_response_body(response.get_body())
-            )
+            result = AppConnectorGroup(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
 
@@ -229,7 +222,7 @@ class AppConnectorGroupAPI(APIClient):
         http_method = "post".upper()
         api_url = format_url(
             f"""
-            {self._base_url}/appConnectorGroup
+            {self._base_endpoint}/appConnectorGroup
             """
         )
 
@@ -309,10 +302,10 @@ class AppConnectorGroupAPI(APIClient):
         http_method = "put".upper()
         api_url = format_url(
             f"""
-            {self._base_url}/appConnectorGroup/{group_id}
+            {self._base_endpoint}/appConnectorGroup/{group_id}
             """
         )
-        
+
         existing_group, _, error = self.get_connector_group(group_id, **kwargs)
         if error:
             return (None, None, error)
@@ -352,7 +345,7 @@ class AppConnectorGroupAPI(APIClient):
         http_method = "delete".upper()
         api_url = format_url(
             f"""
-            {self._base_url}/appConnectorGroup/{group_id}
+            {self._base_endpoint}/appConnectorGroup/{group_id}
             """
         )
 
@@ -369,4 +362,3 @@ class AppConnectorGroupAPI(APIClient):
             return (None, response, error)
 
         return (None, response, None)
-

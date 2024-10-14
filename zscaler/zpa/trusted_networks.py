@@ -13,6 +13,7 @@ WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
+
 from zscaler.api_client import APIClient
 from zscaler.zpa.models.trusted_network import TrustedNetwork
 from zscaler.utils import format_url
@@ -24,14 +25,13 @@ class TrustedNetworksAPI(APIClient):
     A client object for the Trusted Networks resource.
     """
 
-    def __init__(self):
-        super().__init__()  # Inherit initialization from APIClient
-        self._base_url = ""
+    def __init__(self, request_executor, config):
+        super().__init__()
+        self._request_executor = request_executor
+        customer_id = config["client"].get("customerId")
+        self._base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
-    def list_trusted_networks(
-            self, query_params=None,
-            keep_empty_params=False
-    ) -> tuple:
+    def list_trusted_networks(self, query_params=None, keep_empty_params=False) -> tuple:
         """
         Returns a list of all configured trusted networks.
 
@@ -44,16 +44,16 @@ class TrustedNetworksAPI(APIClient):
 
         Returns:
             list: A list of `TrustedNetwork` instances.
-        
+
         Example:
             >>> trusted_networks = zpa.trusted_networks.list_trusted_networks(search="example")
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/network")
+        api_url = format_url(f"{self._base_endpoint}/network")
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
-        
+
         # Build the query string
         if query_params:
             encoded_query_params = urlencode(query_params)
@@ -82,9 +82,7 @@ class TrustedNetworksAPI(APIClient):
         try:
             result = []
             for item in response.get_body():
-                result.append(TrustedNetwork(
-                    self.form_response_body(item)
-                ))
+                result.append(TrustedNetwork(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
@@ -103,7 +101,7 @@ class TrustedNetworksAPI(APIClient):
         http_method = "get".upper()
         api_url = format_url(
             f"""
-            {self._base_url}/network/{network_id}
+            {self._base_endpoint}/network/{network_id}
         """
         )
 
