@@ -20,6 +20,8 @@ from zscaler.zia.rule_labels import RuleLabelsAPI
 from zscaler.zia.security_policy_settings import SecurityPolicyAPI
 from zscaler.zia.ssl_inspection import SSLInspectionAPI
 from zscaler.zia.traffic import TrafficForwardingAPI
+from zscaler.zia.traffic_vpn_credentials import TrafficVPNCredentialAPI
+from zscaler.zia.traffic_static_ip import TrafficStaticIPAPI
 from zscaler.zia.url_categories import URLCategoriesAPI
 from zscaler.zia.url_filtering import URLFilteringAPI
 from zscaler.zia.user_management import UserManagementAPI
@@ -208,6 +210,22 @@ class ZIAService:
 
         """
         return TrafficForwardingAPI(self._request_executor)
+
+    @property
+    def traffic_vpn_credentials(self):
+        """
+        The interface object for the :ref:`ZIA Traffic VPN Credential interface <zia-traffic_vpn_credentials>`.
+
+        """
+        return TrafficVPNCredentialAPI(self._request_executor)
+
+    @property
+    def traffic_static_ip(self):
+        """
+        The interface object for the :ref:`ZIA Traffic Static IP interface <zia-traffic_static_ip>`.
+
+        """
+        return TrafficStaticIPAPI(self._request_executor)
 
     @property
     def url_categories(self):

@@ -40,7 +40,10 @@ class ActivationAPI(APIClient):
             >>> config_status, response, error = zia.config.status()
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._zia_base_endpoint}/status")
+        api_url = format_url(f"""
+            {self._zia_base_endpoint}
+            /status
+        """)
 
         # Create the request
         request, error = self._request_executor.create_request(
@@ -51,7 +54,8 @@ class ActivationAPI(APIClient):
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, Activation)
+        response, error = self._request_executor\
+            .execute(request, Activation)
 
         if error:
             return (None, response, error)
@@ -74,7 +78,10 @@ class ActivationAPI(APIClient):
             >>> config_activate, response, error = zia.config.activate()
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._zia_base_endpoint}/status/activate")
+        api_url = format_url(f"""
+            {self._zia_base_endpoint}
+            /status/activate
+        """)
 
         # Create the request
         request, error = self._request_executor.create_request(

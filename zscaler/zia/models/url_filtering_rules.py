@@ -39,23 +39,42 @@ class URLFilteringRule(ZscalerObject):
     def __init__(self, config=None):
         super().__init__(config)
         if config:
-            self.id = config["id"] if "id" in config else None
-            self.name = config["name"] if "name" in config else None
-            self.order = config["order"] if "order" in config else None
-            self.rank = config["rank"] if "rank" in config else None
-            self.state = config["state"] if "state" in config else None
-            self.end_user_notification_url = config["endUserNotificationUrl"] if "endUserNotificationUrl" in config else None
-            self.block_override = config["blockOverride"] if "blockOverride" in config else False
-            self.time_quota = config["timeQuota"] if "timeQuota" in config else 0
-            self.size_quota = config["sizeQuota"] if "sizeQuota" in config else 0
-            self.description = config["description"] if "description" in config else None
-            self.validity_start_time = config["validityStartTime"] if "validityStartTime" in config else None
-            self.validity_end_time = config["validityEndTime"] if "validityEndTime" in config else None
-            self.validity_time_zone_id = config["validityTimeZoneId"] if "validityTimeZoneId" in config else None
-            self.last_modified_time = config["lastModifiedTime"] if "lastModifiedTime" in config else None
-            self.enforce_time_validity = config["enforceTimeValidity"] if "enforceTimeValidity" in config else False
-            self.action = config["action"] if "action" in config else None
-            self.ciparule = config["ciparule"] if "ciparule" in config else False
+            self.id = config["id"]\
+                if "id" in config else None
+            self.name = config["name"]\
+                if "name" in config else None
+            self.order = config["order"]\
+                if "order" in config else None
+            self.rank = config["rank"]\
+                if "rank" in config else None
+            self.state = config["state"]\
+                if "state" in config else None
+            self.end_user_notification_url = config["endUserNotificationUrl"]\
+                if "endUserNotificationUrl" in config else None
+            self.block_override = config["blockOverride"]\
+                if "blockOverride" in config else False
+            self.time_quota = config["timeQuota"]\
+                if "timeQuota" in config else 0
+            self.size_quota = config["sizeQuota"]\
+                if "sizeQuota" in config else 0
+            self.description = config["description"]\
+                if "description" in config else None
+            self.validity_start_time = config["validityStartTime"]\
+                if "validityStartTime" in config else None
+            self.validity_end_time = config["validityEndTime"]\
+                if "validityEndTime" in config else None
+            self.validity_time_zone_id = config["validityTimeZoneId"]\
+                if "validityTimeZoneId" in config else None
+            self.last_modified_time = config["lastModifiedTime"]\
+                if "lastModifiedTime" in config else None
+            self.last_modified_by = config["lastModifiedBy"]\
+                if "lastModifiedBy" in config else None
+            self.enforce_time_validity = config["enforceTimeValidity"]\
+                if "enforceTimeValidity" in config else False
+            self.action = config["action"]\
+                if "action" in config else None
+            self.ciparule = config["ciparule"]\
+                if "ciparule" in config else False
 
             # Handling lists of simple values
             self.protocols = ZscalerCollection.form_list(
@@ -116,11 +135,6 @@ class URLFilteringRule(ZscalerObject):
             self.cbi_profile = isolation.CBIProfile(config["cbiProfile"])\
                 if "cbiProfile" in config else None
 
-            self.last_modified_by = {
-                "id": config["lastModifiedBy"]["id"] if "lastModifiedBy" in config and "id" in config["lastModifiedBy"] else None,
-                "name": config["lastModifiedBy"]["name"] if "lastModifiedBy" in config and "name" in config["lastModifiedBy"] else None
-            } if "lastModifiedBy" in config else None
-
         else:
             # Defaults if config is None
             self.id = None
@@ -137,6 +151,7 @@ class URLFilteringRule(ZscalerObject):
             self.validity_end_time = None
             self.validity_time_zone_id = None
             self.last_modified_time = None
+            self.last_modified_by = None
             self.enforce_time_validity = False
             self.action = None
             self.ciparule = False
@@ -158,7 +173,6 @@ class URLFilteringRule(ZscalerObject):
             self.devices = []
             self.device_groups = []
             self.cbi_profile = None
-            self.last_modified_by = None
 
     def request_format(self):
         """
@@ -180,6 +194,7 @@ class URLFilteringRule(ZscalerObject):
             "validityEndTime": self.validity_end_time,
             "validityTimeZoneId": self.validity_time_zone_id,
             "lastModifiedTime": self.last_modified_time,
+            "lastModifiedBy": self.last_modified_by,
             "enforceTimeValidity": self.enforce_time_validity,
             "action": self.action,
             "ciparule": self.ciparule,
@@ -188,20 +203,19 @@ class URLFilteringRule(ZscalerObject):
             "urlCategories2": self.url_categories2,
             "requestMethods": self.request_methods,
             "deviceTrustLevels": self.device_trust_levels,
-            "locations": [location.request_format() for location in self.locations],
+            "locations": [location.request_format() for location in (self.locations or [])],
             "groups": [group.request_format() for group in self.groups],
-            "departments": [department.request_format() for department in self.departments],
+            "departments": [department.request_format() for department in (self.departments or [])],
             "users": [user.request_format() for user in self.users],
-            "timeWindows": [window.request_format() for window in self.time_windows],
-            "workloadGroups": [group.request_format() for group in self.workload_groups],
-            "overrideUsers": [user.request_format() for user in self.override_users],
-            "overrideGroups": [group.request_format() for group in self.override_groups],
-            "locationGroups": [group.request_format() for group in self.location_groups],
-            "labels": [label.request_format() for label in self.labels],
-            "devices": [device.request_format() for device in self.devices],
-            "deviceGroups": [group.request_format() for group in self.device_groups],
+            "timeWindows": [window.request_format() for window in (self.time_windows or [])],
+            "workloadGroups": [group.request_format() for group in (self.workload_groups or [])],
+            "overrideUsers": [user.request_format() for user in (self.override_users or [])],
+            "overrideGroups": [group.request_format() for group in (self.override_groups or [])],
+            "locationGroups": [group.request_format() for group in (self.location_groups or [])],
+            "labels": [label.request_format() for label in (self.labels or [])],
+            "devices": [device.request_format() for device in (self.devices or [])],
+            "deviceGroups": [group.request_format() for group in (self.device_groups or [])],
             "cbiProfile": self.cbi_profile.request_format() if self.cbi_profile else None,
-            "lastModifiedBy": self.last_modified_by.request_format() if self.last_modified_by else None
         }
         parent_req_format.update(current_obj_format)
         return parent_req_format

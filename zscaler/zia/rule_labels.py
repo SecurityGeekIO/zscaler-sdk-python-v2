@@ -82,7 +82,8 @@ class RuleLabelsAPI(APIClient):
         headers = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(
+        request, error = self._request_executor\
+            .create_request(
             http_method, api_url, body, headers
         )
         
@@ -111,11 +112,10 @@ class RuleLabelsAPI(APIClient):
         Fetches a specific rule labels by ID.
 
         Args:
-            label_id (str): The unique identifier for the connector group.
-            query_params (dict, optional): Map of query parameters for the request.
-
+            label_id (int): The unique identifier for the rule label.
+            
         Returns:
-            tuple: A tuple containing (AppConnectorGroup instance, Response, error).
+            tuple: A tuple containing (Rule Label instance, Response, error).
         """
         http_method = "get".upper()
         api_url = format_url(f"""
@@ -126,7 +126,8 @@ class RuleLabelsAPI(APIClient):
         body = {}
         headers = {}
 
-        request, error = self._request_executor.create_request(
+        request, error = self._request_executor\
+            .create_request(
             http_method, api_url, body, headers
         )
 
@@ -147,7 +148,7 @@ class RuleLabelsAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
 
-    def add_label(self, label):
+    def add_label(self, label) -> tuple:
         """
         Creates a new ZIA Rule Label.
 
@@ -159,8 +160,7 @@ class RuleLabelsAPI(APIClient):
             tuple: A tuple containing the newly added Rule Label (Box), response, and error.
         """
         http_method = "post".upper()
-        api_url = format_url(
-            f"""
+        api_url = format_url(f"""
             {self._zia_base_endpoint}
             /ruleLabels
         """
@@ -183,16 +183,18 @@ class RuleLabelsAPI(APIClient):
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, RuleLabels)
+        response, error = self._request_executor\
+            .execute(request, RuleLabels)
 
         if error:
             return (None, response, error)
 
         try:
-            result = RuleLabels(self.form_response_body(response.get_body()))
+            result = RuleLabels(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
-
         return (result, response, None)
 
     def update_label(
@@ -206,7 +208,7 @@ class RuleLabelsAPI(APIClient):
             label_id (str): The unique ID for the Rule Label.
 
         Returns:
-            tuple: A tuple containing the updated Rule Label (Box), response, and error.
+            tuple: A tuple containing the updated Rule Label, response, and error.
         """
         http_method = "put".upper()
         api_url = format_url(f"""
@@ -216,26 +218,29 @@ class RuleLabelsAPI(APIClient):
 
         # If label is already a dictionary, use it, otherwise convert the label object to a dictionary
         if isinstance(label, dict):
-            payload = label
+            body = label
         else:
-            payload = label.as_dict()
+            body = label.as_dict()
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, payload, {}, {})
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, {}, {})
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, RuleLabels)
+        response, error = self._request_executor\
+            .execute(request, RuleLabels)
         if error:
             return (None, response, error)
 
         # Parse the response into a RuleLabels instance
         try:
-            result = RuleLabels(self.form_response_body(response.get_body()))
+            result = RuleLabels(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
-
         return (result, response, None)
 
     def delete_label(self, label_id: int) -> tuple:
@@ -256,12 +261,13 @@ class RuleLabelsAPI(APIClient):
 
         params = {}
 
-        request, error = self._request_executor.create_request(http_method, api_url, params=params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
-
         return (None, response, None)

@@ -17,6 +17,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 from zscaler.oneapi_object import ZscalerObject
 from zscaler.oneapi_collection import ZscalerCollection
 
+from zscaler.zia.models import traffic_vpn_credentials as vpn_credentials
 class LocationManagement(ZscalerObject):
     """
     A class representing a Location object.
@@ -116,15 +117,12 @@ class LocationManagement(ZscalerObject):
                 config["dynamiclocationGroups"] if "dynamiclocationGroups" in config else [], dict
             )
 
-            # Handling nested objects (vpnCredentials is optional)
             self.vpn_credentials = ZscalerCollection.form_list(
-                config["vpnCredentials"] if "vpnCredentials" in config else [], dict
+                config["vpnCredentials"] if "vpnCredentials" in config else [], vpn_credentials.VPNCredentials
             )
 
-            # Handling flat list (ipAddresses)
             self.ip_addresses = ZscalerCollection.form_list(
-                config["ipAddresses"] if "ipAddresses" in config else [],
-                str
+                config["ipAddresses"] if "ipAddresses" in config else [], str
             )
 
         else:
@@ -221,17 +219,10 @@ class LocationManagement(ZscalerObject):
             "excludeFromManualGroups": self.exclude_from_manual_groups,
             "profile": self.profile,
             "description": self.description,
-            "staticLocationGroups": [
-                group for group in self.static_location_groups
-            ],
-            "dynamiclocationGroups": [
-                group for group in self.dynamic_location_groups
-            ],
-            "vpnCredentials": [
-                vpn_credential for vpn_credential in self.vpn_credentials
-            ],
-            "ipAddresses": self.ip_addresses
+            "ipAddresses": self.ip_addresses,
+            "staticLocationGroups": [static.request_format() for static in (self.static_location_groups or [])],
+            "dynamiclocationGroups": [dyn.request_format() for dyn in (self.dynamic_location_groups or [])],
+            "vpnCredentials": [vpn.request_format() for vpn in (self.vpn_credentials or [])],
         }
         parent_req_format.update(current_obj_format)
         return parent_req_format
-

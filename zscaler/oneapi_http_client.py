@@ -136,14 +136,35 @@ class HTTPClient:
         # Log and handle non-successful responses
         logger.error(f"Error response from {url}: {response_details.status_code} - {formatted_response}")
 
-        # Handle specific error conditions (e.g., 4xx, 5xx)
-        try:
-            error = ZscalerAPIError(url, response_details, formatted_response)
-        except Exception as ex:
-            logger.error(f"Error instantiating ZscalerAPIError: {ex}")
-            return None, ex
+        status_code = response_details.status
 
-        return None, error
+        # check if call was succesful
+        if 200 <= status_code <= 299:
+            return (formatted_response, None)
+        else:
+            # create errors
+            try:
+                error = ZscalerAPIError(url, response_details, formatted_response)
+                if HTTPClient.raise_exception:
+                    raise ZscalerAPIException(formatted_response)
+            except ZscalerAPIException:
+                raise
+            except Exception:
+                error = HTTPError(url, response_details, formatted_response)
+                if HTTPClient.raise_exception:
+                    logger.exception(formatted_response)
+                    raise HTTPException(formatted_response)
+            logger.error(error)
+            return (None, error)
+        
+        # # Handle specific error conditions (e.g., 4xx, 5xx)
+        # try:
+        #     error = ZscalerAPIError(url, response_details, formatted_response)
+        # except Exception as ex:
+        #     logger.error(f"Error instantiating ZscalerAPIError: {ex}")
+        #     return None, ex
+
+        # return None, error
 
     @staticmethod
     def format_binary_data(data):

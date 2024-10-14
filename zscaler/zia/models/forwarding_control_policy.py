@@ -55,15 +55,10 @@ class ForwardingControlRule(ZscalerObject):
                 if "description" in config else None
             self.last_modified_time = config["lastModifiedTime"]\
                 if "lastModifiedTime" in config else None
+            self.last_modified_by = config["lastModifiedBy"]\
+                if "lastModifiedBy" in config else None   
             self.zpa_broker_rule = config["zpaBrokerRule"]\
                 if "zpaBrokerRule" in config else None
-
-            # Nested single object
-            self.last_modified_by = {
-                "id": config["lastModifiedBy"]["id"] if "lastModifiedBy" in config and "id" in config["lastModifiedBy"] else None,
-                "name": config["lastModifiedBy"]["name"] if "lastModifiedBy" in config and "name" in config["lastModifiedBy"] else None,
-                "externalId": config["lastModifiedBy"]["externalId"] if "lastModifiedBy" in config and "externalId" in config["lastModifiedBy"] else None
-            } if "lastModifiedBy" in config else None
 
             # Handling lists of simple values
             self.src_ips = ZscalerCollection.form_list(
@@ -211,33 +206,33 @@ class ForwardingControlRule(ZscalerObject):
             "forwardMethod": self.forward_method,
             "description": self.description,
             "lastModifiedTime": self.last_modified_time,
-            "lastModifiedBy": self.last_modified_by if self.last_modified_by else None,
+            "lastModifiedBy": self.last_modified_by,
             "srcIps": self.src_ips,
             "destAddresses": self.dest_addresses,
             "destIpCategories": self.dest_ip_categories,
             "resCategories": self.res_categories,
             "destCountries": self.dest_countries,
             "nwApplications": self.nw_applications,
-            "locations": [loc.request_format() for loc in self.locations],
-            "locationGroups": [loc_group.request_format() for loc_group in self.location_groups],
-            "ecGroups": [ec_group.request_format() for ec_group in self.ec_groups],
-            "departments": [dept.request_format() for dept in self.departments],
-            "groups": [group.request_format() for group in self.groups],
-            "users": [user.request_format() for user in self.users],
-            "srcIpGroups": [sig.request_format() for sig in self.src_ip_groups],
-            "srcIpv6Groups": [sig.request_format() for sig in self.src_ipv6_groups],
-            "destIpGroups": [dig.request_format() for dig in self.dest_ip_groups],
-            "destIpv6Groups": [dig.request_format() for dig in self.dest_ipv6_groups],
-            "nwServices": [service.request_format() for service in self.nw_services],
-            "nwServiceGroups": [service_group.request_format() for service_group in self.nw_service_groups],
-            "nwApplicationGroups": [app_group.request_format() for app_group in self.nw_application_groups],
-            "timeWindows": [window.request_format() for window in self.time_windows],
-            "labels": [label.request_format() for label in self.labels],
-            "devices": [device.request_format() for device in self.devices],
-            "deviceGroups": [dg.request_format() for dg in self.device_groups],
-            "zpaAppSegments": [zpa.request_format() for zpa in self.zpa_app_segments],
-            "zpaApplicationSegments": [zpa_app.request_format() for zpa_app in self.zpa_application_segments],
-            "zpaApplicationSegmentGroups": [zpa_app_group.request_format() for zpa_app_group in self.zpa_application_segment_groups],
+            "locations": [loc.request_format() for loc in (self.locations or [])],
+            "locationGroups": [loc_group.request_format() for loc_group in (self.location_groups or [])],
+            "ecGroups": [ec_group.request_format() for ec_group in (self.ec_groups or [])],
+            "departments": [dept.request_format() for dept in (self.departments or [])],
+            "groups": [group.request_format() for group in (self.groups or [])],
+            "users": [user.request_format() for user in (self.users or [])],
+            "srcIpGroups": [sig.request_format() for sig in (self.src_ip_groups or [])],
+            "srcIpv6Groups": [sig.request_format() for sig in (self.src_ipv6_groups or [])],
+            "destIpGroups": [dig.request_format() for dig in (self.dest_ip_groups or [])],
+            "destIpv6Groups": [dig.request_format() for dig in (self.dest_ipv6_groups or [])],
+            "nwServices": [service.request_format() for service in (self.nw_services or [])],
+            "nwServiceGroups": [service_group.request_format() for service_group in (self.nw_service_groups or [])],
+            "nwApplicationGroups": [app_group.request_format() for app_group in (self.nw_application_groups or [])],
+            "timeWindows": [window.request_format() for window in (self.time_windows or [])],
+            "labels": [label.request_format() for label in (self.labels or [])],
+            "devices": [device.request_format() for device in (self.devices or [])],
+            "deviceGroups": [dg.request_format() for dg in (self.device_groups or [])],
+            "zpaAppSegments": [zpa.request_format() for zpa in (self.zpa_app_segments or [])],
+            "zpaApplicationSegments": [zpa_app.request_format() for zpa_app in (self.zpa_application_segments or [])],
+            "zpaApplicationSegmentGroups": [zpa_app_group.request_format() for zpa_app_group in (self.zpa_application_segment_groups or [])],
             "proxyGateway": self.proxy_gateway.request_format() if self.proxy_gateway else None,
             "zpaGateway": self.zpa_gateway.request_format() if self.zpa_gateway else None,
             "zpaBrokerRule": self.zpa_broker_rule

@@ -33,11 +33,11 @@ class CBIProfileAPI(APIClient):
         self._request_executor = request_executor
 
     def list_isolation_profiles(
-            self, query_params=None,
-            keep_empty_params=False
+            self,
+            query_params=None,
     ) -> tuple:
         """
-        Enumerates isolation profiles in your organization with pagination.
+        Lists isolation profiles in your organization with pagination.
         A subset of isolation profiles  can be returned that match a supported
         filter expression or query.
 
@@ -47,7 +47,6 @@ class CBIProfileAPI(APIClient):
                 [query_params.search] {str}: Search string for filtering results.
                 [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
                 [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
-            keep_empty_params {bool}: Whether to include empty parameters in the query string.
 
         Returns:
             tuple: A tuple containing (list of isolation profiles instances, Response, error)
@@ -57,9 +56,11 @@ class CBIProfileAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/browserIsolation/profiles")
+        api_url = format_url(f"""
+            {self._zia_base_endpoint}
+            /browserIsolation/profiles
+        """)
 
-        # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
 
         # Build the query string
@@ -70,18 +71,18 @@ class CBIProfileAPI(APIClient):
         # Prepare request body and headers
         body = {}
         headers = {}
-        form = {}
 
         # Create the request
         request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
+            http_method, api_url, body, headers
         )
-
+        
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
 
         if error:
             return (None, response, error)

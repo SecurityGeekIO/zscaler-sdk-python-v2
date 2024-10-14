@@ -7,6 +7,7 @@ from zscaler.user_agent import UserAgent
 from zscaler.utils import convert_date_time_to_seconds
 from zscaler.error_messages import ERROR_MESSAGE_429_MISSING_DATE_X_RESET
 from http import HTTPStatus
+from zscaler.helpers import convert_keys_to_snake_case, to_lower_camel_case
 
 # Setup logging
 logging.basicConfig(level=logging.DEBUG)
@@ -131,6 +132,13 @@ class RequestExecutor:
 
         print(f"Request headers: {headers}")
 
+        # Convert body and params to camelCase before sending
+        if body:
+            body = {to_lower_camel_case(k): v for k, v in body.items()}
+
+        if params:
+            params = {to_lower_camel_case(k): v for k, v in params.items()}
+
         print(f"Final request body (before JSON serialization): {body}")
 
         # Construct the request dictionary
@@ -182,9 +190,13 @@ class RequestExecutor:
         if error:
             logger.error(f"Error in HTTP response: {error}")
             return None, error
-
+            
         logger.debug(f"Successful response from {request['url']}")
         logger.debug(f"Response Data: {response_data}")
+
+        # Convert response body keys from camelCase to snake_case if response_data is a dict or list
+        if isinstance(response_data, (dict, list)):
+            response_data = convert_keys_to_snake_case(response_data)
 
         # Return the ZscalerAPIResponse object (this will handle pagination)
         return (
@@ -198,7 +210,7 @@ class RequestExecutor:
             ),
             None,
         )
-
+            
     def fire_request(self, request):
         """
         Send request using HTTP client.

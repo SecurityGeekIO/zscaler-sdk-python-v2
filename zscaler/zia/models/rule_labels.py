@@ -31,43 +31,18 @@ class RuleLabels(ZscalerObject):
         super().__init__(config)
 
         if config:
-            # Defensive approach using 'if' conditions
-            if "id" in config:
-                self.id = config["id"]
-            else:
-                self.id = None
-
-            if "name" in config:
-                self.name = config["name"]
-            else:
-                self.name = None
-
-            if "lastModifiedTime" in config:
-                self.last_modified_time = config["lastModifiedTime"]
-            else:
-                self.last_modified_time = None
-
-            if "lastModifiedBy" in config:
-                if "id" in config["lastModifiedBy"] and "name" in config["lastModifiedBy"]:
-                    self.last_modified_by = {
-                        "id": config["lastModifiedBy"]["id"],
-                        "name": config["lastModifiedBy"]["name"]
-                    }
-                else:
-                    self.last_modified_by = None
-            else:
-                self.last_modified_by = None
-
-            if "createdBy" in config:
-                if "id" in config["createdBy"] and "name" in config["createdBy"]:
-                    self.created_by = {
-                        "id": config["createdBy"]["id"],
-                        "name": config["createdBy"]["name"]
-                    }
-                else:
-                    self.created_by = None
-            else:
-                self.created_by = None
+            self.id = config["id"]\
+                if "id" in config else None
+            self.name = config["name"]\
+                if "name" in config else None
+            self.description = config["description"]\
+                if "description" in config else None
+            self.last_modified_time = config["lastModifiedTime"]\
+                if "lastModifiedTime" in config else None
+            self.last_modified_by = config["lastModifiedBy"]\
+                if "lastModifiedBy" in config else None   
+            self.created_by = config["createdBy"]\
+                if "createdBy" in config else None 
 
             if "referencedRuleCount" in config:
                 self.referenced_rule_count = config["referencedRuleCount"]

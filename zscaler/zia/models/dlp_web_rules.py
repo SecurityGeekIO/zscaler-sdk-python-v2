@@ -242,21 +242,21 @@ class DLPWebRules(ZscalerObject):
             "protocols": self.protocols,
             "fileTypes": self.file_types,
             "cloudApplications": self.cloud_applications,
-            "locations": [location.request_format() for location in self.locations],
-            "locationGroups": [group.request_format() for group in self.location_groups],
-            "groups": [group.request_format() for group in self.groups],
-            "departments": [department.request_format() for department in self.departments],
-            "users": [user.request_format() for user in self.users],
-            "urlCategories": [url_category.request_format() for url_category in self.url_categories],
-            "zpaAppSegments": [segment.request_format() for segment in self.zpa_app_segments],
-            "workloadGroups": [group.request_format() for group in self.workload_groups],
-            "includedDomainProfiles": [profile.request_format() for profile in self.included_domain_profiles],
-            "excludedDomainProfiles": [exclude_profile.request_format() for exclude_profile in self.excluded_domain_profiles],
-            "sourceIpGroups": [group.request_format() for group in self.source_ip_groups],
-            "labels": [label.request_format() for label in self.labels],
-            "excludedGroups": [group.request_format() for group in self.excluded_groups],  # New Attribute
-            "excludedDepartments": [department.request_format() for department in self.excluded_departments],  # New Attribute
-            "excludedUsers": [user.request_format() for user in self.excluded_users],  # New Attribute
+            "locations": [location.request_format() for location in (self.locations or [])],
+            "locationGroups": [group.request_format() for group in (self.location_groups or [])],
+            "groups": [group.request_format() for group in (self.groups or [])],
+            "departments": [department.request_format() for department in (self.departments or [])],
+            "users": [user.request_format() for user in (self.users or [])],
+            "urlCategories": [url_category.request_format() for url_category in (self.url_categories or [])],
+            "zpaAppSegments": [segment.request_format() for segment in (self.zpa_app_segments or [])],
+            "workloadGroups": [group.request_format() for group in (self.workload_groups or [])],
+            "includedDomainProfiles": [profile.request_format() for profile in (self.included_domain_profiles or [])],
+            "excludedDomainProfiles": [exclude_profile.request_format() for exclude_profile in (self.excluded_domain_profiles or [])],
+            "sourceIpGroups": [group.request_format() for group in (self.source_ip_groups or [])],
+            "labels": [label.request_format() for label in (self.labels or [])],
+            "excludedGroups": [group.request_format() for group in (self.excluded_groups or [])],  # New Attribute
+            "excludedDepartments": [department.request_format() for department in (self.excluded_departments or [])],  # New Attribute
+            "excludedUsers": [user.request_format() for user in (self.excluded_users or [])],  # New Attribute
             "auditor": self.auditor.request_format()\
                 if self.auditor else None,
             "notificationTemplate": self.notification_template.request_format()\

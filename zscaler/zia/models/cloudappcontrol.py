@@ -63,6 +63,8 @@ class CloudApplicationControl(ZscalerObject):
                 if "validityTimeZoneId" in config else None
             self.last_modified_time = config["lastModifiedTime"]\
                 if "lastModifiedTime" in config else None
+            self.last_modified_by = config["lastModifiedBy"]\
+                if "lastModifiedBy" in config else None  
             self.enforce_time_validity = config["enforceTimeValidity"]\
                 if "enforceTimeValidity" in config else False
             self.eun_enabled = config["eunEnabled"]\
@@ -136,11 +138,6 @@ class CloudApplicationControl(ZscalerObject):
             self.cloud_app_risk_profile = ZscalerCollection.form_list(
                 config["cloudAppRiskProfile"] if "cloudAppRiskProfile" in config else [], common_reference.ResourceReference
             )
-                
-            self.last_modified_by = {
-                "id": config["lastModifiedBy"]["id"] if "lastModifiedBy" in config and "id" in config["lastModifiedBy"] else None,
-                "name": config["lastModifiedBy"]["name"] if "lastModifiedBy" in config and "name" in config["lastModifiedBy"] else None
-            } if "lastModifiedBy" in config else None
 
             self.cbi_profile = isolation.CBIProfile(config["cbiProfile"])\
                 if "cbiProfile" in config else None
@@ -159,6 +156,7 @@ class CloudApplicationControl(ZscalerObject):
             self.validity_end_time = None
             self.validity_time_zone_id = None
             self.last_modified_time = None
+            self.last_modified_by = None
             self.enforce_time_validity = False
             self.eun_enabled = False
             self.eun_template_id = None
@@ -184,7 +182,6 @@ class CloudApplicationControl(ZscalerObject):
             self.sharing_domain_profiles = []
             self.form_sharing_domain_profiles = []
             self.cloud_app_risk_profile = None
-            self.last_modified_by = None
             self.cbi_profile = None
 
     def request_format(self):
@@ -205,6 +202,7 @@ class CloudApplicationControl(ZscalerObject):
             "validityEndTime": self.validity_end_time,
             "validityTimeZoneId": self.validity_time_zone_id,
             "lastModifiedTime": self.last_modified_time,
+            "lastModifiedBy": self.last_modified_by,
             "enforceTimeValidity": self.enforce_time_validity,
             "eunEnabled": self.eun_enabled,
             "eunTemplateId": self.eun_template_id,
@@ -215,22 +213,21 @@ class CloudApplicationControl(ZscalerObject):
             "userAgentTypes": self.user_agent_types,
             "deviceTrustLevels": self.device_trust_levels,
             "userRiskScoreLevels": self.user_risk_score_levels,
-            "locations": [loc.request_format() for loc in self.locations],
-            "groups": [grp.request_format() for grp in self.groups],
-            "departments": [dept.request_format() for dept in self.departments],
-            "users": [usr.request_format() for usr in self.users],
-            "applications": [app.request_format() for app in self.applications],
-            "locationGroups": [lg.request_format() for lg in self.location_groups],
-            "timeWindows": [tw.request_format() for tw in self.time_windows],
-            "devices": [dev.request_format() for dev in self.devices],
-            "deviceGroups": [dg.request_format() for dg in self.device_groups],
-            "tenancyProfileIds": [tp.request_format() for tp in self.tenancy_profile_ids],
-            "labels": [label.request_format() for label in self.labels],
-            "cloudAppInstances": [inst.request_format() for inst in self.cloud_app_instances],
-            "sharingDomainProfiles": [sdp.request_format() for sdp in self.sharing_domain_profiles],
-            "formSharingDomainProfiles": [fsdp.request_format() for fsdp in self.form_sharing_domain_profiles],
+            "locations": [loc.request_format() for loc in (self.locations or [])],
+            "groups": [grp.request_format() for grp in (self.groups or [])],
+            "departments": [dept.request_format() for dept in (self.departments or [])],
+            "users": [usr.request_format() for usr in (self.users or [])],
+            "applications": [app.request_format() for app in (self.applications or [])],
+            "locationGroups": [lg.request_format() for lg in (self.location_groups or [])],
+            "timeWindows": [tw.request_format() for tw in (self.time_windows or [])],
+            "devices": [dev.request_format() for dev in (self.devices or [])],
+            "deviceGroups": [dg.request_format() for dg in (self.device_groups or [])],
+            "tenancyProfileIds": [tp.request_format() for tp in (self.tenancy_profile_ids or [])],
+            "labels": [label.request_format() for label in (self.labels or [])],
+            "cloudAppInstances": [inst.request_format() for inst in (self.cloud_app_instances or [])],
+            "sharingDomainProfiles": [sdp.request_format() for sdp in (self.sharing_domain_profiles or [])],
+            "formSharingDomainProfiles": [fsdp.request_format() for fsdp in (self.form_sharing_domain_profiles or [])],
             "cloudAppRiskProfile": self.cloud_app_risk_profile.request_format() if self.cloud_app_risk_profile else None,
-            "lastModifiedBy": self.last_modified_by.request_format() if self.last_modified_by else None,
             "cbiProfile": self.cbi_profile.request_format() if self.cbi_profile else None
         }
         parent_req_format.update(current_obj_format)
