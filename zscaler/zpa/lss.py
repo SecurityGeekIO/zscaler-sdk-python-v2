@@ -36,7 +36,8 @@ class LSSConfigControllerAPI(APIClient):
         super().__init__()
         self._request_executor = request_executor
         customer_id = config["client"].get("customerId")
-        self._base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
+        self._base_endpoint = f"/zpa/mgmtconfig/v2/admin/customers/{customer_id}"
+        self._base_endpoint_v2_typesformats = "/zpa/mgmtconfig/v2/admin"
 
     def _create_policy(self, conditions: list) -> list:
         """
@@ -161,12 +162,7 @@ class LSSConfigControllerAPI(APIClient):
             LSSConfig: The corresponding LSS Receiver config object.
         """
         http_method = "get".upper()
-        api_url = format_url(
-            f"""
-            {self._base_endpoint}
-            /lssConfig/{lss_config_id}
-            """
-        )
+        api_url = format_url(f"{self._base_endpoint}/lssConfig/{lss_config_id}")
 
         request, error = self._request_executor.create_request(http_method, api_url, {}, kwargs)
         if error:
@@ -243,12 +239,7 @@ class LSSConfigControllerAPI(APIClient):
         http_method = "post".upper()
 
         # Construct the API URL
-        api_url = format_url(
-            f"""
-            {self._base_endpoint}
-            /lssConfig
-            """
-        )
+        api_url = format_url(f"{self._base_endpoint}/lssConfig")
 
         # Map the source log type to ZPA internal log codes
         source_log_type = self.source_log_map[source_log_type]
@@ -436,13 +427,7 @@ class LSSConfigControllerAPI(APIClient):
         """
 
         http_method = "get".upper()
-        api_url = format_url(
-            f"""
-            {self._base_endpoint}
-            /clientTypes"
-        """,
-            api_version="v2_lss",
-        )
+        api_url = format_url(f"{self._base_endpoint_v2_typesformats}/lssConfig/clientTypes")
 
         request, error = self._request_executor.create_request(http_method, api_url)
         if error:
@@ -475,13 +460,7 @@ class LSSConfigControllerAPI(APIClient):
             >>> specific_format = zpa.lss.get_log_formats('zpn_ast_comprehensive_stats')
         """
         http_method = "get".upper()
-        api_url = format_url(
-            f"""
-            {self._base_endpoint}
-            /lssConfig/logType/formats"
-        """,
-            api_version="v2",
-        )
+        api_url = format_url(f"{self._base_endpoint_v2_typesformats}/lssConfig/logType/formats")
 
         request, error = self._request_executor.create_request(http_method, api_url)
         if error:
@@ -514,13 +493,7 @@ class LSSConfigControllerAPI(APIClient):
             >>> user_activity_codes = zpa.lss.get_status_codes(log_type="user_activity")
         """
         http_method = "get".upper()
-        api_url = format_url(
-            f"""
-            {self._base_endpoint}
-            /statusCodes"
-        """,
-            api_version="v2",
-        )
+        api_url = format_url(f"{self._base_endpoint_v2_typesformats}/statusCodes")
 
         request, error = self._request_executor.create_request(http_method, api_url)
         if error:

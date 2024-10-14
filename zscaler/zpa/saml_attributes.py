@@ -30,6 +30,7 @@ class SAMLAttributesAPI(APIClient):
         self._request_executor = request_executor
         customer_id = config["client"].get("customerId")
         self._base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
+        self._base_endpoint_v2 = f"/zpa/mgmtconfig/v2/admin/customers/{customer_id}"
 
     def list_attributes(self, query_params=None, keep_empty_params=False) -> tuple:
         """
@@ -50,7 +51,7 @@ class SAMLAttributesAPI(APIClient):
             ...    pprint(saml_attribute)
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_endpoint}/samlAttribute", api_version="v2")
+        api_url = format_url(f"{self._base_endpoint_v2}/samlAttribute")
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
@@ -111,7 +112,7 @@ class SAMLAttributesAPI(APIClient):
             ...    pprint(saml_attribute)
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_endpoint}/samlAttribute/idp/{idp_id}", api_version="v2")
+        api_url = format_url(f"{self._base_endpoint}/samlAttribute/idp/{idp_id}")
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
@@ -166,13 +167,7 @@ class SAMLAttributesAPI(APIClient):
             ...    pprint(attribute)
         """
         http_method = "get".upper()
-        api_url = format_url(
-            f"""
-            {self._base_endpoint}
-            /samlAttribute/{attribute_id}
-            """,
-            api_version="v1",
-        )
+        api_url = format_url(f"{self._base_endpoint}/samlAttribute/{attribute_id}")
 
         request, error = self._request_executor.create_request(http_method, api_url, {}, kwargs)
         if error:

@@ -30,7 +30,8 @@ class CertificatesAPI(APIClient):
         super().__init__()
         self._request_executor = request_executor
         customer_id = config["client"].get("customerId")
-        self._base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
+        self._base_endpoint = f"/zpa/cbiconfig/cbi/api/customers/{customer_id}"
+        self._base_endpoint_v2 = f"/zpa/cbiconfig/cbi/api/customers/{customer_id}"
 
     def list_certificates(self, query_params=None, keep_empty_params=False) -> tuple:
         """
@@ -115,7 +116,7 @@ class CertificatesAPI(APIClient):
             >>> certificates = zpa.certificates.list_issued_certificates(search="example")
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_endpoint}/clientlessCertificate/issued")
+        api_url = format_url(f"{self._base_endpoint_v2}/clientlessCertificate/issued")
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}

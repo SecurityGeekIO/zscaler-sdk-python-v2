@@ -30,6 +30,7 @@ class ScimAttributeHeaderAPI(APIClient):
         self._request_executor = request_executor
         customer_id = config["client"].get("customerId")
         self._base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
+        self._base_endpoint_userconfig = f"/zpa/userconfig/v1/customers/{customer_id}"
 
     def list_attributes_by_idp(self, idp_id: str, query_params=None, keep_empty_params=False) -> tuple:
         """
@@ -107,13 +108,7 @@ class ScimAttributeHeaderAPI(APIClient):
             >>> attribute = zpa.scim_attributes.get_attribute('99999', scim_attribute_id="88888")
         """
         http_method = "get".upper()
-        api_url = format_url(
-            f"""
-            {self._base_endpoint}
-            /idp/{idp_id}/scimattribute/{attribute_id}
-            """,
-            api_version="v1",
-        )
+        api_url = format_url(f"{self._base_endpoint}/idp/{idp_id}/scimattribute/{attribute_id}")
 
         # Fetch SCIM attribute data
         request, error = self._request_executor.create_request(http_method, api_url, params=kwargs)
@@ -149,9 +144,7 @@ class ScimAttributeHeaderAPI(APIClient):
             >>> values = zpa.scim_attributes.get_values('99999', '88888')
         """
         http_method = "get".upper()
-        api_url = format_url(
-            f"{self._base_endpoint}/scimattribute/idpId/{idp_id}/attributeId/{attribute_id}", api_version="userconfig_v1"
-        )
+        api_url = format_url(f"{self._base_endpoint_userconfig}/scimattribute/idpId/{idp_id}/attributeId/{attribute_id}")
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
@@ -189,103 +182,3 @@ class ScimAttributeHeaderAPI(APIClient):
             return (None, response, error)
 
         return (result, response, None)
-
-
-# from box import Box, BoxList
-
-# from zscaler.api_client import APIClient
-
-
-# class ScimAttributeHeaderAPI(APIClient):
-#     # def __init__(self, client: ZPAClient):
-#     #     self.rest = client
-
-#     def list_attributes_by_idp(self, idp_id: str, **kwargs) -> BoxList:
-#         """
-#         Returns a list of all configured SCIM attributes for the specified IdP.
-
-#         Args:
-#             idp_id (str): The unique id of the IdP to retrieve SCIM attributes for.
-#             **kwargs: Optional keyword args.
-
-#         Keyword Args:
-#             max_items (int):
-#                 The maximum number of items to request before stopping iteration.
-#             max_pages (int):
-#                 The maximum number of pages to request before stopping iteration.
-#             pagesize (int):
-#                 Specifies the page size. The default size is 20, but the maximum size is 500.
-#             search (str, optional):
-#                 The search string used to match against features and fields.
-
-#         Returns:
-#             :obj:`BoxList`: A list of all configured SCIM attributes for the specified IdP.
-
-#         Examples:
-#             >>> for scim_attribute in zpa.scim_attributes.list_attributes_by_idp('99999'):
-#             ...    pprint(scim_attribute)
-
-#         """
-#         list, _ = self.rest.get_paginated_data(
-#             path=f"/idp/{idp_id}/scimattribute",
-#             **kwargs,
-#             api_version="v1",
-#         )
-#         return list
-
-#     def get_attribute(self, idp_id: str, attribute_id: str) -> Box:
-#         """
-#         Returns information on the specified SCIM attribute.
-
-#         Args:
-#             idp_id (str):
-#                 The unique id of the Idp corresponding to the SCIM attribute.
-#             attribute_id (str):
-#                 The unique id of the SCIM attribute.
-
-#         Returns:
-#             :obj:`Box`: The resource record for the SCIM attribute.
-
-#         Examples:
-#             >>> pprint(zpa.scim_attributes.get_attribute('99999',
-#             ...    scim_attribute_id="88888"))
-
-#         """
-#         response = self.rest.get(f"/idp/{idp_id}/scimattribute/{attribute_id}", api_version="v1")
-#         return response
-
-#     def get_values(self, idp_id: str, attribute_id: str, **kwargs) -> BoxList:
-#         """
-#         Returns information on the specified SCIM attributes.
-
-#         Args:
-#             idp_id (str):
-#                 The unique identifier for the IDP.
-#             attribute_id (str):
-#                 The unique identifier for the attribute.
-#             **kwargs:
-#                 Optional keyword args.
-
-#         Keyword Args:
-#             max_items (int):
-#                 The maximum number of items to request before stopping iteration.
-#             max_pages (int):
-#                 The maximum number of pages to request before stopping iteration.
-#             pagesize (int):
-#                 Specifies the page size. Default is 20, maximum is 500.
-#             search (str, optional):
-#                 The search string used to match against features and fields.
-
-#         Returns:
-#             :obj:`BoxList`: The resource record for the SCIM attribute values.
-
-#         Examples:
-#             >>> pprint(zpa.scim_attributes.get_values('99999', '88888'))
-
-#         """
-#         list, _ = self.rest.get_paginated_data(
-#             path=f"/scimattribute/idpId/{idp_id}/attributeId/{attribute_id}",
-#             **kwargs,
-#             api_version="userconfig_v1",
-#         )
-#         return list

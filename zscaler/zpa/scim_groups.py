@@ -75,7 +75,7 @@ class SCIMGroupsAPI(APIClient):
             ...    pprint(scim_group)
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_endpoint}/scimgroup/idpId/{idp_id}", api_version="userconfig_v1")
+        api_url = format_url(f"{self._base_endpoint}/scimgroup/idpId/{idp_id}")
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
@@ -127,7 +127,7 @@ class SCIMGroupsAPI(APIClient):
         Examples:
             >>> group = zpa.scim_groups.get_group('99999')
         """
-        api_url = format_url(f"{self._base_endpoint}/scimgroup/{group_id}", api_version="userconfig_v1")
+        api_url = format_url(f"{self._base_endpoint}/scimgroup/{group_id}")
 
         # Fetch SCIM group data
         request, error = self._request_executor.create_request("get", api_url, params=kwargs)

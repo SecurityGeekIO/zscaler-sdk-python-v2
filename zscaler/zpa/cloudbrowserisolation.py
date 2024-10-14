@@ -32,7 +32,7 @@ class CloudBrowserIsolationAPI(APIClient):
         super().__init__()
         self._request_executor = request_executor
         customer_id = config["client"].get("customerId")
-        self._base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
+        self._base_endpoint = f"/zpa/cbiconfig/cbi/api/customers/{customer_id}"
 
     def list_cbi_banners(self) -> tuple:
         """
@@ -42,7 +42,7 @@ class CloudBrowserIsolationAPI(APIClient):
             tuple: A tuple containing a list of `CBIBanner` instances, response object, and error if any.
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_endpoint}/banners", api_version="cbiconfig_v1")
+        api_url = format_url(f"{self._base_endpoint}/banners")
 
         # Prepare request
         body = {}
@@ -85,7 +85,6 @@ class CloudBrowserIsolationAPI(APIClient):
             {self._base_endpoint}
             /banners/{banner_id}
             """,
-            api_version="cbiconfig_v1",
         )
 
         request, error = self._request_executor.create_request(http_method, api_url, {}, kwargs)
@@ -115,7 +114,6 @@ class CloudBrowserIsolationAPI(APIClient):
             {self._base_endpoint}
             /banners
         """,
-            api_version="cbiconfig_v1",
         )
 
         payload = {
@@ -152,7 +150,6 @@ class CloudBrowserIsolationAPI(APIClient):
             {self._base_endpoint}
             /banners/{banner_id}
             """,
-            api_version="cbiconfig_v1",
         )
 
         # Get current banner data and update it
@@ -189,7 +186,6 @@ class CloudBrowserIsolationAPI(APIClient):
             {self._base_endpoint}
             /banners/{banner_id}
             """,
-            api_version="cbiconfig_v1",
         )
 
         request, error = self._request_executor.create_request(http_method, api_url)
@@ -210,7 +206,7 @@ class CloudBrowserIsolationAPI(APIClient):
             tuple: A tuple containing a list of `CBICertificate` instances, response object, and error if any.
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_endpoint}/certificates", api_version="cbiconfig_v1")
+        api_url = format_url(f"{self._base_endpoint}/certificates")
 
         # Prepare request
         body = {}
@@ -253,7 +249,6 @@ class CloudBrowserIsolationAPI(APIClient):
             {self._base_endpoint}
             /certificates/{certificate_id}
             """,
-            api_version="cbiconfig_v1",
         )
 
         request, error = self._request_executor.create_request(http_method, api_url, {}, kwargs)
@@ -294,7 +289,6 @@ class CloudBrowserIsolationAPI(APIClient):
             {self._base_endpoint}
             /certificates
             """,
-            api_version="cbiconfig_v1",
         )
 
         payload = {
@@ -341,7 +335,6 @@ class CloudBrowserIsolationAPI(APIClient):
             {self._base_endpoint}
             /certificates/{certificate_id}
             """,
-            api_version="cbiconfig_v1",
         )
 
         # Get current certificate data and update it
@@ -378,7 +371,6 @@ class CloudBrowserIsolationAPI(APIClient):
             {self._base_endpoint}
             /certificates/{certificate_id}
             """,
-            api_version="cbiconfig_v1",
         )
 
         request, error = self._request_executor.create_request(http_method, api_url)
@@ -448,7 +440,7 @@ class CloudBrowserIsolationAPI(APIClient):
             tuple: A tuple containing the `CBIProfile` instance, response object, and error if any.
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_endpoint}/profiles/{profile_id}", api_version="cbiconfig_v1")
+        api_url = format_url(f"{self._base_endpoint}/profiles/{profile_id}")
 
         request, error = self._request_executor.create_request(http_method, api_url, {}, kwargs)
         if error:
@@ -492,7 +484,7 @@ class CloudBrowserIsolationAPI(APIClient):
             tuple: A tuple containing a list of `ZPAProfile` instances, response object, and error if any.
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_endpoint}/isolation/zpaprofiles", api_version="cbiconfig_v1")
+        api_url = format_url(f"{self._base_endpoint}/isolation/zpaprofiles")
 
         # Prepare request
         body = {}
@@ -611,7 +603,7 @@ class CloudBrowserIsolationAPI(APIClient):
 
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._base_endpoint}/profiles", api_version="cbiconfig_v1")
+        api_url = format_url(f"{self._base_endpoint}/profiles")
 
         payload = {
             "name": name,
@@ -692,7 +684,7 @@ class CloudBrowserIsolationAPI(APIClient):
             )
         """
         http_method = "put".upper()
-        api_url = format_url(f"{self._base_endpoint}/profiles{profile_id}", api_version="cbiconfig_v1")
+        api_url = format_url(f"{self._base_endpoint}/profiles{profile_id}")
 
         # Get the current profile and update it
         current_profile, response, error = self.get_cbi_profile(profile_id)
@@ -723,7 +715,7 @@ class CloudBrowserIsolationAPI(APIClient):
             tuple: A tuple containing the response object and error if any.
         """
         http_method = "delete".upper()
-        api_url = format_url(f"{self._base_endpoint}/profiles{profile_id}", api_version="cbiconfig_v1")
+        api_url = format_url(f"{self._base_endpoint}/profiles{profile_id}")
 
         request, error = self._request_executor.create_request(http_method, api_url)
         if error:
@@ -754,7 +746,7 @@ class CloudBrowserIsolationAPI(APIClient):
             ...    pprint(region)
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_endpoint}/regions", api_version="cbiconfig_v1")
+        api_url = format_url(f"{self._base_endpoint}/regions")
 
         # Prepare request
         body = {}
@@ -801,7 +793,6 @@ class CloudBrowserIsolationAPI(APIClient):
             {self._base_endpoint}
             /regions/{region_id}
             """,
-            api_version="cbiconfig_v1",
         )
 
         request, error = self._request_executor.create_request(http_method, api_url)
