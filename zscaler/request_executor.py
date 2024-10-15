@@ -110,7 +110,6 @@ class RequestExecutor:
         body: dict = None,
         headers: dict = {},
         params: dict = {},
-        keep_empty_params={},
     ):
         print(f"Initial endpoint before modification: {endpoint}")
 
@@ -179,6 +178,12 @@ class RequestExecutor:
             logger.error(f"Error during request execution: {error}")
             return None, error
 
+        # Handle 204 No Content case globally
+        if response.status_code == 204:
+            logger.debug(f"Received 204 No Content from {request['url']}")
+            # Return None for the object, as there's no content to parse
+            return None, None
+        
         # Check for any errors in the HTTP response
         try:
             response_data, error = self._http_client.check_response_for_error(request["url"], response, response_body)

@@ -54,7 +54,7 @@ class AppConnectorGroupAPI(APIClient):
             /appConnectorGroup""")
 
         query_params = query_params or {}
-        microtenant_id = query_params.pop("microtenant_id", None)
+        microtenant_id = query_params.get("microtenant_id", None)
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
@@ -63,37 +63,27 @@ class AppConnectorGroupAPI(APIClient):
             encoded_query_params = urlencode(query_params)
             api_url += f"?{encoded_query_params}"
 
-        # Prepare request body and headers
-        body = {}
-        headers = {}
-
-        # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers
-        )
-
+        # Prepare request
+        request, error = self._request_executor.create_request(http_method, api_url)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
-
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
+        # Simply retrieve the list of results using get_results
         try:
             result = []
-            for item in response.get_body():
-                result.append(AppConnectorGroup(
-                    self.form_response_body(item)
-                ))
+            for item in response.get_results():
+                result.append(AppConnectorGroup(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
         return (result, response, None)
 
-    def get_connector_group(self, group_id: str) -> tuple:
+    def get_connector_group(self, group_id: str, query_params=None) -> tuple:
         """
         Fetches a specific connector group by ID.
 
@@ -114,7 +104,7 @@ class AppConnectorGroupAPI(APIClient):
 
         # Handle optional query parameters
         query_params = query_params or {}
-        microtenant_id = query_params.pop("microtenant_id", None)
+        microtenant_id = query_params.get("microtenant_id", None)
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
@@ -207,8 +197,8 @@ class AppConnectorGroupAPI(APIClient):
         else:
             body = connector_group.as_dict()
 
-        # Extract and handle the microtenant_id separately for URL params
-        microtenant_id = body.pop("microtenant_id", None)
+        # Use get instead of pop to keep microtenant_id in the body
+        microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         # Create the request
@@ -293,9 +283,13 @@ class AppConnectorGroupAPI(APIClient):
         else:
             body = connector_group.as_dict()
 
+        # Use get instead of pop to keep microtenant_id in the body
+        microtenant_id = body.get("microtenant_id", None)
+        params = {"microtenantId": microtenant_id} if microtenant_id else {}
+
         # Create the request
         request, error = self._request_executor\
-            .create_request(http_method, api_url, body, {}, {})
+            .create_request(http_method, api_url, body, {}, params)
         if error:
             return (None, None, error)
 
@@ -305,6 +299,11 @@ class AppConnectorGroupAPI(APIClient):
         if error:
             return (None, response, error)
 
+        # Handle case where no content is returned (204 No Content)
+        if response is None:
+            # Return a meaningful result to indicate success
+            return (AppConnectorGroup({"id": group_id}), None, None)
+
         # Parse the response into an AppConnectorGroup instance
         try:
             result = AppConnectorGroup(
@@ -312,9 +311,7 @@ class AppConnectorGroupAPI(APIClient):
             )
         except Exception as error:
             return (None, response, error)
-
         return (result, response, None)
-
 
     def delete_connector_group(self, group_id: str, microtenant_id: str = None) -> tuple:
         """
