@@ -37,7 +37,6 @@ class Client:
         self._vanity_domain = self._config["client"]["vanityDomain"]
         self._cloud = self._config["client"].get("cloud", "PRODUCTION")
         self._auth_token = None
-        self._api_version = self._config["client"].get("api_version", "v1")
 
         # Handle cache
         cache = NoOpCache()
@@ -99,7 +98,6 @@ class Client:
         if self._zpa is None:
             self._zpa = ZPAService(self._request_executor, self._config)
         return self._zpa
-
 
     def __enter__(self):
         """

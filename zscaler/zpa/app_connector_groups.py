@@ -49,9 +49,11 @@ class AppConnectorGroupAPI(APIClient):
             tuple: A tuple containing (list of AppConnectorGroup instances, Response, error)
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
-            /appConnectorGroup""")
+            /appConnectorGroup"""
+        )
 
         query_params = query_params or {}
         microtenant_id = query_params.get("microtenant_id", None)
@@ -97,10 +99,12 @@ class AppConnectorGroupAPI(APIClient):
             tuple: A tuple containing (AppConnectorGroup instance, Response, error).
         """
         http_method = "get".upper()
-        api_url = format_url(f"""{
+        api_url = format_url(
+            f"""{
             self._zpa_base_endpoint}
             /appConnectorGroup/{group_id}
-        """)
+        """
+        )
 
         # Handle optional query parameters
         query_params = query_params or {}
@@ -118,25 +122,20 @@ class AppConnectorGroupAPI(APIClient):
         headers = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
 
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, AppConnectorGroup)
+        response, error = self._request_executor.execute(request, AppConnectorGroup)
 
         if error:
             return (None, response, error)
 
         # Parse the response into an AppConnectorGroup instance
         try:
-            result = AppConnectorGroup(
-                self.form_response_body(response.get_body()
-            ))
+            result = AppConnectorGroup(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -186,10 +185,12 @@ class AppConnectorGroupAPI(APIClient):
             tuple: A tuple containing (AppConnectorGroup, Response, error)
         """
         http_method = "post".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /appConnectorGroup
-        """)
+        """
+        )
 
         # Ensure connector_group is a dictionary
         if isinstance(connector_group, dict):
@@ -202,25 +203,17 @@ class AppConnectorGroupAPI(APIClient):
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, 
-            api_url, 
-            body=body, 
-            params=params
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body=body, params=params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, AppConnectorGroup)
+        response, error = self._request_executor.execute(request, AppConnectorGroup)
         if error:
             return (None, response, error)
 
         try:
-            result = AppConnectorGroup(
-                self.form_response_body(response.get_body()
-            ))
+            result = AppConnectorGroup(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -272,10 +265,12 @@ class AppConnectorGroupAPI(APIClient):
             tuple: A tuple containing (AppConnectorGroup, Response, error)
         """
         http_method = "put".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /appConnectorGroup/{group_id}
-        """)
+        """
+        )
 
         # Ensure the connector_group is in dictionary format
         if isinstance(connector_group, dict):
@@ -288,14 +283,12 @@ class AppConnectorGroupAPI(APIClient):
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, {}, params)
+        request, error = self._request_executor.create_request(http_method, api_url, body, {}, params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, AppConnectorGroup)
+        response, error = self._request_executor.execute(request, AppConnectorGroup)
         if error:
             return (None, response, error)
 
@@ -306,9 +299,7 @@ class AppConnectorGroupAPI(APIClient):
 
         # Parse the response into an AppConnectorGroup instance
         try:
-            result = AppConnectorGroup(
-                self.form_response_body(response.get_body())
-            )
+            result = AppConnectorGroup(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)

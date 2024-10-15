@@ -4,7 +4,7 @@ from zscaler.errors.error import Error
 # ZPA API Errors
 class ZscalerAPIError(Error):
     def __init__(self, url, response_details, response_body):
-        self.status = response_details.status
+        self.status_code = response_details.status_code
         self.error_id = response_body.get("id", "")
         self.reason = response_body.get("reason", "")
         self.params = response_body.get("params", [])
@@ -15,7 +15,7 @@ class ZscalerAPIError(Error):
         self.headers = response_details.headers
         self.stack = ""
 
-        self.message = f"ZPA HTTP {self.status} {self.error_id} " f"{self.reason}\nParameters: {params_string}"
+        self.message = f"ZPA HTTP {self.status_code} {self.error_id} " f"{self.reason}\nParameters: {params_string}"
 
 
 # ZIA API Errors

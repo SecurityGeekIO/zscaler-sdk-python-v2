@@ -4,6 +4,8 @@ import yaml
 from zscaler.constants import _GLOBAL_YAML_PATH, _LOCAL_YAML_PATH
 from flatdict import FlatDict
 
+from zscaler.helpers import to_snake_case
+
 
 class ConfigSetter:
     """
@@ -91,7 +93,8 @@ class ConfigSetter:
             self._apply_yaml_config(_LOCAL_YAML_PATH)
 
         # apply existing environment variables
-        self._apply_env_config()
+        self._apply_env_config("client")
+        self._apply_env_config("testing")
 
     def _setup_logging(self):
         """
@@ -155,14 +158,14 @@ class ConfigSetter:
         # Apply acquired config to configuration
         self._apply_config(config.get("zscaler", {}))
 
-    def _apply_env_config(self):
+    def _apply_env_config(self, conf_key):
         """
         This method checks the environment variables for any Zscaler
         configuration parameters and applies them if available.
         """
         # Flatten current config and join with underscores
         # (for environment variable format)
-        flattened_config = FlatDict(self._config, delimiter="_")
+        flattened_config = FlatDict(self._config.get(conf_key, {}), delimiter="_")
         flattened_keys = flattened_config.keys()
 
         # Create empty result config and populate
@@ -171,9 +174,10 @@ class ConfigSetter:
         # Go through keys and search for it in the environment vars
         # using the format described in the README
         for key in flattened_keys:
-            env_key = ConfigSetter._ZSCALER + "_" + key.upper()
+
+            env_key = ConfigSetter._ZSCALER + "_" + to_snake_case(key).upper()
             env_value = os.environ.get(env_key, None)
 
             if env_value is not None:
                 updated_config[key] = env_value
-        self._apply_config(updated_config.as_dict())
+        self._apply_config({conf_key: updated_config.as_dict()})

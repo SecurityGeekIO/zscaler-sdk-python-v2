@@ -49,7 +49,7 @@ class RequestExecutor:
         self.cloud = self._config["client"].get("cloud", "production").lower()
         self.service = self._config["client"].get("service", "zia")  # Default to ZIA
         self.customer_id = self._config["client"].get("customerId")  # Optional for ZIA/ZCC
-        self.api_version = self._config["client"].get("api_version", "v1")  # Default API version
+        self.microtenant_id = self._config["client"].get("microtenantId")  # Optional for ZIA/ZCC
 
         # Initialize base URL based on the cloud setting
         self._base_url = self.get_base_url(self.cloud)
@@ -138,6 +138,10 @@ class RequestExecutor:
         if params:
             params = {to_lower_camel_case(k): v for k, v in params.items()}
 
+        # Check if microtenant_id is in the query params and not empty (ZPA only)
+        if ("microtenantId" not in params or params["microtenantId"] == "") and self.microtenant_id:
+            params["microtenantId"] = self.microtenant_id
+
         print(f"Final request body (before JSON serialization): {body}")
 
         # Construct the request dictionary
@@ -183,7 +187,7 @@ class RequestExecutor:
             logger.debug(f"Received 204 No Content from {request['url']}")
             # Return None for the object, as there's no content to parse
             return None, None
-        
+
         # Check for any errors in the HTTP response
         try:
             response_data, error = self._http_client.check_response_for_error(request["url"], response, response_body)

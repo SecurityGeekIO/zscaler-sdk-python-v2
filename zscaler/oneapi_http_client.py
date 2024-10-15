@@ -89,7 +89,8 @@ class HTTPClient:
                 params["data"] = json.dumps(request["data"])  # Use 'data' for form-encoded data
             elif request.get("form"):
                 params["data"] = request["form"]
-
+            if request["params"]:
+                params["params"] = request["params"]
             # Fire the request
             response = self._session.request(**params) if self._session else requests.request(**params)
 
@@ -136,7 +137,7 @@ class HTTPClient:
         # Log and handle non-successful responses
         logger.error(f"Error response from {url}: {response_details.status_code} - {formatted_response}")
 
-        status_code = response_details.status
+        status_code = response_details.status_code
 
         # check if call was succesful
         if 200 <= status_code <= 299:
@@ -156,7 +157,7 @@ class HTTPClient:
                     raise HTTPException(formatted_response)
             logger.error(error)
             return (None, error)
-        
+
         # # Handle specific error conditions (e.g., 4xx, 5xx)
         # try:
         #     error = ZscalerAPIError(url, response_details, formatted_response)

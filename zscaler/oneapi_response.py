@@ -39,7 +39,7 @@ class ZscalerAPIResponse:
         self._resp_headers = res_details.headers if res_details and hasattr(res_details, "headers") else {}
         self._body = None  # First page of results
         self._type = data_type
-        self._status = res_details.status if res_details and hasattr(res_details, "status") else None
+        self._status = res_details.status_code if res_details and hasattr(res_details, "status_code") else None
         self._request_executor = request_executor  # Request Executor for future calls
 
         # Custom options

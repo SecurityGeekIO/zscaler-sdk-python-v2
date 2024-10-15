@@ -43,7 +43,8 @@ def to_lower_camel_case(string):
         components[0] = components[0][0].lower() + components[0][1:]
     # join other components with first capitalized first letter
     return components[0] + "".join(x.title() for x in components[1:])
-    
+
+
 def convert_keys_to_snake_case(data):
     """
     Convert all keys in a dictionary or list to snake_case.
