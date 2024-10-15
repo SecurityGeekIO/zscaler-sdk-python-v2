@@ -97,8 +97,9 @@ class Client:
     @property
     def zpa(self) -> ZPAService:
         if self._zpa is None:
-            self._zpa = ZPAService(self)
+            self._zpa = ZPAService(self._request_executor, self._config)
         return self._zpa
+
 
     def __enter__(self):
         """
