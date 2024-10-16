@@ -138,9 +138,18 @@ class RequestExecutor:
         if params:
             params = {to_lower_camel_case(k): v for k, v in params.items()}
 
-        # Check if microtenant_id is in the query params and not empty (ZPA only)
-        if ("microtenantId" not in params or params["microtenantId"] == "") and self.microtenant_id:
-            params["microtenantId"] = self.microtenant_id
+        # Check for microtenantId in body, params, and config (in that order)
+        microtenant_id = None
+        if body and "microtenantId" in body and body["microtenantId"]:
+            microtenant_id = body["microtenantId"]
+        elif params and "microtenantId" in params and params["microtenantId"]:
+            microtenant_id = params["microtenantId"]
+        elif self.microtenant_id:
+            microtenant_id = self.microtenant_id
+
+        # Set microtenantId in params if found
+        if microtenant_id:
+            params["microtenantId"] = microtenant_id
 
         print(f"Final request body (before JSON serialization): {body}")
 
