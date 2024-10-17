@@ -9,6 +9,7 @@ from zscaler.cache.no_op_cache import NoOpCache
 from zscaler.cache.zscaler_cache import ZscalerCache
 from zscaler.oneapi_oauth_client import OAuth
 from zscaler.logger import setup_logging
+from zscaler.zcc.zcc_service import ZCCService
 from zscaler.zia.zia_service import ZIAService
 from zscaler.zpa.zpa_service import ZPAService
 
@@ -67,7 +68,7 @@ class Client:
         # Lazy load ZIA and ZPA clients
         self._zia = None
         self._zpa = None
-
+        self._zcc = None
         # super().__init__()
 
     def authenticate(self):
@@ -82,9 +83,9 @@ class Client:
         print(f"Authentication complete. Token set: {self._auth_token}")
 
     @property
-    def zcc(self) -> ZPAService:
+    def zcc(self) -> ZCCService:
         if self._zcc is None:
-            self._zcc = ZPAService(self)
+            self._zcc = ZCCService(self._request_executor)
         return self._zcc
 
     @property

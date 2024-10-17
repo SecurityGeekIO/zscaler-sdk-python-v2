@@ -1,14 +1,15 @@
-import shutil
 from datetime import datetime
 from box import BoxList
-from zscaler.zcc.client import ZCCClient
+from zscaler.api_client import APIClient
 from zscaler.utils import convert_keys, zcc_param_map
+from zscaler.zcc.models.devices import Device
 
 
-class DevicesAPI:
+class DevicesAPI(APIClient):
 
-    def __init__(self, client: ZCCClient):
-        self.rest = client
+    def __init__(self, request_executor):
+        self._request_executor = request_executor
+        self._base_endpoint = "/zcc/papi/public/v1"
 
     def download_devices(
         self,
@@ -102,13 +103,20 @@ class DevicesAPI:
                     )
 
         # Create the local file and stream the device list csv to it
-        with self.rest.get("downloadDevices", params=params, stream=True) as r:
-            with open(filename, "wb") as f:
-                f.write(r.content)
+        api_url = f"{self._base_endpoint}/downloadDevices"
+        request, error = self._request_executor.create_request("get", api_url, params=params)
+        if error:
+            raise Exception("Error creating request for downloading devices.")
+
+        with open(filename, "wb") as f:
+            response, error = self._request_executor.execute(request)
+            if error:
+                raise Exception("Error executing request for downloading devices.")
+            f.write(response.content)
 
         return filename
 
-    def list_devices(self, **kwargs) -> BoxList:
+    def list_devices(self, **kwargs) -> tuple:
         """
         Returns the list of devices enrolled in the Client Connector Portal.
 
@@ -129,7 +137,7 @@ class DevicesAPI:
                 Filter by the enrolled user for the device.
 
         Returns:
-            :obj:`BoxList`: A list containing devices using ZCC enrolled in the Client Connector Portal.
+            :obj:`list`: A list containing devices using ZCC enrolled in the Client Connector Portal.
 
         Examples:
             Prints all devices in the Client Connector Portal to the console:
@@ -139,18 +147,25 @@ class DevicesAPI:
 
         """
         payload = convert_keys(dict(kwargs))
+        api_url = f"{self._base_endpoint}/getDevices"
 
-        # Simplify the os_type argument, raise an error if the user supplies the wrong one.
-        if kwargs.get("os_type"):
-            os_type = zcc_param_map["os"].get(payload["osType"], None)
-            if os_type:
-                payload["osType"] = os_type
-            else:
-                raise ValueError("Invalid os_type specified. Check the Zscaler documentation for valid os_type options.")
+        request, error = self._request_executor.create_request("get", api_url, params=payload)
+        if error:
+            return (None, None, error)
 
-        return self.rest.get("getDevices", **payload)
+        response, error = self._request_executor.execute(request)
+        if error:
+            return (None, response, error)
 
-    def remove_devices(self, force: bool = False, **kwargs):
+        try:
+            result = []
+            for item in response.get_results():
+                result.append(Device(self.form_response_body(item)))
+        except Exception as error:
+            return (None, response, error)
+        return (result, response, None)
+
+    def remove_devices(self, force: bool = False, **kwargs) -> tuple:
         """
         Removes the specified devices from the Zscaler Client Connector Portal.
 
@@ -205,16 +220,14 @@ class DevicesAPI:
 
         """
         payload = convert_keys(dict(kwargs))
+        api_url = f"{self._base_endpoint}/removeDevices"
 
-        # Simplify the os_type argument, raise an error if the user supplies the wrong one.
-        if kwargs.get("os_type"):
-            os_type = zcc_param_map["os"].get(payload["osType"], None)
-            if os_type:
-                payload["osType"] = os_type
-            else:
-                raise ValueError("Invalid os_type specified. Check the pyZscaler documentation for valid os_type options.")
+        request, error = self._request_executor.create_request("post", api_url, body=payload)
+        if error:
+            return None, None, error
 
-        if force:
-            return self.rest.post("forceRemoveDevices", json=payload)
-        else:
-            return self.rest.post("removeDevices", json=payload)
+        response, error = self._request_executor.execute(request)
+        if error:
+            return None, response, error
+
+        return None, response, None

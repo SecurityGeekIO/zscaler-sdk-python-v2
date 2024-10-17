@@ -137,19 +137,22 @@ class RequestExecutor:
 
         if params:
             params = {to_lower_camel_case(k): v for k, v in params.items()}
+        if "/zpa/" in endpoint:
+            # Check for microtenantId in body, params, and config (in that order)
+            microtenant_id = None
+            if body and "microtenantId" in body and body["microtenantId"]:
+                microtenant_id = body["microtenantId"]
+            elif params and "microtenantId" in params and params["microtenantId"]:
+                microtenant_id = params["microtenantId"]
+            elif self.microtenant_id:
+                microtenant_id = self.microtenant_id
 
-        # Check for microtenantId in body, params, and config (in that order)
-        microtenant_id = None
-        if body and "microtenantId" in body and body["microtenantId"]:
-            microtenant_id = body["microtenantId"]
-        elif params and "microtenantId" in params and params["microtenantId"]:
-            microtenant_id = params["microtenantId"]
-        elif self.microtenant_id:
-            microtenant_id = self.microtenant_id
-
-        # Set microtenantId in params if found
-        if microtenant_id:
-            params["microtenantId"] = microtenant_id
+            # Set microtenantId in params if found
+            if microtenant_id:
+                params["microtenantId"] = microtenant_id
+        else:
+            if params.get("microtenantId") is not None:
+                del params["microtenantId"]
 
         print(f"Final request body (before JSON serialization): {body}")
 
@@ -291,18 +294,22 @@ class RequestExecutor:
             if date_time:
                 date_time = convert_date_time_to_seconds(date_time)
 
-            retry_limit_reset_headers = list(map(float, headers.getall("X-Rate-Limit-Reset", [])))
-            retry_limit_reset_headers.extend(list(map(float, headers.getall("x-rate-limit-reset", []))))
-            retry_limit_reset = min(retry_limit_reset_headers) if len(retry_limit_reset_headers) > 0 else None
+            # Extract the x-ratelimit-reset value and convert it to float
+            retry_limit_reset_header = headers.get("x-ratelimit-reset")  # Get the value for x-ratelimit-reset
+            if retry_limit_reset_header is not None:  # Check if the header exists
+                retry_limit_reset_headers = [float(retry_limit_reset_header)]  # Convert to float
+            else:
+                retry_limit_reset_headers = []  # Default to an empty list if not present
 
             retry_after = headers.get("Retry-After") or headers.get("retry-after")
             if retry_after:
                 retry_after = int(retry_after.strip("s"))
 
-            if not date_time or not retry_limit_reset:
+            if not date_time or not retry_limit_reset_headers:
                 return None, response, response.text, Exception(ERROR_MESSAGE_429_MISSING_DATE_X_RESET)
-
-            backoff_seconds = self.calculate_backoff(retry_limit_reset, date_time)
+            # x-ratelimit-reset: The time (in seconds) remaining in the current window after which the rate limit resets.
+            # so no need to substract the date unix time
+            backoff_seconds = retry_limit_reset_headers[0]
             logger.info(f"Hit rate limit. Retrying request in {backoff_seconds} seconds.")
             time.sleep(backoff_seconds)
             attempts += 1

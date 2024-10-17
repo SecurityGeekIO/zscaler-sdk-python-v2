@@ -8,14 +8,25 @@ class ZscalerAPIError(Error):
         self.error_id = response_body.get("id", "")
         self.reason = response_body.get("reason", "")
         self.params = response_body.get("params", [])
+        self.error = response_body.get("error", "")
+        self.path = response_body.get("path", "")
 
-        params_string = ", ".join(self.params)
+        # Constructing the message dynamically based on available fields
+        message_parts = [f"HTTP {self.status_code}"]
+
+        if self.error_id:
+            message_parts.append(self.error_id)
+        if self.reason:
+            message_parts.append(self.reason)
+        if self.params:
+            params_string = ", ".join(self.params)
+            message_parts.append(f"Parameters: {params_string}")
+
+        self.message = " ".join(message_parts)
 
         self.url = url
         self.headers = response_details.headers
         self.stack = ""
-
-        self.message = f"ZPA HTTP {self.status_code} {self.error_id} " f"{self.reason}\nParameters: {params_string}"
 
 
 # ZIA API Errors
