@@ -173,7 +173,8 @@ class RuleLabelsAPI(APIClient):
             body = label.as_dict()
 
         # Create the request with no empty param handling logic
-        request, error = self._request_executor.create_request(
+        request, error = self._request_executor\
+            .create_request(
             method=http_method,
             endpoint=api_url,
             body=body,

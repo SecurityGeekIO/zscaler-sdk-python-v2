@@ -1,15 +1,31 @@
-from datetime import datetime
-from box import BoxList
-from zscaler.api_client import APIClient
-from zscaler.utils import convert_keys, zcc_param_map
-from zscaler.zcc.models.devices import Device
+"""
+Copyright (c) 2023, Zscaler Inc.
 
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+"""
+
+from zscaler.api_client import APIClient
+from zscaler.utils import format_url, zcc_param_map
+from zscaler.zcc.models.devices import Device
+from datetime import datetime
+from urllib.parse import urlencode
 
 class DevicesAPI(APIClient):
 
     def __init__(self, request_executor):
+        super().__init__()
         self._request_executor = request_executor
-        self._base_endpoint = "/zcc/papi/public/v1"
+        self._zcc_base_endpoint = "/zcc/papi/public/v1"
 
     def download_devices(
         self,
@@ -102,9 +118,14 @@ class DevicesAPI(APIClient):
                         "registration_type options."
                     )
 
-        # Create the local file and stream the device list csv to it
-        api_url = f"{self._base_endpoint}/downloadDevices"
-        request, error = self._request_executor.create_request("get", api_url, params=params)
+        http_method = "get".upper()
+        api_url = format_url(f"""
+            {self._zcc_base_endpoint}
+            /downloadDevices
+        """)
+
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=params)
         if error:
             raise Exception("Error creating request for downloading devices.")
 
@@ -116,7 +137,7 @@ class DevicesAPI(APIClient):
 
         return filename
 
-    def list_devices(self, **kwargs) -> tuple:
+    def list_devices(self, query_params=None) -> tuple:
         """
         Returns the list of devices enrolled in the Client Connector Portal.
 
@@ -146,26 +167,49 @@ class DevicesAPI(APIClient):
             ...    print(device)
 
         """
-        payload = convert_keys(dict(kwargs))
-        api_url = f"{self._base_endpoint}/getDevices"
+        http_method = "get".upper()
+        api_url = format_url(f"""
+            {self._zcc_base_endpoint}
+            /getDevices
+        """)
+        
+        # payload = convert_keys(dict(kwargs))
 
-        request, error = self._request_executor.create_request("get", api_url, params=payload)
+        query_params = query_params or {}
+
+        # Build the query string
+        if query_params:
+            encoded_query_params = urlencode(query_params)
+            api_url += f"?{encoded_query_params}"
+
+        # Prepare request body and headers
+        body = {}
+        headers = {}
+        
+        request, error = self._request_executor\
+            .create_request(
+            http_method, api_url, body, headers
+        )
+        
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_results():
-                result.append(Device(self.form_response_body(item)))
+            for item in response.get_body():
+                result.append(Device(
+                    self.form_response_body(item))
+                )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def remove_devices(self, force: bool = False, **kwargs) -> tuple:
+    def remove_devices(self, remove) -> tuple:
         """
         Removes the specified devices from the Zscaler Client Connector Portal.
 
@@ -219,14 +263,31 @@ class DevicesAPI(APIClient):
             ...     user_name="johnno@widgets.co")
 
         """
-        payload = convert_keys(dict(kwargs))
-        api_url = f"{self._base_endpoint}/removeDevices"
+        http_method = "post".upper()
+        api_url = format_url(f"""
+            {self._zcc_base_endpoint}
+            /removeDevices
+        """)
+        
+        # payload = convert_keys(dict(kwargs))
 
-        request, error = self._request_executor.create_request("post", api_url, body=payload)
+        if isinstance(remove, dict):
+            body = remove
+        else:
+            body = remove.as_dict()
+            
+        request, error = self._request_executor\
+            .create_request(
+            method=http_method,
+            endpoint=api_url,
+            body=body,
+        )
+
         if error:
             return None, None, error
 
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return None, response, error
 

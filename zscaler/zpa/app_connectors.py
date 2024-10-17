@@ -14,27 +14,30 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
+from box import Box, BoxList
+from requests import Response
 from zscaler.api_client import APIClient
 from zscaler.zpa.models.app_connectors import AppConnectorController
 from urllib.parse import urlencode
-from zscaler.utils import format_url, snake_to_camel
+from zscaler.utils import format_url
 
 
 class AppConnectorControllerAPI(APIClient):
-    """
-    A Client object for the App Connectors resource.
-    """
+    reformat_params = [
+        ("connector_ids", "connectors"),
+        ("server_group_ids", "serverGroups"),
+    ]
 
     def __init__(self, request_executor, config):
         super().__init__()
         self._request_executor = request_executor
         customer_id = config["client"].get("customerId")
-        self._base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
+        self._zpa_base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
-    def list_connectors(self, query_params=None, keep_empty_params=False) -> tuple:
+    def list_connectors(self, query_params=None) -> tuple:
         """
-        Enumerates connectors in your organization with pagination.
-        A subset of connectors can be returned that match a supported
+        Enumerates app connectors in your organization with pagination.
+        A subset of app connectors can be returned that match a supported
         filter expression or query.
 
         Args:
@@ -44,18 +47,25 @@ class AppConnectorControllerAPI(APIClient):
                 [query_params.microtenant_id] {str}: ID of the microtenant, if applicable.
                 [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
                 [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
-            keep_empty_params {bool}: Whether to include empty parameters in the query string.
 
         Returns:
-            tuple: A tuple containing (list of AppConnector instances, Response, error)
-        """
-        # Initialize URL and HTTP method
-        http_method = "get".upper()
-        api_url = format_url(f"{self._base_endpoint}/connector")
+            tuple: A tuple containing (list of App Connector instances, Response, error)
+    
+        Examples:
+            List all configured App Connectors:
 
-        # Handle query parameters (including microtenant_id if provided)
+            >>> for connector in zpa.connectors.list_connectors():
+            ...    print(connector)
+
+        """
+        http_method = "get".upper()
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint}
+            /connector
+        """)
+
         query_params = query_params or {}
-        microtenant_id = query_params.pop("microtenant_id", None)
+        microtenant_id = query_params.get("microtenant_id", None)
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
@@ -67,180 +77,231 @@ class AppConnectorControllerAPI(APIClient):
         # Prepare request body and headers
         body = {}
         headers = {}
-        form = {}
+
+        # Prepare request
+        request, error = self._request_executor\
+            .create_request(
+                http_method, api_url, body, headers
+            )
+        if error:
+            return (None, None, error)
+
+        # Execute the request
+        response, error = self._request_executor\
+            .execute(request)
+        if error:
+            return (None, response, error)
+
+        try:
+            result = []
+            for item in response.get_results():
+                result.append(AppConnectorController(
+                    self.form_response_body(item))
+                )
+        except Exception as error:
+            return (None, response, error)
+        return (result, response, None)
+
+    def get_connector(self, connector_id: str, query_params=None) -> tuple:
+        """
+        Returns information on the specified App Connector.
+
+        Args:
+            connector_id (str): The unique id for the ZPA App Connector.
+
+        Returns:
+            :obj:`Box`: The specified App Connector resource record.
+
+        Examples:
+            >>> app_connector = zpa.connectors.get_connector('99999')
+
+        """
+        http_method = "get".upper()
+        api_url = format_url(f"""{
+            self._zpa_base_endpoint}
+            /connector/{connector_id}
+        """)
+
+        # Handle optional query parameters
+        query_params = query_params or {}
+        microtenant_id = query_params.get("microtenant_id", None)
+        if microtenant_id:
+            query_params["microtenantId"] = microtenant_id
+
+        # Build the query string
+        if query_params:
+            encoded_query_params = urlencode(query_params)
+            api_url += f"?{encoded_query_params}"
+
+        # Prepare request body, headers, and form (if needed)
+        body = {}
+        headers = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
-        )
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, headers)
 
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, AppConnectorController)
+        response, error = self._request_executor\
+            .execute(request, AppConnectorController)
 
         if error:
             return (None, response, error)
 
-        # Parse the response into AppConnector instances
+        # Parse the response into an AppConnectorGroup instance
         try:
-            result = []
-            for item in response.get_body():
-                result.append(AppConnectorController(self.form_response_body(item)))
+            result = AppConnectorController(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
-
         return (result, response, None)
 
-    def get_connector(self, connector_id: str, **kwargs) -> AppConnectorController:
+    def update_connector(self, connector_id: str, connector) -> tuple:
         """
-        Returns information on the specified App Connector.
+        Updates an existing ZPA App Connector.
 
         Args:
-            connector_id (str): The unique ID of the ZPA App Connector.
+            connector_id (str): The unique id of the ZPA App Connector.
+
+        Keyword Args:
+            **description (str): Additional information about the App Connector.
+            **enabled (bool): True if the App Connector is enabled.
+            **name (str): The name of the App Connector.
 
         Returns:
-            AppConnector: The corresponding App Connector object.
-        """
-        http_method = "get".upper()
-        api_url = format_url(
-            f"""
-            {self._base_endpoint}/connector/{connector_id}
-            """
-        )
+            :obj:`Box`: The updated App Connector resource record.
 
-        microtenant_id = kwargs.pop("microtenant_id", None)
-        params = {"microtenantId": microtenant_id} if microtenant_id else {}
+        Examples:
+            Update an App Connector name and disable it.
 
-        request, error = self._request_executor.create_request(http_method, api_url, params=params)
-        if error:
-            return None
+            >>> app_connector = zpa.connectors.update_connector('999999',
+            ...    name="Updated App Connector Name",
+            ...    enabled=False)
 
-        response, error = self._request_executor.execute(request)
-        if error:
-            return None
-
-        return AppConnectorController(response.get_body())
-
-    def get_connector_by_name(self, name: str, **kwargs) -> AppConnectorController:
-        """
-        Returns information on the App Connector with the specified name.
-
-        Args:
-            name (str): The name of the App Connector.
-
-        Returns:
-            AppConnector: The corresponding App Connector object or None if not found.
-        """
-        connectors = self.list_connectors(**kwargs)
-        for connector in connectors:
-            if connector.name == name:
-                return connector
-        return None
-
-    def update_connector(self, connector_id: str, **kwargs) -> AppConnectorController:
-        """
-        Updates the specified ZPA App Connector.
-
-        Args:
-            connector_id (str): The unique ID of the App Connector.
-
-        Returns:
-            AppConnector: The updated App Connector object.
         """
         http_method = "put".upper()
-        api_url = format_url(
-            f"""
-            {self._base_endpoint}/connector/{connector_id}
-            """
-        )
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint}
+            /connector/{connector_id}
+        """)
 
-        # Fetch the current App Connector data and update it with kwargs
-        existing_connector = self.get_connector(connector_id)
-        if not existing_connector:
-            return None  # Defensive approach: exit if no connector found.
+        # Ensure the connector_group is in dictionary format
+        if isinstance(connector, dict):
+            body = connector
+        else:
+            body = connector.as_dict()
 
-        payload = existing_connector.request_format()
-
-        # Update payload with any new values from kwargs
-        for key, value in kwargs.items():
-            payload[snake_to_camel(key)] = value
-
-        # Handle microtenant ID if provided
-        microtenant_id = kwargs.pop("microtenant_id", None)
+        # Use get instead of pop to keep microtenant_id in the body
+        microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        # Prepare and execute the update request
-        request, error = self._request_executor.create_request(http_method, api_url, json=payload, params=params)
+        # Log for debugging to ensure the URL construct
+        print(f"Final URL: {api_url}?{urlencode(params)}" if params else api_url)
+
+        # Create the request
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, {}, params)
         if error:
-            return None
+            return (None, None, error)
 
-        # Execute the request and check the response
-        _, error = self._request_executor.execute(request)
+        # Execute the request
+        response, error = self._request_executor\
+            .execute(request, AppConnectorController)
         if error:
-            return None
+            return (None, response, error)
 
-        # Return the updated connector details
-        return self.get_connector(connector_id)
+        # Handle case where no content is returned (204 No Content)
+        if response is None:
+            # Return a meaningful result to indicate success
+            return (AppConnectorController({"id": connector_id}), None, None)
 
-    def delete_connector(self, connector_id: str, **kwargs) -> int:
+        # Parse the response into an AppConnectorGroup instance
+        try:
+            result = AppConnectorController(
+                self.form_response_body(response.get_body())
+            )
+        except Exception as error:
+            return (None, response, error)
+        return (result, response, None)
+
+    def delete_connector(self, connector_id: str, microtenant_id: str = None) -> tuple:
         """
-        Deletes the specified ZPA App Connector.
+        Deletes the specified App Connector from ZPA.
 
         Args:
-            connector_id (str): The unique ID of the App Connector.
+            connector_id (str): The unique id for the ZPA App Connector that will be deleted.
 
         Returns:
-            int: Status code of the delete operation.
+            :obj:`int`: The status code for the operation.
+
+        Examples:
+            >>> zpa.connectors.delete_connector('999999')
+
         """
         http_method = "delete".upper()
-        api_url = format_url(
-            f"""
-            {self._base_endpoint}/connector/{connector_id}
-            """
-        )
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint}
+            /connector/{connector_id}
+        """)
 
-        microtenant_id = kwargs.pop("microtenant_id", None)
+        # Handle microtenant_id in URL params if provided
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        request, error = self._request_executor.create_request(http_method, api_url, params=params)
+        # Create the request
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=params)
         if error:
-            return None
+            return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        # Execute the request
+        response, error = self._request_executor\
+            .execute(request)
         if error:
-            return None
+            return (None, response, error)
 
-        return response.get_status_code()
+        return (None, response, None)
 
-    def bulk_delete_connectors(self, connector_ids: list, **kwargs) -> int:
+    def bulk_delete_connectors(self, connector_ids: list, microtenant_id: str = None) -> tuple:
         """
-        Bulk deletes the specified App Connectors from ZPA.
+        Deletes all specified App Connectors from ZPA.
 
         Args:
-            connector_ids (list): A list of App Connector IDs to be deleted.
+            connector_ids (list): The list of unique ids for the ZPA App Connectors that will be deleted.
 
         Returns:
-            int: Status code for the operation.
+            :obj:`int`: The status code for the operation.
+
+        Examples:
+            >>> zpa.connectors.bulk_delete_connectors(['111111', '222222', '333333'])
+
         """
         http_method = "post".upper()
-        api_url = format_url(
-            f"""
-            {self._base_endpoint}/connector/bulkDelete
-            """
-        )
-        payload = {"ids": connector_ids}
-
-        microtenant_id = kwargs.pop("microtenant_id", None)
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint}
+            /connector/bulkDelete
+        """)
+        
+        # Handle microtenant_id in URL params if provided
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        request, error = self._request_executor.create_request(http_method, api_url, json=payload, params=params)
-        if error:
-            return None
+        payload = {"ids": connector_ids}
 
-        response, error = self._request_executor.execute(request)
-        if error:
-            return None
+        # Create the request
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, payload, params=params)
 
-        return response.get_status_code()
+        if error:
+            return (None, None, error)
+
+        # Execute the request
+        response, error = self._request_executor\
+            .execute(request)
+        if error:
+            return (None, response, error)
+
+        return (None, response, None)
+

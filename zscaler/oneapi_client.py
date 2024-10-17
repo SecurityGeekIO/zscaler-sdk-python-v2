@@ -85,7 +85,7 @@ class Client:
     @property
     def zcc(self) -> ZCCService:
         if self._zcc is None:
-            self._zcc = ZCCService(self._request_executor)
+            self._zcc = ZCCService(self)
         return self._zcc
 
     @property

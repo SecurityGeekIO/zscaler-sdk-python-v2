@@ -9,6 +9,7 @@ from zscaler.zpa.servers import AppServersAPI
 from zscaler.zpa.certificates import CertificatesAPI
 from zscaler.zpa.cloud_connector_groups import CloudConnectorGroupsAPI
 from zscaler.zpa.cloudbrowserisolation import CloudBrowserIsolationAPI
+from zscaler.zpa.customer_version_profile import CustomerVersionProfileAPI
 from zscaler.zpa.emergency_access import EmergencyAccessAPI
 from zscaler.zpa.enrollment_certificates import EnrollmentCertificateAPI
 from zscaler.zpa.idp import IDPControllerAPI
@@ -78,6 +79,14 @@ class ZPAService:
         """
         return CertificatesAPI(self._request_executor, self._config)
 
+    @property
+    def customer_version_profile(self):
+        """
+        The interface object for the :ref:`ZPA Customer Version profile interface <zpa-customer_version_profile>`.
+
+        """
+        return CustomerVersionProfileAPI(self._request_executor, self._config)
+    
     @property
     def isolation(self):
         """

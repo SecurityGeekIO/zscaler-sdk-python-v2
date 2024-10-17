@@ -28,13 +28,21 @@ class Passwords(ZscalerObject):
         super().__init__(config)
 
         if config:
-            self.exit_pass = config.get("exitPass")
-            self.logout_pass = config.get("logoutPass")
-            self.uninstall_pass = config.get("uninstallPass")
-            self.zd_settings_access_pass = config.get("zdSettingsAccessPass")
-            self.zdx_disable_pass = config.get("zdxDisablePass")
-            self.zia_disable_pass = config.get("ziaDisablePass")
-            self.zpa_disable_pass = config.get("zpaDisablePass")
+            self.exit_pass = config["exitPass"]\
+                if "exitPass" in config else None
+            self.logout_pass = config["logoutPass"]\
+                if "logoutPass" in config else None                
+            self.uninstall_pass = config["uninstallPass"]\
+                if "uninstallPass" in config else None    
+            self.zd_settings_access_pass = config["zdSettingsAccessPass"]\
+                if "zdSettingsAccessPass" in config else None   
+            self.zdx_disable_pass = config["zdxDisablePass"]\
+                if "zdxDisablePass" in config else None                   
+            self.zia_disable_pass = config["ziaDisablePass"]\
+                if "ziaDisablePass" in config else None 
+            self.zpa_disable_pass = config["zpaDisablePass"]\
+                if "zpaDisablePass" in config else None 
+
         else:
             self.exit_pass = None
             self.logout_pass = None

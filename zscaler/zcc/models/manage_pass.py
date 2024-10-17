@@ -28,17 +28,29 @@ class ManagePass(ZscalerObject):
         super().__init__(config)
 
         if config:
-            self.company_id = config.get("companyId")
-            self.device_type = config.get("deviceType")
-            self.exit_pass = config.get("exitPass")
-            self.logout_pass = config.get("logoutPass")
-            self.policy_name = config.get("policyName")
-            self.uninstall_pass = config.get("uninstallPass")
-            self.zad_disable_pass = config.get("zadDisablePass")
-            self.zdp_disable_pass = config.get("zdpDisablePass")
-            self.zdx_disable_pass = config.get("zdxDisablePass")
-            self.zia_disable_pass = config.get("ziaDisablePass")
-            self.zpa_disable_pass = config.get("zpaDisablePass")
+            self.company_id = config["companyId"]\
+                if "companyId" in config else None
+            self.device_type = config["deviceType"]\
+                if "deviceType" in config else None                
+            self.exit_pass = config["exitPass"]\
+                if "exitPass" in config else None   
+            self.logout_pass = config["logoutPass"]\
+                if "logoutPass" in config else None   
+            self.policy_name = config["policyName"]\
+                if "policyName" in config else None  
+            self.uninstall_pass = config["uninstallPass"]\
+                if "uninstallPass" in config else None  
+            self.zad_disable_pass = config["zadDisablePass"]\
+                if "zadDisablePass" in config else None  
+            self.zdp_disable_pass = config["zdpDisablePass"]\
+                if "zdpDisablePass" in config else None  
+            self.zdx_disable_pass = config["zdxDisablePass"]\
+                if "zdxDisablePass" in config else None  
+            self.zia_disable_pass = config["ziaDisablePass"]\
+                if "ziaDisablePass" in config else None  
+            self.zpa_disable_pass = config["zpaDisablePass"]\
+                if "zpaDisablePass" in config else None                
+
         else:
             self.company_id = None
             self.device_type = None

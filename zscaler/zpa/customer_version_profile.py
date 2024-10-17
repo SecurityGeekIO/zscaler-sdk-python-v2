@@ -15,14 +15,14 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.api_client import APIClient
-from zscaler.zpa.models.cloud_connector_groups import CloudConnectorGroup
-from zscaler.utils import format_url
+from zscaler.zpa.models.customer_version_profile import CustomerVersionProfile
 from urllib.parse import urlencode
+from zscaler.utils import format_url
 
 
-class CloudConnectorGroupsAPI(APIClient):
+class CustomerVersionProfileAPI(APIClient):
     """
-    A Client object for the Cloud Connector Groups resource.
+    A Client object for the Customer Version Profile resource.
     """
 
     def __init__(self, request_executor, config):
@@ -31,11 +31,14 @@ class CloudConnectorGroupsAPI(APIClient):
         customer_id = config["client"].get("customerId")
         self._zpa_base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
-    def list_cloud_connector_groups(self, query_params=None) -> tuple:
+    def list_version_profiles(self, query_params=None) -> tuple:
         """
-        Returns a list of all configured cloud connector groups.
+        Returns a list of all visible version profiles.
 
-        Keyword Args:
+        Args:
+            **kwargs: Optional keyword args.
+
+        Args:
             query_params {dict}: Map of query parameters for the request.
                 [query_params.pagesize] {int}: Page size for pagination.
                 [query_params.search] {str}: Search string for filtering results.
@@ -44,18 +47,21 @@ class CloudConnectorGroupsAPI(APIClient):
                 [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
 
         Returns:
-            list: A list of `CloudConnectorGroup` instances.
+            tuple: A tuple containing (list of Customer Profiles instances, Response, error)
 
-        Example:
-            >>> cloud_connector_groups = zpa.cloud_connector_groups.list_cloud_connector_groups(search="example")
+        Examples:
+            List all visibile version profiles:
+
+            >>> for profile in zpa.connectors.list_version_profiles():
+            ...    print(profile)
+
         """
         http_method = "get".upper()
         api_url = format_url(f"""
             {self._zpa_base_endpoint}
-            /cloudConnectorGroup
+            /visible/versionProfiles
         """)
 
-        # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
 
         # Build the query string
@@ -63,15 +69,9 @@ class CloudConnectorGroupsAPI(APIClient):
             encoded_query_params = urlencode(query_params)
             api_url += f"?{encoded_query_params}"
 
-        # Prepare request body and headers
-        body = {}
-        headers = {}
-
         # Prepare request
         request, error = self._request_executor\
-            .create_request(
-                http_method, api_url, body, headers
-            )
+            .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
@@ -84,58 +84,9 @@ class CloudConnectorGroupsAPI(APIClient):
         try:
             result = []
             for item in response.get_results():
-                result.append(CloudConnectorGroup(
+                result.append(CustomerVersionProfile(
                     self.form_response_body(item))
                 )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
-
-    def get_cloud_connector_groups(self, group_id: str, query_params={}, keep_empty_params=False):
-        """
-        Returns information on the specified cloud connector group.
-
-        Args:
-            group_id (str): The unique identifier for the cloud connector group.
-            query_params (dict): Optional query parameters.
-            keep_empty_params (bool): Whether to include empty query parameters in the request.
-
-        Returns:
-            dict: The cloud connector group object.
-
-        Example:
-            >>> group, response, error = zpa.cloud_connector_groups.get_group('216196257331305019')
-            >>> if error is None:
-            ...     pprint(group)
-        """
-        http_method = "get".upper()
-        api_url = format_url(
-            f"""
-            {self._zpa_base_endpoint}/cloudConnectorGroup/{group_id}
-        """
-        )
-
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
-
-        body, headers, form = {}, {}, {}
-
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
-        )
-
-        if error:
-            return (None, None, error)
-
-        response, error = self._request_executor.execute(request)
-
-        if error:
-            return (None, response, error)
-
-        try:
-            result = CloudConnectorGroup(response.get_body())
-        except Exception as error:
-            return (None, response, error)
-
-        return result, response, None

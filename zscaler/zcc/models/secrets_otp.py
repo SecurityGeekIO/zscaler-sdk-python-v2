@@ -28,17 +28,29 @@ class OtpResponse(ZscalerObject):
         super().__init__(config)
 
         if config:
-            self.anti_tempering_disable_otp = config.get("antiTemperingDisableOtp")
-            self.deception_settings_otp = config.get("deceptionSettingsOtp")
-            self.exit_otp = config.get("exitOtp")
-            self.logout_otp = config.get("logoutOtp")
-            self.otp = config.get("otp")
-            self.revert_otp = config.get("revertOtp")
-            self.uninstall_otp = config.get("uninstallOtp")
-            self.zdp_disable_otp = config.get("zdpDisableOtp")
-            self.zdx_disable_otp = config.get("zdxDisableOtp")
-            self.zia_disable_otp = config.get("ziaDisableOtp")
-            self.zpa_disable_otp = config.get("zpaDisableOtp")
+            self.anti_tempering_disable_otp = config["antiTemperingDisableOtp"]\
+                if "antiTemperingDisableOtp" in config else None
+            self.deception_settings_otp = config["deceptionSettingsOtp"]\
+                if "deceptionSettingsOtp" in config else None               
+            self.exit_otp = config["exitOtp"]\
+                if "exitOtp" in config else None 
+            self.logout_otp = config["logoutOtp"]\
+                if "logoutOtp" in config else None 
+            self.otp = config["otp"]\
+                if "otp" in config else None 
+            self.revert_otp = config["revertOtp"]\
+                if "revertOtp" in config else None 
+            self.uninstall_otp = config["uninstallOtp"]\
+                if "uninstallOtp" in config else None 
+            self.zdp_disable_otp = config["zdpDisableOtp"]\
+                if "zdpDisableOtp" in config else None 
+            self.zdx_disable_otp = config["zdxDisableOtp"]\
+                if "zdxDisableOtp" in config else None 
+            self.zia_disable_otp = config["ziaDisableOtp"]\
+                if "ziaDisableOtp" in config else None 
+            self.zpa_disable_otp = config["zpaDisableOtp"]\
+                if "zpaDisableOtp" in config else None 
+
         else:
             self.anti_tempering_disable_otp = None
             self.deception_settings_otp = None

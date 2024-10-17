@@ -64,15 +64,9 @@ class AppConnectorGroupAPI(APIClient):
             encoded_query_params = urlencode(query_params)
             api_url += f"?{encoded_query_params}"
 
-        # Prepare request body and headers
-        body = {}
-        headers = {}
-
         # Prepare request
         request, error = self._request_executor\
-            .create_request(
-                http_method, api_url, body, headers
-            )
+            .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
@@ -100,14 +94,12 @@ class AppConnectorGroupAPI(APIClient):
             group_id (str): The unique identifier for the connector group.
             query_params (dict, optional): Map of query parameters for the request.
                 [query_params.microtenantId] {str}: The microtenant ID, if applicable.
-            keep_empty_params (bool): Whether to include empty parameters in the query string.
 
         Returns:
             tuple: A tuple containing (AppConnectorGroup instance, Response, error).
         """
         http_method = "get".upper()
-        api_url = format_url(
-            f"""{
+        api_url = format_url(f"""{
             self._zpa_base_endpoint}
             /appConnectorGroup/{group_id}
         """)
@@ -123,29 +115,19 @@ class AppConnectorGroupAPI(APIClient):
             encoded_query_params = urlencode(query_params)
             api_url += f"?{encoded_query_params}"
 
-        # Prepare request body, headers, and form (if needed)
-        body = {}
-        headers = {}
-
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, headers)
-
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, AppConnectorGroup)
-
+        response, error = self._request_executor.execute(request, AppConnectorGroup)
         if error:
             return (None, response, error)
 
         # Parse the response into an AppConnectorGroup instance
         try:
-            result = AppConnectorGroup(
-                self.form_response_body(response.get_body())
-            )
+            result = AppConnectorGroup(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -301,12 +283,14 @@ class AppConnectorGroupAPI(APIClient):
         print(f"Final URL: {api_url}?{urlencode(params)}" if params else api_url)
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body, {}, params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, {}, params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, AppConnectorGroup)
+        response, error = self._request_executor\
+            .execute(request, AppConnectorGroup)
         if error:
             return (None, response, error)
 
@@ -317,7 +301,9 @@ class AppConnectorGroupAPI(APIClient):
 
         # Parse the response into an AppConnectorGroup instance
         try:
-            result = AppConnectorGroup(self.form_response_body(response.get_body()))
+            result = AppConnectorGroup(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)

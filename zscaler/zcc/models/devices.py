@@ -28,31 +28,57 @@ class Device(ZscalerObject):
         super().__init__(config)
 
         if config:
-            self.agent_version = config.get("agentVersion")
-            self.company_name = config.get("companyName")
-            self.config_download_time = config.get("config_download_time")
-            self.deregistration_timestamp = config.get("deregistrationTimestamp")
-            self.detail = config.get("detail")
-            self.download_count = config.get("download_count")
-            self.hardware_fingerprint = config.get("hardwareFingerprint")
-            self.keep_alive_time = config.get("keepAliveTime")
-            self.last_seen_time = config.get("last_seen_time")
-            self.mac_address = config.get("macAddress")
-            self.machine_hostname = config.get("machineHostname")
-            self.manufacturer = config.get("manufacturer")
-            self.os_version = config.get("osVersion")
-            self.owner = config.get("owner")
-            self.policy_name = config.get("policyName")
-            self.registration_state = config.get("registrationState")
-            self.registration_time = config.get("registration_time")
-            self.state = config.get("state")
-            self.tunnel_version = config.get("tunnelVersion")
-            self.type = config.get("type")
-            self.udid = config.get("udid")
-            self.upm_version = config.get("upmVersion")
-            self.user = config.get("user")
-            self.vpn_state = config.get("vpnState")
-            self.zapp_arch = config.get("zappArch")
+            self.agent_version = config["agentVersion"]\
+                if "agentVersion" in config else None
+            self.company_name = config["companyName"]\
+                if "companyName" in config else None
+            self.config_download_time = config["config_download_time"]\
+                if "config_download_time" in config else None
+            self.deregistration_timestamp = config["deregistrationTimestamp"]\
+                if "deregistrationTimestamp" in config else None
+            self.detail = config["detail"]\
+                if "detail" in config else None                                
+            self.download_count = config["download_count"]\
+                if "download_count" in config else None      
+            self.hardware_fingerprint = config["hardwareFingerprint"]\
+                if "hardwareFingerprint" in config else None   
+            self.keep_alive_time = config["keepAliveTime"]\
+                if "keepAliveTime" in config else None   
+            self.last_seen_time = config["last_seen_time"]\
+                if "last_seen_time" in config else None                                   
+            self.mac_address = config["macAddress"]\
+                if "macAddress" in config else None 
+            self.machine_hostname = config["machineHostname"]\
+                if "machineHostname" in config else None 
+            self.manufacturer = config["manufacturer"]\
+                if "manufacturer" in config else None 
+            self.os_version = config["osVersion"]\
+                if "osVersion" in config else None
+            self.owner = config["owner"]\
+                if "owner" in config else None                
+            self.policy_name = config["policyName"]\
+                if "policyName" in config else None    
+            self.registration_state = config["registrationState"]\
+                if "registrationState" in config else None   
+            self.registration_time = config["registration_time"]\
+                if "registration_time" in config else None   
+            self.state = config["state"]\
+                if "state" in config else None   
+            self.tunnel_version = config["tunnelVersion"]\
+                if "tunnelVersion" in config else None 
+            self.type = config["type"]\
+                if "type" in config else None 
+            self.udid = config["udid"]\
+                if "udid" in config else None 
+            self.upm_version = config["upmVersion"]\
+                if "upmVersion" in config else None 
+            self.user = config["user"]\
+                if "user" in config else None 
+            self.vpn_state = config["vpnState"]\
+                if "vpnState" in config else None 
+            self.zapp_arch = config["zappArch"]\
+                if "zappArch" in config else None 
+
         else:
             self.agent_version = None
             self.company_name = None

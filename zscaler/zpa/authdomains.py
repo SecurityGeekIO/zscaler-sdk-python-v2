@@ -52,10 +52,9 @@ class AuthDomainsAPI(APIClient):
 
         body = {}
         headers = {}
-        form = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body, headers, form)
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
 
         if error:
             return (None, None, error)
@@ -68,32 +67,8 @@ class AuthDomainsAPI(APIClient):
 
         # Parse the response
         try:
-            result = response.get_body()  # In this case, response is a list of strings like ["PASS", "BLOCK", "REDIRECT"]
+            result = response.get_body()
         except Exception as error:
             return (None, response, error)
 
         return (result, response, None)
-
-
-# from box import Box
-# from zscaler.api_client import APIClient
-
-
-# class AuthDomainsAPI(APIClient):
-
-#     def get_auth_domains(self) -> Box:
-#         """
-#         Returns information on authentication domains.
-
-#         Args:
-#             group_id (str):
-#                 The unique identifier for the authentication domains.
-
-#         Returns:
-#             :obj:`Box`: The resource record for the authentication domains.
-
-#         Examples:
-#             >>> pprint(zpa.authdomains.get_auth_domains())
-
-#         """
-#         return self.rest.get("authDomains")
