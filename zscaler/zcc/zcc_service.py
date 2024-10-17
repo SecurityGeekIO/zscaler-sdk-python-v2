@@ -1,4 +1,5 @@
 from zscaler.zcc.devices import DevicesAPI
+from zscaler.zcc.manage_pass import ManagePassAPI
 from zscaler.zcc.secrets import SecretsAPI
 
 
@@ -23,3 +24,11 @@ class ZCCService:
 
         """
         return SecretsAPI(self._request_executor)
+
+    @property
+    def manage_pass(self):
+        """
+        The interface object for the :ref:`ZCC manage pass interface <zcc-manage-pass>`.
+
+        """
+        return ManagePassAPI(self._request_executor)
