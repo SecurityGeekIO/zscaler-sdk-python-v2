@@ -1,7 +1,6 @@
 import logging
 import time
 import uuid
-from zscaler.logger import setup_logging
 from zscaler.oneapi_http_client import HTTPClient
 from zscaler.oneapi_response import ZscalerAPIResponse
 from zscaler.oneapi_oauth_client import OAuth
@@ -11,9 +10,6 @@ from zscaler.error_messages import ERROR_MESSAGE_429_MISSING_DATE_X_RESET
 from http import HTTPStatus
 from zscaler.helpers import convert_keys_to_snake_case, to_lower_camel_case
 
-
-# Configure logging
-setup_logging(logger_name="zscaler-sdk-python")
 logger = logging.getLogger(__name__)
 
 

@@ -1,10 +1,6 @@
 import json
 import logging
 
-from zscaler.logger import setup_logging
-
-# Configure logging
-setup_logging(logger_name="zscaler-sdk-python")
 logger = logging.getLogger(__name__)
 
 

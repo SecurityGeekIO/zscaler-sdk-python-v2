@@ -10,11 +10,7 @@ from zscaler.error_messages import (
     ERROR_MESSAGE_PROXY_MISSING_AUTH,
     ERROR_MESSAGE_PROXY_INVALID_PORT,
 )
-from zscaler.logger import setup_logging
 
-
-# Configure logging
-setup_logging(logger_name="zscaler-sdk-python")
 logger = logging.getLogger(__name__)
 
 

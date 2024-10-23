@@ -6,10 +6,8 @@ import time
 from zscaler.errors.http_error import HTTPError
 from zscaler.errors.zscaler_api_error import ZscalerAPIError
 from zscaler.exceptions import HTTPException, ZscalerAPIException
-from zscaler.logger import dump_request, dump_response, setup_logging
+from zscaler.logger import dump_request, dump_response
 
-# Configure logging
-setup_logging(logger_name="zscaler-sdk-python")
 logger = logging.getLogger(__name__)
 
 

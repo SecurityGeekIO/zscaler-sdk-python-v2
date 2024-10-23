@@ -4,12 +4,9 @@ import jwt
 import time
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
-from zscaler.logger import setup_logging
 from zscaler.user_agent import UserAgent
 from zscaler.oneapi_http_client import HTTPClient
 
-# Configure logging
-setup_logging(logger_name="zscaler-sdk-python")
 logger = logging.getLogger(__name__)
 
 

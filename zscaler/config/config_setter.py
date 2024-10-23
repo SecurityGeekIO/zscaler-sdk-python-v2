@@ -5,11 +5,8 @@ from zscaler.constants import _GLOBAL_YAML_PATH, _LOCAL_YAML_PATH
 from flatdict import FlatDict
 
 from zscaler.helpers import to_snake_case
-from zscaler.logger import setup_logging
 
 
-# Configure logging
-setup_logging(logger_name="zscaler-sdk-python")
 logger = logging.getLogger(__name__)
 
 

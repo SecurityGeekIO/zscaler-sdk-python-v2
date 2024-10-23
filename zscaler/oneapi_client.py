@@ -4,18 +4,14 @@ import os
 
 from zscaler.config.config_setter import ConfigSetter
 from zscaler.config.config_validator import ConfigValidator
+from zscaler.logger import setup_logging
 from zscaler.request_executor import RequestExecutor
 from zscaler.cache.no_op_cache import NoOpCache
 from zscaler.cache.zscaler_cache import ZscalerCache
 from zscaler.oneapi_oauth_client import OAuth
-from zscaler.logger import setup_logging
 from zscaler.zcc.zcc_service import ZCCService
 from zscaler.zia.zia_service import ZIAService
 from zscaler.zpa.zpa_service import ZPAService
-
-# Configure logging
-setup_logging(logger_name="zscaler-sdk-python")
-logger = logging.getLogger(__name__)
 
 
 # Zscaler Client Connector APIs
@@ -23,23 +19,37 @@ class Client:
     """A Zscaler client object"""
 
     def __init__(self, user_config: dict = {}):
-        logger.debug("Initializing Client with user configuration.")
+
+        # Assuming user_config is a dictionary or an object with a 'logging' attribute
+        logging_config = (
+            user_config.get("logging", {}) if isinstance(user_config, dict) else getattr(user_config, "logging", {})
+        )
+
+        # Extract enabled and verbose from the logging configuration
+        enabled = logging_config.get("enabled", None)
+        verbose = logging_config.get("verbose", None)
+
+        # Setup logging with the extracted configuration
+        setup_logging("zscaler-sdk-python", enabled=enabled, verbose=verbose)
+        self.logger = logging.getLogger(__name__)
+
+        self.logger.debug("Initializing Client with user configuration.")
         client_config_setter = ConfigSetter()
         client_config_setter._apply_config({"client": user_config})
         self._config = client_config_setter.get_config()
-        logger.debug(f"Configuration applied: {self._config}")
+        self.logger.debug(f"Configuration applied: {self._config}")
 
         # Retrieve optional customerId from config or environment
         self._customer_id = self._config["client"].get("customerId", os.getenv("ZSCALER_CUSTOMER_ID"))
-        logger.debug(f"Customer ID set to: {self._customer_id}")
+        self.logger.debug(f"Customer ID set to: {self._customer_id}")
 
         # Prune unnecessary configuration fields
         self._config = client_config_setter._prune_config(self._config)
-        logger.debug(f"Configuration after pruning: {self._config}")
+        self.logger.debug(f"Configuration after pruning: {self._config}")
 
         # Validate configuration
         ConfigValidator(self._config)
-        logger.debug("Configuration validated successfully.")
+        self.logger.debug("Configuration validated successfully.")
 
         self._client_id = self._config["client"]["clientId"]
         self._client_secret = self._config["client"].get("clientSecret", None)
@@ -55,34 +65,34 @@ class Client:
                 time_to_idle = self._config["client"]["cache"]["defaultTti"]
                 time_to_live = self._config["client"]["cache"]["defaultTtl"]
                 cache = ZscalerCache(time_to_live, time_to_idle)
-                logger.debug(f"Using default cache with TTL: {time_to_live}, TTI: {time_to_idle}")
+                self.logger.debug(f"Using default cache with TTL: {time_to_live}, TTI: {time_to_idle}")
             else:
                 cache = user_config.get("cacheManager")
-                logger.debug("Using custom cache manager.")
+                self.logger.debug("Using custom cache manager.")
 
         self._request_executor = user_config.get("requestExecutor", RequestExecutor)(
             self._config, cache, user_config.get("httpClient", None)
         )
-        logger.debug("Request executor initialized.")
+        self.logger.debug("Request executor initialized.")
 
         # Lazy load ZIA and ZPA clients
         self._zia = None
         self._zpa = None
         self._zcc = None
-        logger.debug("Client initialized successfully.")
+        self.logger.debug("Client initialized successfully.")
 
     def authenticate(self):
         """
         Handles authentication by using either client_secret or private_key.
         """
-        logger.debug("Starting authentication process.")
+        self.logger.debug("Starting authentication process.")
         oauth_client = OAuth(self._request_executor, self._config)
         self._auth_token = oauth_client._get_access_token()
-        logger.debug("Authentication successful. Access token obtained.")
+        self.logger.debug("Authentication successful. Access token obtained.")
 
         # Update the default headers by setting the Authorization Bearer token
         self._request_executor._default_headers.update({"Authorization": f"Bearer {self._auth_token}"})
-        logger.debug("Authorization header updated with access token.")
+        self.logger.debug("Authorization header updated with access token.")
 
     @property
     def zcc(self) -> ZCCService:
@@ -106,19 +116,19 @@ class Client:
         """
         Automatically create and set session within context manager.
         """
-        logger.debug("Entering context manager, setting up session.")
+        self.logger.debug("Entering context manager, setting up session.")
         # Create and set up a session using 'requests' library for sync.
         self._session = requests.Session()
         self._request_executor.set_session(self._session)
         self.authenticate()  # Authenticate when entering the context
-        logger.debug("Session setup and authentication complete.")
+        self.logger.debug("Session setup and authentication complete.")
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Automatically close session within context manager."""
-        logger.debug("Exiting context manager, closing session.")
+        self.logger.debug("Exiting context manager, closing session.")
         self._session.close()
-        logger.debug("Session closed.")
+        self.logger.debug("Session closed.")
 
     """
     Getters
