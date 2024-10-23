@@ -19,33 +19,23 @@ class Client:
     """A Zscaler client object"""
 
     def __init__(self, user_config: dict = {}):
-
-        # Assuming user_config is a dictionary or an object with a 'logging' attribute
-        logging_config = (
-            user_config.get("logging", {}) if isinstance(user_config, dict) else getattr(user_config, "logging", {})
-        )
-
-        # Extract enabled and verbose from the logging configuration
-        enabled = logging_config.get("enabled", None)
-        verbose = logging_config.get("verbose", None)
-
-        # Setup logging with the extracted configuration
-        setup_logging("zscaler-sdk-python", enabled=enabled, verbose=verbose)
+        self._setup_logger(user_config)
         self.logger = logging.getLogger(__name__)
 
-        self.logger.debug("Initializing Client with user configuration.")
         client_config_setter = ConfigSetter()
+        self.logger.debug("Initializing Client with user configuration.")
         client_config_setter._apply_config({"client": user_config})
         self._config = client_config_setter.get_config()
+
+        # Prune unnecessary configuration fields
+        self._config = client_config_setter._prune_config(self._config)
+        self.logger.debug(f"Configuration after pruning: {self._config}")
+
         self.logger.debug(f"Configuration applied: {self._config}")
 
         # Retrieve optional customerId from config or environment
         self._customer_id = self._config["client"].get("customerId", os.getenv("ZSCALER_CUSTOMER_ID"))
         self.logger.debug(f"Customer ID set to: {self._customer_id}")
-
-        # Prune unnecessary configuration fields
-        self._config = client_config_setter._prune_config(self._config)
-        self.logger.debug(f"Configuration after pruning: {self._config}")
 
         # Validate configuration
         ConfigValidator(self._config)
@@ -80,6 +70,19 @@ class Client:
         self._zpa = None
         self._zcc = None
         self.logger.debug("Client initialized successfully.")
+
+    def _setup_logger(self, user_config):
+        # Assuming user_config is a dictionary or an object with a 'logging' attribute
+        logging_config = (
+            user_config.get("logging", {}) if isinstance(user_config, dict) else getattr(user_config, "logging", {})
+        )
+
+        # Extract enabled and verbose from the logging configuration
+        logging_enabled = logging_config.get("enabled", os.getenv("ZSCALER_SDK_LOG", "false").lower() == "true")
+        verbose_logging = logging_config.get("verbose", os.getenv("ZSCALER_SDK_VERBOSE", "false").lower() == "true")
+
+        # Setup logging with the extracted configuration
+        setup_logging("zscaler-sdk-python", enabled=logging_enabled, verbose=verbose_logging)
 
     def authenticate(self):
         """

@@ -5,6 +5,7 @@ from zscaler.constants import _GLOBAL_YAML_PATH, _LOCAL_YAML_PATH
 from flatdict import FlatDict
 
 from zscaler.helpers import to_snake_case
+from zscaler.logger import setup_logging
 
 
 logger = logging.getLogger(__name__)
@@ -53,8 +54,6 @@ class ConfigSetter:
         self._config = ConfigSetter._DEFAULT_CONFIG
         # Update configuration
         self._update_config()
-        # Setup logging based on config
-        self._setup_logging()
 
     def get_config(self):
         """
@@ -104,21 +103,6 @@ class ConfigSetter:
         # apply existing environment variables
         self._apply_env_config("client")
         self._apply_env_config("testing")
-
-    def _setup_logging(self):
-        """
-        Setup logging based on configuration.
-        """
-        logging_enabled = self._config["client"]["logging"].get("enabled", False)
-        verbose_logging = self._config["client"]["logging"].get("verbose", False)
-
-        if logging_enabled:
-            logger.info("Enabling logging for Zscaler SDK.")
-            os.environ["ZSCALER_SDK_LOG"] = "true"
-            os.environ["ZSCALER_SDK_VERBOSE"] = "true" if verbose_logging else "false"
-        else:
-            logger.info("Disabling logging for Zscaler SDK.")
-            os.environ["ZSCALER_SDK_LOG"] = "false"
 
     def _apply_default_values(self):
         """Apply default values to default client configuration"""
