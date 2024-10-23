@@ -1,5 +1,7 @@
 import logging
 import time
+import uuid
+from zscaler.logger import setup_logging
 from zscaler.oneapi_http_client import HTTPClient
 from zscaler.oneapi_response import ZscalerAPIResponse
 from zscaler.oneapi_oauth_client import OAuth
@@ -9,9 +11,10 @@ from zscaler.error_messages import ERROR_MESSAGE_429_MISSING_DATE_X_RESET
 from http import HTTPStatus
 from zscaler.helpers import convert_keys_to_snake_case, to_lower_camel_case
 
-# Setup logging
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger()
+
+# Configure logging
+setup_logging(logger_name="zscaler-sdk-python")
+logger = logging.getLogger(__name__)
 
 
 class RequestExecutor:
@@ -30,6 +33,7 @@ class RequestExecutor:
             cache (object): Cache object for storing request responses.
             http_client (object, optional): Custom HTTP client for making requests.
         """
+        logger.info("Initializing RequestExecutor with provided configuration.")
 
         # Validate and set request timeout
         self._request_timeout = config["client"].get("requestTimeout", 240)  # Default to 240 seconds
@@ -53,6 +57,7 @@ class RequestExecutor:
 
         # Initialize base URL based on the cloud setting
         self._base_url = self.get_base_url(self.cloud)
+        logger.debug(f"Base URL set to: {self._base_url}")
 
         # OAuth2 setup
         self._oauth = OAuth(self, self._config)
@@ -89,11 +94,13 @@ class RequestExecutor:
         Returns:
             str: The constructed base URL for API requests.
         """
+        logger.debug(f"Determining base URL for cloud: {cloud}")
         if cloud and cloud != "production":
             return f"https://api.{cloud}.zsapi.net"
         return self.BASE_URL
 
     def get_service_type(self, url):
+        logger.debug(f"Determining service type for URL: {url}")
         if "/zia" in url:
             return "zia"
         elif "/zcc" in url:
@@ -111,14 +118,12 @@ class RequestExecutor:
         headers: dict = {},
         params: dict = {},
     ):
-        print(f"Initial endpoint before modification: {endpoint}")
-
+        logger.info(f"Creating request for endpoint: {endpoint} with method: {method}")
         # Get the appropriate base URL based on the service and cloud environment
         base_url = self.get_base_url(self.cloud)
 
         # Ensure the final URL is constructed by appending the base URL
         final_url = f"{base_url}/{endpoint.lstrip('/')}"
-        print(f"Final URL constructed: {final_url}")
 
         logger.debug(f"Final URL after service detection and version handling: {final_url}")
 
@@ -128,8 +133,6 @@ class RequestExecutor:
         # Set headers, including OAuth token if required
         headers = {**self._default_headers, **headers}
         headers["Authorization"] = f"Bearer {self._oauth._get_access_token()}"
-
-        print(f"Request headers: {headers}")
 
         # Convert body and params to camelCase before sending
         if body:
@@ -154,8 +157,6 @@ class RequestExecutor:
             if params.get("microtenantId") is not None:
                 del params["microtenantId"]
 
-        print(f"Final request body (before JSON serialization): {body}")
-
         # Construct the request dictionary
         request = {
             "method": method,
@@ -163,10 +164,10 @@ class RequestExecutor:
             "json": body,  # Always use 'json' for JSON payloads
             "params": params,
             "headers": headers,
+            "uuid": uuid.uuid4(),
         }
 
-        print(f"Final request: {request}")
-
+        logger.debug(f"Request created: {request}")
         return request, None
 
     def execute(self, request, response_type=None):
@@ -180,7 +181,8 @@ class RequestExecutor:
         Returns:
             ZscalerAPIResponse or error
         """
-        logger.debug(f"Executing request: {request}")
+        logger.info(f"Executing request to URL: {request['url']}")
+        logger.debug(f"Request details: {request}")
 
         # Fire the request
         try:
@@ -212,7 +214,7 @@ class RequestExecutor:
             logger.error(f"Error in HTTP response: {error}")
             return None, error
 
-        logger.debug(f"Successful response from {request['url']}")
+        logger.info(f"Successful response from {request['url']}")
         logger.debug(f"Response Data: {response_data}")
 
         # Convert response body keys from camelCase to snake_case if response_data is a dict or list
@@ -242,7 +244,8 @@ class RequestExecutor:
         Returns:
             request, response, response_body, error
         """
-        logger.debug(f"Sending request: {request}")
+        logger.info(f"Sending request to URL: {request['url']}")
+        logger.debug(f"Request details: {request}")
 
         # Pass both URL and params to create_key
         url_cache_key = self._cache.create_key(request["url"], request["params"])
@@ -253,12 +256,14 @@ class RequestExecutor:
 
         # Check if response exists in cache
         if self._cache.contains(url_cache_key):
+            logger.info(f"Cache hit for URL: {request['url']}")
             return self._cache.get(url_cache_key), None
 
         # Send actual request
         request, response, response_body, error = self.fire_request_helper(request, 0, time.time())
 
         if error is None and request["method"].upper() == "GET" and 200 <= response.status_code < 300:
+            logger.info(f"Caching response for URL: {request['url']}")
             self._cache.add(url_cache_key, (response, response_body))
 
         return request, response, response_body, error
@@ -275,16 +280,19 @@ class RequestExecutor:
         Returns:
             Tuple of request, response object, response body, and error.
         """
+        logger.debug(f"Attempting request to URL: {request['url']}, attempt {attempts + 1}")
         current_req_start_time = time.time()
         max_retries = self._max_retries
         req_timeout = self._request_timeout
 
         if req_timeout > 0 and (current_req_start_time - request_start_time) > req_timeout:
+            logger.error("Request Timeout exceeded.")
             return None, None, None, Exception("Request Timeout exceeded.")
 
         response, error = self._http_client.send_request(request)
 
         if error:
+            logger.error(f"Error sending request: {error}")
             return None, None, None, error
 
         headers = response.headers
@@ -306,6 +314,7 @@ class RequestExecutor:
                 retry_after = int(retry_after.strip("s"))
 
             if not date_time or not retry_limit_reset_headers:
+                logger.error("Missing Date or X-Rate-Limit-Reset headers.")
                 return None, response, response.text, Exception(ERROR_MESSAGE_429_MISSING_DATE_X_RESET)
             # x-ratelimit-reset: The time (in seconds) remaining in the current window after which the rate limit resets.
             # so no need to substract the date unix time
@@ -368,19 +377,23 @@ class RequestExecutor:
         """
         Set custom headers for all future requests.
         """
+        logger.debug(f"Setting custom headers: {headers}")
         self._custom_headers.update(headers)
 
     def set_session(self, session):
+        logger.debug("Setting HTTP client session.")
         self._http_client.set_session(session)
 
     def clear_custom_headers(self):
         """
         Clear custom headers set for future requests.
         """
+        logger.debug("Clearing custom headers.")
         self._custom_headers.clear()
 
     def get_custom_headers(self):
         """
         Get the current custom headers.
         """
+        logger.debug("Getting custom headers.")
         return self._custom_headers

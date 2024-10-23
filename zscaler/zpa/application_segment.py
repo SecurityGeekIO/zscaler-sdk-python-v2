@@ -54,10 +54,12 @@ class ApplicationSegmentAPI(APIClient):
         """
         # Initialize URL and HTTP method
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /application
-        """)
+        """
+        )
 
         query_params = query_params or {}
         microtenant_id = query_params.get("microtenant_id", None)
@@ -74,25 +76,19 @@ class ApplicationSegmentAPI(APIClient):
         headers = {}
 
         # Prepare request
-        request, error = self._request_executor\
-            .create_request(
-                http_method, api_url, body, headers
-            )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
             for item in response.get_results():
-                result.append(ApplicationSegment(
-                    self.form_response_body(item))
-                )
+                result.append(ApplicationSegment(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -111,7 +107,8 @@ class ApplicationSegmentAPI(APIClient):
             tuple: A tuple containing the `ApplicationSegment` instance, response object, and error if any.
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /application/{segment_id}
         """
@@ -133,17 +130,14 @@ class ApplicationSegmentAPI(APIClient):
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, ApplicationSegment)
+        response, error = self._request_executor.execute(request, ApplicationSegment)
 
         if error:
             return (None, response, error)
 
         # Parse the response into an AppConnectorGroup instance
         try:
-            result = ApplicationSegment(
-                self.form_response_body(response.get_body())
-            )
+            result = ApplicationSegment(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -165,10 +159,12 @@ class ApplicationSegmentAPI(APIClient):
             tuple: A tuple containing the `ApplicationSegment` instance, response object, and error if any.
         """
         http_method = "post".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /application
-        """)
+        """
+        )
 
         # Ensure app_segment is a dictionary
         if isinstance(app_segment, dict):
@@ -188,13 +184,8 @@ class ApplicationSegmentAPI(APIClient):
         if "clientless_app_ids" in body:
             body["clientlessApps"] = transform_clientless_apps(body.pop("clientless_app_ids"))
 
-        # Log for debugging to ensure the URL construct
-        print(f"Final URL: {api_url}?{urlencode(params)}" if params else api_url)
-
         # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body=body, params=params
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body=body, params=params)
         if error:
             return (None, None, error)
 
@@ -223,10 +214,12 @@ class ApplicationSegmentAPI(APIClient):
             tuple: A tuple containing the updated `ApplicationSegment` instance, response object, and error if any.
         """
         http_method = "put".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /application/{segment_id}
-        """)
+        """
+        )
 
         # Ensure app_segment is a dictionary
         if isinstance(app_segment, dict):
@@ -245,19 +238,13 @@ class ApplicationSegmentAPI(APIClient):
         # Reformat clientless_app_ids if present
         if "clientless_app_ids" in body:
             body["clientlessApps"] = transform_clientless_apps(body.pop("clientless_app_ids"))
-
-        # Log for debugging to ensure the URL construct
-        print(f"Final URL: {api_url}?{urlencode(params)}" if params else api_url)
-
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, {}, params)
+        request, error = self._request_executor.create_request(http_method, api_url, body, {}, params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, ApplicationSegment)
+        response, error = self._request_executor.execute(request, ApplicationSegment)
         if error:
             return (None, response, error)
 
@@ -267,13 +254,11 @@ class ApplicationSegmentAPI(APIClient):
             return (ApplicationSegment({"id": segment_id}), None, None)
 
         try:
-            result = ApplicationSegment(
-                self.form_response_body(response.get_body())
-            )
+            result = ApplicationSegment(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
-            
+
     def delete_segment(self, segment_id: str, force_delete: bool = False, microtenant_id: str = None) -> tuple:
         """
         Delete an application segment.
@@ -289,10 +274,12 @@ class ApplicationSegmentAPI(APIClient):
             tuple: A tuple containing the status code, response object, and error if any.
         """
         http_method = "delete".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /application/{segment_id}
-        """)
+        """
+        )
 
         # Handle microtenant_id and forceDelete in URL params
         params = {}

@@ -1,3 +1,4 @@
+import logging
 from zscaler.error_messages import (
     ERROR_MESSAGE_CLIENT_ID_MISSING,
     ERROR_MESSAGE_CLIENT_SECRET_MISSING,
@@ -9,6 +10,12 @@ from zscaler.error_messages import (
     ERROR_MESSAGE_PROXY_MISSING_AUTH,
     ERROR_MESSAGE_PROXY_INVALID_PORT,
 )
+from zscaler.logger import setup_logging
+
+
+# Configure logging
+setup_logging(logger_name="zscaler-sdk-python")
+logger = logging.getLogger(__name__)
 
 
 class ConfigValidator:
@@ -18,6 +25,7 @@ class ConfigValidator:
 
     def __init__(self, config):
         self._config = config
+        logging.info("Initializing ConfigValidator with provided configuration.")
         self.validate_config()
 
     def validate_config(self):
@@ -30,16 +38,17 @@ class ConfigValidator:
         """
         errors = []
         client = self._config.get("client")
+        logging.debug("Starting configuration validation.")
 
         # Validate vanity domain (if required in your SDK)
         vanity_domain_errors = self._validate_vanity_domain(client.get("vanityDomain"))
-        print(f"Vanity domain errors: {vanity_domain_errors}")  # Add log
+        logging.debug(f"Vanity domain errors: {vanity_domain_errors}")
         errors += vanity_domain_errors
 
         # Validate proxy settings (if provided)
         if "proxy" in client:
             proxy_errors = self._validate_proxy_settings(client["proxy"])
-            print(f"Proxy errors: {proxy_errors}")  # Add log
+            logging.debug(f"Proxy errors: {proxy_errors}")
             errors += proxy_errors
 
         # Validate OAuth2 Client ID and Client Secret or PrivateKey
@@ -49,38 +58,26 @@ class ConfigValidator:
 
         if not client_secret and not private_key:
             errors.append(ERROR_MESSAGE_CLIENT_SECRET_MISSING)
+            logging.warning("Both client secret and private key are missing.")
 
         client_id_errors = self._validate_client_id(client_id)
-        print(f"Client ID errors: {client_id_errors}")  # Add log
+        logging.debug(f"Client ID errors: {client_id_errors}")
         errors += client_id_errors
-
-        # # Validate ZPA-specific fields independently, only for ZPA services
-        # if self._config.get("service_type") == "zpa":  # Assuming service_type is passed in the config
-        #     zpa_customer_id = client.get("customerId", "")
-        #     zpa_microtenant_id = client.get("microtenantId", "")
-
-        #     if not zpa_customer_id:
-        #         zpa_customer_id_errors = self._validate_zpa_customer_id(zpa_customer_id)
-        #         print(f"ZPA customer ID errors: {zpa_customer_id_errors}")  # Add log
-        #         errors += zpa_customer_id_errors
-
-        #     if zpa_microtenant_id:
-        #         zpa_microtenant_id_errors = self._validate_zpa_microtenant_id(zpa_microtenant_id)
-        #         print(f"ZPA microtenant ID errors: {zpa_microtenant_id_errors}")  # Add log
-        #         errors += zpa_microtenant_id_errors
 
         # Validate cloud (optional parameter)
         cloud_errors = self._validate_cloud(client.get("cloud", ""))
-        print(f"Cloud errors: {cloud_errors}")  # Add log
+        logging.debug(f"Cloud errors: {cloud_errors}")
         errors += cloud_errors
 
         # Raise exception if errors exist
         if errors:
             newline = "\n"
-            print(f"Final errors list: {errors}")  # Add log for final errors
+            logging.error(f"Configuration validation failed with errors: {errors}")
             raise ValueError(
                 f"{newline}Errors:" f"{newline + newline.join(errors) + 2*newline}" f"Please check your configuration."
             )
+        else:
+            logging.info("Configuration validation completed successfully.")
 
     def _validate_client_id(self, client_id):
         client_id_errors = []
@@ -89,9 +86,11 @@ class ConfigValidator:
         client_id = client_id.strip().lower()
         if not client_id:
             client_id_errors.append(ERROR_MESSAGE_CLIENT_ID_MISSING)
+            logging.warning("Client ID is missing.")
         # Detect if default {clientId} placeholder is used
         if "{clientId}".lower() in client_id:
             client_id_errors.append("Client ID contains a placeholder value {clientId}.")
+            logging.warning("Client ID contains a placeholder value {clientId}.")
 
         return client_id_errors
 
@@ -99,11 +98,12 @@ class ConfigValidator:
         vanity_domain_errors = []
 
         # Log the vanity domain to debug
-        print(f"Validating vanity domain: {vanity_domain}")
+        logging.debug(f"Validating vanity domain: {vanity_domain}")
 
         # Check if vanity domain is None or empty
         if vanity_domain is None:
             vanity_domain_errors.append(ERROR_MESSAGE_VANITY_DOMAIN_MISSING)
+            logging.warning("Vanity domain is missing.")
             return vanity_domain_errors
 
         # Remove whitespaces and lowercase domain for comparisons
@@ -112,9 +112,10 @@ class ConfigValidator:
         # Vanity domain is required
         if not vanity_domain:
             vanity_domain_errors.append(ERROR_MESSAGE_VANITY_DOMAIN_MISSING)
+            logging.warning("Vanity domain is empty after stripping.")
 
         # Log result after validation
-        print(f"Vanity domain after validation: {vanity_domain}")
+        logging.debug(f"Vanity domain after validation: {vanity_domain}")
 
         return vanity_domain_errors
 
@@ -124,6 +125,7 @@ class ConfigValidator:
         # Check if ZPA customer ID is valid (non-empty)
         if not zpa_customer_id:
             zpa_errors.append(ERROR_MESSAGE_ZPA_CUSTOMER_ID)
+            logging.warning("ZPA customer ID is missing.")
 
         return zpa_errors
 
@@ -133,6 +135,7 @@ class ConfigValidator:
         # Check if ZPA microtenant ID is valid (non-empty)
         if not zpa_microtenant_id:
             zpa_errors.append(ERROR_MESSAGE_ZPA_MICROTENANT_ID)
+            logging.warning("ZPA microtenant ID is missing.")
 
         return zpa_errors
 
@@ -141,7 +144,8 @@ class ConfigValidator:
 
         # Validate cloud field (optional)
         if cloud and not cloud.strip():
-            cloud_errors.append(ERROR_MESSAGE_CLOUD_MISSING)  # Only validate if cloud is provided but invalid
+            cloud_errors.append(ERROR_MESSAGE_CLOUD_MISSING)
+            logging.warning("Cloud is provided but invalid.")
 
         return cloud_errors
 
@@ -151,10 +155,12 @@ class ConfigValidator:
         # Check if host is provided
         if "host" not in proxy:
             proxy_errors.append(ERROR_MESSAGE_PROXY_MISSING_HOST)
+            logging.warning("Proxy host is missing.")
 
         # Check for username/password if one is provided
         if ("username" in proxy and "password" not in proxy) or ("username" not in proxy and "password" in proxy):
             proxy_errors.append(ERROR_MESSAGE_PROXY_MISSING_AUTH)
+            logging.warning("Proxy authentication details are incomplete.")
 
         # Validate port number
         if "port" in proxy:
@@ -164,5 +170,6 @@ class ConfigValidator:
                     raise ValueError
             except (TypeError, ValueError):
                 proxy_errors.append(ERROR_MESSAGE_PROXY_INVALID_PORT)
+                logging.warning("Proxy port is invalid.")
 
         return proxy_errors

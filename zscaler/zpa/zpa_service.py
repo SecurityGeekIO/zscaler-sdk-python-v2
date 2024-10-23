@@ -86,7 +86,7 @@ class ZPAService:
 
         """
         return CustomerVersionProfileAPI(self._request_executor, self._config)
-    
+
     @property
     def isolation(self):
         """
@@ -110,7 +110,7 @@ class ZPAService:
 
         """
         return AppConnectorGroupAPI(self._request_executor, self._config)
-    
+
     @property
     def connectors(self):
         """
@@ -126,7 +126,7 @@ class ZPAService:
 
         """
         return AppConnectorScheduleAPI(self._request_executor, self._config)
-    
+
     @property
     def emergency_access(self):
         """
@@ -142,7 +142,7 @@ class ZPAService:
 
         """
         return EnrollmentCertificateAPI(self._request_executor, self._config)
-    
+
     @property
     def idp(self):
         """
@@ -286,7 +286,7 @@ class ZPAService:
 
         """
         return ServiceEdgeScheduleAPI(self._request_executor, self._config)
-    
+
     @property
     def trusted_networks(self):
         """

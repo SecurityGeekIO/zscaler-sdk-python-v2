@@ -49,10 +49,12 @@ class AppConnectorGroupAPI(APIClient):
             tuple: A tuple containing (list of AppConnectorGroup instances, Response, error)
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /appConnectorGroup
-        """)
+        """
+        )
 
         query_params = query_params or {}
         microtenant_id = query_params.get("microtenant_id", None)
@@ -65,23 +67,19 @@ class AppConnectorGroupAPI(APIClient):
             api_url += f"?{encoded_query_params}"
 
         # Prepare request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
             for item in response.get_results():
-                result.append(AppConnectorGroup(
-                    self.form_response_body(item))
-                )
+                result.append(AppConnectorGroup(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -99,10 +97,12 @@ class AppConnectorGroupAPI(APIClient):
             tuple: A tuple containing (AppConnectorGroup instance, Response, error).
         """
         http_method = "get".upper()
-        api_url = format_url(f"""{
+        api_url = format_url(
+            f"""{
             self._zpa_base_endpoint}
             /appConnectorGroup/{group_id}
-        """)
+        """
+        )
 
         # Handle optional query parameters
         query_params = query_params or {}
@@ -177,10 +177,12 @@ class AppConnectorGroupAPI(APIClient):
             tuple: A tuple containing (AppConnectorGroup, Response, error)
         """
         http_method = "post".upper()
-        api_url = format_url(f"""{
+        api_url = format_url(
+            f"""{
             self._zpa_base_endpoint}
             /appConnectorGroup
-        """)
+        """
+        )
 
         # Ensure connector_group is a dictionary
         if isinstance(connector_group, dict):
@@ -192,27 +194,18 @@ class AppConnectorGroupAPI(APIClient):
         microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        # Log for debugging to ensure the URL construct
-        print(f"Final URL: {api_url}?{urlencode(params)}" if params else api_url)
-
         # Create the request
-        request, error = self._request_executor\
-            .create_request(
-            http_method, api_url, body=body, params=params
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body=body, params=params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, AppConnectorGroup)
+        response, error = self._request_executor.execute(request, AppConnectorGroup)
         if error:
             return (None, response, error)
 
         try:
-            result = AppConnectorGroup(
-                self.form_response_body(response.get_body())
-            )
+            result = AppConnectorGroup(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -264,10 +257,12 @@ class AppConnectorGroupAPI(APIClient):
             tuple: A tuple containing (AppConnectorGroup, Response, error)
         """
         http_method = "put".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /appConnectorGroup/{group_id}
-        """)
+        """
+        )
 
         # Ensure the connector_group is in dictionary format
         if isinstance(connector_group, dict):
@@ -279,18 +274,13 @@ class AppConnectorGroupAPI(APIClient):
         microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        # Log for debugging to ensure the URL construct
-        print(f"Final URL: {api_url}?{urlencode(params)}" if params else api_url)
-
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, {}, params)
+        request, error = self._request_executor.create_request(http_method, api_url, body, {}, params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, AppConnectorGroup)
+        response, error = self._request_executor.execute(request, AppConnectorGroup)
         if error:
             return (None, response, error)
 
@@ -301,9 +291,7 @@ class AppConnectorGroupAPI(APIClient):
 
         # Parse the response into an AppConnectorGroup instance
         try:
-            result = AppConnectorGroup(
-                self.form_response_body(response.get_body())
-            )
+            result = AppConnectorGroup(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -320,10 +308,12 @@ class AppConnectorGroupAPI(APIClient):
             tuple: A tuple containing the response and error (if any).
         """
         http_method = "delete".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /appConnectorGroup/{group_id}
-        """)
+        """
+        )
 
         # Handle microtenant_id in URL params if provided
         params = {"microtenantId": microtenant_id} if microtenant_id else {}

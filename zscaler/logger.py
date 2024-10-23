@@ -59,23 +59,17 @@ def setup_logging(logger_name="zscaler-sdk-python"):
         file_handler.setFormatter(log_formatter)
         logger.addHandler(file_handler)
 
+
 def dump_request(logger, url: str, method: str, json, params, headers, request_uuid: str, body=True):
     request_headers_filtered = {key: value for key, value in headers.items() if key != "Authorization"}
     # Log the request details before sending the request
-    request_data = {
-        "url": url,
-        "method": method,
-        "params": jsonp.dumps(params),
-        "uuid": str(request_uuid),
-        "request_headers": jsonp.dumps(request_headers_filtered),
-    }
     log_lines = []
     request_body = ""
     if body:
         request_body = jsonp.dumps(json)
     log_lines.append(f"\n---[ ZSCALER SDK REQUEST | ID:{request_uuid} ]-------------------------------")
     log_lines.append(f"{method} {url}")
-    for key, value in headers.items():
+    for key, value in request_headers_filtered.items():
         log_lines.append(f"{key}: {value}")
     if body and request_body != "" and request_body != "null":
         log_lines.append(f"\n{request_body}")
