@@ -18,7 +18,6 @@ from zscaler.oneapi_object import ZscalerObject
 from zscaler.oneapi_collection import ZscalerCollection
 from zscaler.zpa.models import server_group\
     as server_group
-from zscaler.utils import format_clientless_apps
 
 class ApplicationSegment(ZscalerObject):
     """
@@ -113,8 +112,10 @@ class ApplicationSegment(ZscalerObject):
                             "to": port_range.get("to")
                         })
 
-            # Handle clientlessApps using conditionals for defensive programming
-            self.clientless_apps = format_clientless_apps(config["clientlessApps"]) if "clientlessApps" in config else []
+            self.clientless_apps = ZscalerCollection.form_list(
+                config["clientlessApps"], AppSegmentClientlessApps
+            ) if "clientlessApps" in config else []
+            
         else:
             self.id = None
             self.name = None
@@ -161,7 +162,7 @@ class ApplicationSegment(ZscalerObject):
             "name": self.name,
             "domainNames": self.domain_names,
             "serverGroups": [group.request_format() for group in self.server_groups],
-            "clientlessApps": format_clientless_apps(self.clientless_apps),
+            "clientlessApps": [clientless.request_format() for clientless in self.clientless_apps],
             "enabled": self.enabled,
             "tcpPortRanges": self.tcp_port_ranges,
             "udpPortRanges": self.udp_port_ranges,
@@ -192,4 +193,94 @@ class ApplicationSegment(ZscalerObject):
             "microtenantId": self.microtenant_id,
             "segmentGroupId": self.segment_group_id,
             "segmentGroupName": self.segment_group_name,
+        }
+
+class AppSegmentClientlessApps(ZscalerObject):
+    """
+    A class for Clientless Application Segment Entity objects.
+    """
+
+    def __init__(self, config=None):
+        super().__init__(config)
+        if config:
+            self.id = config["id"]\
+                if "id" in config else None
+            self.name = config["name"]\
+                if "name" in config else None
+            self.description = config["description"]\
+                if "description" in config else None
+            self.enabled = config["enabled"]\
+                if "enabled" in config else None
+            self.certificate_id = config["certificateId"]\
+                if "certificateId" in config else None
+            self.certificate_name = config["certificateName"]\
+                if "certificateName" in config else None
+            self.application_port = config["applicationPort"]\
+                if "applicationPort" in config else None
+            self.application_protocol = config["applicationProtocol"]\
+                if "applicationProtocol" in config else None
+            self.domain = config["domain"]\
+                if "domain" in config else None
+            self.app_id = config["appId"]\
+                if "appId" in config else None
+            self.hidden = config["hidden"]\
+                if "hidden" in config else None
+            self.local_domain = config["localDomain"]\
+                if "localDomain" in config else None
+            self.portal = config["portal"]\
+                if "portal" in config else None
+            self.trust_untrusted_cert = config["trustUntrustedCert"]\
+                if "trustUntrustedCert" in config else None
+            self.allow_options = config["allowOptions"]\
+                if "allowOptions" in config else None
+            self.cname = config["cname"]\
+                if "cname" in config else None
+            self.microtenant_id = config["microtenantId"]\
+                if "microtenantId" in config else None   
+            self.microtenant_name = config["microtenantName"]\
+                if "microtenantName" in config else None       
+        else:
+            # Default values when no config is provided
+            self.id = None
+            self.name = None
+            self.description = None
+            self.enabled = None
+            self.certificate_id = None
+            self.certificate_name = None
+            self.application_port = None
+            self.application_protocol = None
+            self.domain = None
+            self.app_id = None
+            self.hidden = None
+            self.local_domain = None
+            self.portal = None           
+            self.trust_untrusted_cert = None
+            self.allow_options = None
+            self.cname = None
+            self.microtenant_id = None
+            self.microtenant_name = None
+
+    def request_format(self):
+        """
+        Return a dictionary representing this object for API requests.
+        """
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "enabled": self.enabled,
+            "certificateId": self.certificate_id,
+            "certificateName": self.certificate_name,
+            "applicationPort": self.application_port,
+            "applicationProtocol": self.application_protocol,
+            "domain": self.domain,
+            "appId": self.app_id,
+            "hidden": self.hidden,
+            "localDomain": self.local_domain,
+            "portal": self.portal,
+            "trustUntrustedCert": self.trust_untrusted_cert,
+            "allowOptions": self.allow_options,
+            "cname": self.cname,
+            "microtenantId": self.microtenant_id,
+            "microtenantName": self.microtenant_name,
         }

@@ -201,7 +201,6 @@ def transform_common_id_fields(id_groups: list, kwargs: dict, payload: dict):
 def transform_clientless_apps(clientless_app_ids):
     transformed_apps = []
     for app in clientless_app_ids:
-        # Transform each attribute in app as needed by your API
         transformed_apps.append(
             {
                 "name": app["name"],

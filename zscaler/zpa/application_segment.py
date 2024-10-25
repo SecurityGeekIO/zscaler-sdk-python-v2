@@ -17,7 +17,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 from zscaler.api_client import APIClient
 from zscaler.zpa.models.application_segment import ApplicationSegment
 from urllib.parse import urlencode
-from zscaler.utils import format_url, transform_clientless_apps, add_id_groups
+from zscaler.utils import format_url, add_id_groups
 
 
 class ApplicationSegmentAPI(APIClient):
@@ -173,6 +173,8 @@ class ApplicationSegmentAPI(APIClient):
         else:
             body = app_segment.as_dict()
 
+        body.update(kwargs)
+        
         # Check if microtenant_id is set in kwargs or the body, and use it to set query parameter
         microtenant_id = kwargs.get("microtenant_id") or body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
@@ -181,9 +183,9 @@ class ApplicationSegmentAPI(APIClient):
         if "server_group_ids" in body:
             body["serverGroups"] = [{"id": group_id} for group_id in body.pop("server_group_ids")]
 
-        # Reformat clientless_app_ids if present
+        # Convert clientless_app_ids to clientlessApps if present
         if "clientless_app_ids" in body:
-            body["clientlessApps"] = transform_clientless_apps(body.pop("clientless_app_ids"))
+            body["clientlessApps"] = body.pop("clientless_app_ids")
 
         if kwargs.get("tcp_port_ranges"):
             body["tcpPortRange"] = [{"from": ports[0], "to": ports[1]} for ports in kwargs.pop("tcp_port_ranges")]
@@ -198,14 +200,16 @@ class ApplicationSegmentAPI(APIClient):
         add_id_groups(self.reformat_params, kwargs, body)
     
         # Create the request
-        request, error = self._request_executor.create_request(
+        request, error = self._request_executor\
+            .create_request(
             http_method, api_url, body=body, params=params
         )
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, ApplicationSegment)
+        response, error = self._request_executor\
+            .execute(request, ApplicationSegment)
         if error:
             return (None, response, error)
 
@@ -242,6 +246,8 @@ class ApplicationSegmentAPI(APIClient):
         else:
             body = app_segment.as_dict()
 
+        body.update(kwargs)
+
         # Check if microtenant_id is set in the body, and use it to set query parameter
         microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
@@ -250,10 +256,16 @@ class ApplicationSegmentAPI(APIClient):
         if "server_group_ids" in body:
             body["serverGroups"] = [{"id": group_id} for group_id in body.pop("server_group_ids")]
 
-        # Reformat clientless_app_ids if present
+        # Convert clientless_app_ids to clientlessApps if present
         if "clientless_app_ids" in body:
-            body["clientlessApps"] = transform_clientless_apps(body.pop("clientless_app_ids"))
+            body["clientlessApps"] = body.pop("clientless_app_ids")
 
+        # Handle clientlessApps block and automatically assign appId
+        if "clientlessApps" in body:
+            for clientless_app in body["clientlessApps"]:
+                clientless_app["appId"] = segment_id  # Set appId to the segment_id
+
+        # Handle port ranges if present in kwargs
         if kwargs.get("tcp_port_ranges"):
             body["tcpPortRange"] = [{"from": ports[0], "to": ports[1]} for ports in kwargs.pop("tcp_port_ranges")]
 
@@ -262,18 +274,17 @@ class ApplicationSegmentAPI(APIClient):
 
         # Add any additional fields from kwargs to the body
         body.update(kwargs)
-        
+
+        # Apply reformatting of certain fields (if necessary)
         add_id_groups(self.reformat_params, kwargs, body)
-        
+
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, {}, params)
+        request, error = self._request_executor.create_request(http_method, api_url, body, {}, params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, ApplicationSegment)
+        response, error = self._request_executor.execute(request, ApplicationSegment)
         if error:
             return (None, response, error)
 
@@ -283,11 +294,10 @@ class ApplicationSegmentAPI(APIClient):
             return (ApplicationSegment({"id": segment_id}), None, None)
 
         try:
-            result = ApplicationSegment(
-                self.form_response_body(response.get_body())
-            )
+            result = ApplicationSegment(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
+
         return (result, response, None)
     
     def delete_segment(self, segment_id: str, force_delete: bool = False, microtenant_id: str = None) -> tuple:
@@ -328,3 +338,78 @@ class ApplicationSegmentAPI(APIClient):
             return (None, response, error)
 
         return (None, response, None)
+
+    def get_segments_by_type(self, application_type: str, expand_all: bool = False, query_params=None, **kwargs) -> tuple:
+        """
+        Retrieve all configured application segments of a specified type, optionally expanding all related data.
+
+        Args:
+            application_type (str): Type of application segment to retrieve.
+            Must be one of "BROWSER_ACCESS", "INSPECT", "SECURE_REMOTE_ACCESS".
+            expand_all (bool, optional): Whether to expand all related data. Defaults to False.
+
+        Keyword Args:
+            query_params {dict}: Map of query parameters for the request.
+                [query_params.pagesize] {int}: Page size for pagination.
+                [query_params.search] {str}: Search string for filtering results.
+                [query_params.expand_all] {bool}: Additional information related to the applications
+                [query_params.microtenant_id] {str}: ID of the microtenant, if applicable.
+                [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
+                [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
+
+        Returns:
+            tuple: List of application segments.
+
+        Examples:
+            >>> app_type = 'BROWSER_ACCESS'
+            >>> expand_all = True
+            >>> search = "ba_server01"
+            >>> app_segments = zpa.app_segments.get_segments_by_type(app_type, expand_all, search=search)
+        """
+        # Ensure the applicationType is provided
+        if not application_type:
+            raise ValueError("The 'application_type' parameter must be provided.")
+
+        http_method = "GET"
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint}
+            /application/getAppsByType
+        """)
+
+        # Initialize query parameters and update with additional kwargs
+        query_params = query_params or {}
+        query_params.update(kwargs)
+
+        # Ensure applicationType is always present in the query parameters
+        query_params["applicationType"] = application_type
+
+        # Handle optional expandAll parameter (add even when False as per API requirement)
+        query_params["expandAll"] = str(expand_all).lower()  # Converts True/False to 'true'/'false'
+
+        # Handle microtenant_id if provided
+        microtenant_id = query_params.get("microtenant_id", None)
+        if microtenant_id:
+            query_params["microtenantId"] = microtenant_id
+
+        # Build the query string
+        if query_params:
+            encoded_query_params = urlencode(query_params)
+            api_url += f"?{encoded_query_params}"
+
+        # Prepare request
+        request, error = self._request_executor.create_request(http_method, api_url, body={}, headers={})
+        if error:
+            return (None, None, error)
+
+        # Execute the request
+        response, error = self._request_executor.execute(request)
+        if error:
+            return (None, response, error)
+
+        try:
+            # Directly return the raw response data as a list of dictionaries
+            result = response.get_results()  # Assuming `get_results()` returns the list from the API
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
