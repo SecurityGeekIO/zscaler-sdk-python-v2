@@ -8,7 +8,7 @@ from http.client import HTTPConnection
 LOG_FORMAT = "%(asctime)s - %(name)s - %(module)s - %(levelname)s - %(message)s"
 
 
-def setup_logging(logger_name="zscaler-sdk-python"):
+def setup_logging(logger_name="zscaler-sdk-python", enabled=None, verbose=None):
     """
     Set up logging with specified level and logger name.
     Log level is controlled via ZSCALER_SDK_VERBOSE environment variable.
@@ -16,15 +16,20 @@ def setup_logging(logger_name="zscaler-sdk-python"):
 
     Parameters:
     - logger_name (str, optional): Logger name. Defaults to "zscaler-sdk-python".
+    - enabled (bool, optional): Enable logging. Defaults to None, which uses the environment variable.
+    - verbose (bool, optional): Set verbose logging. Defaults to None, which uses the environment variable.
     """
-    logging_enabled = os.getenv("ZSCALER_SDK_LOG", "false").lower() == "true"
+    if enabled is None:
+        enabled = os.getenv("ZSCALER_SDK_LOG", "false").lower() == "true"
 
-    if not logging_enabled:
+    if not enabled:
         # If logging is not enabled, set up a null handler
         logging.disable(logging.INFO)
         return
 
-    verbose = os.getenv("ZSCALER_SDK_VERBOSE", "false").lower() == "true"
+    if verbose is None:
+        verbose = os.getenv("ZSCALER_SDK_VERBOSE", "false").lower() == "true"
+
     log_level = logging.DEBUG if verbose else logging.INFO
     HTTPConnection.debuglevel = 0
     # Create a logger with the specified name
@@ -42,7 +47,6 @@ def setup_logging(logger_name="zscaler-sdk-python"):
     logger.setLevel(log_level)
     default_logger.setLevel(log_level)
     logging.basicConfig(level=log_level)
-
     # Create a stream handler with the specified level and formatter
     stream_handler = logging.StreamHandler()
     stream_handler.setLevel(log_level)
@@ -59,23 +63,17 @@ def setup_logging(logger_name="zscaler-sdk-python"):
         file_handler.setFormatter(log_formatter)
         logger.addHandler(file_handler)
 
+
 def dump_request(logger, url: str, method: str, json, params, headers, request_uuid: str, body=True):
     request_headers_filtered = {key: value for key, value in headers.items() if key != "Authorization"}
     # Log the request details before sending the request
-    request_data = {
-        "url": url,
-        "method": method,
-        "params": jsonp.dumps(params),
-        "uuid": str(request_uuid),
-        "request_headers": jsonp.dumps(request_headers_filtered),
-    }
     log_lines = []
     request_body = ""
     if body:
         request_body = jsonp.dumps(json)
     log_lines.append(f"\n---[ ZSCALER SDK REQUEST | ID:{request_uuid} ]-------------------------------")
     log_lines.append(f"{method} {url}")
-    for key, value in headers.items():
+    for key, value in request_headers_filtered.items():
         log_lines.append(f"{key}: {value}")
     if body and request_body != "" and request_body != "null":
         log_lines.append(f"\n{request_body}")

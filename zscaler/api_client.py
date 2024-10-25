@@ -5,6 +5,7 @@ class APIClient:
     """
     Base class for handling responses and converting keys between camelCase and snake_case.
     """
+
     def __init__(self):
         """
         Automatically set the base URL from the request executor (inherited by each API class).

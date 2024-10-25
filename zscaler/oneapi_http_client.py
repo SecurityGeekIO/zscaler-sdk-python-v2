@@ -2,11 +2,12 @@ import json
 import requests
 import logging
 import os
+import time
 from zscaler.errors.http_error import HTTPError
 from zscaler.errors.zscaler_api_error import ZscalerAPIError
 from zscaler.exceptions import HTTPException, ZscalerAPIException
+from zscaler.logger import dump_request, dump_response
 
-logger = logging.getLogger("zscaler-sdk-python")
 logger = logging.getLogger(__name__)
 
 
@@ -67,10 +68,10 @@ class HTTPClient:
             if "Authorization" in headers:
                 headers["Authorization"] = "Bearer <TOKEN>"
 
-            logger.debug(f"Request URL: {request['url']}")
+            logger.info(f"Preparing to send {request['method']} request to {request['url']}")
             logger.debug(f"Request Headers: {headers}")
-            logger.debug(f"Request Method: {request['method']}")
             logger.debug(f"Request Data: {request.get('json') or request.get('data')}")
+            logger.debug(f"Request Params: {request.get('params')}")
 
             # Prepare request parameters
             params = {
@@ -84,22 +85,41 @@ class HTTPClient:
 
             # Always use 'json' for JSON payloads
             if request.get("json"):
-                params["json"] = request["json"]  # Use 'json' for JSON payloads
+                params["json"] = request["json"]
             elif request.get("data"):
-                params["data"] = json.dumps(request["data"])  # Use 'data' for form-encoded data
+                params["data"] = json.dumps(request["data"])
             elif request.get("form"):
                 params["data"] = request["form"]
             if request["params"]:
                 params["params"] = request["params"]
-            # Fire the request
-            response = self._session.request(**params) if self._session else requests.request(**params)
 
-            # Return only two values: the response and the response text
+            logger.info("Sending request...")
+            dump_request(
+                logger,
+                params["url"],
+                params["method"],
+                params.get("json"),
+                params.get("params"),
+                params.get("headers"),
+                request["uuid"],
+                body=True,
+            )
+            start_time = time.time()  # Capture the start time before sending the request
+            response = self._session.request(**params) if self._session else requests.request(**params)
+            logger.info(f"Received response with status code: {response.status_code}")
+            dump_response(
+                logger,
+                request["url"],
+                request["method"],
+                response,
+                request.get("params"),
+                request["uuid"],
+                start_time,
+            )
             return (response, None)
 
         except (requests.RequestException, requests.Timeout) as error:
-            # Log the exception and return the error
-            logger.exception(f"Request error: {error}")
+            logger.error(f"Request to {request['url']} failed: {error}")
             return (None, error)
 
     @staticmethod
@@ -115,7 +135,7 @@ class HTTPClient:
         Returns:
             Tuple(dict repr of response (if no error), any error found)
         """
-        # Log status code and headers
+        logger.info(f"Checking response from {url}")
         logger.debug(f"Response Status Code: {response_details.status_code}")
         logger.debug(f"Response Headers: {response_details.headers}")
         logger.debug(f"Response Body: {response_body}")
@@ -124,17 +144,17 @@ class HTTPClient:
         if "application/json" in response_details.headers.get("Content-Type", ""):
             try:
                 formatted_response = json.loads(response_body)
+                logger.debug("Successfully parsed JSON response")
             except json.JSONDecodeError as e:
                 logger.error(f"Failed to parse JSON response: {e}")
                 return None, e
         else:
             formatted_response = response_body
 
-        # If status code is successful, return the response
         if 200 <= response_details.status_code < 300:
+            logger.info("Response indicates success")
             return formatted_response, None
 
-        # Log and handle non-successful responses
         logger.error(f"Error response from {url}: {response_details.status_code} - {formatted_response}")
 
         status_code = response_details.status_code
@@ -157,15 +177,6 @@ class HTTPClient:
                     raise HTTPException(formatted_response)
             logger.error(error)
             return (None, error)
-
-        # # Handle specific error conditions (e.g., 4xx, 5xx)
-        # try:
-        #     error = ZscalerAPIError(url, response_details, formatted_response)
-        # except Exception as ex:
-        #     logger.error(f"Error instantiating ZscalerAPIError: {ex}")
-        #     return None, ex
-
-        # return None, error
 
     @staticmethod
     def format_binary_data(data):

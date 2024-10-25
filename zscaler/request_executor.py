@@ -111,15 +111,12 @@ class RequestExecutor:
         headers: dict = {},
         params: dict = {},
     ):
-        print(f"Initial endpoint before modification: {endpoint}")
-
+        logger.info(f"Creating request for endpoint: {endpoint} with method: {method}")
         # Get the appropriate base URL based on the service and cloud environment
         base_url = self.get_base_url(self.cloud)
 
         # Ensure the final URL is constructed by appending the base URL
         final_url = f"{base_url}/{endpoint.lstrip('/')}"
-        print(f"Final URL constructed: {final_url}")
-
         logger.debug(f"Final URL after service detection and version handling: {final_url}")
 
         # OAuth

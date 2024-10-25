@@ -1,4 +1,7 @@
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class ZscalerAPIResponse:
@@ -32,6 +35,7 @@ class ZscalerAPIResponse:
         start_time=None,
         end_time=None,
     ):
+        logger.debug("Initializing ZscalerAPIResponse with service_type: %s", service_type)
         # Safely handle None values for res_details
         self._url = res_details.url if res_details and hasattr(res_details, "url") else None
         self._headers = req.get("headers", {})  # Headers for the request
@@ -100,25 +104,31 @@ class ZscalerAPIResponse:
 
         # If page_size is not provided, use default; otherwise, cap it at the max limit.
         if page_size is None:
+            logger.debug("Page size not provided, using default: %d", default_page_size)
             return default_page_size
-        return min(max(int(page_size), limits.get("min", 1)), max_page_size)
+        validated_size = min(max(int(page_size), limits.get("min", 1)), max_page_size)
+        logger.debug("Validated page size: %d", validated_size)
+        return validated_size
 
     def get_headers(self):
         """
         Returns the response headers of the Zscaler API Response.
         """
+        logger.debug("Fetching response headers")
         return self._resp_headers
 
     def get_body(self):
         """
         Returns the response body of the Zscaler API Response.
         """
+        logger.debug("Fetching response body")
         return self._body
 
     def get_status(self):
         """
         Returns HTTP Status Code of response.
         """
+        logger.debug("Fetching response status code: %s", self._status)
         return self._status
 
     def build_json_response(self, response_body):
@@ -126,6 +136,7 @@ class ZscalerAPIResponse:
         Converts JSON response text into Python dictionary or list depending on the service.
         Handles ZPA's totalPages/totalCount, ZIA's raw list response, and ZDX offset/limit.
         """
+        logger.debug("Building JSON response")
         self._body = json.loads(response_body)
 
         if isinstance(self._body, list):
@@ -146,11 +157,13 @@ class ZscalerAPIResponse:
         # Track the number of items fetched in the current page
         self._items_fetched += len(self._list)
         self._pages_fetched += 1
+        logger.debug("Items fetched: %d, Pages fetched: %d", self._items_fetched, self._pages_fetched)
 
     def get_results(self):
         """
         Return the list of results (automatically extracted from the response).
         """
+        logger.debug("Fetching results list")
         return self._list
 
     def get_total_count(self):
@@ -158,7 +171,9 @@ class ZscalerAPIResponse:
         Returns the total number of items in the API response (if available for ZPA).
         """
         if self._service_type == "ZPA":
+            logger.debug("Total count for ZPA: %d", self._total_count)
             return self._total_count
+        logger.debug("Total count not available for service type: %s", self._service_type)
         return None  # ZIA and ZDX do not provide totalCount
 
     def has_next(self):
@@ -170,16 +185,24 @@ class ZscalerAPIResponse:
         - Custom: Stops if max_items or max_pages limits are reached.
         """
         if self._max_items is not None and self._items_fetched >= self._max_items:
+            logger.debug("Reached max items limit: %d", self._max_items)
             return False  # Stop if we've reached the max number of items
         if self._max_pages is not None and self._pages_fetched >= self._max_pages:
+            logger.debug("Reached max pages limit: %d", self._max_pages)
             return False  # Stop if we've reached the max number of pages
 
         if self._service_type == "ZPA":
-            return self._page < self._total_pages
+            has_next = self._page < self._total_pages
+            logger.debug("Has next page for ZPA: %s", has_next)
+            return has_next
         elif self._service_type == "ZDX":
-            return self._next_offset is not None
+            has_next = self._next_offset is not None
+            logger.debug("Has next page for ZDX: %s", has_next)
+            return has_next
         else:
-            return bool(self._list)  # For ZIA and ZCC, stop when no data is returned
+            has_next = bool(self._list)  # For ZIA and ZCC, stop when no data is returned
+            logger.debug("Has next page for ZIA/ZCC: %s", has_next)
+            return has_next
 
     def next(self):
         """
@@ -190,6 +213,7 @@ class ZscalerAPIResponse:
         - Custom: Stops if max_items or max_pages limits are reached.
         """
         if not self.has_next():
+            logger.debug("No more pages to fetch")
             return []  # No more pages to fetch
 
         # Update the request with the next_offset for ZDX or page for ZPA/ZIA/ZCC
@@ -199,6 +223,7 @@ class ZscalerAPIResponse:
             self._page += 1
             self._params["page"] = self._page
 
+        logger.debug("Fetching next page with params: %s", self._params)
         req = {"headers": self._headers, "params": self._params}  # Include filters like search, sort, etc.
 
         # Fire the request for the next page
@@ -210,6 +235,7 @@ class ZscalerAPIResponse:
 
         # Stop if no data was returned (especially for ZIA and ZDX)
         if not self._list:
+            logger.debug("No data returned for the next page")
             return []
 
         return self._list
