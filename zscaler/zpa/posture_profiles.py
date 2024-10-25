@@ -29,19 +29,19 @@ class PostureProfilesAPI(APIClient):
         super().__init__()
         self._request_executor = request_executor
         customer_id = config["client"].get("customerId")
-        self._base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
-        self._base_endpoint_v2 = f"/zpa/mgmtconfig/v2/admin/customers/{customer_id}"
+        self._zpa_base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
+        self._zpa_base_endpoint_v2 = f"/zpa/mgmtconfig/v2/admin/customers/{customer_id}"
 
-    def list_posture_profiles(self, query_params=None, keep_empty_params=False) -> tuple:
+    def list_posture_profiles(self, query_params=None) -> tuple:
         """
         Returns a list of all configured posture profiles.
 
         Keyword Args:
-            max_items (int): The maximum number of items to request before stopping iteration.
-            max_pages (int): The maximum number of pages to request before stopping iteration.
-            pagesize (int): Specifies the page size. The default size is 20, but the maximum size is 500.
-            search (str, optional): The search string used to match against features and fields.
-            keep_empty_params (bool): Whether to include empty parameters in the query string.
+            query_params {dict}: Map of query parameters for the request.
+                [query_params.pagesize] {int}: Page size for pagination.
+                [query_params.search] {str}: Search string for filtering results.
+                [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
+                [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
 
         Returns:
             list: A list of `PostureProfile` instances.
@@ -50,9 +50,11 @@ class PostureProfilesAPI(APIClient):
             >>> posture_profiles = zpa.posture_profiles.list_posture_profiles(search="example")
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_endpoint_v2}/posture")
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint_v2}
+            /posture
+        """)
 
-        # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
 
         # Build the query string
@@ -63,40 +65,37 @@ class PostureProfilesAPI(APIClient):
         # Prepare request body and headers
         body = {}
         headers = {}
-        form = {}
 
-        # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
-        )
-
+        # Prepare request
+        request, error = self._request_executor\
+            .create_request(
+                http_method, api_url, body, headers
+            )
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, PostureProfile)
-
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 
-        # Parse the response into AppConnectorGroup instances
         try:
             result = []
-            for item in response.get_body():
-                result.append(PostureProfile(self.form_response_body(item)))
+            for item in response.get_results():
+                result.append(PostureProfile(
+                    self.form_response_body(item))
+                )
         except Exception as error:
             return (None, response, error)
-
         return (result, response, None)
 
-    def get_profile(self, profile_id: str, query_params={}, keep_empty_params=False):
+    def get_profile(self, profile_id: str) -> tuple:
         """
         Gets a specific posture profile by its unique ID.
 
         Args:
             profile_id (str): The unique identifier of the posture profile.
-            query_params (dict): Optional query parameters.
-            keep_empty_params (bool): Whether to include empty query parameters in the request.
 
         Returns:
             tuple: A tuple containing (list of Posture Profile instances, Response, error)
@@ -107,40 +106,44 @@ class PostureProfilesAPI(APIClient):
             ...     pprint(profile)
         """
         http_method = "get".upper()
-        api_url = format_url(
-            f"""
-            {self._base_endpoint}/posture/{profile_id}
-        """
-        )
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint}
+            /posture/{profile_id}
+        """)
 
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
+        # Prepare request body, headers, and form (if needed)
+        body = {}
+        headers = {}
 
-        body, headers, form = {}, {}, {}
-
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
-        )
+        # Create the request
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, headers)
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        # Execute the request
+        response, error = self._request_executor\
+            .execute(request, PostureProfile)
 
         if error:
             return (None, response, error)
 
-        return response.get_body(), response, None
+        try:
+            result = PostureProfile(
+                self.form_response_body(response.get_body())
+            )
+        except Exception as error:
+            return (None, response, error)
+        return (result, response, None)
 
-    def get_profile_by_name(self, name: str, query_params={}, keep_empty_params=False):
+    def get_profile_by_name(self, name: str, query_params=None):
         """
         Returns a posture profile by its name.
 
         Args:
             name (str): The name of the posture profile.
             query_params (dict): Optional query parameters.
-            keep_empty_params (bool): Whether to include empty query parameters.
 
         Returns:
             dict: The posture profile matching the specified name, or None if not found.
@@ -150,24 +153,23 @@ class PostureProfilesAPI(APIClient):
             >>> if error is None:
             ...     pprint(profile)
         """
-        profiles, response, error = self.list_posture_profiles(query_params=query_params, keep_empty_params=keep_empty_params)
+        profiles, response, error = self.list_posture_profiles(query_params=query_params)
         if error:
             return (None, response, error)
 
         for profile in profiles:
-            if profile.get("name") == name:
+            if profile.name == name:
                 return profile, response, None
 
         return None, response, None
 
-    def get_udid_by_profile_name(self, search_name: str, query_params={}, keep_empty_params=False):
+    def get_udid_by_profile_name(self, search_name: str, query_params={}) -> tuple:
         """
         Searches for a posture profile by name and returns its posture_udid.
 
         Args:
             search_name (str): The name of the posture profile to search for.
             query_params (dict): Optional query parameters.
-            keep_empty_params (bool): Whether to include empty query parameters.
 
         Returns:
             str: The posture_udid of the matching profile, or None if not found.
@@ -177,25 +179,25 @@ class PostureProfilesAPI(APIClient):
             >>> if error is None:
             ...     print(f"Found Profile UDID: {udid}")
         """
-        profiles, response, error = self.list_posture_profiles(query_params=query_params, keep_empty_params=keep_empty_params)
+        profiles, response, error = self.list_posture_profiles(query_params=query_params)
         if error:
             return (None, response, error)
 
         for profile in profiles:
-            clean_profile_name = remove_cloud_suffix(profile.get("name"))
-            if clean_profile_name == search_name or profile.get("name") == search_name:
-                return profile.get("postureUdid"), response, None
+            clean_profile_name = remove_cloud_suffix(profile.name)  # Access attribute directly
+            if clean_profile_name == search_name or profile.name == search_name:
+                return profile.posture_udid, response, None  # Access posture_udid directly
+
 
         return None, response, None
 
-    def get_name_by_posture_udid(self, search_udid: str, query_params={}, keep_empty_params=False):
+    def get_name_by_posture_udid(self, search_udid: str, query_params={}) -> tuple:
         """
         Searches for a posture profile by posture_udid and returns its name.
 
         Args:
             search_udid (str): The posture_udid of the posture profile to search for.
             query_params (dict): Optional query parameters.
-            keep_empty_params (bool): Whether to include empty query parameters.
 
         Returns:
             str: The name of the posture profile, or None if not found.
@@ -205,12 +207,12 @@ class PostureProfilesAPI(APIClient):
             >>> if error is None:
             ...     print(f"Profile Name: {name}")
         """
-        profiles, response, error = self.list_posture_profiles(query_params=query_params, keep_empty_params=keep_empty_params)
+        profiles, response, error = self.list_posture_profiles(query_params=query_params)
         if error:
             return (None, response, error)
 
         for profile in profiles:
-            if profile.get("postureUdid") == search_udid:
-                return profile.get("name"), response, None
+            if profile.posture_udid == search_udid:  # Access posture_udid directly
+                return profile.name, response, None  # Access name directly
 
         return None, response, None

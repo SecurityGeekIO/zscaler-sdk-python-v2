@@ -15,8 +15,10 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.oneapi_object import ZscalerObject
+from zscaler.oneapi_collection import ZscalerCollection
 from zscaler.zpa.models import server_group\
     as server_group
+
 class ApplicationSegmentPRA(ZscalerObject):
     """
     A class representing the Application Segment in ZPA for PRA (Privileged Remote Access).
@@ -95,9 +97,13 @@ class ApplicationSegmentPRA(ZscalerObject):
                         self.server_groups.append(group)
                     else:
                         self.server_groups.append(server_group.ServerGroup(group))
-
-            # Handle PRA applications (praApps vs commonAppsDto) using defensive programming
-            self.common_apps_dto = config["commonAppsDto"] if "commonAppsDto" in config else {}
+            
+            # Handle PRA applications (commonAppsDto)
+            self.common_apps_dto = config.get("commonAppsDto", {})
+            if "appsConfig" in self.common_apps_dto:
+                self.common_apps_dto["appsConfig"] = ZscalerCollection.form_list(
+                    self.common_apps_dto["appsConfig"], AppConfig
+                )
             self.pra_apps = config["praApps"] if "praApps" in config else []
 
             # Handle tcpPortRange using conditionals for defensive programming
@@ -195,4 +201,46 @@ class ApplicationSegmentPRA(ZscalerObject):
             "segmentGroupName": self.segment_group_name,
             "commonAppsDto": self.common_apps_dto,
             "praApps": self.pra_apps,
+        }
+        
+class AppConfig(ZscalerObject):
+    def __init__(self, config=None):
+        super().__init__(config)
+
+        if config:
+            self.app_types = config["appTypes"]\
+                if "appTypes" in config else []
+            self.application_port = config["applicationPort"]\
+                if "applicationPort" in config else None
+            self.application_protocol = config["applicationProtocol"]\
+                if "applicationProtocol" in config else None
+            self.connection_security = config["connectionSecurity"]\
+                if "connectionSecurity" in config else None
+            self.enabled = config["enabled"]\
+                if "enabled" in config else True
+            self.domain = config["domain"]\
+                if "domain" in config else None
+            self.name = config["name"]\
+                if "name" in config else None
+        else:
+            self.app_types = []
+            self.application_port = None
+            self.application_protocol = None
+            self.connection_security = None
+            self.enabled = True
+            self.domain = None
+            self.name = None
+            
+    def request_format(self):
+        """
+        Formats the AppConfig data into a dictionary suitable for API requests.
+        """
+        return {
+            "appTypes": self.app_types,
+            "applicationPort": self.application_port,
+            "applicationProtocol": self.application_protocol,
+            "connectionSecurity": self.connection_security,
+            "enabled": self.enabled,
+            "domain": self.domain,
+            "name": self.name,
         }

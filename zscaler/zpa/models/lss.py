@@ -15,10 +15,11 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.oneapi_object import ZscalerObject
+from zscaler.oneapi_collection import ZscalerCollection
 from zscaler.zpa.models import app_connector_groups\
     as app_connector_groups
-from zscaler.zpa.models import policyset_controller_v1\
-    as policyset_controller_v1
+from zscaler.zpa.models import policyset_controller_v2\
+    as policyset_controller_v2
 
 class LSSConfig(ZscalerObject):
     """
@@ -65,16 +66,12 @@ class LSSConfig(ZscalerObject):
             self.lss_port = config["lssPort"]\
                 if "lssPort" in config else None
 
-            self.server_groups = []
-            if "connectorGroups" in config:
-                for group in config["connectorGroups"]:
-                    if isinstance(group, app_connector_groups.AppConnectorGroup):
-                        self.server_groups.append(group)
-                    else:
-                        self.server_groups.append(app_connector_groups.AppConnectorGroup(group))
-
+            self.connector_groups = ZscalerCollection.form_list(
+                config["connectorGroups"] if "connectorGroups" in config else [], app_connector_groups.AppConnectorGroup
+            )
+            
             if "policyRule" in config:
-                self.policy_rule = policyset_controller_v1.PolicySetControllerV1(config["policyRule"])
+                self.policy_rule = policyset_controller_v2.PolicySetControllerV2(config["policyRule"])
             else:
                 self.policy_rule = None
         else:

@@ -14,16 +14,14 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
-import os
 from zscaler.api_client import APIClient
-from zscaler.zpa.models.service_edge_groups import ServiceEdgeGroup
-from zscaler.utils import format_url, snake_to_camel, pick_version_profile, add_id_groups
+from zscaler.zpa.models.pra_portal import PrivilegedRemoteAccessPortal
+from zscaler.utils import format_url
 from urllib.parse import urlencode
 
-
-class ServiceEdgeGroupAPI(APIClient):
+class PRAPortalAPI(APIClient):
     """
-    A Client object for the Service Edge Group resource.
+    A Client object for the Privileged Remote Access Portal resource.
     """
 
     def __init__(self, request_executor, config):
@@ -32,13 +30,11 @@ class ServiceEdgeGroupAPI(APIClient):
         customer_id = config["client"].get("customerId")
         self._zpa_base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
-    def list_service_edge_groups(self, query_params=None) -> tuple:
+    def list_portals(self, query_params=None) -> tuple:
         """
-        Enumerates connector groups in your organization with pagination.
-        A subset of connector groups can be returned that match a supported
-        filter expression or query.
+        Returns a list of all configured PRA portals with pagination support.
 
-        Args:
+        Keyword Args:
             query_params {dict}: Map of query parameters for the request.
                 [query_params.pagesize] {int}: Page size for pagination.
                 [query_params.search] {str}: Search string for filtering results.
@@ -47,12 +43,12 @@ class ServiceEdgeGroupAPI(APIClient):
                 [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
 
         Returns:
-            tuple: A tuple containing (list of AppConnectorGroup instances, Response, error)
+            tuple: A list of `PrivilegedRemoteAccessPortal` instances.
         """
         http_method = "get".upper()
         api_url = format_url(f"""
             {self._zpa_base_endpoint}
-            /serviceEdgeGroup
+            /praPortal
         """)
 
         query_params = query_params or {}
@@ -80,95 +76,88 @@ class ServiceEdgeGroupAPI(APIClient):
         try:
             result = []
             for item in response.get_results():
-                result.append(ServiceEdgeGroup(
+                result.append(PrivilegedRemoteAccessPortal(
                     self.form_response_body(item))
                 )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def get_service_edge_group(self, group_id: str, query_params=None) -> tuple:
+    def get_portal(self, portal_id: str, query_params=None) -> tuple:
         """
-        Retrieves information about a specific service edge group.
+        Provides information on the specified PRA portal.
 
         Args:
-            group_id (str): The unique identifier of the service edge group.
+            portal_id (str): The unique identifier of the portal.
+            query_params (dict, optional): Map of query parameters for the request.
+                [query_params.microtenantId] {str}: The microtenant ID, if applicable.
 
         Returns:
-            ServiceEdgeGroup: The service edge group object.
+            PrivilegedRemoteAccessPortal: The corresponding portal object.
         """
         http_method = "get".upper()
         api_url = format_url(f"""{
             self._zpa_base_endpoint}
-            /serviceEdgeGroup/{group_id}
+            /praPortal/{portal_id}
         """)
 
-        # Handle optional query parameters
         query_params = query_params or {}
         microtenant_id = query_params.get("microtenant_id", None)
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        # Build the query string
         if query_params:
             encoded_query_params = urlencode(query_params)
             api_url += f"?{encoded_query_params}"
 
-        # Create the request
         request, error = self._request_executor\
             .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        # Execute the request
         response, error = self._request_executor\
-            .execute(request, ServiceEdgeGroup)
+            .execute(request, PrivilegedRemoteAccessPortal)
         if error:
             return (None, response, error)
 
-        # Parse the response into an AppConnectorGroup instance
         try:
-            result = ServiceEdgeGroup(
+            result = PrivilegedRemoteAccessPortal(
                 self.form_response_body(response.get_body())
             )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def add_service_edge_group(self, edge_group, **kwargs) -> tuple:
+    def add_portal(self, portal, **kwargs) -> tuple:
         """
-        Adds a new service edge group.
+        Adds a new PRA portal.
 
         Args:
-            name (str): The name of the service edge group.
-            latitude (str): The latitude of the physical location.
-            longitude (str): The longitude of the physical location.
-            location (str): The name of the location.
+            name (str): The name of the PRA portal.
+            certificate_id (str): The unique identifier of the certificate.
+            domain (str): The domain of the PRA portal.
+            enabled (bool): Whether the PRA portal is enabled (default is True).
 
         Returns:
-            ServiceEdgeGroup: The newly created service edge group object.
+            PrivilegedRemoteAccessPortal: The newly created portal object.
         """
         http_method = "post".upper()
-        api_url = format_url(f"""
-            {self._zpa_base_endpoint}
-            /serviceEdgeGroup
+        api_url = format_url(f"""{
+            self._zpa_base_endpoint}
+            /praPortal
         """)
 
-        # Ensure edge_group is a dictionary
-        if isinstance(edge_group, dict):
-            body = edge_group
+        # Ensure connector_group is a dictionary
+        if isinstance(portal, dict):
+            body = portal
         else:
-            body = edge_group.as_dict()
+            body = portal.as_dict()
 
-        # Merge any additional kwargs into the body
         body.update(kwargs)
 
         # Check if microtenant_id is set in the body, and use it to set query parameter
         microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
-
-        # Log for debugging to ensure the URL construct
-        print(f"Final URL: {api_url}?{urlencode(params)}" if params else api_url)
 
         # Create the request
         request, error = self._request_executor\
@@ -180,81 +169,79 @@ class ServiceEdgeGroupAPI(APIClient):
 
         # Execute the request
         response, error = self._request_executor\
-            .execute(request, ServiceEdgeGroup)
+            .execute(request, PrivilegedRemoteAccessPortal)
         if error:
             return (None, response, error)
 
         try:
-            result = ServiceEdgeGroup(
+            result = PrivilegedRemoteAccessPortal(
                 self.form_response_body(response.get_body())
             )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def update_service_edge_group(self, group_id: str, edge_group, **kwargs) -> ServiceEdgeGroup:
+    def update_portal(self, portal_id: str, portal, **kwargs) -> tuple:
         """
-        Updates a specified service edge group.
+        Updates the specified PRA portal.
 
         Args:
-            group_id (str): The unique ID of the service edge group.
+            portal_id (str): The unique identifier of the portal being updated.
 
         Returns:
-            ServiceEdgeGroup: The updated service edge group object.
+            PrivilegedRemoteAccessPortal: The updated portal object.
         """
         http_method = "put".upper()
         api_url = format_url(f"""
             {self._zpa_base_endpoint}
-            /serviceEdgeGroup/{group_id}
+            /praPortal/{portal_id}
         """)
 
-        # Ensure edge_group is a dictionary
-        if isinstance(edge_group, dict):
-            body = edge_group
+        # Ensure the connector_group is in dictionary format
+        if isinstance(portal, dict):
+            body = portal
         else:
-            body = edge_group.as_dict()
+            body = portal.as_dict()
 
-        # Merge any additional kwargs into the body
         body.update(kwargs)
-
+        
         # Use get instead of pop to keep microtenant_id in the body
         microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        # Log for debugging to ensure the URL construct
-        print(f"Final URL: {api_url}?{urlencode(params)}" if params else api_url)
-
         # Create the request
         request, error = self._request_executor\
-            .create_request(http_method, api_url, body=body, params=params)
+            .create_request(http_method, api_url, body, {}, params)
         if error:
             return (None, None, error)
 
         # Execute the request
         response, error = self._request_executor\
-            .execute(request, ServiceEdgeGroup)
+            .execute(request, PrivilegedRemoteAccessPortal)
         if error:
             return (None, response, error)
 
         # Handle case where no content is returned (204 No Content)
         if response is None:
-            return (ServiceEdgeGroup({"id": group_id}), None, None)
+            # Return a meaningful result to indicate success
+            return (PrivilegedRemoteAccessPortal({"id": portal_id}), None, None)
 
-        # Parse the response into a ServiceEdgeGroup instance
+        # Parse the response into an AppConnectorGroup instance
         try:
-            result = ServiceEdgeGroup(
+            result = PrivilegedRemoteAccessPortal(
                 self.form_response_body(response.get_body())
             )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
-
-    def delete_service_edge_group(self, group_id: str, microtenant_id: str = None) -> tuple:
+    
+    def delete_portal(self, portal_id: str, microtenant_id: str = None) -> tuple:
         """
-        Deletes the specified service edge group.
+        Deletes the specified PRA portal.
 
         Args:
-            group_id (str): The unique ID of the service edge group to delete.
+            portal_id (str): The unique identifier of the portal to be deleted.
+            microtenant_id (str, optional): The optional ID of the microtenant if applicable.
 
         Returns:
             int: Status code of the delete operation.
@@ -262,7 +249,7 @@ class ServiceEdgeGroupAPI(APIClient):
         http_method = "delete".upper()
         api_url = format_url(f"""
             {self._zpa_base_endpoint}
-            /serviceEdgeGroup/{group_id}
+            /praPortal/{portal_id}
         """)
 
         # Handle microtenant_id in URL params if provided
@@ -279,4 +266,5 @@ class ServiceEdgeGroupAPI(APIClient):
             .execute(request)
         if error:
             return (None, response, error)
+
         return (None, response, None)

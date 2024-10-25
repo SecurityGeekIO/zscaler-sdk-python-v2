@@ -17,8 +17,8 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 import os
 from zscaler.api_client import APIClient
 from zscaler.zpa.models.service_edge_schedule import ServiceEdgeSchedule
-from zscaler.utils import format_url, snake_to_camel
-
+from zscaler.utils import format_url
+from urllib.parse import urlencode
 
 class ServiceEdgeScheduleAPI(APIClient):
     """
@@ -28,10 +28,14 @@ class ServiceEdgeScheduleAPI(APIClient):
     def __init__(self, request_executor, config):
         super().__init__()
         self._request_executor = request_executor
-        customer_id = config["client"].get("customerId")
-        self._base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
+        # Attempt to fetch customer_id from config, else fallback to environment variable
+        self.customer_id = config["client"].get("customerId") or os.getenv("ZPA_CUSTOMER_ID")
+        if not self.customer_id:
+            raise ValueError("customer_id is required either in the config or as an environment variable ZPA_CUSTOMER_ID")
 
-    def get_service_edge_schedule(self, customer_id=None, **kwargs) -> tuple:
+        self._zpa_base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{self.customer_id}"
+
+    def get_service_edge_schedule(self, customer_id=None) -> tuple:
         """
         Returns the configured Service Edge Schedule frequency.
 
@@ -39,53 +43,67 @@ class ServiceEdgeScheduleAPI(APIClient):
             customer_id (str, optional): Unique identifier of the ZPA tenant. If not provided, will look up from env var.
 
         Returns:
-            tuple: A tuple containing (ServiceEdgeSchedule, Response, error)
+            tuple: A tuple containing (AppConnectorSchedule, Response, error)
         """
-        customer_id = customer_id or os.getenv("ZPA_CUSTOMER_ID")
-        if not customer_id:
-            return (
-                None,
-                None,
-                ValueError(
-                    "customer_id is required either as a function argument or as an environment variable ZPA_CUSTOMER_ID"
-                ),
-            )
         http_method = "get".upper()
-        api_url = format_url(
-            f"""
-            {self._base_endpoint}
-            /connectorSchedule
-        """
-        )
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint}
+            /serviceEdgeSchedule
+        """)
 
-        microtenant_id = kwargs.pop("microtenant_id", None)
+        # Use passed customer_id or fallback to initialized customer_id
+        customer_id = customer_id or self.customer_id
+
+        # Check if microtenant_id exists in env vars (optional)
+        microtenant_id = os.getenv("ZPA_MICROTENANT_ID", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        request, error = self._request_executor.create_request(http_method, api_url, params=params)
+        # Create the request with headers
+        request, error = self._request_executor\
+            .create_request(
+            http_method, api_url, body=None, headers={}, params=params
+        )
+
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        # Execute the request
+        response, error = self._request_executor\
+            .execute(request)
+
         if error:
             return (None, response, error)
 
-        result = ServiceEdgeSchedule(response.get_body())
+        try:
+            # Expect a single object, not a list
+            result = ServiceEdgeSchedule(
+                self.form_response_body(response.get_body())
+            )
+        except Exception as error:
+            return (None, response, error)
         return (result, response, None)
 
-    def add_service_edge_schedule(self, frequency, interval, disabled, enabled, **kwargs) -> tuple:
+    def add_service_edge_schedule(self, schedule) -> tuple:
         """
-        Configure an App Connector schedule frequency to delete inactive connectors based on the configured frequency.
+        Configure an Service Edge schedule frequency to delete inactive connectors based on the configured frequency.
 
         Args:
-            frequency (str): Frequency at which disconnected App Connectors are deleted.
-            interval (str): Interval for the frequency value.
-            disabled (bool): Whether to include disconnected connectors for deletion.
-            enabled (bool): Whether the deletion setting is enabled.
+            schedule (dict): Dictionary containing:
+                frequency (str): Frequency at which disconnected Service Edges are deleted.
+                interval (str): Interval for the frequency value.
+                disabled (bool, optional): Whether to include disconnected connectors for deletion.
+                enabled (bool, optional): Whether the deletion setting is enabled.
 
         Returns:
-            tuple: A tuple containing (ServiceEdgeSchedule, Response, error)
+            tuple: A tuple containing (AppConnectorSchedule, Response, error)
         """
-        customer_id = kwargs.get("customer_id") or os.getenv("ZPA_CUSTOMER_ID")
+        http_method = "post".upper()
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint}
+            /serviceEdgeSchedule
+        """)
+
+        customer_id = schedule.get("customer_id") or os.getenv("ZPA_CUSTOMER_ID")
         if not customer_id:
             return (
                 None,
@@ -94,51 +112,72 @@ class ServiceEdgeScheduleAPI(APIClient):
                     "customer_id is required either as a function argument or as an environment variable ZPA_CUSTOMER_ID"
                 ),
             )
-        http_method = "post".upper()
-        api_url = format_url(
-            f"""
-            {self._base_endpoint}
-            /connectorSchedule
-        """
-        )
 
+        # Ensure schedule is a dictionary
+        body = schedule if isinstance(schedule, dict) else schedule.as_dict()
+
+        # Construct payload using snake_case to camelCase conversion
         payload = {
             "customerId": customer_id,
-            "frequency": frequency,
-            "frequencyInterval": interval,
-            "deleteDisabled": disabled,
-            "enabled": enabled,
+            "frequency": body.get("frequency"),
+            "frequencyInterval": body.get("frequency_interval"),
         }
+        if "delete_disabled" in body:
+            payload["deleteDisabled"] = body["delete_disabled"]
+        if "enabled" in body:
+            payload["enabled"] = body["enabled"]
 
-        for key, value in kwargs.items():
-            payload[snake_to_camel(key)] = value
+        # Add microtenant_id to query parameters if set
+        microtenant_id = body.get("microtenant_id", None)
+        params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        request, error = self._request_executor.create_request(http_method, api_url, json=payload)
+        # Log for debugging to ensure the URL construct
+        print(f"Final URL: {api_url}?{urlencode(params)}" if params else api_url)
+
+        # Create the request
+        request, error = self._request_executor\
+            .create_request(
+            http_method, api_url, body=payload, params=params
+        )
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        # Execute the request
+        response, error = self._request_executor\
+            .execute(request, ServiceEdgeSchedule)
         if error:
             return (None, response, error)
 
-        result = ServiceEdgeSchedule(payload)
+        try:
+            result = ServiceEdgeSchedule(
+                self.form_response_body(response.get_body())
+            )
+        except Exception as error:
+            return (None, response, error)
         return (result, response, None)
 
-    def update_service_edge_schedule(self, scheduler_id: str, frequency, interval, disabled, enabled, **kwargs) -> tuple:
+    def update_service_edge_schedule(self, scheduler_id: str, schedule) -> tuple:
         """
-        Updates App Connector schedule frequency to delete inactive connectors based on the configured frequency.
+        Updates Service Edge schedule frequency to delete inactive connectors based on the configured frequency.
 
         Args:
             scheduler_id (str): Unique identifier for the schedule.
-            frequency (str): Frequency at which disconnected App Connectors are deleted.
+            frequency (str): Frequency at which disconnected Service Edges are deleted.
             interval (str): Interval for the frequency value.
             disabled (bool): Whether to include disconnected connectors for deletion.
             enabled (bool): Whether the deletion setting is enabled.
 
         Returns:
-            tuple: A tuple containing (ServiceEdgeSchedule, Response, error)
+            tuple: A tuple containing (AppConnectorSchedule, Response, error)
         """
-        customer_id = kwargs.get("customer_id") or os.getenv("ZPA_CUSTOMER_ID")
+        
+        http_method = "put".upper()
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint}
+            /serviceEdgeSchedule/{scheduler_id}
+        """)
+
+        customer_id = schedule.get("customer_id") or os.getenv("ZPA_CUSTOMER_ID")
         if not customer_id:
             return (
                 None,
@@ -148,32 +187,49 @@ class ServiceEdgeScheduleAPI(APIClient):
                 ),
             )
 
-        http_method = "put".upper()
-        api_url = format_url(
-            f"""
-            {self._base_endpoint}
-            /connectorSchedule/{scheduler_id}
-        """
-        )
+        # Ensure schedule is a dictionary format
+        body = schedule if isinstance(schedule, dict) else schedule.as_dict()
 
+        # Construct payload using snake_case to camelCase conversion
         payload = {
             "customerId": customer_id,
-            "frequency": frequency,
-            "frequencyInterval": interval,
-            "deleteDisabled": disabled,
-            "enabled": enabled,
+            "frequency": body.get("frequency"),
+            "frequencyInterval": body.get("frequency_interval"),
         }
+        if "delete_disabled" in body:
+            payload["deleteDisabled"] = body["delete_disabled"]
+        if "enabled" in body:
+            payload["enabled"] = body["enabled"]
 
-        for key, value in kwargs.items():
-            payload[snake_to_camel(key)] = value
+        # Use get instead of pop to keep microtenant_id in the body
+        microtenant_id = body.get("microtenant_id", None)
+        params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        request, error = self._request_executor.create_request(http_method, api_url, json=payload)
+        # Log for debugging to ensure the URL construct
+        print(f"Final URL: {api_url}?{urlencode(params)}" if params else api_url)
+
+        # Create the request
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body, {}, params
+        )
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        # Execute the request
+        response, error = self._request_executor.execute(request, ServiceEdgeSchedule)
         if error:
             return (None, response, error)
 
-        updated_schedule, _, error = self.get_connector_schedule(customer_id=customer_id)
-        return (updated_schedule, response, None)
+        # Handle case where no content is returned (204 No Content)
+        if response is None:
+            # Return a meaningful result to indicate success
+            return (ServiceEdgeSchedule({"id": scheduler_id}), None, None)
+
+        # Parse the response into an AppConnectorGroup instance
+        try:
+            result = ServiceEdgeSchedule(
+                self.form_response_body(response.get_body())
+            )
+        except Exception as error:
+            return (None, response, error)
+        return (result, response, None)

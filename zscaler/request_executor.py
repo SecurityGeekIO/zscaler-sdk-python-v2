@@ -131,16 +131,24 @@ class RequestExecutor:
 
         print(f"Request headers: {headers}")
 
-        # Convert body and params to camelCase before sending
-        if body:
-            body = {to_lower_camel_case(k): v for k, v in body.items()}
+        # Handle ZPA-specific cases, especially the /reorder endpoint which expects a JSON list
+        if "/zpa/" in endpoint and "/reorder" in endpoint and isinstance(body, list):
+            # For the /reorder endpoint, handle the body as a list
+            print(f"Handling ZPA reorder endpoint with list body: {body}")
+            json_payload = body
+        else:
+            # For all other endpoints, process the body as a dictionary
+            if body:
+                body = {to_lower_camel_case(k): v for k, v in body.items()}
+            json_payload = body
 
         if params:
             params = {to_lower_camel_case(k): v for k, v in params.items()}
+
         if "/zpa/" in endpoint:
             # Check for microtenantId in body, params, and config (in that order)
             microtenant_id = None
-            if body and "microtenantId" in body and body["microtenantId"]:
+            if body and isinstance(body, dict) and "microtenantId" in body and body["microtenantId"]:
                 microtenant_id = body["microtenantId"]
             elif params and "microtenantId" in params and params["microtenantId"]:
                 microtenant_id = params["microtenantId"]
@@ -154,7 +162,7 @@ class RequestExecutor:
             if params.get("microtenantId") is not None:
                 del params["microtenantId"]
 
-        print(f"Final request body (before JSON serialization): {body}")
+        print(f"Final request body (before JSON serialization): {json_payload}")
 
         # Construct the request dictionary
         request = {

@@ -15,57 +15,54 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.api_client import APIClient
+from zscaler.zpa.models.cbi_region import CBIRegion
 from zscaler.utils import format_url
 
 
-class AuthDomainsAPI(APIClient):
+class CBIRegionAPI(APIClient):
     """
-    A Client object for the Auth Domains resource.
+    A Client object for the Cloud Browser Isolation Banners resource.
     """
 
     def __init__(self, request_executor, config):
         super().__init__()
         self._request_executor = request_executor
         customer_id = config["client"].get("customerId")
-        self._zpa_base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
+        self._zpa_base_endpoint = f"/zpa/cbiconfig/cbi/api/customers/{customer_id}"
 
-    def get_auth_domains(self):
+    def list_cbi_regions(self) -> list:
         """
-        Returns information on authentication domains.
+        Returns a list of all cloud browser isolation regions.
 
         Returns:
-            tuple: A dictionary containing custom ZPA Inspection Control HTTP Methods.
+            tuple: A tuple containing a list of `CBIRegion` instances, response object, and error if any.
 
-        Example:
-            >>> auth_domains, response, error = zpa.authdomains.get_auth_domains()
-            >>> if error is None:
-            ...     pprint(auth_domains)
+        Examples:
+            >>> for region in zpa.isolation.list_cbi_regions():
+            ...    pprint(region)
         """
         http_method = "get".upper()
         api_url = format_url(f"""
             {self._zpa_base_endpoint}
-            /authDomains
-            """)
+            /regions
+        """)
 
-        body = {}
-        headers = {}
-
-        # Create the request
         request, error = self._request_executor\
-            .create_request(http_method, api_url, body, headers)
-
+            .create_request(http_method, api_url)
         if error:
             return (None, None, error)
 
-        # Execute the request
         response, error = self._request_executor\
-            .execute(request, str)
-
+            .execute(request)
         if error:
             return (None, response, error)
 
         try:
-            result = response.get_body()
+            result = []
+            for item in response.get_results():
+                result.append(CBIRegion(
+                    self.form_response_body(item))
+                )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)

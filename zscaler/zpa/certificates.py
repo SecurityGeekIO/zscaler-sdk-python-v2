@@ -17,7 +17,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from zscaler.api_client import APIClient
 from zscaler.zpa.models.certificates import Certificate
-from zscaler.utils import snake_to_camel, format_url
+from zscaler.utils import format_url
 from urllib.parse import urlencode
 
 
@@ -51,7 +51,6 @@ class CertificatesAPI(APIClient):
         Example:
             >>> certificates = zpa.certificates.list_certificates(search="example")
         """
-        # Initialize URL and HTTP method
         http_method = "get".upper()
         api_url = format_url(f"""
             {self._zpa_base_endpoint}
@@ -158,7 +157,7 @@ class CertificatesAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
 
-    def get_certificate(self, certificate_id, query_params=None) -> tuple:
+    def get_certificate(self, certificate_id: str, query_params=None) -> tuple:
         """
         Fetches a specific certificate by ID.
 

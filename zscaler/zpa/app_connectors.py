@@ -14,8 +14,6 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
-from box import Box, BoxList
-from requests import Response
 from zscaler.api_client import APIClient
 from zscaler.zpa.models.app_connectors import AppConnectorController
 from urllib.parse import urlencode
@@ -23,6 +21,10 @@ from zscaler.utils import format_url
 
 
 class AppConnectorControllerAPI(APIClient):
+    """
+    A Client object for the App Connectors resource.
+    """
+    
     reformat_params = [
         ("connector_ids", "connectors"),
         ("server_group_ids", "serverGroups"),
@@ -74,15 +76,9 @@ class AppConnectorControllerAPI(APIClient):
             encoded_query_params = urlencode(query_params)
             api_url += f"?{encoded_query_params}"
 
-        # Prepare request body and headers
-        body = {}
-        headers = {}
-
         # Prepare request
         request, error = self._request_executor\
-            .create_request(
-                http_method, api_url, body, headers
-            )
+            .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
@@ -102,7 +98,7 @@ class AppConnectorControllerAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
 
-    def get_connector(self, connector_id: str, query_params=None) -> tuple:
+    def get_connector(self, connector) -> tuple:
         """
         Returns information on the specified App Connector.
 
@@ -119,39 +115,36 @@ class AppConnectorControllerAPI(APIClient):
         http_method = "get".upper()
         api_url = format_url(f"""{
             self._zpa_base_endpoint}
-            /connector/{connector_id}
+            /connector
         """)
 
-        # Handle optional query parameters
-        query_params = query_params or {}
-        microtenant_id = query_params.get("microtenant_id", None)
-        if microtenant_id:
-            query_params["microtenantId"] = microtenant_id
+        # Ensure connector_group is a dictionary
+        if isinstance(connector, dict):
+            body = connector
+        else:
+            body = connector.as_dict()
 
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
+        # Check if microtenant_id is set in the body, and use it to set query parameter
+        microtenant_id = body.get("microtenant_id", None)
+        params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        # Prepare request body, headers, and form (if needed)
-        body = {}
-        headers = {}
+        # Log for debugging to ensure the URL construct
+        print(f"Final URL: {api_url}?{urlencode(params)}" if params else api_url)
 
         # Create the request
         request, error = self._request_executor\
-            .create_request(http_method, api_url, body, headers)
-
+            .create_request(
+            http_method, api_url, body=body, params=params
+        )
         if error:
             return (None, None, error)
 
         # Execute the request
         response, error = self._request_executor\
             .execute(request, AppConnectorController)
-
         if error:
             return (None, response, error)
 
-        # Parse the response into an AppConnectorGroup instance
         try:
             result = AppConnectorController(
                 self.form_response_body(response.get_body())

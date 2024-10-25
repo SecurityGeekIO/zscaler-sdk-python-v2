@@ -104,35 +104,34 @@ class AppConnectorGroupAPI(APIClient):
             /appConnectorGroup/{group_id}
         """)
 
-        # Handle optional query parameters
         query_params = query_params or {}
         microtenant_id = query_params.get("microtenant_id", None)
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        # Build the query string
         if query_params:
             encoded_query_params = urlencode(query_params)
             api_url += f"?{encoded_query_params}"
 
-        # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        # Execute the request
-        response, error = self._request_executor.execute(request, AppConnectorGroup)
+        response, error = self._request_executor\
+            .execute(request, AppConnectorGroup)
         if error:
             return (None, response, error)
 
-        # Parse the response into an AppConnectorGroup instance
         try:
-            result = AppConnectorGroup(self.form_response_body(response.get_body()))
+            result = AppConnectorGroup(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def add_connector_group(self, connector_group) -> tuple:
+    def add_connector_group(self, connector_group, **kwargs) -> tuple:
         """
         Adds a new ZPA App Connector Group.
 
@@ -141,7 +140,6 @@ class AppConnectorGroupAPI(APIClient):
             latitude (int): The latitude representing the App Connector's physical location.
             location (str): The name of the location that the App Connector Group represents.
             longitude (int): The longitude representing the App Connector's physical location.
-            **kwargs: Optional keyword args.
 
         Keyword Args:
             **connector_ids (list):
@@ -188,12 +186,11 @@ class AppConnectorGroupAPI(APIClient):
         else:
             body = connector_group.as_dict()
 
+        body.update(kwargs)
+
         # Check if microtenant_id is set in the body, and use it to set query parameter
         microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
-
-        # Log for debugging to ensure the URL construct
-        print(f"Final URL: {api_url}?{urlencode(params)}" if params else api_url)
 
         # Create the request
         request, error = self._request_executor\
@@ -217,13 +214,12 @@ class AppConnectorGroupAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
 
-    def update_connector_group(self, group_id: str, connector_group) -> tuple:
+    def update_connector_group(self, group_id: str, connector_group, **kwargs) -> tuple:
         """
         Updates an existing ZPA App Connector Group.
 
         Args:
             group_id (str): The unique id for the App Connector Group in ZPA.
-            **kwargs: Optional keyword args.
 
         Keyword Args:
             **connector_ids (list):
@@ -275,12 +271,11 @@ class AppConnectorGroupAPI(APIClient):
         else:
             body = connector_group.as_dict()
 
+        body.update(kwargs)
+        
         # Use get instead of pop to keep microtenant_id in the body
         microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
-
-        # Log for debugging to ensure the URL construct
-        print(f"Final URL: {api_url}?{urlencode(params)}" if params else api_url)
 
         # Create the request
         request, error = self._request_executor\
@@ -329,12 +324,14 @@ class AppConnectorGroupAPI(APIClient):
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, params=params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 
