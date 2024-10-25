@@ -1,3 +1,4 @@
+import logging
 import requests
 import jwt
 import time
@@ -5,6 +6,9 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from zscaler.user_agent import UserAgent
 from zscaler.oneapi_http_client import HTTPClient
+
+logger = logging.getLogger(__name__)
+
 
 class OAuth:
     """
@@ -15,6 +19,7 @@ class OAuth:
         self._request_executor = request_executor
         self._config = config
         self._access_token = None
+        logging.info("OAuth instance created with provided configuration.")
 
     def authenticate(self):
         """
@@ -25,19 +30,24 @@ class OAuth:
         Returns:
             str: OAuth access token.
         """
+        logging.debug("Starting authentication process.")
         client_id = self._config["client"]["clientId"]
         client_secret = self._config["client"].get("clientSecret", "")
         private_key = self._config["client"].get("privateKey", "")
 
         if not client_id or (not client_secret and not private_key):
+            logging.error("No valid client credentials provided.")
             raise ValueError("No valid client credentials provided")
 
         # Determine whether to authenticate with client secret or JWT
         if private_key:
+            logging.info("Authenticating using JWT private key.")
             response = self._authenticate_with_private_key(client_id, private_key)
         else:
+            logging.info("Authenticating using client secret.")
             response = self._authenticate_with_client_secret(client_id, client_secret)
 
+        logging.debug("Authentication process completed.")
         return response
 
     def _authenticate_with_client_secret(self, client_id, client_secret):
@@ -51,12 +61,10 @@ class OAuth:
         Returns:
             str: OAuth access token.
         """
+        logging.debug("Preparing to authenticate with client secret.")
         vanity_domain = self._config["client"]["vanityDomain"]
         cloud = self._config["client"].get("cloud", "PRODUCTION").lower()
         auth_url = self._get_auth_url(vanity_domain, cloud)
-
-        # Log the URL for debugging
-        print(f"Auth URL: {auth_url}")
 
         # Prepare form data (like in the Go SDK)
         form_data = {
@@ -66,31 +74,22 @@ class OAuth:
             "audience": "https://api.zscaler.com",
         }
 
-        # Log the form data for debugging
-        print(f"Form Data: {form_data}")
-
         user_agent = UserAgent().get_user_agent_string()
         headers = {
             "Accept": "application/json",
             "Content-Type": "application/x-www-form-urlencoded",
-            "User-Agent": user_agent, 
+            "User-Agent": user_agent,
         }
 
-        # Log the headers for debugging
-        print(f"Headers: {headers}")
-
+        logging.info(f"Sending authentication request to {auth_url}.")
         # Synchronous HTTP request (with form data in the body)
         response = requests.post(auth_url, data=form_data, headers=headers)
 
-        # Log the response for debugging
-        print(f"Response Status Code: {response.status_code}")
-        print(f"Response Body: {response.text}")
-    
         if response.status_code >= 300:
-            print(f"Error Response: {response.text}")  # Log the full error response
+            logging.error(f"Error authenticating: {response.status_code}, {response.text}")
             raise Exception(f"Error authenticating: {response.status_code}, {response.text}")
 
-        # Return the full response object for further processing
+        logging.info("Authentication with client secret successful.")
         return response
 
     def _authenticate_with_private_key(self, client_id, private_key_path):
@@ -104,12 +103,10 @@ class OAuth:
         Returns:
             str: OAuth access token.
         """
+        logging.debug("Preparing to authenticate with JWT private key.")
         vanity_domain = self._config["client"]["vanityDomain"]
         cloud = self._config["client"].get("cloud", "PRODUCTION").lower()
         auth_url = self._get_auth_url(vanity_domain, cloud)
-
-        # Log the URL for debugging
-        print(f"Auth URL: {auth_url}")
 
         # Read and load the private key
         with open(private_key_path, "rb") as key_file:
@@ -127,13 +124,10 @@ class OAuth:
         # Generate the assertion using RS256 algorithm
         assertion = jwt.encode(payload, private_key, algorithm="RS256")
 
-        # Log the assertion for debugging
-        print(f"JWT Assertion: {assertion}")
-
         # Prepare form data
         form_data = {
             "grant_type": "client_credentials",
-            "client_id":   client_id,
+            "client_id": client_id,
             "client_assertion": assertion,
             "client_assertion_type": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
             "audience": "https://api.zscaler.com",
@@ -146,22 +140,15 @@ class OAuth:
             "User-Agent": user_agent,
         }
 
-        # Log form data and headers for debugging
-        print(f"Form Data: {form_data}")
-        print(f"Headers: {headers}")
-
+        logging.info(f"Sending authentication request to {auth_url} with JWT.")
         # Synchronous HTTP request
         response = requests.post(auth_url, data=form_data, headers=headers)
 
-        # Log the response for debugging
-        print(f"Response Status Code: {response.status_code}")
-        print(f"Response Body: {response.text}")
-
         if response.status_code >= 300:
-            print(f"Error Response: {response.text}")  # Log the full error response
+            logging.error(f"Error authenticating: {response.status_code}, {response.text}")
             raise Exception(f"Error authenticating: {response.status_code}, {response.text}")
 
-        # Return the full response object for further processing
+        logging.info("Authentication with JWT private key successful.")
         return response
 
     def _get_access_token(self):
@@ -171,6 +158,7 @@ class OAuth:
         Returns:
             str: OAuth access token.
         """
+        logging.debug("Retrieving access token.")
         # Return token if already generated
         if not self._access_token:
             try:
@@ -178,32 +166,26 @@ class OAuth:
                 response = self.authenticate()
 
                 # Check the response body for error messages using check_response_for_error
-                parsed_response, err = HTTPClient.check_response_for_error(
-                    response.url, response, response.text
-                )
+                parsed_response, err = HTTPClient.check_response_for_error(response.url, response, response.text)
 
                 if err:
+                    logging.error(f"Error during authentication: {err}")
                     raise ValueError(f"Error during authentication: {err}")
-
-                # Debug: Print the parsed response to understand its structure
-                print(f"Parsed Response: {parsed_response}")
 
                 # Extract access token from the parsed response
                 if isinstance(parsed_response, dict):
                     self._access_token = parsed_response.get("access_token")
+                    logging.info("Access token successfully retrieved.")
                 else:
+                    logging.error("Parsed response is not a dictionary as expected.")
                     raise ValueError("Parsed response is not a dictionary as expected")
 
-                # Debug: Print the access token after extracting it
-                print(f"Access Token after parsing: {self._access_token}")
-
             except Exception as e:
-                print(f"Failed to get access token: {e}")
+                logging.error(f"Failed to get access token: {e}")
                 raise  # Re-raise the exception to handle it outside
 
         return self._access_token  # Return just the token, not a tuple
 
-        
     def _get_auth_url(self, vanity_domain, cloud):
         """
         Determines the OAuth2 provider URL based on the vanity domain and cloud.
@@ -215,6 +197,7 @@ class OAuth:
         Returns:
             str: The fully constructed authentication URL.
         """
+        logging.debug(f"Constructing auth URL for cloud: {cloud}.")
         if cloud == "production":
             return f"https://{vanity_domain}.zslogin.net/oauth2/v1/token"
         else:
@@ -224,5 +207,6 @@ class OAuth:
         """
         Clear the current OAuth access token.
         """
+        logging.info("Clearing the current access token.")
         self._access_token = None
         self._request_executor._default_headers.pop("Authorization", None)

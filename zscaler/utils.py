@@ -36,7 +36,7 @@ from restfly import APIIterator
 
 from zscaler.constants import RETRYABLE_STATUS_CODES, DATETIME_FORMAT, EPOCH_DAY, EPOCH_MONTH, EPOCH_YEAR
 
-logger = logging.getLogger("zscaler-sdk-python")
+logger = logging.getLogger(__name__)
 
 
 # Recursive function to convert all keys and nested keys from camel case
