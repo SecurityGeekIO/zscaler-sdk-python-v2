@@ -27,14 +27,13 @@ class ServiceEdgeControllerAPI(APIClient):
         ("trusted_network_ids", "trustedNetworks"),
     ]
 
-    def __init__(self):
+    def __init__(self, request_executor, config):
         super().__init__()
-        self._base_url = ""
+        self._request_executor = request_executor
+        customer_id = config["client"].get("customerId")
+        self._base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
-    def list_service_edges(
-            self, query_params=None,
-            keep_empty_params=False
-    ) -> tuple:
+    def list_service_edges(self, query_params=None, keep_empty_params=False) -> tuple:
         """
         Enumerates service edges in your organization with pagination.
         A subset of service edges can be returned that match a supported
@@ -53,7 +52,7 @@ class ServiceEdgeControllerAPI(APIClient):
             tuple: A tuple containing (list of AppConnectorGroup instances, Response, error)
         """
         http_method = "get".upper()
-        api_url = f"{self._base_url}/serviceEdge"
+        api_url = f"{self._base_endpoint}/serviceEdge"
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
@@ -89,14 +88,11 @@ class ServiceEdgeControllerAPI(APIClient):
         try:
             result = []
             for item in response.get_body():
-                result.append(ServiceEdge(
-                    self.form_response_body(item)
-                ))
+                result.append(ServiceEdge(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
         return (result, response, None)
-
 
     def get_service_edge(self, service_edge_id: str, **kwargs) -> ServiceEdge:
         """
@@ -111,7 +107,7 @@ class ServiceEdgeControllerAPI(APIClient):
         http_method = "get".upper()
         api_url = format_url(
             f"""
-            {self._base_url}/serviceEdge/{service_edge_id}"
+            {self._base_endpoint}/serviceEdge/{service_edge_id}"
             """
         )
 
@@ -173,7 +169,7 @@ class ServiceEdgeControllerAPI(APIClient):
         http_method = "put".upper()
         api_url = format_url(
             f"""
-            {self._base_url}/serviceEdge/{service_edge_id}"
+            {self._base_endpoint}/serviceEdge/{service_edge_id}"
             """
         )
 
@@ -210,7 +206,7 @@ class ServiceEdgeControllerAPI(APIClient):
         http_method = "delete".upper()
         api_url = format_url(
             f"""
-            {self._base_url}/serviceEdge/{service_edge_id}"
+            {self._base_endpoint}/serviceEdge/{service_edge_id}"
             """
         )
 
@@ -240,10 +236,10 @@ class ServiceEdgeControllerAPI(APIClient):
         http_method = "post".upper()
         api_url = format_url(
             f"""
-            {self._base_url}/serviceEdge/bulkDelete"
+            {self._base_endpoint}/serviceEdge/bulkDelete"
             """
         )
-        
+
         payload = {"ids": service_edge_ids}
 
         microtenant_id = kwargs.pop("microtenant_id", None)

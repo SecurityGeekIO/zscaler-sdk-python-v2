@@ -272,7 +272,6 @@ class TrafficStaticIPAPI(APIClient):
 
         return (result, response, None)
 
-
     def delete_static_ip(self, static_ip_id: int) -> tuple:
         """
         Delete the specified static IP.

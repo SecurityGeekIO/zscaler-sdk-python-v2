@@ -26,7 +26,6 @@ class AppConnectorGroup(ZscalerObject):
             config (dict): A dictionary representing the App Connector Group configuration.
         """
         super().__init__(config)
-
         if config:
             self.id = config["id"] if "id" in config else None
             self.modified_time = config["modifiedTime"]\

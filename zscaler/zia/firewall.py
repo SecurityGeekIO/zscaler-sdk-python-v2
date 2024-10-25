@@ -14,14 +14,8 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
-
-from box import Box, BoxList
-from requests import Response
-
 from zscaler.utils import (
-    recursive_snake_to_camel,
     snake_to_camel,
-    transform_common_id_fields,
     format_url
 )
 from zscaler.api_client import APIClient
@@ -1117,7 +1111,8 @@ class FirewallPolicyAPI(APIClient):
             return (None, response, error)
 
         try:
-            result = NetworkApplicationGroups(self.form_response_body(response.get_body()))
+            result = NetworkApplicationGroups(
+                self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
 
@@ -1696,7 +1691,7 @@ class FirewallPolicyAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
 
-    def add_network_service(self, network_service, ports: list = None) -> Box:
+    def add_network_service(self, network_service, ports: list = None) -> tuple:
         """
         Adds a new Network Service.
 

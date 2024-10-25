@@ -56,7 +56,10 @@ class TrafficStaticIP(ZscalerObject):
             self.latitude = None
             self.longitude = None
             self.routable_ip = False
-
+            self.last_modification_time = None
+            self.last_modified_by = None
+            self.managed_by = None
+            
     def request_format(self):
         """
         Return the object as a dictionary in the format expected for API requests.

@@ -9,11 +9,13 @@ from zscaler.cache.no_op_cache import NoOpCache
 from zscaler.cache.zscaler_cache import ZscalerCache
 from zscaler.oneapi_oauth_client import OAuth
 from zscaler.logger import setup_logging
+from zscaler.zcc.zcc_service import ZCCService
 from zscaler.zia.zia_service import ZIAService
 from zscaler.zpa.zpa_service import ZPAService
 
+
 # Zscaler Client Connector APIs
-class Client():
+class Client:
     """A Zscaler client object"""
 
     def __init__(self, user_config: dict = {}):
@@ -36,7 +38,6 @@ class Client():
         self._vanity_domain = self._config["client"]["vanityDomain"]
         self._cloud = self._config["client"].get("cloud", "PRODUCTION")
         self._auth_token = None
-        self._api_version = self._config["client"].get("api_version", "v1")
 
         # Handle cache
         cache = NoOpCache()
@@ -63,11 +64,11 @@ class Client():
         self._request_executor = user_config.get("requestExecutor", RequestExecutor)(
             self._config, cache, user_config.get("httpClient", None)
         )
-        
+
         # Lazy load ZIA and ZPA clients
         self._zia = None
         self._zpa = None
-
+        self._zcc = None
         # super().__init__()
 
     def authenticate(self):
@@ -82,21 +83,21 @@ class Client():
         print(f"Authentication complete. Token set: {self._auth_token}")
 
     @property
-    def zcc(self):
+    def zcc(self) -> ZCCService:
         if self._zcc is None:
-            self._zcc = ZPAService(self)
+            self._zcc = ZCCService(self)
         return self._zcc
-    
+
     @property
-    def zia(self):
+    def zia(self) -> ZIAService:
         if self._zia is None:
             self._zia = ZIAService(self)
         return self._zia
 
     @property
-    def zpa(self):
+    def zpa(self) -> ZPAService:
         if self._zpa is None:
-            self._zpa = ZPAService(self)
+            self._zpa = ZPAService(self._request_executor, self._config)
         return self._zpa
 
     def __enter__(self):
@@ -112,7 +113,7 @@ class Client():
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Automatically close session within context manager."""
         self._session.close()
-        
+
     """
     Getters
     """

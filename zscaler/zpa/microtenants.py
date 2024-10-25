@@ -16,23 +16,26 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from zscaler.api_client import APIClient
 from zscaler.zpa.models.microtenants import Microtenant
+from zscaler.zpa.models.microtenants import MicrotenantSearch
 from urllib.parse import urlencode
-from zscaler.utils import format_url, snake_to_camel
+from zscaler.utils import format_url
+import logging 
 
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 class MicrotenantsAPI(APIClient):
     """
     A client object for the Microtenants resource.
     """
 
-    def __init__(self):
+    def __init__(self, request_executor, config):
         super().__init__()
-        self._base_url = ""
+        self._request_executor = request_executor
+        customer_id = config["client"].get("customerId")
+        self._zpa_base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
-    def list_microtenants(
-            self, query_params=None,
-            keep_empty_params=False
-    ) -> tuple:
+    def list_microtenants(self, query_params=None) -> tuple:
         """
         Enumerates microtenants in your organization with pagination.
         A subset of microtenants can be returned that match a supported
@@ -42,60 +45,55 @@ class MicrotenantsAPI(APIClient):
             query_params {dict}: Map of query parameters for the request.
                 [query_params.pagesize] {int}: Page size for pagination.
                 [query_params.search] {str}: Search string for filtering results.
-                [query_params.microtenant_id] {str}: ID of the microtenant, if applicable.
+                [query_params.include_roles] {bool}: Include roles information in the API response. Default value: False
                 [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
                 [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
-            keep_empty_params {bool}: Whether to include empty parameters in the query string.
 
         Returns:
             tuple: A tuple containing (list of Microtenants instances, Response, error)
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/microtenants")
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint}
+            /microtenants
+        """)
 
-        # Handle query parameters (including microtenant_id if provided)
+        # Set default pagination values
         query_params = query_params or {}
-        microtenant_id = query_params.pop("microtenant_id", None)
+        query_params["page"] = query_params.get("page", 1)
+        query_params["pagesize"] = max(20, min(query_params.get("pagesize", 20), 500))
+        query_params["includeRoles"] = query_params.get("includeRoles", False)
+
+        # Handle microtenant_id if provided
+        microtenant_id = query_params.get("microtenant_id", None)
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
         # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
+        encoded_query_params = urlencode(query_params)
+        api_url += f"?{encoded_query_params}"
 
-        # Prepare request body and headers
-        body = {}
-        headers = {}
-        form = {}
-
-        # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
-        )
-
+        # Prepare request
+        request, error = self._request_executor.create_request(http_method, api_url)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, Microtenant)
-
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
-        # Parse the response into AppConnectorGroup instances
+        # Process response and create Microtenant instances
         try:
             result = []
-            for item in response.get_body():
-                result.append(Microtenant(
-                    self.form_response_body(item)
-                ))
+            for item in response.get_results():
+                result.append(Microtenant(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
         return (result, response, None)
 
-    def get_microtenant(self, microtenant_id: str) -> Microtenant:
+    def get_microtenant(self, microtenant_id: str, query_params=None) -> tuple:
         """
         Returns information on the specified microtenant.
 
@@ -109,19 +107,36 @@ class MicrotenantsAPI(APIClient):
             >>> microtenant = zpa.microtenants.get_microtenant('216199618143364393')
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/microtenants/{microtenant_id}")
+        api_url = format_url(f"""{
+            self._zpa_base_endpoint}
+            /microtenants/{microtenant_id}
+        """)
 
-        request, error = self._request_executor.create_request(http_method, api_url)
+        query_params = query_params or {}
+
+        if query_params:
+            encoded_query_params = urlencode(query_params)
+            api_url += f"?{encoded_query_params}"
+
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
         if error:
-            return None
+            return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request, Microtenant)
         if error:
-            return None
+            return (None, response, error)
 
-        return Microtenant(response.get_body())
+        try:
+            result = Microtenant(
+                self.form_response_body(response.get_body())
+            )
+        except Exception as error:
+            return (None, response, error)
+        return (result, response, None)
 
-    def get_microtenant_summary(self) -> Microtenant:
+    def get_microtenant_summary(self) -> tuple:
         """
         Returns the name and ID of the configured Microtenant.
 
@@ -132,38 +147,87 @@ class MicrotenantsAPI(APIClient):
             >>> summary = zpa.microtenants.get_microtenant_summary()
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/microtenants/summary")
+        api_url = format_url(f"""{
+            self._zpa_base_endpoint}
+            /microtenants/summary
+        """)
 
+        # Create the request without any body or payload, as it's a simple GET request
         request, error = self._request_executor.create_request(http_method, api_url)
         if error:
-            return None
+            return (None, error)
 
+        # Execute the request
         response, error = self._request_executor.execute(request)
         if error:
-            return None
+            return (None, error)
 
-        return Microtenant(response.get_body())
+        # Parse the response as a list of Microtenant objects
+        microtenant_list = []
+        response_body = response.get_body()
+        
+        if isinstance(response_body, list):
+            for item in response_body:
+                microtenant_list.append(Microtenant(item))
 
-    def get_microtenant_by_name(self, name: str, **kwargs) -> Microtenant:
+        return (microtenant_list, None)
+
+    def get_microtenant_search(self, microtenant, **kwargs) -> tuple:
         """
-        Returns information on the microtenant with the specified name.
+        Add a new microtenant.
 
         Args:
             name (str): The name of the microtenant.
+            criteria_attribute (str): The criteria attribute for the microtenant.
+            criteria_attribute_values (list): The values for the criteria attribute.
+
+        Keyword Args:
+            description (str): A description for the microtenant.
+            enabled (bool): Whether the microtenant is enabled. Defaults to True.
+            privileged_approvals_enabled (bool): Whether privileged approvals are enabled. Defaults to True.
 
         Returns:
-            Microtenant: The resource record for the microtenant if found, otherwise None.
+            Microtenant: The resource record for the newly created microtenant.
 
-        Examples:
-            >>> microtenant = zpa.microtenants.get_microtenant_by_name('example_name')
         """
-        microtenants = self.list_microtenants(**kwargs)
-        for microtenant in microtenants:
-            if microtenant.name == name:
-                return microtenant
-        return None
+        http_method = "post".upper()
+        api_url = format_url(f"""{
+            self._zpa_base_endpoint}
+            /microtenants/search
+        """)
 
-    def add_microtenant(self, name: str, criteria_attribute: str, criteria_attribute_values: list, **kwargs) -> Microtenant:
+        # Ensure provisioning is a dictionary
+        if isinstance(microtenant, dict):
+            body = microtenant
+        else:
+            body = microtenant.as_dict()
+
+        # Add any additional attributes from kwargs
+        body.update(kwargs)
+
+        # Create the request
+        request, error = self._request_executor\
+            .create_request(
+            http_method, api_url, body=body
+        )
+        if error:
+            return (None, None, error)
+
+        # Execute the request
+        response, error = self._request_executor\
+            .execute(request, MicrotenantSearch)
+        if error:
+            return (None, response, error)
+
+        try:
+            result = MicrotenantSearch(
+                self.form_response_body(response.get_body())
+            )
+        except Exception as error:
+            return (None, response, error)
+        return (result, response, None)
+
+    def add_microtenant(self, microtenant, **kwargs) -> tuple:
         """
         Add a new microtenant.
 
@@ -188,29 +252,56 @@ class MicrotenantsAPI(APIClient):
                 )
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._base_url}/microtenants")
+        api_url = format_url(f"""{
+            self._zpa_base_endpoint}
+            /microtenants
+        """)
 
-        payload = {
+        # Ensure provisioning is a dictionary
+        if isinstance(microtenant, dict):
+            body = microtenant
+        else:
+            body = microtenant.as_dict()
+
+        # Extract and set attributes from the body
+        name = body.pop("name", None)
+        criteria_attribute = body.pop("criteria_attribute", None)
+        criteria_attribute_values = body.pop("criteria_attribute_values", [])
+
+
+        # Add extracted values to the body
+        body.update({
             "name": name,
             "criteriaAttribute": criteria_attribute,
             "criteriaAttributeValues": criteria_attribute_values,
-        }
+        })
 
-        # Add optional parameters to payload
-        for key, value in kwargs.items():
-            payload[snake_to_camel(key)] = value
+        # Add any additional attributes from kwargs
+        body.update(kwargs)
 
-        request, error = self._request_executor.create_request(http_method, api_url, payload)
+        # Create the request
+        request, error = self._request_executor\
+            .create_request(
+            http_method, api_url, body=body
+        )
         if error:
-            return None
+            return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        # Execute the request
+        response, error = self._request_executor\
+            .execute(request, Microtenant)
         if error:
-            return None
+            return (None, response, error)
 
-        return Microtenant(response.get_body())
+        try:
+            result = Microtenant(
+                self.form_response_body(response.get_body())
+            )
+        except Exception as error:
+            return (None, response, error)
+        return (result, response, None)
 
-    def update_microtenant(self, microtenant_id: str, **kwargs) -> Microtenant:
+    def update_microtenant(self, microtenant_id: str, microtenant, **kwargs) -> tuple:
         """
         Updates the specified microtenant.
 
@@ -236,21 +327,49 @@ class MicrotenantsAPI(APIClient):
                 )
         """
         http_method = "put".upper()
-        api_url = format_url(f"{self._base_url}/microtenants/{microtenant_id}")
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint}
+            /microtenants/{microtenant_id}
+        """)
 
-        # Get the current microtenant data and update it with the new kwargs
-        microtenant_data = self.get_microtenant(microtenant_id).request_format()
-        microtenant_data.update({snake_to_camel(k): v for k, v in kwargs.items()})
+        # Ensure the connector_group is in dictionary format
+        if isinstance(microtenant, dict):
+            body = microtenant
+        else:
+            body = microtenant.as_dict()
 
-        request, error = self._request_executor.create_request(http_method, api_url, microtenant_data)
+        body.update(kwargs)
+        
+        # Use get instead of pop to keep microtenant_id in the body
+        microtenant_id = body.get("microtenant_id", None)
+        params = {"microtenantId": microtenant_id} if microtenant_id else {}
+
+        # Create the request
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, {}, params)
         if error:
-            return None
+            return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        # Execute the request
+        response, error = self._request_executor\
+            .execute(request, Microtenant)
         if error:
-            return None
+            return (None, response, error)
 
-        return Microtenant(response.get_body())
+        # Handle case where no content is returned (204 No Content)
+        # Handle case where no content is returned (204 No Content)
+        if response is None:
+            # Return a meaningful result to indicate success
+            return (Microtenant({"id": microtenant_id}), None, None)
+
+        # Parse the response into an AppConnectorGroup instance
+        try:
+            result = Microtenant(
+                self.form_response_body(response.get_body())
+            )
+        except Exception as error:
+            return (None, response, error)
+        return (result, response, None)
 
     def delete_microtenant(self, microtenant_id: str) -> int:
         """
@@ -266,211 +385,21 @@ class MicrotenantsAPI(APIClient):
             >>> zpa.microtenants.delete_microtenant('99999')
         """
         http_method = "delete".upper()
-        api_url = format_url(f"{self._base_url}/microtenants/{microtenant_id}")
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint}
+            /microtenants/{microtenant_id}
+        """)
 
-        request, error = self._request_executor.create_request(http_method, api_url)
+        # Create the request
+        request, error = self._request_executor\
+            .create_request(http_method, api_url)
         if error:
-            return None
+            return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        # Execute the request
+        response, error = self._request_executor\
+            .execute(request)
         if error:
-            return None
+            return (None, response, error)
 
-        return response.status_code
-
-
-# from box import Box, BoxList
-# from requests import Response
-# from zscaler.utils import snake_to_camel
-# from zscaler.api_client import APIClient
-
-# class MicrotenantsAPI(APIClient):
-
-#     def list_microtenants(self, **kwargs) -> BoxList:
-#         """
-#         Returns a list of all configured microtenants.
-
-#         Returns:
-#             :obj:`BoxList`: A list of all configured microtenants.
-
-#         Examples:
-#             >>> for microtenant in zpa.microtenants.list_microtenants():
-#             ...    pprint(microtenant)
-
-#         """
-#         if "pageSize" in kwargs:
-#             kwargs.pop("pageSize")
-#         list, _ = self.rest.get_paginated_data(path="/microtenants", **kwargs)
-#         return list
-
-#     def get_microtenant(self, microtenant_id: str) -> Box:
-#         """
-#         Returns information on the specified microtenant.
-
-#         Args:
-#             microtenant_id (str):
-#                 The unique identifier for the microtenant.
-
-#         Returns:
-#             :obj:`Box`: The resource record for the microtenant.
-
-#         Examples:
-#             >>> pprint(zpa.microtenants.get_microtenant('216199618143364393'))
-
-#         """
-#         response = self.rest.get("/microtenants/%s" % (microtenant_id))
-#         if isinstance(response, Response):
-#             status_code = response.status_code
-#             if status_code != 200:
-#                 return None
-#         return response
-
-#     def get_microtenant_summary(self) -> Box:
-#         """
-#         Returns the name and ID of the configured Microtenant
-
-#         Args:
-
-#         Returns:
-#             :obj:`Box`: The resource record for the microtenant.
-
-#         Examples:
-#             >>> pprint(zpa.microtenants.get_microtenant_summary())
-
-#         """
-#         return self.rest.get("microtenants/summary")
-
-#     def get_microtenant_by_name(self, name: str, **kwargs) -> Box:
-#         """
-#         Returns information on the microtenant with the specified name.
-
-#         Args:
-#             name (str): The name of the microtenant.
-
-#         Returns:
-#             :obj:`Box` or None: The resource record for the microtenant if found, otherwise None.
-
-#         Examples:
-#             >>> microtenant = zpa.microtenants.get_microtenant_by_name('example_name')
-#             >>> if microtenant:
-#             ...     pprint(microtenant)
-#             ... else:
-#             ...     print("Microtenant not found")
-#         """
-#         microtenants = self.list_microtenants(**kwargs)
-#         for microtenant in microtenants:
-#             if microtenant.get("name") == name:
-#                 return microtenant
-#         return None
-
-#     def add_microtenant(self, name: str, criteria_attribute: str, criteria_attribute_values: list, **kwargs) -> Box:
-#         """
-#         Add a new microtenant.
-
-#         Args:
-#             name (str): The name of the microtenant.
-#             **kwargs: Optional keyword args.
-
-#         Keyword Args:
-#             description (str): A description for the microtenant.
-#             enabled (bool): Whether the Microtenant is enabled or not. Defaults to True.
-#             privileged_approvals_enabled (bool): Whether the Microtenant is enabled or not. Defaults to True.
-#             criteria_attribute (str): The criteria attribute for the Microtenant. The supported value is AuthDomain.
-#             criteria_attribute_values (list): The value for the criteria attribute.
-#                 This is the valid authentication domains configured for a customer (e.g., ExampleAuthDomain.com).
-
-#         Returns:
-#             :obj:`Box`: The resource record for the newly created microtenant, including the user block.
-
-#         Examples:
-#             Create a server with the minimum required parameters:
-
-#             >>> zpa.microtenants.add_microtenant(
-#             ...   name='Microtenant_A',
-#             ...   description='New Microtenant',
-#             ...   enabled=True,
-#             ...   privileged_approvals_enabled=True,
-#             ...   criteria_attribute_values=['acme.com'],
-#             ...   criteria_attribute='AuthDomain',
-#             ... )
-
-#         """
-#         payload = {"name": name, "criteriaAttribute": criteria_attribute, "criteriaAttributeValues": criteria_attribute_values}
-
-#         # Add optional parameters to payload
-#         for key, value in kwargs.items():
-#             payload[snake_to_camel(key)] = value
-#         response = self.rest.post("microtenants", json=payload)
-#         if isinstance(response, Response):
-#             status_code = response.status_code
-#             raise Exception(f"API call failed with status {status_code}: {response.json()}")
-#         return response
-
-#     def update_microtenant(self, microtenant_id: str, **kwargs) -> Box:
-#         """
-#         Updates the specified microtenant.
-
-#         Args:
-#             microtenant_id (str):
-#                 The unique identifier for the microtenant being updated.
-#             **kwargs:
-#                 Optional keyword args.
-
-#         Keyword Args:
-#             name (str): The name of the microtenant.
-#             description (str): A description for the microtenant.
-#             enabled (bool): Whether the Microtenant is enabled or not. Defaults to True.
-#             privileged_approvals_enabled (bool): Whether the Microtenant is enabled or not. Defaults to True.
-#             criteria_attribute (str): The criteria attribute for the Microtenant. The supported value is AuthDomain.
-#             criteria_attribute_values (list): The value for the criteria attribute.
-#                 This is the valid authentication domains configured for a customer (e.g., ExampleAuthDomain.com).
-
-#         Returns:
-#             :obj:`Box`: The resource record for the updated microtenant.
-
-#         Examples:
-#             Update the name of a microtenant:
-
-#             >>> zpa.servers.update_server(
-#             ...   '99999',
-#             ...   name='Update_Microtenant_A')
-
-#             Disable the privileged_approvals_enabled:
-
-#             >>> zpa.microtenants.update_microtenant(
-#             ...   microtenant_id='216199618143368569',
-#             ...   name='Microtenant_A',
-#             ...   description='Microtenant_A',
-#             ...   enabled=True,
-#             ...   privileged_approvals_enabled=False,
-#             ...   criteria_attribute_values=['acme.com'],
-#             ...   criteria_attribute='AuthDomain',
-#             ... )
-
-#         """
-#         # Set payload to value of existing record
-#         payload = {snake_to_camel(k): v for k, v in self.get_microtenant(microtenant_id).items()}
-
-#         # Add optional parameters to payload
-#         for key, value in kwargs.items():
-#             payload[snake_to_camel(key)] = value
-
-#         resp = self.rest.put(f"microtenants/{microtenant_id}", json=payload).status_code
-#         if not isinstance(resp, Response):
-#             return self.get_microtenant(microtenant_id)
-
-#     def delete_microtenant(self, microtenant_id: str) -> int:
-#         """
-#         Delete the specified microtenant.
-
-#         Args:
-#             microtenant_id (str): The unique identifier for the Microtenant to be deleted.
-
-#         Returns:
-#             :obj:`int`: The response code for the operation.
-
-#         Examples:
-#             >>> zpa.microtenant.delete_microtenant('99999')
-
-#         """
-#         return self.rest.delete(f"microtenants/{microtenant_id}").status_code
+        return (None, response, None)

@@ -13,6 +13,7 @@ WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
+
 from zscaler.api_client import APIClient
 from zscaler.zpa.models.idp import IDP
 from urllib.parse import urlencode
@@ -24,14 +25,14 @@ class IDPControllerAPI(APIClient):
     A Client object for the Identity Provider (IdP) resource.
     """
 
-    def __init__(self):
-        super().__init__()  # Inherit initialization from APIClient
-        self._base_url = ""
+    def __init__(self, request_executor, config):
+        super().__init__()
+        self._request_executor = request_executor
+        customer_id = config["client"].get("customerId")
+        self._zpa_base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
+        self._zpa_base_endpoint_v2 = f"/zpa/mgmtconfig/v2/admin/customers/{customer_id}"
 
-    def list_idps(
-            self, query_params=None,
-            keep_empty_params=False
-    ) -> tuple:
+    def list_idps(self, query_params=None) -> tuple:
         """
         Enumerates identity provider in your organization with pagination.
         A subset of identity provider can be returned that match a supported
@@ -39,20 +40,23 @@ class IDPControllerAPI(APIClient):
 
         Args:
             query_params {dict}: Map of query parameters for the request.
-                [query_params.pagesize] {int}: Page size for pagination.
-                [query_params.search] {str}: Search string for filtering results.
-                [query_params.microtenant_id] {str}: ID of the microtenant, if applicable.
+                [query_params.page] {int}: Specifies the page number.
+                [query_params.pagesize] {int}: Specifies the page size. If not provided, the default page size is 20. The max page size is 500.
+                [query_params.search] {str}: The search string used to support search by features and fields for the API.
+                [query_params.scim_enabled] {bool}: Returns all SCIM IdPs if set to true. Returns all non SCIM IdPs if set to false.
+                [query_params.user_attributes] {bool}: Returns user attributes.
                 [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
                 [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
-            keep_empty_params {bool}: Whether to include empty parameters in the query string.
 
         Returns:
             tuple: A tuple containing (list of IDP instances, Response, error)
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/idp")
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint_v2}
+            /idp
+        """)
 
-        # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
 
         # Build the query string
@@ -63,35 +67,32 @@ class IDPControllerAPI(APIClient):
         # Prepare request body and headers
         body = {}
         headers = {}
-        form = {}
 
-        # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
-        )
-
+        # Prepare request
+        request, error = self._request_executor\
+            .create_request(
+                http_method, api_url, body, headers
+            )
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, IDP)
-
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 
-        # Parse the response into IDP instances
         try:
             result = []
-            for item in response.get_body():
+            for item in response.get_results():
                 result.append(IDP(
-                    self.form_response_body(item)
-                ))
+                    self.form_response_body(item))
+                )
         except Exception as error:
             return (None, response, error)
-
         return (result, response, None)
 
-    def get_idp(self, idp_id: str, **kwargs) -> IDP:
+    def get_idp(self, idp_id: str) -> tuple:
         """
         Returns information on the specified identity provider (IdP).
 
@@ -102,31 +103,33 @@ class IDPControllerAPI(APIClient):
             IDP: The corresponding identity provider object.
         """
         http_method = "get".upper()
-        api_url = format_url(
-            f"""
-            {self._base_url}/idp/{idp_id}
-        """
-        )
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint}
+            /idp/{idp_id}
+        """)
 
-        response, error = self._request_executor.execute(self._request_executor.create_request(http_method, api_url), IDP)
+        # Prepare request body, headers, and form (if needed)
+        body = {}
+        headers = {}
+
+        # Create the request
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, headers)
 
         if error:
-            raise Exception(f"API request failed: {error}")
+            return (None, None, error)
 
-        return IDP(response.get_body())
+        # Execute the request
+        response, error = self._request_executor\
+            .execute(request, IDP)
 
-    def get_idp_by_name(self, name: str, **kwargs) -> IDP:
-        """
-        Returns information on the identity provider with the specified name.
+        if error:
+            return (None, response, error)
 
-        Args:
-            name (str): The name of the identity provider.
-
-        Returns:
-            IDP or None: The resource record for the identity provider if found, otherwise None.
-        """
-        idps = self.list_idps(**kwargs)
-        for idp in idps:
-            if idp.name == name:
-                return idp
-        return None
+        try:
+            result = IDP(
+                self.form_response_body(response.get_body())
+            )
+        except Exception as error:
+            return (None, response, error)
+        return (result, response, None)

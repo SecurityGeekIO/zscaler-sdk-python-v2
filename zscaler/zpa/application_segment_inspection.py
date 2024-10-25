@@ -14,37 +14,28 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
-from box import Box, BoxList
-from requests import Response
-
-from zscaler.utils import (
-    add_id_groups,
-    convert_keys,
-    recursive_snake_to_camel,
-    snake_to_camel,
-)
 from zscaler.api_client import APIClient
 from zscaler.zpa.models.application_segment_inspection import ApplicationSegmentInspection
 from urllib.parse import urlencode
-from zscaler.utils import format_url
+from zscaler.utils import add_id_groups, format_url
+
 
 class AppSegmentsInspectionAPI(APIClient):
     """
     A client object for the Application Segment Inspection resource.
     """
-    
-    def __init__(self):
-        super().__init__()  # Inherit initialization from APIClient
-        self._base_url = ""
-        
+
     reformat_params = [
         ("server_group_ids", "serverGroups"),
     ]
 
-    def list_segment_inspection(
-            self, query_params=None,
-            keep_empty_params=False
-    ) -> tuple:
+    def __init__(self, request_executor, config):
+        super().__init__()
+        self._request_executor = request_executor
+        customer_id = config["client"].get("customerId")
+        self._zpa_base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
+
+    def list_segment_inspection(self, query_params=None, **kwargs) -> tuple:
         """
         Returns all configured application segment inspection with pagination support.
 
@@ -53,8 +44,6 @@ class AppSegmentsInspectionAPI(APIClient):
             max_pages (int): The maximum number of pages to request before stopping iteration.
             pagesize (int): Specifies the page size. The default size is 20, but the maximum size is 500.
             search (str, optional): The search string used to match against features and fields.
-            microtenant_id (str, optional): ID of the microtenant, if applicable.
-            keep_empty_params (bool, optional): Whether to include empty parameters in the query string.
 
         Returns:
             tuple: A tuple containing a list of `AppSegmentsInspection` instances, response object, and error if any.
@@ -64,48 +53,43 @@ class AppSegmentsInspectionAPI(APIClient):
         """
         # Initialize URL and HTTP method
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/application")
-
-        # Handle query parameters (including microtenant_id if provided)
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint}
+            /application
+        """)
+        
+        # Handle optional query parameters
         query_params = query_params or {}
-
+        query_params.update(kwargs)
+            
         # Build the query string
         if query_params:
             encoded_query_params = urlencode(query_params)
             api_url += f"?{encoded_query_params}"
 
-        # Prepare request body and headers
-        body = {}
-        headers = {}
-        form = {}
-
-        # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
-        )
-
+        # Prepare request
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body={}, headers={})
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, ApplicationSegmentInspection)
-
+        response, error = self._request_executor\
+        .execute(request)
         if error:
             return (None, response, error)
 
-        # Parse the response into AppConnectorGroup instances
         try:
             result = []
-            for item in response.get_body():
+            for item in response.get_results():
                 result.append(ApplicationSegmentInspection(
-                    self.form_response_body(item)
-                ))
+                    self.form_response_body(item))
+                )
         except Exception as error:
             return (None, response, error)
-
         return (result, response, None)
 
-    def get_segment_inspection(self, segment_id: str, **kwargs) -> Box:
+    def get_segment_inspection(self, segment_id: str) -> tuple:
         """
         Get information for an AppProtection application segment.
 
@@ -114,28 +98,46 @@ class AppSegmentsInspectionAPI(APIClient):
                 The unique identifier for the AppProtection application segment.
 
         Returns:
-            :obj:`Box`: The AppProtection application segment resource record.
+            :obj:`tuple`: The AppProtection application segment resource record.
 
         Examples:
             >>> app_segment = zpa.app_segments_inspection.details('99999')
 
         """
-        params = {}
-        if "microtenant_id" in kwargs:
-            params["microtenantId"] = kwargs.pop("microtenant_id")
-        return self.rest.get(f"application/{segment_id}", params=params)
+        http_method = "get".upper()
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint}
+            /application/{segment_id}
+        """
+        )
 
-    def add_segment_inspection(
-        self,
-        name: str,
-        domain_names: list,
-        segment_group_id: str,
-        server_group_ids: list,
-        tcp_port_ranges: list = None,
-        udp_port_ranges: list = None,
-        common_apps_dto: dict = None,
-        **kwargs,
-    ) -> Box:
+        query_params = query_params or {}
+        if query_params:
+            encoded_query_params = urlencode(query_params)
+            api_url += f"?{encoded_query_params}"
+
+        # Create the request
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
+        if error:
+            return (None, None, error)
+
+        # Execute the request
+        response, error = self._request_executor\
+            .execute(request, ApplicationSegmentInspection)
+        if error:
+            return (None, response, error)
+
+        # Parse the response into an AppConnectorGroup instance
+        try:
+            result = ApplicationSegmentInspection(
+                self.form_response_body(response.get_body())
+            )
+        except Exception as error:
+            return (None, response, error)
+        return (result, response, None)
+
+    def add_segment_inspection(self, app_segment, **kwargs) -> tuple:
         """
         Create an AppProtection application segment.
 
@@ -183,7 +185,7 @@ class AppSegmentsInspectionAPI(APIClient):
             icmp_access_type (str): Sets ICMP access type for ZPA clients.
 
         Returns:
-            :obj:`Box`: The newly created application segment resource record.
+            :obj:`tuple`: The newly created application segment resource record.
 
         Examples:
             Add a new AppProtection application segment for example.com, ports 8080-8085.
@@ -195,40 +197,62 @@ class AppSegmentsInspectionAPI(APIClient):
             ...    server_group_ids=['99999', '88888'])
 
         """
-        payload = {
-            "name": name,
-            "domainNames": domain_names,
-            "tcpPortRanges": tcp_port_ranges,
-            "udpPortRanges": udp_port_ranges,
-            "segmentGroupId": segment_group_id,
-            "commonAppsDto": common_apps_dto if common_apps_dto else None,
-            "serverGroups": [{"id": group_id} for group_id in server_group_ids],
-        }
+        http_method = "post".upper()
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint}
+            /application
+        """)
 
+        # Ensure app_segment is a dictionary
+        if isinstance(app_segment, dict):
+            body = app_segment
+        else:
+            body = app_segment.as_dict()
+
+        # Reformat server_group_ids to match the expected API format (serverGroups)
+        if "server_group_ids" in body:
+            body["serverGroups"] = [{"id": group_id} for group_id in body.pop("server_group_ids")]
+
+        # Add common_apps_dto if provided
+        common_apps_dto = kwargs.get("common_apps_dto")
         if common_apps_dto:
-            camel_common_apps_dto = recursive_snake_to_camel(common_apps_dto)
-            payload["commonAppsDto"] = camel_common_apps_dto
+            body["commonAppsDto"] = common_apps_dto
 
-        add_id_groups(self.reformat_params, kwargs, payload)
-        for key, value in kwargs.items():
-            if value is not None:
-                payload[snake_to_camel(key)] = value
+        if kwargs.get("tcp_port_ranges"):
+            body["tcpPortRange"] = [{"from": ports[0], "to": ports[1]} for ports in kwargs.pop("tcp_port_ranges")]
 
-        microtenant_id = kwargs.pop("microtenant_id", None)
-        params = {"microtenantId": microtenant_id} if microtenant_id else {}
+        if kwargs.get("udp_port_ranges"):
+            body["udpPortRange"] = [{"from": ports[0], "to": ports[1]} for ports in kwargs.pop("udp_port_ranges")]
 
-        camel_payload = recursive_snake_to_camel(payload)
-        for key, value in kwargs.items():
-            if value is not None:
-                camel_payload[snake_to_camel(key)] = value
+        # Add any additional fields from kwargs to the body
+        body.update(kwargs)
 
-        response = self.rest.post("application", json=camel_payload, params=params)
-        if isinstance(response, Response):
-            status_code = response.status_code
-            raise Exception(f"API call failed with status {status_code}: {response.json()}")
-        return response
+        # Apply add_id_groups to reformat params based on self.reformat_params
+        add_id_groups(self.reformat_params, kwargs, body)
+        
+        # Create the request
+        request, error = self._request_executor\
+            .create_request(
+            http_method, api_url, body=body
+        )
+        if error:
+            return (None, None, error)
 
-    def update_segment_inspection(self, segment_id: str, common_apps_dto=None, **kwargs) -> Box:
+        # Execute the request
+        response, error = self._request_executor\
+            .execute(request, ApplicationSegmentInspection)
+        if error:
+            return (None, response, error)
+
+        try:
+            result = ApplicationSegmentInspection(
+                self.form_response_body(response.get_body())
+            )
+        except Exception as error:
+            return (None, response, error)
+        return (result, response, None)
+
+    def update_segment_inspection(self, segment_id: str, app_segment, **kwargs) -> tuple:
         """
         Update an AppProtection application segment.
 
@@ -278,7 +302,7 @@ class AppSegmentsInspectionAPI(APIClient):
             icmp_access_type (str): Sets ICMP access type for ZPA clients.
 
         Returns:
-            :obj:`Box`: The updated AppProtection application segment resource record.
+            :obj:`tuple`: The updated AppProtection application segment resource record.
 
         Examples:
             Rename the application segment for example.com.
@@ -287,31 +311,62 @@ class AppSegmentsInspectionAPI(APIClient):
             ...    name='new_app_name',
 
         """
-        payload = convert_keys(self.get_segment_inspection(segment_id))
+        http_method = "put".upper()
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint}
+            /application/{segment_id}
+        """)
+
+        # Ensure app_segment is a dictionary
+        if isinstance(app_segment, dict):
+            body = app_segment
+        else:
+            body = app_segment.as_dict()
+
+        # Reformat server_group_ids to match the expected API format (serverGroups)
+        if "server_group_ids" in body:
+            body["serverGroups"] = [{"id": group_id} for group_id in body.pop("server_group_ids")]
+
+        # Add common_apps_dto if provided
+        common_apps_dto = kwargs.get("common_apps_dto")
+        if common_apps_dto:
+            body["commonAppsDto"] = common_apps_dto
 
         if kwargs.get("tcp_port_ranges"):
-            payload["tcpPortRange"] = [{"from": ports[0], "to": ports[1]} for ports in kwargs.pop("tcp_port_ranges")]
+            body["tcpPortRange"] = [{"from": ports[0], "to": ports[1]} for ports in kwargs.pop("tcp_port_ranges")]
 
         if kwargs.get("udp_port_ranges"):
-            payload["udpPortRange"] = [{"from": ports[0], "to": ports[1]} for ports in kwargs.pop("udp_port_ranges")]
+            body["udpPortRange"] = [{"from": ports[0], "to": ports[1]} for ports in kwargs.pop("udp_port_ranges")]
 
-        if common_apps_dto:
-            camel_common_apps_dto = recursive_snake_to_camel(common_apps_dto)
-            payload["commonAppsDto"] = camel_common_apps_dto
+        # Add any additional fields from kwargs to the body
+        body.update(kwargs)
 
-        add_id_groups(self.reformat_params, kwargs, payload)
+        # Apply add_id_groups to reformat params based on self.reformat_params
+        add_id_groups(self.reformat_params, kwargs, body)
+        
+        # Create the request
+        request, error = self._request_executor\
+            .create_request(
+            http_method, api_url, body=body
+        )
+        if error:
+            return (None, None, error)
 
-        for key, value in kwargs.items():
-            payload[snake_to_camel(key)] = value
+        # Execute the request
+        response, error = self._request_executor\
+            .execute(request, ApplicationSegmentInspection)
+        if error:
+            return (None, response, error)
 
-        microtenant_id = kwargs.pop("microtenant_id", None)
-        params = {"microtenantId": microtenant_id} if microtenant_id else {}
+        try:
+            result = ApplicationSegmentInspection(
+                self.form_response_body(response.get_body())
+            )
+        except Exception as error:
+            return (None, response, error)
+        return (result, response, None)
 
-        resp = self.rest.put(f"application/{segment_id}", json=payload, params=params).status_code
-        if not isinstance(resp, Response):
-            return self.get_segment_inspection(segment_id)
-
-    def delete_segment_inspection(self, segment_id: str, force_delete: bool = False, **kwargs) -> int:
+    def delete_segment_inspection(self, segment_id: str, force_delete: bool = False) -> int:
         """
         Delete an AppProtection application segment.
 
@@ -334,9 +389,27 @@ class AppSegmentsInspectionAPI(APIClient):
             >>> zpa.app_segments_inspection.delete('88888', force_delete=True)
 
         """
+        http_method = "delete".upper()
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint}
+            /application/{segment_id}
+        """)
+        
+        # Initialize params and add forceDelete if needed
         params = {}
-        if "microtenant_id" in kwargs:
-            params["microtenantId"] = kwargs.pop("microtenant_id")
-        query = "forceDelete=true" if force_delete else ""
-        response = self.rest.delete(f"/application/{segment_id}?{query}", params=params)
-        return response.status_code
+        if force_delete:
+            params["forceDelete"] = "true"
+            
+        # Create the request
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=params)
+        if error:
+            return (None, None, error)
+
+        # Execute the request
+        response, error = self._request_executor\
+            .execute(request)
+        if error:
+            return (None, response, error)
+
+        return (None, response, None)

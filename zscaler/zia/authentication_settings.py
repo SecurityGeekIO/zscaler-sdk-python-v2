@@ -49,14 +49,16 @@ class AuthenticationSettingsAPI(APIClient):
         body = {}
         headers = {}
 
-        request, error = self._request_executor.create_request(
+        request, error = self._request_executor\
+            .create_request(
             http_method, api_url, body, headers
         )
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
 
         if error:
             return (None, response, error)
@@ -69,7 +71,6 @@ class AuthenticationSettingsAPI(APIClient):
                 ))
         except Exception as error:
             return (None, response, error)
-
         return (result, response, None)
 
     def add_urls_to_exempt_list(self, url_list: list) -> tuple:

@@ -19,7 +19,7 @@ from zscaler.zia.locations import LocationsAPI
 from zscaler.zia.rule_labels import RuleLabelsAPI
 from zscaler.zia.security_policy_settings import SecurityPolicyAPI
 from zscaler.zia.ssl_inspection import SSLInspectionAPI
-from zscaler.zia.traffic import TrafficForwardingAPI
+from zscaler.zia.traffic_gre_tunnels import TrafficForwardingGRETunnelAPI
 from zscaler.zia.traffic_vpn_credentials import TrafficVPNCredentialAPI
 from zscaler.zia.traffic_static_ip import TrafficStaticIPAPI
 from zscaler.zia.url_categories import URLCategoriesAPI
@@ -30,6 +30,8 @@ from zscaler.zia.zpa_gateway import ZPAGatewayAPI
 
 
 class ZIAService:
+    """ZIA Service client, exposing various ZIA APIs."""
+
     def __init__(self, client):
         # Ensure the service gets the request executor from the Client object
         self._request_executor = client._request_executor
@@ -204,12 +206,12 @@ class ZIAService:
         return SSLInspectionAPI(self._request_executor)
 
     @property
-    def traffic(self):
+    def traffic_gre_tunnel(self):
         """
-        The interface object for the :ref:`ZIA Traffic Forwarding interface <zia-traffic>`.
+        The interface object for the :ref:`ZIA Traffic Forwarding interface <zia-traffic_gre_tunnel>`.
 
         """
-        return TrafficForwardingAPI(self._request_executor)
+        return TrafficForwardingGRETunnelAPI(self._request_executor)
 
     @property
     def traffic_vpn_credentials(self):

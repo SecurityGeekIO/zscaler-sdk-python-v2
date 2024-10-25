@@ -16,8 +16,9 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from zscaler.api_client import APIClient
 from zscaler.zpa.models.lss import LSSConfig
-from zscaler.utils import format_url, snake_to_camel, keys_exists
+from zscaler.utils import format_url, snake_to_camel, keys_exists, convert_keys
 from urllib.parse import urlencode
+
 
 class LSSConfigControllerAPI(APIClient):
     source_log_map = {
@@ -30,6 +31,14 @@ class LSSConfigControllerAPI(APIClient):
         "user_status": "zpn_auth_log",
         "web_inspection": "zpn_waf_http_exchanges_log",
     }
+
+    def __init__(self, request_executor, config):
+        super().__init__()
+        self._request_executor = request_executor
+        customer_id = config["client"].get("customerId")
+        self._zpa_lss_base_endpoint_v2 = f"/zpa/mgmtconfig/v2/admin/customers/{customer_id}"
+        self._zpa_base_lss_url_v2 = "/zpa/mgmtconfig/v2/admin/lssConfig"
+        self._zpa_lss_endpoint_v2 = f"/zpa/mgmtconfig/v2/admin/lssConfig/customers/{customer_id}"
 
     def _create_policy(self, conditions: list) -> list:
         """
@@ -49,7 +58,7 @@ class LSSConfigControllerAPI(APIClient):
             # Template for SAML, SCIM, and SCIM_GROUP Policy Rule objects
             if condition[0] in ["saml", "scim", "scim_group"]:
                 operand = {"operands": [{"objectType": condition[0].upper(), "entryValues": []}]}
-                for entry in condition[1]:
+                for entry in condition[1]:  # entry is expected to be a tuple (lhs, rhs)
                     entry_values = {
                         "lhs": entry[0],
                         "rhs": entry[1],
@@ -79,15 +88,12 @@ class LSSConfigControllerAPI(APIClient):
 
         return template
 
-    def list_configs(
-        self, query_params=None,
-            keep_empty_params=False
-        ) -> tuple:
+    def list_configs(self, query_params=None) -> tuple:
         """
         Enumerates log receivers in your organization with pagination.
         A subset of log receivers can be returned that match a supported
         filter expression or query.
-        
+
         Args:
             query_params {dict}: Map of query parameters for the request.
                 [query_params.pagesize] {int}: Page size for pagination.
@@ -95,60 +101,49 @@ class LSSConfigControllerAPI(APIClient):
                 [query_params.microtenant_id] {str}: ID of the microtenant, if applicable.
                 [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
                 [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
-            keep_empty_params {bool}: Whether to include empty parameters in the query string.
 
         Returns:
-            tuple: A tuple containing (list of AppConnectorGroup instances, Response, error)
-        
+            tuple: A tuple containing (list of LSS Config instances, Response, error)
+
         Example:
             >>> lss_configs = zpa.lss.list_configs(search="example", pagesize=100)
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/lssConfig")
+        api_url = format_url(f"""
+            {self._zpa_lss_base_endpoint_v2}
+            /lssConfig
+        """)
 
-        # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
-        microtenant_id = query_params.pop("microtenant_id", None)
-        if microtenant_id:
-            query_params["microtenantId"] = microtenant_id
 
         # Build the query string
         if query_params:
             encoded_query_params = urlencode(query_params)
             api_url += f"?{encoded_query_params}"
 
-        # Prepare request body and headers
-        body = {}
-        headers = {}
-        form = {}
-
-        # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
-        )
-
+        # Prepare request
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, LSSConfig)
-
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 
-        # Parse the response into AppConnectorGroup instances
         try:
             result = []
-            for item in response.get_body():
+            for item in response.get_results():
                 result.append(LSSConfig(
-                    self.form_response_body(item)
-                ))
+                    self.form_response_body(item))
+                )
         except Exception as error:
             return (None, response, error)
-
         return (result, response, None)
 
-    def get_config(self, lss_config_id: str, **kwargs) -> LSSConfig:
+    def get_config(self, lss_config_id: str, query_params=None) -> tuple:
         """
         Gets information on the specified LSS Receiver config.
 
@@ -159,22 +154,34 @@ class LSSConfigControllerAPI(APIClient):
             LSSConfig: The corresponding LSS Receiver config object.
         """
         http_method = "get".upper()
-        api_url = format_url(
-            f"""
-            {self._base_url}
+        api_url = format_url(f"""{
+            self._zpa_lss_base_endpoint_v2}
             /lssConfig/{lss_config_id}
-            """
-        )
+        """)
 
-        request, error = self._request_executor.create_request(http_method, api_url, {}, kwargs)
+        query_params = query_params or {}
+
+        if query_params:
+            encoded_query_params = urlencode(query_params)
+            api_url += f"?{encoded_query_params}"
+
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
         if error:
-            return None
+            return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request, LSSConfig)
         if error:
-            return None
+            return (None, response, error)
 
-        return LSSConfig(response.get_body())
+        try:
+            result = LSSConfig(
+                self.form_response_body(response.get_body())
+            )
+        except Exception as error:
+            return (None, response, error)
+        return (result, response, None)
 
     def add_lss_config(
         self,
@@ -187,7 +194,7 @@ class LSSConfigControllerAPI(APIClient):
         source_log_format: str = "csv",
         use_tls: bool = False,
         **kwargs,
-    ) -> LSSConfig:
+    ) -> tuple:
         """
         Adds a new LSS Receiver Config to ZPA.
 
@@ -239,14 +246,10 @@ class LSSConfigControllerAPI(APIClient):
                 )
         """
         http_method = "post".upper()
-        
-        # Construct the API URL
-        api_url = format_url(
-            f"""
-            {self._base_url}
+        api_url = format_url(f"""{
+            self._zpa_lss_base_endpoint_v2}
             /lssConfig
-            """
-        )
+        """)
 
         # Map the source log type to ZPA internal log codes
         source_log_type = self.source_log_map[source_log_type]
@@ -255,7 +258,7 @@ class LSSConfigControllerAPI(APIClient):
         if kwargs.get("log_stream_content"):
             log_stream_content = kwargs.pop("log_stream_content")
         else:
-            log_stream_content = self.get_log_formats()[source_log_type][source_log_format]
+            log_stream_content = self.get_all_log_formats()[source_log_type][source_log_format]
 
         # Prepare the payload
         payload = {
@@ -286,20 +289,29 @@ class LSSConfigControllerAPI(APIClient):
         for key, value in kwargs.items():
             payload[snake_to_camel(key)] = value
 
-        # Create the request using the request executor
-        request, error = self._request_executor.create_request(http_method, api_url, payload, {})
+        # Create the request
+        request, error = self._request_executor\
+            .create_request(
+            http_method, api_url, body=payload
+        )
         if error:
-            return None
+            return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request, LSSConfig)
         if error:
-            return None
+            return (None, response, error)
 
-        # Return the created LSS config object
-        return LSSConfig(response.get_body())
+        try:
+            result = LSSConfig(
+                self.form_response_body(response.get_body())
+            )
+        except Exception as error:
+            return (None, response, error)
+        return (result, response, None)
 
-    def update_lss_config(self, lss_config_id: str, **kwargs) -> LSSConfig:
+    def update_lss_config(self, lss_config_id: str, **kwargs) -> tuple:
         """
         Updates the specified LSS Receiver Config.
 
@@ -335,67 +347,96 @@ class LSSConfigControllerAPI(APIClient):
                     source_log_type="user_status")
         """
         http_method = "put".upper()
-        
-        # Construct the API URL using the format_url pattern
-        api_url = format_url(
-            f"""
-            {self._base_url}
+        api_url = format_url(f"""
+            {self._zpa_lss_base_endpoint_v2}
             /lssConfig/{lss_config_id}
-            """
-        )
+        """)
 
-        # Fetch the current configuration and update it with the provided kwargs
-        existing_config = self.get_config(lss_config_id)
-        payload = existing_config.request_format()
+        # Fetch the current configuration so we can merge with the new values
+        current_config, _, error = self.get_config(lss_config_id)
+        if error:
+            return (None, None, error)
 
-        # Handle custom log stream content formatting or map it to the ZPA internal format
-        if kwargs.get("log_stream_content"):
-            payload["config"]["format"] = kwargs.pop("log_stream_content")
-        elif kwargs.get("source_log_type"):
+        # Convert current config to dictionary format, if it's an object
+        if hasattr(current_config, "as_dict"):
+            current_config = current_config.as_dict()
+
+        # Ensure source_log_type is passed and valid
+        if "source_log_type" in kwargs:
             source_log_type = self.source_log_map[kwargs.pop("source_log_type")]
-            payload["config"]["sourceLogType"] = source_log_type
-            payload["config"]["format"] = self.get_log_formats()[source_log_type][kwargs.pop("source_log_format", "csv")]
+        else:
+            source_log_type = current_config["config"].get("sourceLogType")
 
-        # Update the payload with known fields
-        for key in ["name", "lss_host", "lss_port", "enabled", "use_tls"]:
-            if key in kwargs:
-                payload["config"][snake_to_camel(key)] = kwargs.pop(key)
+        # Handle custom log stream content formatting or use default formatting from ZPA
+        if kwargs.get("log_stream_content"):
+            log_stream_content = kwargs.pop("log_stream_content")
+        else:
+            source_log_format = kwargs.pop("source_log_format", "csv")
+            log_stream_content = self.get_all_log_formats()[source_log_type][source_log_format]
 
-        if "filter_status_codes" in kwargs:
-            payload["config"]["filter"] = kwargs.pop("filter_status_codes")
+        # Ensure the 'config' key exists in the payload structure
+        if "config" not in current_config:
+            current_config["config"] = {}
 
-        # Convert policy_rules tuples into the expected dict format and add to payload
+        # Include the LSS config ID in the config block
+        current_config["config"]["id"] = lss_config_id
+
+        # Prepare the payload by merging the current configuration with the new changes
+        current_config["config"].update({
+            "enabled": kwargs.get("enabled", current_config["config"].get("enabled", True)),
+            "lssHost": kwargs.get("lss_host", current_config["config"].get("lssHost")),
+            "lssPort": kwargs.get("lss_port", current_config["config"].get("lssPort")),
+            "name": kwargs.get("name", current_config["config"].get("name")),
+            "format": log_stream_content,
+            "sourceLogType": source_log_type,
+            "useTls": kwargs.get("use_tls", current_config["config"].get("useTls", False)),
+        })
+
+        # Update connector groups if provided
+        if "app_connector_group_ids" in kwargs:
+            current_config["connectorGroups"] = [{"id": group_id} for group_id in kwargs.pop("app_connector_group_ids")]
+        elif "connectorGroups" not in current_config:  # If it's missing entirely, add an empty list
+            current_config["connectorGroups"] = []
+
+        # Handle policy rules and convert tuples into dictionary format
         if kwargs.get("policy_rules"):
-            if keys_exists(payload, "policyRuleResource", "name"):
-                policy_name = payload["policyRuleResource"]["name"]
-            else:
-                policy_name = "placeholder"
-            payload["policyRuleResource"] = {
+            current_config["policyRuleResource"] = {
                 "conditions": self._create_policy(kwargs.pop("policy_rules")),
-                "name": kwargs.pop("policy_name", policy_name),
+                "name": kwargs.get("policy_name", current_config.get("policyRuleResource", {}).get("name", "SIEM_POLICY")),
             }
 
-        # Add additional provided parameters to the payload
-        for key, value in kwargs.items():
-            payload[snake_to_camel(key)] = value
+        # Add optional filter status codes if provided
+        if kwargs.get("filter_status_codes"):
+            current_config["config"]["filter"] = kwargs.pop("filter_status_codes")
 
-        # Create the request using the request executor
-        request, error = self._request_executor.create_request(http_method, api_url, payload)
+        # Add additional optional parameters to the payload
+        for key, value in kwargs.items():
+            current_config[snake_to_camel(key)] = value
+
+        # Create the request
+        request, error = self._request_executor.create_request(http_method, api_url, body=current_config)
         if error:
-            return None
+            return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor.execute(request, LSSConfig)
         if error:
-            return None
+            return (None, response, error)
 
-        # Return the updated configuration if successful
-        if response.get_status_code() == 204:
-            return self.get_config(lss_config_id)
-        
-        return None
+        # Handle case where no content is returned (204 No Content)
+        if response is None:
+            # Return a meaningful result to indicate success
+            return (LSSConfig({"id": lss_config_id}), None, None)
 
-    def delete_lss_config(self, lss_config_id: str, **kwargs) -> int:
+        # Parse the response into an LSSConfig instance
+        try:
+            result = LSSConfig(self.form_response_body(response.get_body()))
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
+
+    def delete_lss_config(self, lss_config_id: str) -> tuple:
         """
         Deletes the specified LSS Receiver Config.
 
@@ -406,18 +447,25 @@ class LSSConfigControllerAPI(APIClient):
             int: Status code of the delete operation.
         """
         http_method = "delete".upper()
-        api_url = format_url(f"{self._base_url}/lssConfig/{lss_config_id}")
+        api_url = format_url(f"""
+            {self._zpa_lss_base_endpoint_v2}
+            /lssConfig/{lss_config_id}
+        """)
 
-        request, error = self._request_executor.create_request(http_method, api_url, {})
+        # Create the request
+        request, error = self._request_executor\
+            .create_request(http_method, api_url)
         if error:
-            return None
+            return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        # Execute the request
+        response, error = self._request_executor\
+            .execute(request)
         if error:
-            return None
+            return (None, response, error)
 
-        return response.status_code
-    
+        return (None, response, None)
+
     def get_client_types(self, client_type=None) -> dict:
         """
         Returns all available LSS Client Types or a specific Client Type if specified.
@@ -432,21 +480,19 @@ class LSSConfigControllerAPI(APIClient):
             >>> client_types = zpa.lss.get_client_types()
             >>> web_browser_type = zpa.lss.get_client_types('web_browser')
         """
-        
         http_method = "get".upper()
-        api_url = format_url(
-            f"""
-            {self._base_url}
-            /clientTypes"
-        """,
-        api_version="v2_lss"
-        ) 
-        
-        request, error = self._request_executor.create_request(http_method, api_url)
+        api_url = format_url(f"""
+            {self._zpa_lss_endpoint_v2}
+            /clientTypes
+        """)
+
+        request, error = self._request_executor\
+            .create_request(http_method, api_url)
         if error:
             return None
 
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return None
 
@@ -458,7 +504,7 @@ class LSSConfigControllerAPI(APIClient):
 
         return reverse_map
 
-    def get_log_formats(self, log_type=None) -> dict:
+    def get_all_log_formats(self, log_type=None, query_params=None) -> dict:
         """
         Returns all available pre-configured LSS Log Formats or a specific log format if specified.
 
@@ -473,14 +519,28 @@ class LSSConfigControllerAPI(APIClient):
             >>> specific_format = zpa.lss.get_log_formats('zpn_ast_comprehensive_stats')
         """
         http_method = "get".upper()
-        api_url = format_url(
-            f"""
-            {self._base_url}
-            /lssConfig/logType/formats"
-        """,
-        api_version="v2"
-        ) 
+        query_params = query_params or {}
 
+        # Check if a specific log_type is provided; if so, use the specific endpoint
+        if log_type:
+            api_url = format_url(f"""
+                {self._zpa_lss_base_endpoint_v2}
+                /lssConfig/logType/formats
+            """)
+            query_params["logType"] = log_type
+        else:
+            # Otherwise, fetch all log formats
+            api_url = format_url(f"""
+                {self._zpa_base_lss_url_v2}
+                /logType/formats
+            """)
+
+        # Encode the query parameters if provided
+        if query_params:
+            encoded_query_params = urlencode(query_params)
+            api_url += f"?{encoded_query_params}"
+
+        # Prepare request and execute
         request, error = self._request_executor.create_request(http_method, api_url)
         if error:
             return None
@@ -489,13 +549,8 @@ class LSSConfigControllerAPI(APIClient):
         if error:
             return None
 
-        formats = response.get_body()
-
-        if log_type:
-            specific_format = formats.get(log_type)
-            return {log_type: specific_format} if specific_format else {}
-        else:
-            return formats
+        # Return the response
+        return response.get_body()
 
     def get_status_codes(self, log_type: str = "all") -> dict:
         """
@@ -512,19 +567,18 @@ class LSSConfigControllerAPI(APIClient):
             >>> user_activity_codes = zpa.lss.get_status_codes(log_type="user_activity")
         """
         http_method = "get".upper()
-        api_url = format_url(
-            f"""
-            {self._base_url}
-            /statusCodes"
-        """,
-        api_version="v2"
-        ) 
+        api_url = format_url(f"""
+            {self._zpa_base_lss_url_v2}
+            /statusCodes
+        """)
 
-        request, error = self._request_executor.create_request(http_method, api_url)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url)
         if error:
             return None
 
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return None
 
@@ -538,7 +592,6 @@ class LSSConfigControllerAPI(APIClient):
                 raise ValueError("Incorrect log_type provided.")
 
             filtered_status_codes = {
-                code: details for code, details in all_status_codes.items()
-                if log_type_key in details.get("log_types", [])
+                code: details for code, details in all_status_codes.items() if log_type_key in details.get("log_types", [])
             }
             return filtered_status_codes

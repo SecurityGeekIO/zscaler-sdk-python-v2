@@ -49,7 +49,7 @@ class RequestExecutor:
         self.cloud = self._config["client"].get("cloud", "production").lower()
         self.service = self._config["client"].get("service", "zia")  # Default to ZIA
         self.customer_id = self._config["client"].get("customerId")  # Optional for ZIA/ZCC
-        self.api_version = self._config["client"].get("api_version", "v1")  # Default API version
+        self.microtenant_id = self._config["client"].get("microtenantId")  # Optional for ZIA/ZCC
 
         # Initialize base URL based on the cloud setting
         self._base_url = self.get_base_url(self.cloud)
@@ -60,10 +60,9 @@ class RequestExecutor:
 
         # Set default headers from config
         self._default_headers = {
-            'User-Agent': UserAgent(config["client"].get("userAgent", None))
-            .get_user_agent_string(),
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
+            "User-Agent": UserAgent(config["client"].get("userAgent", None)).get_user_agent_string(),
+            "Accept": "application/json",
+            "Content-Type": "application/json",
         }
 
         # Initialize the HTTP client, considering proxy and SSL context from config
@@ -132,14 +131,38 @@ class RequestExecutor:
 
         print(f"Request headers: {headers}")
 
-        # Convert body and params to camelCase before sending
-        if body:
-            body = {to_lower_camel_case(k): v for k, v in body.items()}
+        # Handle ZPA-specific cases, especially the /reorder endpoint which expects a JSON list
+        if "/zpa/" in endpoint and "/reorder" in endpoint and isinstance(body, list):
+            # For the /reorder endpoint, handle the body as a list
+            print(f"Handling ZPA reorder endpoint with list body: {body}")
+            json_payload = body
+        else:
+            # For all other endpoints, process the body as a dictionary
+            if body:
+                body = {to_lower_camel_case(k): v for k, v in body.items()}
+            json_payload = body
 
         if params:
             params = {to_lower_camel_case(k): v for k, v in params.items()}
 
-        print(f"Final request body (before JSON serialization): {body}")
+        if "/zpa/" in endpoint:
+            # Check for microtenantId in body, params, and config (in that order)
+            microtenant_id = None
+            if body and isinstance(body, dict) and "microtenantId" in body and body["microtenantId"]:
+                microtenant_id = body["microtenantId"]
+            elif params and "microtenantId" in params and params["microtenantId"]:
+                microtenant_id = params["microtenantId"]
+            elif self.microtenant_id:
+                microtenant_id = self.microtenant_id
+
+            # Set microtenantId in params if found
+            if microtenant_id:
+                params["microtenantId"] = microtenant_id
+        else:
+            if params.get("microtenantId") is not None:
+                del params["microtenantId"]
+
+        print(f"Final request body (before JSON serialization): {json_payload}")
 
         # Construct the request dictionary
         request = {
@@ -179,6 +202,12 @@ class RequestExecutor:
             logger.error(f"Error during request execution: {error}")
             return None, error
 
+        # Handle 204 No Content case globally
+        if response.status_code == 204:
+            logger.debug(f"Received 204 No Content from {request['url']}")
+            # Return None for the object, as there's no content to parse
+            return None, None
+
         # Check for any errors in the HTTP response
         try:
             response_data, error = self._http_client.check_response_for_error(request["url"], response, response_body)
@@ -190,7 +219,7 @@ class RequestExecutor:
         if error:
             logger.error(f"Error in HTTP response: {error}")
             return None, error
-            
+
         logger.debug(f"Successful response from {request['url']}")
         logger.debug(f"Response Data: {response_data}")
 
@@ -210,7 +239,7 @@ class RequestExecutor:
             ),
             None,
         )
-            
+
     def fire_request(self, request):
         """
         Send request using HTTP client.
@@ -273,18 +302,22 @@ class RequestExecutor:
             if date_time:
                 date_time = convert_date_time_to_seconds(date_time)
 
-            retry_limit_reset_headers = list(map(float, headers.getall("X-Rate-Limit-Reset", [])))
-            retry_limit_reset_headers.extend(list(map(float, headers.getall("x-rate-limit-reset", []))))
-            retry_limit_reset = min(retry_limit_reset_headers) if len(retry_limit_reset_headers) > 0 else None
+            # Extract the x-ratelimit-reset value and convert it to float
+            retry_limit_reset_header = headers.get("x-ratelimit-reset")  # Get the value for x-ratelimit-reset
+            if retry_limit_reset_header is not None:  # Check if the header exists
+                retry_limit_reset_headers = [float(retry_limit_reset_header)]  # Convert to float
+            else:
+                retry_limit_reset_headers = []  # Default to an empty list if not present
 
             retry_after = headers.get("Retry-After") or headers.get("retry-after")
             if retry_after:
                 retry_after = int(retry_after.strip("s"))
 
-            if not date_time or not retry_limit_reset:
+            if not date_time or not retry_limit_reset_headers:
                 return None, response, response.text, Exception(ERROR_MESSAGE_429_MISSING_DATE_X_RESET)
-
-            backoff_seconds = self.calculate_backoff(retry_limit_reset, date_time)
+            # x-ratelimit-reset: The time (in seconds) remaining in the current window after which the rate limit resets.
+            # so no need to substract the date unix time
+            backoff_seconds = retry_limit_reset_headers[0]
             logger.info(f"Hit rate limit. Retrying request in {backoff_seconds} seconds.")
             time.sleep(backoff_seconds)
             attempts += 1

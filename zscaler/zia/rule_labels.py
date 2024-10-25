@@ -173,7 +173,8 @@ class RuleLabelsAPI(APIClient):
             body = label.as_dict()
 
         # Create the request with no empty param handling logic
-        request, error = self._request_executor.create_request(
+        request, error = self._request_executor\
+            .create_request(
             method=http_method,
             endpoint=api_url,
             body=body,
@@ -185,7 +186,6 @@ class RuleLabelsAPI(APIClient):
         # Execute the request
         response, error = self._request_executor\
             .execute(request, RuleLabels)
-
         if error:
             return (None, response, error)
 
@@ -205,7 +205,7 @@ class RuleLabelsAPI(APIClient):
         Updates information for the specified ZIA Rule Label.
 
         Args:
-            label_id (str): The unique ID for the Rule Label.
+            label_id (int): The unique ID for the Rule Label.
 
         Returns:
             tuple: A tuple containing the updated Rule Label, response, and error.

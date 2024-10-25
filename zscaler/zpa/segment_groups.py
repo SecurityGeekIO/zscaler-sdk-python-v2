@@ -19,19 +19,20 @@ from zscaler.zpa.models.segment_group import SegmentGroup
 from zscaler.utils import format_url
 from urllib.parse import urlencode
 
+
 class SegmentGroupsAPI(APIClient):
     """
     A client object for the Segment Groups resource.
     """
 
-    def __init__(self):
+    def __init__(self, request_executor, config):
         super().__init__()
-        self._base_url = ""
+        self._request_executor = request_executor
+        customer_id = config["client"].get("customerId")
+        self._zpa_base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
+        self._zpa_base_endpoint_v2 = f"/zpa/mgmtconfig/v2/admin/customers/{customer_id}"
 
-    def list_groups(
-            self, query_params=None,
-            keep_empty_params=False
-    ) -> tuple:
+    def list_groups(self, query_params=None) -> tuple:
         """
         Enumerates segment groups in your organization with pagination.
         A subset of segment groups can be returned that match a supported
@@ -44,20 +45,21 @@ class SegmentGroupsAPI(APIClient):
                 [query_params.microtenant_id] {str}: ID of the microtenant, if applicable.
                 [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
                 [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
-            keep_empty_params {bool}: Whether to include empty parameters in the query string.
 
         Returns:
-            tuple: A tuple containing (list of AppConnectorGroup instances, Response, error)
-        
+            tuple: A tuple containing (list of SegmentGroup instances, Response, error)
+
         Example:
             >>> segment_groups = zpa.segment_groups.list_groups(search="example", pagesize=100)
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_url}/segmentGroup")
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint}
+            /segmentGroup
+        """)
 
-        # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
-        microtenant_id = query_params.pop("microtenant_id", None)
+        microtenant_id = query_params.get("microtenant_id", None)
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
@@ -66,38 +68,29 @@ class SegmentGroupsAPI(APIClient):
             encoded_query_params = urlencode(query_params)
             api_url += f"?{encoded_query_params}"
 
-        # Prepare request body and headers
-        body = {}
-        headers = {}
-        form = {}
-
-        # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
-        )
-
+        # Prepare request
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, SegmentGroup)
-
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 
-        # Parse the response into AppConnectorGroup instances
         try:
             result = []
-            for item in response.get_body():
+            for item in response.get_results():
                 result.append(SegmentGroup(
-                    self.form_response_body(item)
-                ))
+                    self.form_response_body(item))
+                )
         except Exception as error:
             return (None, response, error)
-
         return (result, response, None)
 
-    def get_group(self, group_id: str, **kwargs) -> SegmentGroup:
+    def get_group(self, group_id: str, query_params=None) -> tuple:
         """
         Gets information on the specified segment group.
 
@@ -108,29 +101,44 @@ class SegmentGroupsAPI(APIClient):
             SegmentGroup: The corresponding segment group object.
         """
         http_method = "get".upper()
-        api_url = format_url(
-            f"""
-            {self._base_url}
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint}
             /segmentGroup/{group_id}
-            """
-        )
+        """)
 
-        # Add microtenant_id to kwargs if provided
-        microtenant_id = kwargs.pop("microtenant_id", None)
+        # Handle optional query parameters
+        query_params = query_params or {}
+        microtenant_id = query_params.get("microtenant_id", None)
         if microtenant_id:
-            kwargs["microtenantId"] = microtenant_id
+            query_params["microtenantId"] = microtenant_id
 
-        request, error = self._request_executor.create_request(http_method, api_url, {}, kwargs)
+        # Build the query string
+        if query_params:
+            encoded_query_params = urlencode(query_params)
+            api_url += f"?{encoded_query_params}"
+
+        # Create the request
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
         if error:
-            return None
+            return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        # Execute the request
+        response, error = self._request_executor\
+            .execute(request, SegmentGroup)
         if error:
-            return None
+            return (None, response, error)
 
-        return SegmentGroup(response.get_body())
+        # Parse the response into an AppConnectorGroup instance
+        try:
+            result = SegmentGroup(
+                self.form_response_body(response.get_body())
+            )
+        except Exception as error:
+            return (None, response, error)
+        return (result, response, None)
 
-    def add_group(self, name: str, enabled: bool = True, **kwargs) -> SegmentGroup:
+    def add_group(self, group, **kwargs) -> tuple:
         """
         Adds a new segment group.
 
@@ -142,39 +150,47 @@ class SegmentGroupsAPI(APIClient):
             SegmentGroup: The created segment group object.
         """
         http_method = "post".upper()
-        api_url = format_url(
-            f"""
-            {self._base_url}
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint}
             /segmentGroup
-        """
-        )
+        """)
 
-        payload = {
-            "name": name,
-            "enabled": enabled,
-        }
+        # Ensure connector_group is a dictionary
+        if isinstance(group, dict):
+            body = group
+        else:
+            body = group.as_dict()
 
-        # Add applications if provided
-        if kwargs.get("application_ids"):
-            payload["applications"] = [{"id": app_id} for app_id in kwargs.pop("application_ids")]
-
-        payload.update(kwargs)
-
-        # Add microtenant_id to kwargs if provided
-        microtenant_id = kwargs.pop("microtenant_id", None)
+        # Check if microtenant_id is set in the body, and use it to set query parameter
+        microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        request, error = self._request_executor.create_request(http_method, api_url, payload, params)
+        # Add any additional fields from kwargs to the body
+        body.update(kwargs)
+
+        # Create the request
+        request, error = self._request_executor\
+            .create_request(
+            http_method, api_url, body=body, params=params
+        )
         if error:
-            return None
+            return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        # Execute the request
+        response, error = self._request_executor\
+            .execute(request, SegmentGroup)
         if error:
-            return None
+            return (None, response, error)
 
-        return SegmentGroup(response.get_body())
+        try:
+            result = SegmentGroup(
+                self.form_response_body(response.get_body())
+            )
+        except Exception as error:
+            return (None, response, error)
+        return (result, response, None)
 
-    def update_group(self, group_id: str, **kwargs) -> SegmentGroup:
+    def update_group(self, group_id: str, group, **kwargs) -> tuple:
         """
         Updates the specified segment group.
 
@@ -185,32 +201,106 @@ class SegmentGroupsAPI(APIClient):
             SegmentGroup: The updated segment group object.
         """
         http_method = "put".upper()
-        api_url = format_url(
-            f"""
-            {self._base_url}
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint}
             /segmentGroup/{group_id}
-        """
-        )
+        """)
 
-        # Get the current segment group data and update it with the new kwargs
-        group_data = self.get_group(group_id).request_format()
-        group_data.update(kwargs)
+        # Ensure the connector_group is in dictionary format
+        if isinstance(group, dict):
+            body = group
+        else:
+            body = group.as_dict()
 
-        # Add microtenant_id to kwargs if provided
-        microtenant_id = kwargs.pop("microtenant_id", None)
+        # Add any additional fields from kwargs to the body
+        body.update(kwargs)
+
+        # Use get instead of pop to keep microtenant_id in the body
+        microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
-
-        request, error = self._request_executor.create_request(http_method, api_url, group_data, params)
+        
+        # Create the request
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, {}, params)
         if error:
-            return None
+            return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        # Execute the request
+        response, error = self._request_executor\
+            .execute(request, SegmentGroup)
         if error:
-            return None
+            return (None, response, error)
 
-        return SegmentGroup(response.get_body())
+        # Handle case where no content is returned (204 No Content)
+        if response is None:
+            # Return a meaningful result to indicate success
+            return (SegmentGroup({"id": group_id}), None, None)
 
-    def delete_group(self, group_id: str, **kwargs) -> int:
+        # Parse the response into an AppConnectorGroup instance
+        try:
+            result = SegmentGroup(
+                self.form_response_body(response.get_body())
+            )
+        except Exception as error:
+            return (None, response, error)
+        return (result, response, None)
+
+    def update_group_v2(self, group_id: str, group, **kwargs) -> tuple:
+        """
+        Updates the specified segment group.
+
+        Args:
+            group_id (str): The unique identifier for the segment group being updated.
+
+        Returns:
+            SegmentGroup: The updated segment group object.
+        """
+        http_method = "put".upper()
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint_v2}
+            /segmentGroup/{group_id}
+        """)
+
+        # Ensure the connector_group is in dictionary format
+        if isinstance(group, dict):
+            body = group
+        else:
+            body = group.as_dict()
+
+        # Add any additional fields from kwargs to the body
+        body.update(kwargs)
+
+        # Use get instead of pop to keep microtenant_id in the body
+        microtenant_id = body.get("microtenant_id", None)
+        params = {"microtenantId": microtenant_id} if microtenant_id else {}
+        
+        # Create the request
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, {}, params)
+        if error:
+            return (None, None, error)
+
+        # Execute the request
+        response, error = self._request_executor\
+            .execute(request, SegmentGroup)
+        if error:
+            return (None, response, error)
+
+        # Handle case where no content is returned (204 No Content)
+        if response is None:
+            # Return a meaningful result to indicate success
+            return (SegmentGroup({"id": group_id}), None, None)
+
+        # Parse the response into an AppConnectorGroup instance
+        try:
+            result = SegmentGroup(
+                self.form_response_body(response.get_body())
+            )
+        except Exception as error:
+            return (None, response, error)
+        return (result, response, None)
+    
+    def delete_group(self, group_id: str, microtenant_id: str = None) -> tuple:
         """
         Deletes the specified segment group.
 
@@ -221,305 +311,23 @@ class SegmentGroupsAPI(APIClient):
             int: Status code of the delete operation.
         """
         http_method = "delete".upper()
-        api_url = format_url(
-            f"""
-            {self._base_url}
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint}
             /segmentGroup/{group_id}
-        """
-        )
-        
-        # Add microtenant_id to kwargs if provided
-        microtenant_id = kwargs.pop("microtenant_id", None)
+        """)
+
+        # Handle microtenant_id in URL params if provided
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        request, error = self._request_executor.create_request(http_method, api_url, {}, params)
+        # Create the request
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=params)
         if error:
-            return None
+            return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        # Execute the request
+        response, error = self._request_executor\
+            .execute(request)
         if error:
-            return None
-
-        return response.status_code
-
-
-# from box import Box, BoxList
-# from requests import Response
-# import logging
-# from zscaler.utils import snake_to_camel
-# from zscaler.utils import format_url
-# from zscaler.api_client import APIClient
-
-# # Setup logging
-# logging.basicConfig(level=logging.DEBUG)
-# logger = logging.getLogger()
-
-# class SegmentGroupsAPI(APIClient):
-
-#     def list_groups(self, **kwargs) -> BoxList:
-#         """
-#         Returns a list of all configured segment groups.
-
-#         Returns:
-#             :obj:`BoxList`: A list of all configured segment groups.
-
-#         Examples:
-#             >>> for segment_group in zpa.segment_groups.list_groups():
-#             ...    pprint(segment_group)
-
-#         """
-#         list, _ = self.rest.get_paginated_data(path="/segmentGroup", **kwargs, api_version="v1")
-#         return list
-
-#     def get_group(self, group_id: str, **kwargs) -> Box:
-#         """
-#         Returns information on the specified segment group.
-
-#         Args:
-#             group_id (str): The unique identifier for the segment group.
-
-#         Returns:
-#             :obj:`Box`: The resource record for the segment group.
-
-#         Examples:
-#             >>> pprint(zpa.segment_groups.get_group('99999'))
-
-#         """
-#         params = {}
-#         if "microtenant_id" in kwargs:
-#             params["microtenantId"] = kwargs.pop("microtenant_id")
-#         return self.rest.get(f"segmentGroup/{group_id}", params=params)
-
-#     def get_segment_group_by_name(self, name: str, **kwargs) -> Box:
-#         """
-#         Returns information on the segment group with the specified name.
-
-#         Args:
-#             name (str): The name of the segment group.
-
-#         Returns:
-#             :obj:`Box` or None: The resource record for the segment group if found, otherwise None.
-
-#         Examples:
-#             >>> segment_group = zpa.segment_groups.get_segment_group_by_name('example_name')
-#             >>> if segment_group:
-#             ...     pprint(segment_group)
-#             ... else:
-#             ...     print("Segment group not found")
-#         """
-#         groups = self.list_groups(**kwargs)
-#         for group in groups:
-#             if group.get("name") == name:
-#                 return group
-#         return None
-
-#     def add_group(self, name: str, enabled: bool = True, api_version="v1", handler="mgmtconfig", **kwargs) -> dict:
-#         """
-#         Adds a new segment group.
-
-#         Args:
-#             name (str): The name of the new segment group.
-#             enabled (bool): Enable the segment group. Defaults to True.
-#             api_version (str): API version (e.g., "v1", "v2"). Defaults to "v1".
-#             handler (str): API handler (e.g., "mgmtconfig", "userconfig"). Defaults to "mgmtconfig".
-#             **kwargs:
-
-#         Keyword Args:
-#             application_ids (:obj:`list` of :obj:`dict`):
-#                 Unique application IDs to associate with the segment group.
-#             description (str):
-#                 A description for the segment group.
-#             microtenant_id (str):
-#                 The microtenant ID to be used for this request.
-
-#         Returns:
-#             :obj:`dict`: The resource record for the newly created segment group.
-#         """
-#         http_method = "POST"
-
-#         # Construct the full API URL with the correct placement of customerId
-#         api_url = f"/zpa/{handler}/{api_version}/admin/customers/{self._customer_id}/segmentGroup"
-
-#         # Log the constructed API URL
-#         logger.debug(f"Constructed API URL: {api_url}")
-#         print(f"Constructed API URL: {api_url}")
-
-#         # Prepare the payload
-#         payload = {
-#             "name": name,
-#             "enabled": enabled,
-#         }
-
-#         # Log the initial payload
-#         logger.debug(f"Initial Payload: {payload}")
-#         print(f"Initial Payload: {payload}")
-
-#         if kwargs.get("application_ids"):
-#             payload["applications"] = [{"id": app_id} for app_id in kwargs.pop("application_ids")]
-
-#         # Additional arguments passed
-#         for key, value in kwargs.items():
-#             payload[snake_to_camel(key)] = value
-
-#         # Log the final payload
-#         logger.debug(f"Final Payload: {payload}")
-#         print(f"Final Payload: {payload}")
-
-#         # Create query parameters
-#         microtenant_id = kwargs.pop("microtenant_id", None)
-#         query_params = {"microtenantId": microtenant_id} if microtenant_id else {}
-
-#         headers = {
-#             "Accept": "application/json",
-#             "Content-Type": "application/json"
-#         }
-
-#         # Log query parameters and headers
-#         logger.debug(f"Query Params: {query_params}")
-#         logger.debug(f"Headers: {headers}")
-#         print(f"Query Params: {query_params}")
-#         print(f"Headers: {headers}")
-
-#         # Create the request using the RequestExecutor
-#         request, error = self._request_executor.create_request(
-#             method=http_method,
-#             url=api_url,
-#             body=payload,
-#             headers=headers,
-#             params=query_params
-#         )
-
-#         if error:
-#             raise Exception(f"Error creating request: {error}")
-
-#         # Log the request before execution
-#         logger.debug(f"Request before execution: {request}")
-#         print(f"Request before execution: {request}")
-
-#         # Execute the request
-#         response, error = self._request_executor.execute(request)
-
-#         if error:
-#             raise Exception(f"API call failed with error: {error}")
-
-#         # Log the response status code and body
-#         logger.debug(f"Response Status Code: {response.status_code}")
-#         logger.debug(f"Response Body: {response.text}")
-#         print(f"Response Status Code: {response.status_code}")
-#         print(f"Response Body: {response.text}")
-
-#         # Check for a success status code (like 201 Created)
-#         if response.status_code >= 300:
-#             raise Exception(f"API call failed with status code {response.status_code}: {response.text}")
-
-#         # Handle successful creation (status 201)
-#         if response.status_code == 201:
-#             return response.json()
-
-#         # For other successful cases (like 200), return the response as-is
-#         return response.json()
-
-
-#     def update_group(self, group_id: str, **kwargs) -> Box:
-#         """
-#         Updates an existing segment group.
-
-#         Args:
-#             group_id (str): The unique identifier for the segment group to be updated.
-#             **kwargs: Optional keyword args.
-
-#         Keyword Args:
-#             name (str): The name of the new segment group.
-#             enabled (bool): Enable the segment group.
-#             application_ids (:obj:`list` of :obj:`dict`): Unique application IDs to associate with the segment group.
-#             config_space (str): The config space for the segment group. Can either be DEFAULT or SIEM.
-#             description (str): A description for the segment group.
-#             policy_migrated (bool):
-#             microtenant_id (str): The microtenant ID to be used for this request.
-
-#         Returns:
-#             :obj:`Box`: The resource record for the updated segment group.
-
-#         Examples:
-#             Updating the name of a segment group:
-
-#             >>> zpa.segment_groups.update_group('99999',
-#             ...    name='updated_name')
-
-#         """
-#         payload = {snake_to_camel(k): v for k, v in self.get_group(group_id).items()}
-
-#         if kwargs.get("application_ids"):
-#             payload["applications"] = [{"id": app_id} for app_id in kwargs.pop("application_ids")]
-
-#         for key, value in kwargs.items():
-#             payload[snake_to_camel(key)] = value
-
-#         microtenant_id = kwargs.pop("microtenant_id", None)
-#         params = {"microtenantId": microtenant_id} if microtenant_id else {}
-
-#         resp = self.rest.put(f"segmentGroup/{group_id}", json=payload, params=params).status_code
-#         if not isinstance(resp, Response):
-#             return self.get_group(group_id)
-
-#     # REQUIRES DEPLOYMENT OF ET-76506 IN PRODUCTION BEFORE ENABLING IT.
-#     def update_group_v2(self, group_id: str, **kwargs) -> Box:
-#         """
-#         Updates an existing segment group using v2 endpoint.
-
-#         Args:
-#             group_id (str): The unique identifier for the segment group to be updated.
-#             **kwargs: Optional keyword args.
-
-#         Keyword Args:
-#             name (str): The name of the new segment group.
-#             enabled (bool): Enable the segment group.
-#             application_ids (:obj:`list` of :obj:`dict`): Unique application IDs to associate with the segment group.
-#             config_space (str): The config space for the segment group. Can either be DEFAULT or SIEM.
-#             description (str): A description for the segment group.
-#             policy_migrated (bool):
-#             microtenant_id (str): The microtenant ID to be used for this request.
-
-#         Returns:
-#             :obj:`Box`: The resource record for the updated segment group.
-
-#         Examples:
-#             Updating the name of a segment group:
-
-#             >>> zpa.segment_groups.update_group_v2('99999',
-#             ...    name='updated_name')
-
-#         """
-#         payload = {snake_to_camel(k): v for k, v in self.get_group(group_id).items()}
-
-#         if kwargs.get("application_ids"):
-#             payload["applications"] = [{"id": app_id} for app_id in kwargs.pop("application_ids")]
-
-#         for key, value in kwargs.items():
-#             payload[snake_to_camel(key)] = value
-
-#         microtenant_id = kwargs.pop("microtenant_id", None)
-#         params = {"microtenantId": microtenant_id} if microtenant_id else {}
-
-#         resp = self.rest.put(f"segmentGroup/{group_id}", json=payload, params=params, api_version="v2").status_code
-#         if not isinstance(resp, Response):
-#             return self.get_group(group_id)
-
-#     def delete_group(self, group_id: str, **kwargs) -> int:
-#         """
-#         Deletes the specified segment group.
-
-#         Args:
-#             group_id (str): The unique identifier for the segment group to be deleted.
-
-#         Returns:
-#             :obj:`int`: The response code for the operation.
-
-#         Examples:
-#             >>> zpa.segment_groups.delete_group('99999')
-
-#         """
-#         params = {}
-#         if "microtenant_id" in kwargs:
-#             params["microtenantId"] = kwargs.pop("microtenant_id")
-#         return self.rest.delete(f"segmentGroup/{group_id}", params=params).status_code
+            return (None, response, error)
+        return (None, response, None)
