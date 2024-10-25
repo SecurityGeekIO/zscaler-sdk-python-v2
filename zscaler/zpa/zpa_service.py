@@ -6,9 +6,13 @@ from zscaler.zpa.app_connector_groups import AppConnectorGroupAPI
 from zscaler.zpa.app_connectors import AppConnectorControllerAPI
 from zscaler.zpa.app_connector_schedule import AppConnectorScheduleAPI
 from zscaler.zpa.servers import AppServersAPI
+from zscaler.zpa.cbi_banner import CBIBannerAPI
+from zscaler.zpa.cbi_certificate import CBICertificateAPI
+from zscaler.zpa.cbi_profile import CBIProfileAPI
+from zscaler.zpa.cbi_region import CBIRegionAPI
+from zscaler.zpa.cbi_zpa_profile import CBIZPAProfileAPI
 from zscaler.zpa.certificates import CertificatesAPI
 from zscaler.zpa.cloud_connector_groups import CloudConnectorGroupsAPI
-from zscaler.zpa.cloudbrowserisolation import CloudBrowserIsolationAPI
 from zscaler.zpa.customer_version_profile import CustomerVersionProfileAPI
 from zscaler.zpa.emergency_access import EmergencyAccessAPI
 from zscaler.zpa.enrollment_certificates import EnrollmentCertificateAPI
@@ -19,7 +23,10 @@ from zscaler.zpa.microtenants import MicrotenantsAPI
 from zscaler.zpa.lss import LSSConfigControllerAPI
 from zscaler.zpa.policies import PolicySetControllerAPI
 from zscaler.zpa.posture_profiles import PostureProfilesAPI
-from zscaler.zpa.privileged_remote_access import PrivilegedRemoteAccessAPI
+from zscaler.zpa.pra_approval import PRAApprovalAPI
+from zscaler.zpa.pra_console import PRAConsoleAPI
+from zscaler.zpa.pra_credential import PRACredentialAPI
+from zscaler.zpa.pra_portal import PRAPortalAPI
 from zscaler.zpa.provisioning import ProvisioningKeyAPI
 from zscaler.zpa.segment_groups import SegmentGroupsAPI
 from zscaler.zpa.server_groups import ServerGroupsAPI
@@ -72,6 +79,46 @@ class ZPAService:
         return AppSegmentsInspectionAPI(self._request_executor, self._config)
 
     @property
+    def cbi_banner(self):
+        """
+        The interface object for the :ref:`ZPA Cloud Browser Isolation Banner interface <zpa-cbi_banner>`.
+
+        """
+        return CBIBannerAPI(self._request_executor, self._config)
+
+    @property
+    def cbi_certificate(self):
+        """
+        The interface object for the :ref:`ZPA Cloud Browser Isolation Certificate interface <zpa-cbi_certificate>`.
+
+        """
+        return CBICertificateAPI(self._request_executor, self._config)
+
+    @property
+    def cbi_profile(self):
+        """
+        The interface object for the :ref:`ZPA Cloud Browser Isolation Profile interface <zpa-cbi_profile>`.
+
+        """
+        return CBIProfileAPI(self._request_executor, self._config)
+
+    @property
+    def cbi_region(self):
+        """
+        The interface object for the :ref:`ZPA Cloud Browser Isolation Region interface <zpa-cbi_region>`.
+
+        """
+        return CBIRegionAPI(self._request_executor, self._config)
+
+    @property
+    def cbi_zpa_profile(self):
+        """
+        The interface object for the :ref:`ZPA Cloud Browser Isolation ZPA Profile interface <zpa-cbi_zpa_profile>`.
+
+        """
+        return CBIZPAProfileAPI(self._request_executor, self._config)
+    
+    @property
     def certificates(self):
         """
         The interface object for the :ref:`ZPA Browser Access Certificates interface <zpa-certificates>`.
@@ -88,14 +135,6 @@ class ZPAService:
         return CustomerVersionProfileAPI(self._request_executor, self._config)
 
     @property
-    def isolation(self):
-        """
-        The interface object for the :ref:`ZPA Isolation <zpa-isolation>`.
-
-        """
-        return CloudBrowserIsolationAPI(self._request_executor, self._config)
-
-    @property
     def cloud_connector_groups(self):
         """
         The interface object for the :ref:`ZPA Cloud Connector Groups interface <zpa-cloud_connector_groups>`.
@@ -110,7 +149,7 @@ class ZPAService:
 
         """
         return AppConnectorGroupAPI(self._request_executor, self._config)
-
+    
     @property
     def connectors(self):
         """
@@ -126,7 +165,7 @@ class ZPAService:
 
         """
         return AppConnectorScheduleAPI(self._request_executor, self._config)
-
+    
     @property
     def emergency_access(self):
         """
@@ -142,7 +181,7 @@ class ZPAService:
 
         """
         return EnrollmentCertificateAPI(self._request_executor, self._config)
-
+    
     @property
     def idp(self):
         """
@@ -200,13 +239,37 @@ class ZPAService:
         return PostureProfilesAPI(self._request_executor, self._config)
 
     @property
-    def privileged_remote_access(self):
+    def pra_approval(self):
         """
-        The interface object for the :ref:`ZPA Privileged Remote Access interface <zpa-privileged_remote_access>`.
+        The interface object for the :ref:`ZPA Privileged Remote Access Approval interface <zpa-pra_approval>`.
 
         """
-        return PrivilegedRemoteAccessAPI(self._request_executor, self._config)
+        return PRAApprovalAPI(self._request_executor, self._config)
 
+    @property
+    def pra_console(self):
+        """
+        The interface object for the :ref:`ZPA Privileged Remote Access Console interface <zpa-pra_console>`.
+
+        """
+        return PRAConsoleAPI(self._request_executor, self._config)
+
+    @property
+    def pra_credential(self):
+        """
+        The interface object for the :ref:`ZPA Privileged Remote Access Credential interface <zpa-pra_credential>`.
+
+        """
+        return PRACredentialAPI(self._request_executor, self._config)
+
+    @property
+    def pra_portal(self):
+        """
+        The interface object for the :ref:`ZPA Privileged Remote Access Portal interface <zpa-pra_portal>`.
+
+        """
+        return PRAPortalAPI(self._request_executor, self._config)
+   
     @property
     def provisioning(self):
         """
@@ -286,7 +349,7 @@ class ZPAService:
 
         """
         return ServiceEdgeScheduleAPI(self._request_executor, self._config)
-
+    
     @property
     def trusted_networks(self):
         """

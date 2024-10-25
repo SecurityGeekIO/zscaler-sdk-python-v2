@@ -29,10 +29,10 @@ class ScimAttributeHeaderAPI(APIClient):
         super().__init__()
         self._request_executor = request_executor
         customer_id = config["client"].get("customerId")
-        self._base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
-        self._base_endpoint_userconfig = f"/zpa/userconfig/v1/customers/{customer_id}"
+        self._zpa_base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
+        self._zpa_base_endpoint_userconfig = f"/zpa/userconfig/v1/customers/{customer_id}"
 
-    def list_attributes_by_idp(self, idp_id: str, query_params=None, keep_empty_params=False) -> tuple:
+    def list_scim_attributes(self, idp_id: str, query_params=None) -> tuple:
         """
         Returns a list of all configured SCIM attributes for the specified IdP.
 
@@ -44,7 +44,6 @@ class ScimAttributeHeaderAPI(APIClient):
             max_pages (int): The maximum number of pages to request before stopping iteration.
             pagesize (int): The page size, default is 20, but the maximum is 500.
             search (str, optional): The search string used to match against features and fields.
-            **keep_empty_params (bool): Whether to include empty parameters in the query string.
 
         Returns:
             list: A list of SCIMAttributeHeader instances.
@@ -54,9 +53,11 @@ class ScimAttributeHeaderAPI(APIClient):
             ...    pprint(scim_attribute)
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_endpoint}/idp/{idp_id}/scimattribute")
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint}
+            /idp/{idp_id}/scimattribute
+        """)
 
-        # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
 
         # Build the query string
@@ -67,33 +68,32 @@ class ScimAttributeHeaderAPI(APIClient):
         # Prepare request body and headers
         body = {}
         headers = {}
-        form = {}
 
-        # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
-        )
-
+        # Prepare request
+        request, error = self._request_executor\
+            .create_request(
+                http_method, api_url, body, headers
+            )
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, SCIMAttributeHeader)
-
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 
-        # Parse the response into AppConnectorGroup instances
         try:
             result = []
-            for item in response.get_body():
-                result.append(SCIMAttributeHeader(self.form_response_body(item)))
+            for item in response.get_results():
+                result.append(SCIMAttributeHeader(
+                    self.form_response_body(item))
+                )
         except Exception as error:
             return (None, response, error)
-
         return (result, response, None)
 
-    def get_attribute(self, idp_id: str, attribute_id: str, **kwargs) -> SCIMAttributeHeader:
+    def get_scim_attribute(self, idp_id: str, attribute_id: str, query_params=None) -> tuple:
         """
         Returns information on the specified SCIM attribute.
 
@@ -108,21 +108,36 @@ class ScimAttributeHeaderAPI(APIClient):
             >>> attribute = zpa.scim_attributes.get_attribute('99999', scim_attribute_id="88888")
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_endpoint}/idp/{idp_id}/scimattribute/{attribute_id}")
+        api_url = format_url(f"""{
+            self._zpa_base_endpoint}
+            /idp/{idp_id}/scimattribute/{attribute_id}
+        """)
 
-        # Fetch SCIM attribute data
-        request, error = self._request_executor.create_request(http_method, api_url, params=kwargs)
+        query_params = query_params or {}
+
+        if query_params:
+            encoded_query_params = urlencode(query_params)
+            api_url += f"?{encoded_query_params}"
+
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
         if error:
-            return None
+            return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request, SCIMAttributeHeader)
         if error:
-            return None
+            return (None, response, error)
 
-        # Convert the response to SCIMAttributeHeader object
-        return SCIMAttributeHeader(response.get_body())
+        try:
+            result = SCIMAttributeHeader(
+                self.form_response_body(response.get_body())
+            )
+        except Exception as error:
+            return (None, response, error)
+        return (result, response, None)
 
-    def get_values(self, idp_id: str, attribute_id: str, query_params=None, keep_empty_params=False) -> tuple:
+    def get_scim_values(self, idp_id: str, attribute_id: str, query_params=None) -> tuple:
         """
         Returns information on the specified SCIM attribute values.
 
@@ -135,7 +150,6 @@ class ScimAttributeHeaderAPI(APIClient):
             max_pages (int): The maximum number of pages to request before stopping iteration.
             pagesize (int): Specifies the page size, default is 20, maximum is 500.
             search (str, optional): The search string used to match against features and fields.
-            **keep_empty_params (bool): Whether to include empty parameters in the query string.
 
         Returns:
             list: A list of attribute values for the SCIM attribute.
@@ -144,9 +158,11 @@ class ScimAttributeHeaderAPI(APIClient):
             >>> values = zpa.scim_attributes.get_values('99999', '88888')
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_endpoint_userconfig}/scimattribute/idpId/{idp_id}/attributeId/{attribute_id}")
+        api_url = format_url(f"""{
+            self._zpa_base_endpoint_userconfig}
+            /scimattribute/idpId/{idp_id}/attributeId/{attribute_id}
+        """)
 
-        # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
 
         # Build the query string
@@ -157,28 +173,26 @@ class ScimAttributeHeaderAPI(APIClient):
         # Prepare request body and headers
         body = {}
         headers = {}
-        form = {}
 
-        # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
-        )
-
+        # Prepare request
+        request, error = self._request_executor\
+            .create_request(
+                http_method, api_url, body, headers
+            )
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, SCIMAttributeHeader)
-
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 
-        # Parse the response into AppConnectorGroup instances
         try:
-            result = []
-            for item in response.get_body():
-                result.append(SCIMAttributeHeader(self.form_response_body(item)))
+            body = response.get_body()
+            # Assuming the API returns a list in the 'list' field as per the Postman response
+            result = body.get('list', [])
         except Exception as error:
             return (None, response, error)
-
+        
         return (result, response, None)

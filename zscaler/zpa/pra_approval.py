@@ -15,14 +15,15 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.api_client import APIClient
-from zscaler.zpa.models.segment_group import SegmentGroup
+from zscaler.zpa.models.pra_approval import PrivilegedRemoteAccessApproval
 from zscaler.utils import format_url
 from urllib.parse import urlencode
+from zscaler.utils import validate_and_convert_times
 
 
-class SegmentGroupsAPI(APIClient):
+class PRAApprovalAPI(APIClient):
     """
-    A client object for the Segment Groups resource.
+    A Client object for the Privileged Remote Access Approval resource.
     """
 
     def __init__(self, request_executor, config):
@@ -30,13 +31,10 @@ class SegmentGroupsAPI(APIClient):
         self._request_executor = request_executor
         customer_id = config["client"].get("customerId")
         self._zpa_base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
-        self._zpa_base_endpoint_v2 = f"/zpa/mgmtconfig/v2/admin/customers/{customer_id}"
-
-    def list_groups(self, query_params=None) -> tuple:
+        
+    def list_approval(self, query_params=None) -> tuple:
         """
-        Enumerates segment groups in your organization with pagination.
-        A subset of segment groups can be returned that match a supported
-        filter expression or query.
+        Returns a list of all privileged remote access approvals.
 
         Args:
             query_params {dict}: Map of query parameters for the request.
@@ -47,15 +45,12 @@ class SegmentGroupsAPI(APIClient):
                 [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
 
         Returns:
-            tuple: A tuple containing (list of SegmentGroup instances, Response, error)
-
-        Example:
-            >>> segment_groups = zpa.segment_groups.list_groups(search="example", pagesize=100)
+            tuple: A tuple containing (list of PrivilegedRemoteAccessApproval instances, Response, error)
         """
         http_method = "get".upper()
         api_url = format_url(f"""
             {self._zpa_base_endpoint}
-            /segmentGroup
+            /approval
         """)
 
         query_params = query_params or {}
@@ -63,18 +58,15 @@ class SegmentGroupsAPI(APIClient):
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        # Build the query string
         if query_params:
             encoded_query_params = urlencode(query_params)
             api_url += f"?{encoded_query_params}"
 
-        # Prepare request
         request, error = self._request_executor\
             .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        # Execute the request
         response, error = self._request_executor\
             .execute(request)
         if error:
@@ -83,229 +75,217 @@ class SegmentGroupsAPI(APIClient):
         try:
             result = []
             for item in response.get_results():
-                result.append(SegmentGroup(
+                result.append(PrivilegedRemoteAccessApproval(
                     self.form_response_body(item))
                 )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def get_group(self, group_id: str, query_params=None) -> tuple:
+    def get_approval(self, approval_id: str, query_params=None) -> tuple:
         """
-        Gets information on the specified segment group.
+        Returns information on the specified pra approval.
 
         Args:
-            group_id (str): The unique identifier of the segment group.
+            approval_id (str): The unique identifier for the pra approval.
+            query_params (dict, optional): Map of query parameters for the request.
+                [query_params.microtenantId] {str}: The microtenant ID, if applicable.
 
         Returns:
-            SegmentGroup: The corresponding segment group object.
+            tuple: A tuple containing (PrivilegedRemoteAccessApproval instance, Response, error).
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
-            {self._zpa_base_endpoint}
-            /segmentGroup/{group_id}
+        api_url = format_url(f"""{
+            self._zpa_base_endpoint}
+            /approval/{approval_id}
         """)
 
-        # Handle optional query parameters
         query_params = query_params or {}
         microtenant_id = query_params.get("microtenant_id", None)
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        # Build the query string
         if query_params:
             encoded_query_params = urlencode(query_params)
             api_url += f"?{encoded_query_params}"
 
-        # Create the request
         request, error = self._request_executor\
             .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        # Execute the request
         response, error = self._request_executor\
-            .execute(request, SegmentGroup)
+            .execute(request, PrivilegedRemoteAccessApproval)
         if error:
             return (None, response, error)
 
-        # Parse the response into an AppConnectorGroup instance
         try:
-            result = SegmentGroup(
+            result = PrivilegedRemoteAccessApproval(
                 self.form_response_body(response.get_body())
             )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def add_group(self, group, **kwargs) -> tuple:
+    def add_approval(self, approval, **kwargs) -> tuple:
         """
-        Adds a new segment group.
+        Adds a privileged remote access approval.
 
         Args:
-            name (str): The name of the segment group.
-            enabled (bool): Enable the segment group. Defaults to True.
+            email_ids (list): Email addresses of the users for the approval.
+            application_ids (list): List of associated application segment ids.
+            start_time (str): Start timestamp in UNIX format.
+            end_time (str): End timestamp in UNIX format.
+            status (str): Status of the approval. Supported: INVALID, ACTIVE, FUTURE, EXPIRED.
+            working_hours (dict): Working hours configuration.
 
         Returns:
-            SegmentGroup: The created segment group object.
+            PrivilegedRemoteAccessApproval: The newly created PRA approval.
         """
         http_method = "post".upper()
         api_url = format_url(f"""
             {self._zpa_base_endpoint}
-            /segmentGroup
+            /approval
         """)
 
-        # Ensure connector_group is a dictionary
-        if isinstance(group, dict):
-            body = group
+        # Ensure approval is a dictionary
+        if isinstance(approval, dict):
+            body = approval
         else:
-            body = group.as_dict()
+            body = approval.as_dict()
+
+        # Convert start_time and end_time to epoch format
+        start_time = body.pop("start_time", None)
+        end_time = body.pop("end_time", None)
+        working_hours = body.get("working_hours", {})
+        
+        if start_time and end_time:
+            start_epoch, end_epoch = validate_and_convert_times(start_time, end_time, working_hours["time_zone"])
+            body.update({
+                "startTime": start_epoch,
+                "endTime": end_epoch
+            })
+
+        # Add applications and working hours to the body
+        body.update({
+            "applications": [{"id": app_id} for app_id in body.pop("application_ids", [])],
+            "workingHours": {
+                "startTimeCron": working_hours.get("start_time_cron"),
+                "endTimeCron": working_hours.get("end_time_cron"),
+                "startTime": working_hours.get("start_time"),
+                "endTime": working_hours.get("end_time"),
+                "days": working_hours.get("days"),
+                "timeZone": working_hours.get("time_zone"),
+            }
+        })
+
+        # Merge in additional keyword arguments
+        body.update(kwargs)
 
         # Check if microtenant_id is set in the body, and use it to set query parameter
         microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        # Add any additional fields from kwargs to the body
-        body.update(kwargs)
-
         # Create the request
         request, error = self._request_executor\
-            .create_request(
-            http_method, api_url, body=body, params=params
-        )
+            .create_request(http_method, api_url, body=body, params=params)
         if error:
             return (None, None, error)
 
         # Execute the request
         response, error = self._request_executor\
-            .execute(request, SegmentGroup)
+            .execute(request, PrivilegedRemoteAccessApproval)
         if error:
             return (None, response, error)
 
         try:
-            result = SegmentGroup(
-                self.form_response_body(response.get_body())
-            )
+            result = PrivilegedRemoteAccessApproval(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def update_group(self, group_id: str, group, **kwargs) -> tuple:
+    def update_approval(self, approval_id: str, approval, **kwargs) -> tuple:
         """
-        Updates the specified segment group.
+        Updates a specified approval based on provided keyword arguments.
 
         Args:
-            group_id (str): The unique identifier for the segment group being updated.
+            approval_id (str): The unique identifier for the approval being updated.
 
         Returns:
-            SegmentGroup: The updated segment group object.
+            PrivilegedRemoteAccessApproval: The updated approval resource.
         """
         http_method = "put".upper()
         api_url = format_url(f"""
             {self._zpa_base_endpoint}
-            /segmentGroup/{group_id}
+            /approval/{approval_id}
         """)
 
-        # Ensure the connector_group is in dictionary format
-        if isinstance(group, dict):
-            body = group
+        # Ensure approval is a dictionary
+        if isinstance(approval, dict):
+            body = approval
         else:
-            body = group.as_dict()
+            body = approval.as_dict()
 
-        # Add any additional fields from kwargs to the body
+        # Convert start_time and end_time to epoch format
+        start_time = body.pop("start_time", None)
+        end_time = body.pop("end_time", None)
+        working_hours = body.get("working_hours", {})
+
+        if start_time and end_time:
+            start_epoch, end_epoch = validate_and_convert_times(start_time, end_time, working_hours.get("time_zone"))
+            body.update({
+                "startTime": start_epoch,
+                "endTime": end_epoch
+            })
+
+        # Add applications and working hours to the body
+        body.update({
+            "applications": [{"id": app_id} for app_id in body.pop("application_ids", [])],
+            "workingHours": {
+                "startTimeCron": working_hours.get("start_time_cron"),
+                "endTimeCron": working_hours.get("end_time_cron"),
+                "startTime": working_hours.get("start_time"),
+                "endTime": working_hours.get("end_time"),
+                "days": working_hours.get("days"),
+                "timeZone": working_hours.get("time_zone"),
+            }
+        })
+
+        # Merge in additional keyword arguments
         body.update(kwargs)
 
-        # Use get instead of pop to keep microtenant_id in the body
+        # Check if microtenant_id is set in the body, and use it to set query parameter
         microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
-        
+
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, {}, params)
+        request, error = self._request_executor.create_request(http_method, api_url, body=body, params=params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, SegmentGroup)
+        response, error = self._request_executor.execute(request, PrivilegedRemoteAccessApproval)
         if error:
             return (None, response, error)
 
         # Handle case where no content is returned (204 No Content)
         if response is None:
-            # Return a meaningful result to indicate success
-            return (SegmentGroup({"id": group_id}), None, None)
+            return (PrivilegedRemoteAccessApproval({"id": approval_id}), None, None)
 
-        # Parse the response into an AppConnectorGroup instance
         try:
-            result = SegmentGroup(
-                self.form_response_body(response.get_body())
-            )
+            result = PrivilegedRemoteAccessApproval(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
+
         return (result, response, None)
 
-    def update_group_v2(self, group_id: str, group, **kwargs) -> tuple:
+    def delete_approval(self, approval_id: str, microtenant_id: str = None) -> tuple:
         """
-        Updates the specified segment group.
+        Deletes a specified privileged remote access approval.
 
         Args:
-            group_id (str): The unique identifier for the segment group being updated.
-
-        Returns:
-            SegmentGroup: The updated segment group object.
-        """
-        http_method = "put".upper()
-        api_url = format_url(f"""
-            {self._zpa_base_endpoint_v2}
-            /segmentGroup/{group_id}
-        """)
-
-        # Ensure the connector_group is in dictionary format
-        if isinstance(group, dict):
-            body = group
-        else:
-            body = group.as_dict()
-
-        # Add any additional fields from kwargs to the body
-        body.update(kwargs)
-
-        # Use get instead of pop to keep microtenant_id in the body
-        microtenant_id = body.get("microtenant_id", None)
-        params = {"microtenantId": microtenant_id} if microtenant_id else {}
-        
-        # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, {}, params)
-        if error:
-            return (None, None, error)
-
-        # Execute the request
-        response, error = self._request_executor\
-            .execute(request, SegmentGroup)
-        if error:
-            return (None, response, error)
-
-        # Handle case where no content is returned (204 No Content)
-        if response is None:
-            # Return a meaningful result to indicate success
-            return (SegmentGroup({"id": group_id}), None, None)
-
-        # Parse the response into an AppConnectorGroup instance
-        try:
-            result = SegmentGroup(
-                self.form_response_body(response.get_body())
-            )
-        except Exception as error:
-            return (None, response, error)
-        return (result, response, None)
-    
-    def delete_group(self, group_id: str, microtenant_id: str = None) -> tuple:
-        """
-        Deletes the specified segment group.
-
-        Args:
-            group_id (str): The unique identifier for the segment group to be deleted.
+            approval_id (str): The unique identifier for the approval to be deleted.
+            microtenant_id (str, optional): The optional ID of the microtenant if applicable.
 
         Returns:
             int: Status code of the delete operation.
@@ -313,19 +293,43 @@ class SegmentGroupsAPI(APIClient):
         http_method = "delete".upper()
         api_url = format_url(f"""
             {self._zpa_base_endpoint}
-            /segmentGroup/{group_id}
+            /approval/{approval_id}
         """)
 
-        # Handle microtenant_id in URL params if provided
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        # Create the request
         request, error = self._request_executor\
             .create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
-        # Execute the request
+        response, error = self._request_executor\
+            .execute(request)
+        if error:
+            return (None, response, error)
+
+        return (None, response, None)
+
+    def expired_approval(self, microtenant_id: str = None) -> tuple:
+        """
+        Deletes all expired privileged approvals.
+
+        Returns:
+            int: Status code of the delete operation.
+        """
+        http_method = "delete".upper()
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint}
+            /approval/expired
+        """)
+
+        params = {"microtenantId": microtenant_id} if microtenant_id else {}
+
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=params)
+        if error:
+            return (None, None, error)
+
         response, error = self._request_executor\
             .execute(request)
         if error:

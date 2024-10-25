@@ -35,7 +35,7 @@ class ApplicationSegmentAPI(APIClient):
         customer_id = config["client"].get("customerId")
         self._zpa_base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
-    def list_segments(self, query_params=None) -> tuple:
+    def list_segments(self, query_params=None, **kwargs) -> tuple:
         """
         Enumerates application segments in your organization with pagination.
         A subset of application segments can be returned that match a supported
@@ -52,43 +52,43 @@ class ApplicationSegmentAPI(APIClient):
         Returns:
             tuple: A tuple containing (list of ApplicationSegment instances, Response, error)
         """
-        # Initialize URL and HTTP method
         http_method = "get".upper()
-        api_url = format_url(
-            f"""
+        api_url = format_url(f"""
             {self._zpa_base_endpoint}
             /application
-        """
-        )
+        """)
 
+        # Handle optional query parameters
         query_params = query_params or {}
+        query_params.update(kwargs)
+        
         microtenant_id = query_params.get("microtenant_id", None)
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
-
+            
         # Build the query string
         if query_params:
             encoded_query_params = urlencode(query_params)
             api_url += f"?{encoded_query_params}"
 
-        # Prepare request body and headers
-        body = {}
-        headers = {}
-
         # Prepare request
-        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body={}, headers={})
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+        .execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
             for item in response.get_results():
-                result.append(ApplicationSegment(self.form_response_body(item)))
+                result.append(ApplicationSegment(
+                    self.form_response_body(item))
+                )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -107,42 +107,45 @@ class ApplicationSegmentAPI(APIClient):
             tuple: A tuple containing the `ApplicationSegment` instance, response object, and error if any.
         """
         http_method = "get".upper()
-        api_url = format_url(
-            f"""
+        api_url = format_url(f"""
             {self._zpa_base_endpoint}
             /application/{segment_id}
-        """
-        )
+        """)
+
+        # Handle optional query parameters
+        query_params = query_params or {}
+        
+        microtenant_id = query_params.get("microtenant_id", None)
+        if microtenant_id:
+            query_params["microtenantId"] = microtenant_id
 
         # Build the query string
         if query_params:
             encoded_query_params = urlencode(query_params)
             api_url += f"?{encoded_query_params}"
 
-        # Prepare request body, headers, and form (if needed)
-        body = {}
-        headers = {}
-
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
-
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, ApplicationSegment)
-
+        response, error = self._request_executor\
+            .execute(request, ApplicationSegment)
         if error:
             return (None, response, error)
 
         # Parse the response into an AppConnectorGroup instance
         try:
-            result = ApplicationSegment(self.form_response_body(response.get_body()))
+            result = ApplicationSegment(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def add_segment(self, app_segment) -> tuple:
+    def add_segment(self, app_segment, **kwargs) -> tuple:
         """
         Create a new application segment.
 
@@ -159,12 +162,10 @@ class ApplicationSegmentAPI(APIClient):
             tuple: A tuple containing the `ApplicationSegment` instance, response object, and error if any.
         """
         http_method = "post".upper()
-        api_url = format_url(
-            f"""
+        api_url = format_url(f"""
             {self._zpa_base_endpoint}
             /application
-        """
-        )
+        """)
 
         # Ensure app_segment is a dictionary
         if isinstance(app_segment, dict):
@@ -172,8 +173,8 @@ class ApplicationSegmentAPI(APIClient):
         else:
             body = app_segment.as_dict()
 
-        # Check if microtenant_id is set in the body, and use it to set query parameter
-        microtenant_id = body.get("microtenant_id", None)
+        # Check if microtenant_id is set in kwargs or the body, and use it to set query parameter
+        microtenant_id = kwargs.get("microtenant_id") or body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         # Reformat server_group_ids to match the expected API format (serverGroups)
@@ -184,8 +185,22 @@ class ApplicationSegmentAPI(APIClient):
         if "clientless_app_ids" in body:
             body["clientlessApps"] = transform_clientless_apps(body.pop("clientless_app_ids"))
 
+        if kwargs.get("tcp_port_ranges"):
+            body["tcpPortRange"] = [{"from": ports[0], "to": ports[1]} for ports in kwargs.pop("tcp_port_ranges")]
+
+        if kwargs.get("udp_port_ranges"):
+            body["udpPortRange"] = [{"from": ports[0], "to": ports[1]} for ports in kwargs.pop("udp_port_ranges")]
+
+        # Add any additional fields from kwargs to the body
+        body.update(kwargs)
+
+        # Apply add_id_groups to reformat params based on self.reformat_params
+        add_id_groups(self.reformat_params, kwargs, body)
+    
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body=body, params=params)
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body=body, params=params
+        )
         if error:
             return (None, None, error)
 
@@ -195,12 +210,14 @@ class ApplicationSegmentAPI(APIClient):
             return (None, response, error)
 
         try:
-            result = ApplicationSegment(self.form_response_body(response.get_body()))
+            result = ApplicationSegment(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def update_segment(self, segment_id: str, app_segment) -> tuple:
+    def update_segment(self, segment_id: str, app_segment, **kwargs) -> tuple:
         """
         Update an existing application segment.
 
@@ -214,12 +231,10 @@ class ApplicationSegmentAPI(APIClient):
             tuple: A tuple containing the updated `ApplicationSegment` instance, response object, and error if any.
         """
         http_method = "put".upper()
-        api_url = format_url(
-            f"""
+        api_url = format_url(f"""
             {self._zpa_base_endpoint}
             /application/{segment_id}
-        """
-        )
+        """)
 
         # Ensure app_segment is a dictionary
         if isinstance(app_segment, dict):
@@ -238,13 +253,27 @@ class ApplicationSegmentAPI(APIClient):
         # Reformat clientless_app_ids if present
         if "clientless_app_ids" in body:
             body["clientlessApps"] = transform_clientless_apps(body.pop("clientless_app_ids"))
+
+        if kwargs.get("tcp_port_ranges"):
+            body["tcpPortRange"] = [{"from": ports[0], "to": ports[1]} for ports in kwargs.pop("tcp_port_ranges")]
+
+        if kwargs.get("udp_port_ranges"):
+            body["udpPortRange"] = [{"from": ports[0], "to": ports[1]} for ports in kwargs.pop("udp_port_ranges")]
+
+        # Add any additional fields from kwargs to the body
+        body.update(kwargs)
+        
+        add_id_groups(self.reformat_params, kwargs, body)
+        
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body, {}, params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, {}, params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, ApplicationSegment)
+        response, error = self._request_executor\
+            .execute(request, ApplicationSegment)
         if error:
             return (None, response, error)
 
@@ -254,47 +283,47 @@ class ApplicationSegmentAPI(APIClient):
             return (ApplicationSegment({"id": segment_id}), None, None)
 
         try:
-            result = ApplicationSegment(self.form_response_body(response.get_body()))
+            result = ApplicationSegment(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
-
+    
     def delete_segment(self, segment_id: str, force_delete: bool = False, microtenant_id: str = None) -> tuple:
         """
-        Delete an application segment.
+        Deletes the specified Application Segment from ZPA.
 
         Args:
-            segment_id (str): The unique identifier of the application segment.
-            force_delete (bool, optional): Whether to force the deletion. Default is False.
-
-        Keyword Args:
-            microtenant_id (str, optional): ID of the microtenant, if applicable.
+            segment_id (str): The unique identifier for the Application Segment.
+            force_delete (bool):
+                Setting this field to true deletes the mapping between Application Segment and Segment Group.
+            microtenant_id (str, optional): The optional ID of the microtenant if applicable.
 
         Returns:
-            tuple: A tuple containing the status code, response object, and error if any.
+            tuple: A tuple containing the response and error (if any).
         """
         http_method = "delete".upper()
-        api_url = format_url(
-            f"""
+        api_url = format_url(f"""
             {self._zpa_base_endpoint}
             /application/{segment_id}
-        """
-        )
+        """)
 
-        # Handle microtenant_id and forceDelete in URL params
-        params = {}
-        if microtenant_id:
-            params["microtenantId"] = microtenant_id
+        # Handle microtenant_id in URL params if provided
+        params = {"microtenantId": microtenant_id} if microtenant_id else {}
+
         if force_delete:
             params["forceDelete"] = "true"
-
+    
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, params=params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 

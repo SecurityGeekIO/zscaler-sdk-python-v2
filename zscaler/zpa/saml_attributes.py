@@ -29,10 +29,10 @@ class SAMLAttributesAPI(APIClient):
         super().__init__()
         self._request_executor = request_executor
         customer_id = config["client"].get("customerId")
-        self._base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
-        self._base_endpoint_v2 = f"/zpa/mgmtconfig/v2/admin/customers/{customer_id}"
+        self._zpa_base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
+        self._zpa_base_endpoint_v2 = f"/zpa/mgmtconfig/v2/admin/customers/{customer_id}"
 
-    def list_attributes(self, query_params=None, keep_empty_params=False) -> tuple:
+    def list_saml_attributes(self, query_params=None) -> tuple:
         """
         Returns a list of all configured SAML attributes.
 
@@ -51,46 +51,38 @@ class SAMLAttributesAPI(APIClient):
             ...    pprint(saml_attribute)
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_endpoint_v2}/samlAttribute")
+        api_url = format_url(f"""{
+            self._zpa_base_endpoint_v2}
+            /samlAttribute
+        """)
 
-        # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
 
-        # Build the query string
         if query_params:
             encoded_query_params = urlencode(query_params)
             api_url += f"?{encoded_query_params}"
 
-        # Prepare request body and headers
-        body = {}
-        headers = {}
-        form = {}
-
-        # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
-        )
-
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        # Execute the request
-        response, error = self._request_executor.execute(request, SAMLAttribute)
-
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 
-        # Parse the response into AppConnectorGroup instances
         try:
             result = []
-            for item in response.get_body():
-                result.append(SAMLAttribute(self.form_response_body(item)))
+            for item in response.get_results():
+                result.append(SAMLAttribute(
+                    self.form_response_body(item))
+                )
         except Exception as error:
             return (None, response, error)
-
         return (result, response, None)
 
-    def list_attributes_by_idp(self, idp_id: str, query_params=None, keep_empty_params=False) -> tuple:
+    def list_saml_attributes_by_idp(self, idp_id: str, query_params=None) -> tuple:
         """
         Returns a list of all configured SAML attributes for the specified IdP.
 
@@ -112,46 +104,38 @@ class SAMLAttributesAPI(APIClient):
             ...    pprint(saml_attribute)
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_endpoint}/samlAttribute/idp/{idp_id}")
+        api_url = format_url(f"""{
+            self._zpa_base_endpoint_v2}
+            /samlAttribute/idp/{idp_id}
+        """)
 
-        # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
 
-        # Build the query string
         if query_params:
             encoded_query_params = urlencode(query_params)
             api_url += f"?{encoded_query_params}"
 
-        # Prepare request body and headers
-        body = {}
-        headers = {}
-        form = {}
-
-        # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
-        )
-
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        # Execute the request
-        response, error = self._request_executor.execute(request, SAMLAttribute)
-
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 
-        # Parse the response into AppConnectorGroup instances
         try:
             result = []
-            for item in response.get_body():
-                result.append(SAMLAttribute(self.form_response_body(item)))
+            for item in response.get_results():
+                result.append(SAMLAttribute(
+                    self.form_response_body(item))
+                )
         except Exception as error:
             return (None, response, error)
-
         return (result, response, None)
 
-    def get_attribute(self, attribute_id: str, **kwargs) -> tuple:
+    def get_saml_attribute(self, attribute_id: str, query_params=None) -> tuple:
         """
         Returns information on the specified SAML attribute.
 
@@ -167,14 +151,31 @@ class SAMLAttributesAPI(APIClient):
             ...    pprint(attribute)
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_endpoint}/samlAttribute/{attribute_id}")
+        api_url = format_url(f"""{
+            self._zpa_base_endpoint}
+            /samlAttribute/{attribute_id}
+        """)
 
-        request, error = self._request_executor.create_request(http_method, api_url, {}, kwargs)
+        query_params = query_params or {}
+
+        if query_params:
+            encoded_query_params = urlencode(query_params)
+            api_url += f"?{encoded_query_params}"
+
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request, SAMLAttribute)
+        response, error = self._request_executor\
+            .execute(request, SAMLAttribute)
         if error:
             return (None, response, error)
 
-        return (SAMLAttribute(response.get_body()), response, None)
+        try:
+            result = SAMLAttribute(
+                self.form_response_body(response.get_body())
+            )
+        except Exception as error:
+            return (None, response, error)
+        return (result, response, None)

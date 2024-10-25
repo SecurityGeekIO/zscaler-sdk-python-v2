@@ -27,9 +27,9 @@ class AppServersAPI(APIClient):
         super().__init__()
         self._request_executor = request_executor
         customer_id = config["client"].get("customerId")
-        self._base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
+        self._zpa_base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
-    def list_servers(self, query_params=None, keep_empty_params=False) -> tuple:
+    def list_servers(self, query_params=None) -> tuple:
         """
         Enumerates application servers in your organization with pagination.
         A subset of application servers can be returned that match a supported
@@ -42,7 +42,6 @@ class AppServersAPI(APIClient):
                 [query_params.microtenant_id] {str}: ID of the microtenant, if applicable.
                 [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
                 [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
-            keep_empty_params {bool}: Whether to include empty parameters in the query string.
 
         Returns:
             tuple: A tuple containing (list of AppConnectorGroup instances, Response, error)
@@ -50,18 +49,14 @@ class AppServersAPI(APIClient):
         Example:
             >>> servers = zpa.servers.list_servers(search="Example 100", pagesize=100, microtenant_id="216199618143464722")
         """
-        # Construct the API URL with the base URL and the servers endpoint
         http_method = "get".upper()
-        api_url = format_url(
-            f"""
-            {self._base_endpoint}
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint}
             /server
-        """
-        )
-
-        # Handle query parameters (including microtenant_id if provided)
+        """)
+        
         query_params = query_params or {}
-        microtenant_id = query_params.pop("microtenant_id", None)
+        microtenant_id = query_params.get("microtenant_id", None)
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
@@ -70,35 +65,29 @@ class AppServersAPI(APIClient):
             encoded_query_params = urlencode(query_params)
             api_url += f"?{encoded_query_params}"
 
-        # Prepare request body and headers
-        body = {}
-        headers = {}
-        form = {}
-
-        # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
-        )
-
+        # Prepare request
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, AppServers)
-
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_body():
-                result.append(AppServers(self.form_response_body(item)))
+            for item in response.get_results():
+                result.append(AppServers(
+                    self.form_response_body(item))
+                )
         except Exception as error:
             return (None, response, error)
-
         return (result, response, None)
 
-    def get_server(self, server_id: str, **kwargs) -> AppServers:
+    def get_server(self, server_id: str, query_params=None) -> tuple:
         """
         Gets information on the specified server.
 
@@ -109,29 +98,44 @@ class AppServersAPI(APIClient):
             AppServers: The corresponding server object.
         """
         http_method = "get".upper()
-        api_url = format_url(
-            f"""
-            {self._base_endpoint}
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint}
             /server/{server_id}
-            """
-        )
+            """)
 
-        # Add microtenant_id to kwargs if provided
-        microtenant_id = kwargs.pop("microtenant_id", None)
+        # Handle optional query parameters
+        query_params = query_params or {}
+        microtenant_id = query_params.get("microtenant_id", None)
         if microtenant_id:
-            kwargs["microtenantId"] = microtenant_id
+            query_params["microtenantId"] = microtenant_id
 
-        request, error = self._request_executor.create_request(http_method, api_url, {}, kwargs)
+        # Build the query string
+        if query_params:
+            encoded_query_params = urlencode(query_params)
+            api_url += f"?{encoded_query_params}"
+
+        # Create the request
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
         if error:
-            raise Exception(f"Failed to create request: {error}")
+            return (None, None, error)
 
-        response, error = self._request_executor.execute(request, AppServers)
+        # Execute the request
+        response, error = self._request_executor\
+            .execute(request, AppServers)
         if error:
-            raise Exception(f"API request failed: {error}")
+            return (None, response, error)
 
-        return AppServers(response.get_body())
+        # Parse the response into an AppConnectorGroup instance
+        try:
+            result = AppServers(
+                self.form_response_body(response.get_body())
+            )
+        except Exception as error:
+            return (None, response, error)
+        return (result, response, None)
 
-    def add_server(self, name: str, address: str, enabled: bool = True, **kwargs) -> AppServers:
+    def add_server(self, server, **kwargs) -> tuple:
         """
         Add a new application server.
 
@@ -141,35 +145,47 @@ class AppServersAPI(APIClient):
             enabled (bool): Enable the server. Defaults to True.
         """
         http_method = "post".upper()
-        api_url = format_url(
-            f"""
-            {self._base_endpoint}
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint}
             /server
-        """
-        )
+        """)
 
-        payload = {
-            "name": name,
-            "address": address,
-            "enabled": enabled,
-        }
-        payload.update(kwargs)
+        # Ensure connector_group is a dictionary
+        if isinstance(server, dict):
+            body = server
+        else:
+            body = server.as_dict()
 
-        # Add microtenant_id to kwargs if provided
-        microtenant_id = kwargs.pop("microtenant_id", None)
+        # Check if microtenant_id is set in the body, and use it to set query parameter
+        microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        request, error = self._request_executor.create_request(http_method, api_url, payload, params)
+        # Add any additional fields from kwargs to the body
+        body.update(kwargs)
+
+        # Create the request
+        request, error = self._request_executor\
+            .create_request(
+            http_method, api_url, body=body, params=params
+        )
         if error:
-            raise Exception(f"Failed to create request: {error}")
+            return (None, None, error)
 
-        response, error = self._request_executor.execute(request, AppServers)
+        # Execute the request
+        response, error = self._request_executor\
+            .execute(request, AppServers)
         if error:
-            raise Exception(f"API request failed: {error}")
+            return (None, response, error)
 
-        return AppServers(response.get_body())
+        try:
+            result = AppServers(
+                self.form_response_body(response.get_body())
+            )
+        except Exception as error:
+            return (None, response, error)
+        return (result, response, None)
 
-    def update_server(self, server_id: str, **kwargs) -> AppServers:
+    def update_server(self, server_id: str, group, **kwargs) -> tuple:
         """
         Updates the specified server.
 
@@ -177,32 +193,51 @@ class AppServersAPI(APIClient):
             server_id (str): The unique identifier for the server being updated.
         """
         http_method = "put".upper()
-        api_url = format_url(
-            f"""
-            {self._base_endpoint}
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint}
             /server/{server_id}
-        """
-        )
+        """)
 
-        # Get the current server data and update it with the new kwargs
-        server_data = self.get_server(server_id).request_format()
-        server_data.update(kwargs)
+        # Ensure the connector_group is in dictionary format
+        if isinstance(group, dict):
+            body = group
+        else:
+            body = group.as_dict()
 
-        # Add microtenant_id to kwargs if provided
-        microtenant_id = kwargs.pop("microtenant_id", None)
+        # Add any additional fields from kwargs to the body
+        body.update(kwargs)
+
+        # Use get instead of pop to keep microtenant_id in the body
+        microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
-
-        request, error = self._request_executor.create_request(http_method, api_url, server_data, params)
+        
+        # Create the request
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, {}, params)
         if error:
-            raise Exception(f"Failed to create request: {error}")
+            return (None, None, error)
 
-        response, error = self._request_executor.execute(request, AppServers)
+        # Execute the request
+        response, error = self._request_executor\
+            .execute(request, AppServers)
         if error:
-            raise Exception(f"API request failed: {error}")
+            return (None, response, error)
 
-        return AppServers(response.get_body())
+        # Handle case where no content is returned (204 No Content)
+        if response is None:
+            # Return a meaningful result to indicate success
+            return (AppServers({"id": server_id}), None, None)
 
-    def delete_server(self, server_id: str, **kwargs) -> int:
+        # Parse the response into an AppConnectorGroup instance
+        try:
+            result = AppServers(
+                self.form_response_body(response.get_body())
+            )
+        except Exception as error:
+            return (None, response, error)
+        return (result, response, None)
+
+    def delete_server(self, server_id: str, microtenant_id: str = None) -> tuple:
         """
         Delete the specified server.
 
@@ -213,23 +248,23 @@ class AppServersAPI(APIClient):
             int: Status code of the delete operation.
         """
         http_method = "delete".upper()
-        api_url = format_url(
-            f"""
-            {self._base_endpoint}
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint}
             /server/{server_id}
-        """
-        )
+        """)
 
-        # Add microtenant_id to kwargs if provided
-        microtenant_id = kwargs.pop("microtenant_id", None)
+        # Handle microtenant_id in URL params if provided
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        request, error = self._request_executor.create_request(http_method, api_url, {}, params)
+        # Create the request
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=params)
         if error:
-            raise Exception(f"Failed to create request: {error}")
+            return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        # Execute the request
+        response, error = self._request_executor\
+            .execute(request)
         if error:
-            raise Exception(f"API request failed: {error}")
-
-        return response.status_code
+            return (None, response, error)
+        return (None, response, None)

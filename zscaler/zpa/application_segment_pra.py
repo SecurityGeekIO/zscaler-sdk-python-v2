@@ -17,7 +17,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 from zscaler.api_client import APIClient
 from zscaler.zpa.models.application_segment_pra import ApplicationSegmentPRA
 from urllib.parse import urlencode
-from zscaler.utils import format_url, snake_to_camel, recursive_snake_to_camel, add_id_groups
+from zscaler.utils import add_id_groups, format_url
 
 
 class AppSegmentsPRAAPI(APIClient):
@@ -25,13 +25,17 @@ class AppSegmentsPRAAPI(APIClient):
     A client object for Application Segments PRA (Privileged Remote Access).
     """
 
+    reformat_params = [
+        ("server_group_ids", "serverGroups"),
+    ]
+
     def __init__(self, request_executor, config):
         super().__init__()
         self._request_executor = request_executor
         customer_id = config["client"].get("customerId")
-        self._base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
+        self._zpa_base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
-    def list_segments_pra(self, query_params=None, keep_empty_params=False) -> tuple:
+    def list_segments_pra(self, query_params=None, **kwargs) -> tuple:
         """
         Enumerates application segment pra in your organization with pagination.
         A subset of application segment pra can be returned that match a supported
@@ -44,18 +48,22 @@ class AppSegmentsPRAAPI(APIClient):
                 [query_params.microtenant_id] {str}: ID of the microtenant, if applicable.
                 [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
                 [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
-            keep_empty_params {bool}: Whether to include empty parameters in the query string.
 
         Returns:
             tuple: A tuple containing (list of AppSegmentsPRA instances, Response, error)
         """
         # Initialize URL and HTTP method
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_endpoint}/application")
-
-        # Handle query parameters (including microtenant_id if provided)
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint}
+            /application
+        """)
+        
+        # Handle optional query parameters
         query_params = query_params or {}
-        microtenant_id = query_params.pop("microtenant_id", None)
+        query_params.update(kwargs)
+
+        microtenant_id = query_params.get("microtenant_id", None)
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
@@ -64,36 +72,29 @@ class AppSegmentsPRAAPI(APIClient):
             encoded_query_params = urlencode(query_params)
             api_url += f"?{encoded_query_params}"
 
-        # Prepare request body and headers
-        body = {}
-        headers = {}
-        form = {}
-
-        # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
-        )
-
+        # Prepare request
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body={}, headers={})
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, ApplicationSegmentPRA)
-
+        response, error = self._request_executor\
+        .execute(request)
         if error:
             return (None, response, error)
 
-        # Parse the response into AppConnectorGroup instances
         try:
             result = []
-            for item in response.get_body():
-                result.append(ApplicationSegmentPRA(self.form_response_body(item)))
+            for item in response.get_results():
+                result.append(ApplicationSegmentPRA(
+                    self.form_response_body(item))
+                )
         except Exception as error:
             return (None, response, error)
-
         return (result, response, None)
 
-    def get_segment_pra(self, segment_id: str, **kwargs) -> tuple:
+    def get_segment_pra(self, segment_id: str, query_params=None) -> tuple:
         """
         Get details of an application segment by its ID.
 
@@ -104,34 +105,44 @@ class AppSegmentsPRAAPI(APIClient):
             tuple: A tuple containing (ApplicationSegment, Response, error)
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._base_endpoint}/application/{segment_id}")
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint}
+            /application/{segment_id}
+        """
+        )
 
-        # Optional parameters such as microtenant_id
-        microtenant_id = kwargs.pop("microtenant_id", None)
-        params = {"microtenantId": microtenant_id} if microtenant_id else {}
+        query_params = query_params or {}
+        
+        microtenant_id = query_params.get("microtenant_id", None)
+        if microtenant_id:
+            query_params["microtenantId"] = microtenant_id
 
-        request, error = self._request_executor.create_request(http_method, api_url, params=params)
+        if query_params:
+            encoded_query_params = urlencode(query_params)
+            api_url += f"?{encoded_query_params}"
+
+        # Create the request
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        # Execute the request
+        response, error = self._request_executor\
+            .execute(request, ApplicationSegmentPRA)
         if error:
             return (None, response, error)
 
-        result = ApplicationSegmentPRA(response.get_body())
+        # Parse the response into an AppConnectorGroup instance
+        try:
+            result = ApplicationSegmentPRA(
+                self.form_response_body(response.get_body())
+            )
+        except Exception as error:
+            return (None, response, error)
         return (result, response, None)
 
-    def add_segment_pra(
-        self,
-        name: str,
-        domain_names: list,
-        segment_group_id: str,
-        server_group_ids: list,
-        tcp_port_ranges: list = None,
-        udp_port_ranges: list = None,
-        common_apps_dto: dict = None,
-        **kwargs,
-    ) -> tuple:
+    def add_segment_pra(self, app_segment, **kwargs) -> tuple:
         """
         Add a new application segment.
 
@@ -191,118 +202,179 @@ class AppSegmentsPRAAPI(APIClient):
             ...    server_group_ids=['99999', '88888'])
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._base_endpoint}/application")
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint}
+            /application
+        """)
 
-        payload = {
-            "name": name,
-            "domainNames": domain_names,
-            "segmentGroupId": segment_group_id,
-            "serverGroups": [{"id": group_id} for group_id in server_group_ids],
-            "tcpPortRanges": tcp_port_ranges,
-            "udpPortRanges": udp_port_ranges,
-            "commonAppsDto": common_apps_dto if common_apps_dto else None,
-        }
+        # Ensure app_segment is a dictionary
+        if isinstance(app_segment, dict):
+            body = app_segment
+        else:
+            body = app_segment.as_dict()
 
-        if common_apps_dto:
-            camel_common_apps_dto = recursive_snake_to_camel(common_apps_dto)
-            payload["commonAppsDto"] = camel_common_apps_dto
-
-        # Optional parameters for the payload
-        add_id_groups(self.reformat_params, kwargs, payload)
-
-        for key, value in kwargs.items():
-            if value is not None:
-                payload[snake_to_camel(key)] = value
-
-        microtenant_id = kwargs.pop("microtenant_id", None)
+        # Check if microtenant_id is set in kwargs or the body, and use it to set query parameter
+        microtenant_id = kwargs.get("microtenant_id") or body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        request, error = self._request_executor.create_request(http_method, api_url, json=payload, params=params)
+        # Reformat server_group_ids to match the expected API format (serverGroups)
+        if "server_group_ids" in body:
+            body["serverGroups"] = [{"id": group_id} for group_id in body.pop("server_group_ids")]
+
+        # Add common_apps_dto if provided
+        common_apps_dto = kwargs.get("common_apps_dto")
+        if common_apps_dto:
+            body["commonAppsDto"] = common_apps_dto
+
+        if kwargs.get("tcp_port_ranges"):
+            body["tcpPortRange"] = [{"from": ports[0], "to": ports[1]} for ports in kwargs.pop("tcp_port_ranges")]
+
+        if kwargs.get("udp_port_ranges"):
+            body["udpPortRange"] = [{"from": ports[0], "to": ports[1]} for ports in kwargs.pop("udp_port_ranges")]
+
+        # Add any additional fields from kwargs to the body
+        body.update(kwargs)
+
+        # Apply add_id_groups to reformat params based on self.reformat_params
+        add_id_groups(self.reformat_params, kwargs, body)
+        
+        # Create the request
+        request, error = self._request_executor\
+            .create_request(
+            http_method, api_url, body=body, params=params
+        )
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        # Execute the request
+        response, error = self._request_executor\
+            .execute(request, ApplicationSegmentPRA)
         if error:
             return (None, response, error)
 
-        result = ApplicationSegmentPRA(response.get_body())
+        try:
+            result = ApplicationSegmentPRA(
+                self.form_response_body(response.get_body())
+            )
+        except Exception as error:
+            return (None, response, error)
         return (result, response, None)
 
-    def update_segment_pra(self, segment_id: str, common_apps_dto=None, **kwargs) -> tuple:
+    def update_segment_pra(self, segment_id: str, app_segment, **kwargs) -> tuple:
         """
         Update an existing application segment.
 
         Args:
-            segment_id (str): The unique ID of the application segment.
+            segment_id (str): The unique identifier of the application segment.
+
+        Keyword Args:
+            microtenant_id (str, optional): ID of the microtenant, if applicable.
 
         Returns:
             tuple: A tuple containing (ApplicationSegment, Response, error)
         """
         http_method = "put".upper()
-        api_url = format_url(f"{self._base_endpoint}/application/{segment_id}")
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint}
+            /application/{segment_id}
+        """)
 
-        # Fetch existing data
-        existing_segment, _, error = self.get_segment_pra(segment_id, **kwargs)
-        if error:
-            return (None, None, error)
+        # Ensure app_segment is a dictionary
+        if isinstance(app_segment, dict):
+            body = app_segment
+        else:
+            body = app_segment.as_dict()
 
-        payload = {snake_to_camel(k): v for k, v in existing_segment.request_format().items()}
-
-        if kwargs.get("tcp_port_ranges"):
-            payload["tcpPortRange"] = [{"from": ports[0], "to": ports[1]} for ports in kwargs.pop("tcp_port_ranges")]
-
-        if kwargs.get("udp_port_ranges"):
-            payload["udpPortRange"] = [{"from": ports[0], "to": ports[1]} for ports in kwargs.pop("udp_port_ranges")]
-
-        if common_apps_dto:
-            camel_common_apps_dto = recursive_snake_to_camel(common_apps_dto)
-            payload["commonAppsDto"] = camel_common_apps_dto
-
-        # Apply updates
-        add_id_groups(self.reformat_params, kwargs, payload)
-
-        for key, value in kwargs.items():
-            payload[snake_to_camel(key)] = value
-
-        microtenant_id = kwargs.pop("microtenant_id", None)
+        # Check if microtenant_id is set in the body, and use it to set query parameter
+        microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        request, error = self._request_executor.create_request(http_method, api_url, json=payload, params=params)
+        # Reformat server_group_ids to match the expected API format (serverGroups)
+        if "server_group_ids" in body:
+            body["serverGroups"] = [{"id": group_id} for group_id in body.pop("server_group_ids")]
+
+        # Add common_apps_dto if provided
+        common_apps_dto = kwargs.get("common_apps_dto")
+        if common_apps_dto:
+            body["commonAppsDto"] = common_apps_dto
+
+        if kwargs.get("tcp_port_ranges"):
+            body["tcpPortRange"] = [{"from": ports[0], "to": ports[1]} for ports in kwargs.pop("tcp_port_ranges")]
+
+        if kwargs.get("udp_port_ranges"):
+            body["udpPortRange"] = [{"from": ports[0], "to": ports[1]} for ports in kwargs.pop("udp_port_ranges")]
+
+        # Add any additional fields from kwargs to the body
+        body.update(kwargs)
+
+        # Apply add_id_groups to reformat params based on self.reformat_params
+        add_id_groups(self.reformat_params, kwargs, body)
+        
+        # Create the request
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, {}, params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        # Execute the request
+        response, error = self._request_executor\
+            .execute(request, ApplicationSegmentPRA)
         if error:
             return (None, response, error)
 
-        result = ApplicationSegmentPRA(response.get_body())
+        try:
+            result = ApplicationSegmentPRA(
+                self.form_response_body(response.get_body())
+            )
+        except Exception as error:
+            return (None, response, error)
         return (result, response, None)
 
-    def delete_segment_pra(self, segment_id: str, force_delete: bool = False, **kwargs) -> tuple:
+    def delete_segment_pra(self, segment_id: str, force_delete: bool = False, microtenant_id: str = None) -> tuple:
         """
-        Delete an application segment.
+        Delete an PRA application segment.
 
         Args:
-            segment_id (str): The unique ID of the application segment.
-            force_delete (bool, optional): Whether to force delete the mapping between the segment and the group.
+            segment_id (str):
+                The unique identifier for the PRA application segment.
+            force_delete (bool):
+                Setting this field to true deletes the mapping between PRA Application Segment and Segment Group.
+            microtenant_id (str, optional): The optional ID of the microtenant if applicable.
 
         Returns:
-            tuple: A tuple containing (None, Response, error)
+            :obj:`int`: The operation response code.
+
+        Examples:
+            Delete an AppProtection Application Segment with an id of 99999.
+
+            >>> zpa.app_segments_inspection.delete('99999')
+
+            Force deletion of an AppProtection Application Segment with an id of 88888.
+
+            >>> zpa.app_segments_inspection.delete('88888', force_delete=True)
+
         """
         http_method = "delete".upper()
-        api_url = format_url(f"{self._base_endpoint}/application/{segment_id}")
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint}
+            /application/{segment_id}
+        """)
 
-        params = {}
+        # Handle microtenant_id in URL params if provided
+        params = {"microtenantId": microtenant_id} if microtenant_id else {}
+
         if force_delete:
             params["forceDelete"] = "true"
-        if "microtenant_id" in kwargs:
-            params["microtenantId"] = kwargs.pop("microtenant_id")
-
-        request, error = self._request_executor.create_request(http_method, api_url, params=params)
+    
+        # Create the request
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        # Execute the request
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 

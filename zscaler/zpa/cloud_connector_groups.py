@@ -91,14 +91,13 @@ class CloudConnectorGroupsAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
 
-    def get_cloud_connector_groups(self, group_id: str, query_params={}, keep_empty_params=False):
+    def get_cloud_connector_groups(self, group_id: str, query_params=None) -> tuple:
         """
         Returns information on the specified cloud connector group.
 
         Args:
             group_id (str): The unique identifier for the cloud connector group.
             query_params (dict): Optional query parameters.
-            keep_empty_params (bool): Whether to include empty query parameters in the request.
 
         Returns:
             dict: The cloud connector group object.
@@ -109,33 +108,37 @@ class CloudConnectorGroupsAPI(APIClient):
             ...     pprint(group)
         """
         http_method = "get".upper()
-        api_url = format_url(
-            f"""
-            {self._zpa_base_endpoint}/cloudConnectorGroup/{group_id}
-        """
-        )
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint}
+            /cloudConnectorGroup/{group_id}
+        """)
 
+        # Handle optional query parameters
+        query_params = query_params or {}
+
+        # Build the query string
         if query_params:
             encoded_query_params = urlencode(query_params)
             api_url += f"?{encoded_query_params}"
 
-        body, headers, form = {}, {}, {}
-
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
-        )
-
+        # Create the request
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
-
+        # Execute the request
+        response, error = self._request_executor\
+            .execute(request, CloudConnectorGroup)
         if error:
             return (None, response, error)
 
+        # Parse the response into an CloudConnectorGroup instance
         try:
-            result = CloudConnectorGroup(response.get_body())
+            result = CloudConnectorGroup(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
+        return (result, response, None)
 
-        return result, response, None
