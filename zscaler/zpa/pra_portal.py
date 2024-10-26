@@ -128,7 +128,7 @@ class PRAPortalAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
 
-    def add_portal(self, portal, **kwargs) -> tuple:
+    def add_portal(self, **kwargs) -> tuple:
         """
         Adds a new PRA portal.
 
@@ -147,13 +147,8 @@ class PRAPortalAPI(APIClient):
             /praPortal
         """)
 
-        # Ensure connector_group is a dictionary
-        if isinstance(portal, dict):
-            body = portal
-        else:
-            body = portal.as_dict()
-
-        body.update(kwargs)
+        # Construct the body from kwargs (as a dictionary)
+        body = kwargs
 
         # Check if microtenant_id is set in the body, and use it to set query parameter
         microtenant_id = body.get("microtenant_id", None)
@@ -181,7 +176,7 @@ class PRAPortalAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
 
-    def update_portal(self, portal_id: str, portal, **kwargs) -> tuple:
+    def update_portal(self, portal_id: str, **kwargs) -> tuple:
         """
         Updates the specified PRA portal.
 
@@ -197,12 +192,10 @@ class PRAPortalAPI(APIClient):
             /praPortal/{portal_id}
         """)
 
-        # Ensure the connector_group is in dictionary format
-        if isinstance(portal, dict):
-            body = portal
-        else:
-            body = portal.as_dict()
+        # Start with an empty body or an existing resource's current data
+        body = {}
 
+        # Update the body with the fields passed in kwargs
         body.update(kwargs)
         
         # Use get instead of pop to keep microtenant_id in the body

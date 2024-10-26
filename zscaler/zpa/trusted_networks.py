@@ -152,10 +152,10 @@ class TrustedNetworksAPI(APIClient):
 
     def get_network_by_udid(self, search_id: str, query_params={}) -> tuple:
         """
-        Returns a trusted network based on its 'network_udid'.
+        Returns a trusted network based on its 'network_id'.
 
         Args:
-            network_udid (str): The unique identifier for the network_udid of the trusted network.
+            search_id (str): The unique identifier for the network_udid of the trusted network.
 
         Returns:
             TrustedNetwork: The resource record for the trusted network, or None if not found.
@@ -165,7 +165,7 @@ class TrustedNetworksAPI(APIClient):
             return (None, response, error)
 
         for network in networks:
-            if network.network_id == search_id:
-                return network.name, response, None
+            if network.network_id == search_id:  # Assuming `network_id` is the UDID field
+                return network, response, None  # Return the full TrustedNetwork object
 
         return None, response, None

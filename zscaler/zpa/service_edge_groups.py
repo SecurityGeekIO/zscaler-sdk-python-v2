@@ -135,7 +135,7 @@ class ServiceEdgeGroupAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
 
-    def add_service_edge_group(self, edge_group, **kwargs) -> tuple:
+    def add_service_edge_group(self, **kwargs) -> tuple:
         """
         Adds a new service edge group.
 
@@ -154,14 +154,8 @@ class ServiceEdgeGroupAPI(APIClient):
             /serviceEdgeGroup
         """)
 
-        # Ensure edge_group is a dictionary
-        if isinstance(edge_group, dict):
-            body = edge_group
-        else:
-            body = edge_group.as_dict()
-
-        # Merge any additional kwargs into the body
-        body.update(kwargs)
+        # Construct the body from kwargs (as a dictionary)
+        body = kwargs
 
         # Check if microtenant_id is set in the body, and use it to set query parameter
         microtenant_id = body.get("microtenant_id", None)
@@ -192,7 +186,7 @@ class ServiceEdgeGroupAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
 
-    def update_service_edge_group(self, group_id: str, edge_group, **kwargs) -> ServiceEdgeGroup:
+    def update_service_edge_group(self, group_id: str, **kwargs) -> ServiceEdgeGroup:
         """
         Updates a specified service edge group.
 
@@ -208,13 +202,10 @@ class ServiceEdgeGroupAPI(APIClient):
             /serviceEdgeGroup/{group_id}
         """)
 
-        # Ensure edge_group is a dictionary
-        if isinstance(edge_group, dict):
-            body = edge_group
-        else:
-            body = edge_group.as_dict()
+        # Start with an empty body or an existing resource's current data
+        body = {}
 
-        # Merge any additional kwargs into the body
+        # Update the body with the fields passed in kwargs
         body.update(kwargs)
 
         # Use get instead of pop to keep microtenant_id in the body

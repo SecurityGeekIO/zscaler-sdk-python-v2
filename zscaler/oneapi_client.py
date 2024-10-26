@@ -51,12 +51,24 @@ class Client:
         ConfigValidator(self._config)
         self.logger.debug("Configuration validated successfully.")
 
-        self._client_id = self._config["client"]["clientId"]
-        self._client_secret = self._config["client"].get("clientSecret", None)
-        self._private_key = self._config["client"].get("privateKey", None)
-        self._vanity_domain = self._config["client"]["vanityDomain"]
-        self._cloud = self._config["client"].get("cloud", "PRODUCTION")
+        # Check inline configuration first, and if not provided, use environment variables
+        self._client_id = self._config["client"].get("clientId", os.getenv("ZSCALER_CLIENT_ID"))
+        self._client_secret = self._config["client"].get("clientSecret", os.getenv("ZSCALER_CLIENT_SECRET"))
+        self._private_key = self._config["client"].get("privateKey", os.getenv("ZSCALER_PRIVATE_KEY"))
+        self._vanity_domain = self._config["client"].get("vanityDomain", os.getenv("ZSCALER_VANITY_DOMAIN"))
+        self._cloud = self._config["client"].get("cloud", os.getenv("ZSCALER_CLOUD", "PRODUCTION"))
         self._auth_token = None
+
+        # Ensure required fields are set, either through inline config or environment variables
+        if not self._client_id:
+            raise ValueError("Client ID is required. Please set 'clientId' or 'ZSCALER_CLIENT_ID' environment variable.")
+        if not (self._client_secret or self._private_key):
+            raise ValueError("Either Client Secret or Private Key is required. Please set 'clientSecret' or 'privateKey'.")
+
+        self.logger.debug(f"Client ID: {self._client_id}")
+        self.logger.debug(f"Vanity Domain: {self._vanity_domain}")
+        self.logger.debug(f"Cloud: {self._cloud}")
+        self.logger.debug(f"Customer ID: {self._customer_id}")
 
         # Handle cache
         cache = NoOpCache()

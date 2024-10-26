@@ -131,7 +131,7 @@ class AppConnectorGroupAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
 
-    def add_connector_group(self, connector_group, **kwargs) -> tuple:
+    def add_connector_group(self, **kwargs) -> tuple:
         """
         Adds a new ZPA App Connector Group.
 
@@ -180,13 +180,8 @@ class AppConnectorGroupAPI(APIClient):
             /appConnectorGroup
         """)
 
-        # Ensure connector_group is a dictionary
-        if isinstance(connector_group, dict):
-            body = connector_group
-        else:
-            body = connector_group.as_dict()
-
-        body.update(kwargs)
+        # Construct the body from kwargs (as a dictionary)
+        body = kwargs
 
         # Check if microtenant_id is set in the body, and use it to set query parameter
         microtenant_id = body.get("microtenant_id", None)
@@ -214,7 +209,7 @@ class AppConnectorGroupAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
 
-    def update_connector_group(self, group_id: str, connector_group, **kwargs) -> tuple:
+    def update_connector_group(self, group_id: str, **kwargs) -> tuple:
         """
         Updates an existing ZPA App Connector Group.
 
@@ -265,12 +260,10 @@ class AppConnectorGroupAPI(APIClient):
             /appConnectorGroup/{group_id}
         """)
 
-        # Ensure the connector_group is in dictionary format
-        if isinstance(connector_group, dict):
-            body = connector_group
-        else:
-            body = connector_group.as_dict()
+        # Start with an empty body or an existing resource's current data
+        body = {}
 
+        # Update the body with the fields passed in kwargs
         body.update(kwargs)
         
         # Use get instead of pop to keep microtenant_id in the body

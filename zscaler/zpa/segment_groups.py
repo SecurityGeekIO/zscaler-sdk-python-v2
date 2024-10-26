@@ -138,7 +138,7 @@ class SegmentGroupsAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
 
-    def add_group(self, group, **kwargs) -> tuple:
+    def add_group(self, **kwargs) -> tuple:
         """
         Adds a new segment group.
 
@@ -154,19 +154,13 @@ class SegmentGroupsAPI(APIClient):
             {self._zpa_base_endpoint}
             /segmentGroup
         """)
-
-        # Ensure connector_group is a dictionary
-        if isinstance(group, dict):
-            body = group
-        else:
-            body = group.as_dict()
-
+        
+        # Construct the body from kwargs (as a dictionary)
+        body = kwargs
+        
         # Check if microtenant_id is set in the body, and use it to set query parameter
         microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
-
-        # Add any additional fields from kwargs to the body
-        body.update(kwargs)
 
         # Create the request
         request, error = self._request_executor\
@@ -190,7 +184,7 @@ class SegmentGroupsAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
 
-    def update_group(self, group_id: str, group, **kwargs) -> tuple:
+    def update_group(self, group_id: str, **kwargs) -> tuple:
         """
         Updates the specified segment group.
 
@@ -206,13 +200,10 @@ class SegmentGroupsAPI(APIClient):
             /segmentGroup/{group_id}
         """)
 
-        # Ensure the connector_group is in dictionary format
-        if isinstance(group, dict):
-            body = group
-        else:
-            body = group.as_dict()
+        # Start with an empty body or an existing resource's current data
+        body = {}
 
-        # Add any additional fields from kwargs to the body
+        # Update the body with the fields passed in kwargs
         body.update(kwargs)
 
         # Use get instead of pop to keep microtenant_id in the body
@@ -220,32 +211,27 @@ class SegmentGroupsAPI(APIClient):
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
         
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, {}, params)
+        request, error = self._request_executor.create_request(http_method, api_url, body, {}, params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, SegmentGroup)
+        response, error = self._request_executor.execute(request, SegmentGroup)
         if error:
             return (None, response, error)
 
-        # Handle case where no content is returned (204 No Content)
+        # If no response body, return a minimal SegmentGroup instance with just the ID
         if response is None:
-            # Return a meaningful result to indicate success
             return (SegmentGroup({"id": group_id}), None, None)
 
-        # Parse the response into an AppConnectorGroup instance
+        # Parse the response into a SegmentGroup instance
         try:
-            result = SegmentGroup(
-                self.form_response_body(response.get_body())
-            )
+            result = SegmentGroup(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def update_group_v2(self, group_id: str, group, **kwargs) -> tuple:
+    def update_group_v2(self, group_id: str, **kwargs) -> tuple:
         """
         Updates the specified segment group.
 
@@ -261,41 +247,30 @@ class SegmentGroupsAPI(APIClient):
             /segmentGroup/{group_id}
         """)
 
-        # Ensure the connector_group is in dictionary format
-        if isinstance(group, dict):
-            body = group
-        else:
-            body = group.as_dict()
-
         # Add any additional fields from kwargs to the body
-        body.update(kwargs)
+        body = kwargs
 
         # Use get instead of pop to keep microtenant_id in the body
         microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
         
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, {}, params)
+        request, error = self._request_executor.create_request(http_method, api_url, body, {}, params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, SegmentGroup)
+        response, error = self._request_executor.execute(request, SegmentGroup)
         if error:
             return (None, response, error)
 
-        # Handle case where no content is returned (204 No Content)
+        # If no response body, return a minimal SegmentGroup instance with just the ID
         if response is None:
-            # Return a meaningful result to indicate success
             return (SegmentGroup({"id": group_id}), None, None)
 
-        # Parse the response into an AppConnectorGroup instance
+        # Parse the response into a SegmentGroup instance
         try:
-            result = SegmentGroup(
-                self.form_response_body(response.get_body())
-            )
+            result = SegmentGroup(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -323,11 +298,12 @@ class SegmentGroupsAPI(APIClient):
         request, error = self._request_executor\
             .create_request(http_method, api_url, params=params)
         if error:
-            return (None, None, error)
+            return (None, error)
 
-        # Execute the request
         response, error = self._request_executor\
             .execute(request)
+
         if error:
             return (None, response, error)
-        return (None, response, None)
+
+        return (None, response, error)

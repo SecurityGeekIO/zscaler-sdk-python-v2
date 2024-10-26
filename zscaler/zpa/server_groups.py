@@ -141,7 +141,7 @@ class ServerGroupsAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
 
-    def add_group(self, server_group, **kwargs) -> tuple:
+    def add_group(self, **kwargs) -> tuple:
         """
         Adds a server group.
 
@@ -158,11 +158,8 @@ class ServerGroupsAPI(APIClient):
             /serverGroup
         """)
 
-        # Ensure app_segment is a dictionary
-        if isinstance(server_group, dict):
-            body = server_group
-        else:
-            body = server_group.as_dict()
+        # Construct the body from kwargs (as a dictionary)
+        body = kwargs
 
         # Check if microtenant_id is set in kwargs or the body, and use it to set query parameter
         microtenant_id = kwargs.get("microtenant_id") or body.get("microtenant_id", None)
@@ -174,9 +171,6 @@ class ServerGroupsAPI(APIClient):
 
         if "server_ids" in body:
             body["servers"] = [{"id": group_id} for group_id in body.pop("server_ids")]
-
-        # Add any additional fields from kwargs to the body
-        body.update(kwargs)
 
         add_id_groups(self.reformat_params, kwargs, body)
 
@@ -202,7 +196,7 @@ class ServerGroupsAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
 
-    def update_group(self, group_id: str, server_group, **kwargs) -> tuple:
+    def update_group(self, group_id: str, **kwargs) -> tuple:
         """
         Updates a server group.
 
@@ -218,37 +212,41 @@ class ServerGroupsAPI(APIClient):
             /serverGroup/{group_id}
         """)
 
-        # Ensure app_segment is a dictionary
-        if isinstance(server_group, dict):
-            body = server_group
-        else:
-            body = server_group.as_dict()
+        # Fetch the existing group to ensure mandatory fields like appConnectorGroups are preserved
+        existing_group, _, err = self.get_group(group_id)
+        if err:
+            return (None, None, f"Error fetching the existing group: {err}")
+        
+        # Use the existing group's data as the base body, to ensure mandatory fields are preserved
+        body = existing_group.request_format()  # Fetch the current group representation
+
+        # Update the body with the fields passed in kwargs (overwrite existing fields with updates)
+        body.update(kwargs)
+
+        # Ensure dynamicDiscovery is always included, default to True if not provided
+        if "dynamicDiscovery" not in body:
+            body["dynamicDiscovery"] = True
 
         # Check if microtenant_id is set in kwargs or the body, and use it to set query parameter
         microtenant_id = kwargs.get("microtenant_id") or body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        # Reformat server_group_ids to match the expected API format (serverGroups)
+        # Reformat app_connector_group_ids to match the expected API format (appConnectorGroups)
         if "app_connector_group_ids" in body:
             body["appConnectorGroups"] = [{"id": group_id} for group_id in body.pop("app_connector_group_ids")]
 
         if "server_ids" in body:
             body["servers"] = [{"id": group_id} for group_id in body.pop("server_ids")]
 
-        # Add any additional fields from kwargs to the body
-        body.update(kwargs)
-
         add_id_groups(self.reformat_params, kwargs, body)
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, {}, params)
+        request, error = self._request_executor.create_request(http_method, api_url, body, {}, params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, ServerGroup)
+        response, error = self._request_executor.execute(request, ServerGroup)
         if error:
             return (None, response, error)
 
@@ -257,13 +255,12 @@ class ServerGroupsAPI(APIClient):
             # Return a meaningful result to indicate success
             return (ServerGroup({"id": group_id}), None, None)
 
-        # Parse the response into an AppConnectorGroup instance
+        # Parse the response into a ServerGroup instance
         try:
-            result = ServerGroup(
-                self.form_response_body(response.get_body())
-            )
+            result = ServerGroup(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
+
         return (result, response, None)
 
     def delete_group(self, group_id: str, microtenant_id: str = None) -> tuple:

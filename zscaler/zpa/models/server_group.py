@@ -15,6 +15,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.oneapi_object import ZscalerObject
+from zscaler.oneapi_collection import ZscalerCollection
 from zscaler.zpa.models import application_segment\
     as application_segment
 from zscaler.zpa.models import app_connector_groups\
@@ -37,8 +38,8 @@ class ServerGroup(ZscalerObject):
                 if "creationTime" in config else None
             self.modified_by = config["modifiedBy"]\
                 if "modifiedBy" in config else None
-            self.enabled = config["enabled"]\
-                if "enabled" in config else None
+            self.enabled = config["enabled"] \
+                if "enabled" in config else True
             self.name = config["name"]\
                 if "name" in config else None
             self.description = config["description"]\
@@ -53,33 +54,30 @@ class ServerGroup(ZscalerObject):
                 if "microtenantId" in config else None
             self.microtenant_name = config["microtenantName"]\
                 if "microtenantName" in config else None
-            self.dynamic_discovery = config["dynamicDiscovery"]\
-                if "dynamicDiscovery" in config else None
+            self.dynamic_discovery = config["dynamicDiscovery"] \
+                if "dynamicDiscovery" in config else True
 
             # Handle the nested list of applications
             if "applications" in config:
                 self.applications = [application_segment.ApplicationSegment(app) for app in config["applications"]]
             else:
                 self.applications = []
-
-            # Handle the nested list of appConnectorGroups
-            if "appConnectorGroups" in config:
-                self.app_connector_groups = [app_connector_groups.AppConnectorGroup(connector) for connector in config["appConnectorGroups"]]
-            else:
-                self.app_connector_groups = []
+                
+            self.app_connector_groups = ZscalerCollection.form_list(config.get("appConnectorGroups", []), app_connector_groups.AppConnectorGroup)
+            
         else:
             self.id = None
             self.modified_time = None
             self.creation_time = None
             self.modified_by = None
-            self.enabled = None
+            self.enabled = True
             self.name = None
             self.description = None
             self.ip_anchored = None
             self.config_space = None
             self.extranet_enabled = None
             self.microtenant_name = None
-            self.dynamic_discovery = None
+            self.dynamic_discovery = True
             self.applications = []
             self.app_connector_groups = []
 
@@ -100,9 +98,9 @@ class ServerGroup(ZscalerObject):
             "configSpace": self.config_space,
             "extranetEnabled": self.extranet_enabled,
             "microtenantName": self.microtenant_name,
-            "dynamicDiscovery": self.dynamic_discovery,
+            "dynamicDiscovery": True if self.dynamic_discovery else False,
             "applications": [app.request_format() for app in self.applications],
-            "appConnectorGroups": [connector.request_format() for connector in self.app_connector_groups],
+            "appConnectorGroups": [group.request_format() for group in self.app_connector_groups],
         }
         parent_req_format.update(current_obj_format)
         return parent_req_format
