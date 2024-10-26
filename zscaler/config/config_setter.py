@@ -144,7 +144,7 @@ class ConfigSetter:
             self._config["testing"] = {}
 
         # Initialize the 'testing' section with default values
-        self._config["testing"]["testingDisableHttpsCheck"] = False
+        self._config["testing"]["disableHttpsCheck"] = False
 
     def _apply_config(self, new_config: dict):
         """Apply a config dictionary to the current config, overwriting values"""

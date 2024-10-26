@@ -31,10 +31,15 @@ class HTTPClient:
             self._proxy = self._setup_proxy(http_config["proxy"])
         else:
             self._proxy = None
+            
+        # Setup SSL context or handle disableHttpsCheck
         if "sslContext" in http_config:
-            self._ssl_context = http_config["sslContext"]
+            self._ssl_context = http_config["sslContext"]  # Use the custom SSL context
+        elif "disableHttpsCheck" in http_config and http_config["disableHttpsCheck"]:
+            self._ssl_context = False  # Disable SSL certificate validation if disableHttpsCheck is true
         else:
-            self._ssl_context = None
+            self._ssl_context = True  # Enable SSL certificate validation by default
+
         self._session = None
 
     def _setup_proxy(self, proxy):

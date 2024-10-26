@@ -229,9 +229,6 @@ class AppSegmentsPRAAPI(APIClient):
         if kwargs.get("udp_port_ranges"):
             body["udpPortRange"] = [{"from": ports[0], "to": ports[1]} for ports in kwargs.pop("udp_port_ranges")]
 
-        # Add any additional fields from kwargs to the body
-        body.update(kwargs)
-
         # Apply add_id_groups to reformat params based on self.reformat_params
         add_id_groups(self.reformat_params, kwargs, body)
         
@@ -276,11 +273,8 @@ class AppSegmentsPRAAPI(APIClient):
             /application/{segment_id}
         """)
 
-        # Start with an empty body or an existing resource's current data
-        body = {}
-
-        # Update the body with the fields passed in kwargs
-        body.update(kwargs)
+        # Construct the body from kwargs (as a dictionary)
+        body = kwargs
 
         # Check if microtenant_id is set in the body, and use it to set query parameter
         microtenant_id = body.get("microtenant_id", None)
@@ -300,9 +294,6 @@ class AppSegmentsPRAAPI(APIClient):
 
         if kwargs.get("udp_port_ranges"):
             body["udpPortRange"] = [{"from": ports[0], "to": ports[1]} for ports in kwargs.pop("udp_port_ranges")]
-
-        # Add any additional fields from kwargs to the body
-        body.update(kwargs)
 
         # Apply add_id_groups to reformat params based on self.reformat_params
         add_id_groups(self.reformat_params, kwargs, body)

@@ -221,9 +221,6 @@ class AppSegmentsInspectionAPI(APIClient):
         if kwargs.get("udp_port_ranges"):
             body["udpPortRange"] = [{"from": ports[0], "to": ports[1]} for ports in kwargs.pop("udp_port_ranges")]
 
-        # Add any additional fields from kwargs to the body
-        body.update(kwargs)
-
         # Apply add_id_groups to reformat params based on self.reformat_params
         add_id_groups(self.reformat_params, kwargs, body)
         
@@ -314,11 +311,8 @@ class AppSegmentsInspectionAPI(APIClient):
             /application/{segment_id}
         """)
 
-        # Start with an empty body or an existing resource's current data
-        body = {}
-
-        # Update the body with the fields passed in kwargs
-        body.update(kwargs)
+        # Construct the body from kwargs (as a dictionary)
+        body = kwargs
 
         # Reformat server_group_ids to match the expected API format (serverGroups)
         if "server_group_ids" in body:
@@ -334,9 +328,6 @@ class AppSegmentsInspectionAPI(APIClient):
 
         if kwargs.get("udp_port_ranges"):
             body["udpPortRange"] = [{"from": ports[0], "to": ports[1]} for ports in kwargs.pop("udp_port_ranges")]
-
-        # Add any additional fields from kwargs to the body
-        body.update(kwargs)
 
         # Apply add_id_groups to reformat params based on self.reformat_params
         add_id_groups(self.reformat_params, kwargs, body)

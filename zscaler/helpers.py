@@ -55,3 +55,16 @@ def convert_keys_to_snake_case(data):
         return [convert_keys_to_snake_case(item) for item in data]
     else:
         return data
+    
+def convert_keys_to_camel_case(data):
+    """
+    Recursively convert all keys in a dictionary or list to camelCase.
+    Handles nested lists and dictionaries.
+    """
+    if isinstance(data, dict):
+        return {to_lower_camel_case(k): convert_keys_to_camel_case(v) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [convert_keys_to_camel_case(item) for item in data]
+    else:
+        return data
+

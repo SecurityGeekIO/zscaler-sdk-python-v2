@@ -8,7 +8,7 @@ from zscaler.user_agent import UserAgent
 from zscaler.utils import convert_date_time_to_seconds
 from zscaler.error_messages import ERROR_MESSAGE_429_MISSING_DATE_X_RESET
 from http import HTTPStatus
-from zscaler.helpers import convert_keys_to_snake_case, to_lower_camel_case
+from zscaler.helpers import convert_keys_to_snake_case, convert_keys_to_camel_case
 
 logger = logging.getLogger(__name__)
 
@@ -126,19 +126,20 @@ class RequestExecutor:
         headers = {**self._default_headers, **headers}
         headers["Authorization"] = f"Bearer {self._oauth._get_access_token()}"
 
+        # Convert body and params to camelCase globally
+        if body:
+            body = convert_keys_to_camel_case(body)
+
+        if params:
+            params = convert_keys_to_camel_case(params)
+
         # Handle ZPA-specific cases, especially the /reorder endpoint which expects a JSON list
         if "/zpa/" in endpoint and "/reorder" in endpoint and isinstance(body, list):
             # For the /reorder endpoint, handle the body as a list
             print(f"Handling ZPA reorder endpoint with list body: {body}")
             json_payload = body
         else:
-            # For all other endpoints, process the body as a dictionary
-            if body:
-                body = {to_lower_camel_case(k): v for k, v in body.items()}
             json_payload = body
-
-        if params:
-            params = {to_lower_camel_case(k): v for k, v in params.items()}
 
         if "/zpa/" in endpoint:
             # Check for microtenantId in body, params, and config (in that order)
