@@ -142,7 +142,7 @@ class AppSegmentsPRAAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
 
-    def add_segment_pra(self, app_segment, **kwargs) -> tuple:
+    def add_segment_pra(self, **kwargs) -> tuple:
         """
         Add a new application segment.
 
@@ -207,11 +207,8 @@ class AppSegmentsPRAAPI(APIClient):
             /application
         """)
 
-        # Ensure app_segment is a dictionary
-        if isinstance(app_segment, dict):
-            body = app_segment
-        else:
-            body = app_segment.as_dict()
+        # Construct the body from kwargs (as a dictionary)
+        body = kwargs
 
         # Check if microtenant_id is set in kwargs or the body, and use it to set query parameter
         microtenant_id = kwargs.get("microtenant_id") or body.get("microtenant_id", None)
@@ -260,7 +257,7 @@ class AppSegmentsPRAAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
 
-    def update_segment_pra(self, segment_id: str, app_segment, **kwargs) -> tuple:
+    def update_segment_pra(self, segment_id: str, **kwargs) -> tuple:
         """
         Update an existing application segment.
 
@@ -279,11 +276,11 @@ class AppSegmentsPRAAPI(APIClient):
             /application/{segment_id}
         """)
 
-        # Ensure app_segment is a dictionary
-        if isinstance(app_segment, dict):
-            body = app_segment
-        else:
-            body = app_segment.as_dict()
+        # Start with an empty body or an existing resource's current data
+        body = {}
+
+        # Update the body with the fields passed in kwargs
+        body.update(kwargs)
 
         # Check if microtenant_id is set in the body, and use it to set query parameter
         microtenant_id = body.get("microtenant_id", None)

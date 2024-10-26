@@ -143,7 +143,7 @@ class SAMLAttributesAPI(APIClient):
             attribute_id (str): The unique identifier for the SAML attribute.
 
         Returns:
-            tuple: A tuple containing the `SAMLAttribute` instance, response object, and error if any.
+            tuple: A tuple containing the raw response data (dict), response object, and error if any.
 
         Examples:
             >>> attribute, response, error = zpa.saml_attributes.get_attribute('99999')
@@ -151,8 +151,8 @@ class SAMLAttributesAPI(APIClient):
             ...    pprint(attribute)
         """
         http_method = "get".upper()
-        api_url = format_url(f"""{
-            self._zpa_base_endpoint}
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint}
             /samlAttribute/{attribute_id}
         """)
 
@@ -162,20 +162,18 @@ class SAMLAttributesAPI(APIClient):
             encoded_query_params = urlencode(query_params)
             api_url += f"?{encoded_query_params}"
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, SAMLAttribute)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
         try:
-            result = SAMLAttribute(
-                self.form_response_body(response.get_body())
-            )
+            # Directly return the raw response data as a dictionary
+            result = self.form_response_body(response.get_body())
         except Exception as error:
             return (None, response, error)
+
         return (result, response, None)

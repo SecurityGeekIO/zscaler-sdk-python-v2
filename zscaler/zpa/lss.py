@@ -250,7 +250,7 @@ class LSSConfigControllerAPI(APIClient):
             self._zpa_lss_base_endpoint_v2}
             /lssConfig
         """)
-
+        
         # Map the source log type to ZPA internal log codes
         source_log_type = self.source_log_map[source_log_type]
 

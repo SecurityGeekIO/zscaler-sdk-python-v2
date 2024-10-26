@@ -166,7 +166,7 @@ class PRAConsoleAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
     
-    def add_console(self, console, **kwargs) -> tuple:
+    def add_console(self, **kwargs) -> tuple:
         """
         Adds a new Privileged Remote Access (PRA) console.
 
@@ -188,11 +188,8 @@ class PRAConsoleAPI(APIClient):
             /praConsole
         """)
 
-        # Ensure the console is a dictionary
-        if isinstance(console, dict):
-            body = console
-        else:
-            body = console.as_dict()
+        # Construct the body from kwargs (as a dictionary)
+        body = kwargs
 
         # Extract 'pra_application_id' and 'pra_portal_ids' from body or kwargs
         pra_application_id = body.pop("pra_application_id", None) or kwargs.pop("pra_application_id", None)
@@ -230,7 +227,7 @@ class PRAConsoleAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
 
-    def update_console(self, console_id: str, console, **kwargs) -> tuple:
+    def update_console(self, console_id: str, **kwargs) -> tuple:
         """
         Updates the specified PRA console.
 
@@ -248,11 +245,11 @@ class PRAConsoleAPI(APIClient):
             /praConsole/{console_id}
         """)
 
-        # Ensure the console is a dictionary
-        if isinstance(console, dict):
-            body = console
-        else:
-            body = console.as_dict()
+        # Start with an empty body or an existing resource's current data
+        body = {}
+
+        # Update the body with the fields passed in kwargs
+        body.update(kwargs)
 
         # Extract 'pra_application_id' and 'pra_portal_ids' from body or kwargs
         pra_application_id = body.pop("pra_application_id", None) or kwargs.pop("pra_application_id", None)

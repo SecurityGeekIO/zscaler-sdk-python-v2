@@ -127,7 +127,7 @@ class PRAApprovalAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
 
-    def add_approval(self, approval, **kwargs) -> tuple:
+    def add_approval(self, **kwargs) -> tuple:
         """
         Adds a privileged remote access approval.
 
@@ -148,11 +148,8 @@ class PRAApprovalAPI(APIClient):
             /approval
         """)
 
-        # Ensure approval is a dictionary
-        if isinstance(approval, dict):
-            body = approval
-        else:
-            body = approval.as_dict()
+        # Construct the body from kwargs (as a dictionary)
+        body = kwargs
 
         # Convert start_time and end_time to epoch format
         start_time = body.pop("start_time", None)
@@ -204,7 +201,7 @@ class PRAApprovalAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
 
-    def update_approval(self, approval_id: str, approval, **kwargs) -> tuple:
+    def update_approval(self, approval_id: str, **kwargs) -> tuple:
         """
         Updates a specified approval based on provided keyword arguments.
 
@@ -220,11 +217,11 @@ class PRAApprovalAPI(APIClient):
             /approval/{approval_id}
         """)
 
-        # Ensure approval is a dictionary
-        if isinstance(approval, dict):
-            body = approval
-        else:
-            body = approval.as_dict()
+        # Start with an empty body or an existing resource's current data
+        body = {}
+
+        # Update the body with the fields passed in kwargs
+        body.update(kwargs)
 
         # Convert start_time and end_time to epoch format
         start_time = body.pop("start_time", None)

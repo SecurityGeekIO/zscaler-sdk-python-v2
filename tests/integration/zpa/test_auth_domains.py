@@ -36,11 +36,13 @@ class TestAuthDomains:
 
         try:
             # Retrieve authentication domains
-            auth_domains = client.authdomains.get_auth_domains()
-            assert auth_domains is not None
-            assert "auth_domains" in auth_domains
-            assert isinstance(auth_domains.auth_domains, list)
-            assert len(auth_domains.auth_domains) > 0, "Auth domains list is empty"
+            auth_domains, _, err = client.zpa.authdomains.get_auth_domains()
+            assert err is None, f"Error retrieving auth domains: {err}"
+            assert auth_domains is not None, "Auth domains response is None"
+            assert isinstance(auth_domains, dict), "Auth domains should be a dictionary"
+            assert "authDomains" in auth_domains, "Missing 'authDomains' key in response"
+            assert isinstance(auth_domains["authDomains"], list), "'authDomains' should be a list"
+            assert len(auth_domains["authDomains"]) > 0, "Auth domains list is empty"
         except Exception as exc:
             errors.append(exc)
 

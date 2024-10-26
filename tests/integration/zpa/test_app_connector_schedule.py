@@ -37,7 +37,7 @@ class TestAppConnectorSchedule:
 
         try:
             # Step 1: Get the existing App Connector Schedule
-            schedule = client.connectors.get_connector_schedule()
+            schedule = client.zpa.app_connector_schedule.get_connector_schedule()
             assert schedule is not None, "Failed to retrieve App Connector Schedule"
             pprint(schedule)
 
@@ -49,7 +49,7 @@ class TestAppConnectorSchedule:
 
         try:
             # Step 2: Add a new App Connector Schedule
-            new_schedule = client.connectors.add_connector_schedule(
+            new_schedule = client.zpa.app_connector_schedule.add_connector_schedule(
                 frequency="days",
                 interval="5",
                 disabled=False,
@@ -69,7 +69,7 @@ class TestAppConnectorSchedule:
         try:
             # Step 3: Update the App Connector Schedule
             assert scheduler_id is not None, "Scheduler ID is None"
-            updated_schedule = client.connectors.update_connector_schedule(
+            updated_schedule = client.zpa.app_connector_schedule.update_connector_schedule(
                 scheduler_id=scheduler_id,
                 frequency="days",
                 interval="7",

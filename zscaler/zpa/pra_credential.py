@@ -125,7 +125,7 @@ class PRACredentialAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
 
-    def add_credential(self, credential, **kwargs) -> tuple:
+    def add_credential(self, **kwargs) -> tuple:
         """
         Adds a new privileged remote access credential.
 
@@ -145,13 +145,8 @@ class PRACredentialAPI(APIClient):
             /credential
         """)
         
-        # Ensure connector_group is a dictionary
-        if isinstance(credential, dict):
-            body = credential
-        else:
-            body = credential.as_dict()
-
-        body.update(kwargs)
+        # Construct the body from kwargs (as a dictionary)
+        body = kwargs
 
         # Validate and process the credential type
         credential_type = body.get("credential_type")
@@ -205,7 +200,7 @@ class PRACredentialAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
 
-    def update_credential(self, credential_id: str, credential, **kwargs) -> tuple:
+    def update_credential(self, credential_id: str, **kwargs) -> tuple:
         """
         Updates a specified credential based on provided keyword arguments.
 
@@ -221,12 +216,10 @@ class PRACredentialAPI(APIClient):
             /credential/{credential_id}
         """)
 
-        # Ensure the connector_group is in dictionary format
-        if isinstance(credential, dict):
-            body = credential
-        else:
-            body = credential.as_dict()
+        # Start with an empty body or an existing resource's current data
+        body = {}
 
+        # Update the body with the fields passed in kwargs
         body.update(kwargs)
 
         # Validate and process the credential type

@@ -16,7 +16,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from zscaler.api_client import APIClient
 from zscaler.zpa.models.cbi_certificate import CBICertificate
-from zscaler.utils import format_url, snake_to_camel
+from zscaler.utils import format_url
 
 
 class CBICertificateAPI(APIClient):
@@ -97,7 +97,7 @@ class CBICertificateAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
 
-    def add_cbi_certificate(self, cbi_certificate, **kwargs) -> tuple:
+    def add_cbi_certificate(self, **kwargs) -> tuple:
         """
         Adds a new cloud browser isolation certificate.
 
@@ -125,13 +125,8 @@ class CBICertificateAPI(APIClient):
             /certificate
         """)
 
-        # Ensure connector_group is a dictionary
-        if isinstance(cbi_certificate, dict):
-            body = cbi_certificate
-        else:
-            body = cbi_certificate.as_dict()
-
-        body.update(kwargs)
+        # Construct the body from kwargs (as a dictionary)
+        body = kwargs
         
         # Create the request
         request, error = self._request_executor\
@@ -155,7 +150,7 @@ class CBICertificateAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
 
-    def update_cbi_certificate(self, certificate_id: str, cbi_certificate, **kwargs) -> tuple:
+    def update_cbi_certificate(self, certificate_id: str, **kwargs) -> tuple:
         """
         Updates an existing cloud browser isolation certificate.
 
@@ -181,12 +176,10 @@ class CBICertificateAPI(APIClient):
             /certificates/{certificate_id}
         """)
 
-        # Ensure the connector_group is in dictionary format
-        if isinstance(cbi_certificate, dict):
-            body = cbi_certificate
-        else:
-            body = cbi_certificate.as_dict()
+        # Start with an empty body or an existing resource's current data
+        body = {}
 
+        # Update the body with the fields passed in kwargs
         body.update(kwargs)
 
         # Create the request

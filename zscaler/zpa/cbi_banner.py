@@ -97,7 +97,7 @@ class CBIBannerAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
 
-    def add_cbi_banner(self, cbi_banner, **kwargs) -> tuple:
+    def add_cbi_banner(self, **kwargs) -> tuple:
         """
         Adds a new cloud browser isolation banner.
 
@@ -114,12 +114,8 @@ class CBIBannerAPI(APIClient):
             /banner
         """)
 
-        if isinstance(cbi_banner, dict):
-            body = cbi_banner
-        else:
-            body = cbi_banner.as_dict()
-
-        body.update(kwargs)
+        # Construct the body from kwargs (as a dictionary)
+        body = kwargs
         
         request, error = self._request_executor\
             .create_request(
@@ -141,7 +137,7 @@ class CBIBannerAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
     
-    def update_cbi_banner(self, banner_id: str, cbi_banner, **kwargs) -> tuple:
+    def update_cbi_banner(self, banner_id: str, **kwargs) -> tuple:
         """
         Updates an existing cloud browser isolation banner.
 
@@ -157,11 +153,10 @@ class CBIBannerAPI(APIClient):
             /banners/{banner_id}
         """)
 
-        if isinstance(cbi_banner, dict):
-            body = cbi_banner
-        else:
-            body = cbi_banner.as_dict()
+        # Start with an empty body or an existing resource's current data
+        body = {}
 
+        # Update the body with the fields passed in kwargs
         body.update(kwargs)
 
         request, error = self._request_executor\

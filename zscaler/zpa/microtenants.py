@@ -227,7 +227,7 @@ class MicrotenantsAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
 
-    def add_microtenant(self, microtenant, **kwargs) -> tuple:
+    def add_microtenant(self, **kwargs) -> tuple:
         """
         Add a new microtenant.
 
@@ -257,11 +257,8 @@ class MicrotenantsAPI(APIClient):
             /microtenants
         """)
 
-        # Ensure provisioning is a dictionary
-        if isinstance(microtenant, dict):
-            body = microtenant
-        else:
-            body = microtenant.as_dict()
+        # Construct the body from kwargs (as a dictionary)
+        body = kwargs
 
         # Extract and set attributes from the body
         name = body.pop("name", None)
@@ -301,7 +298,7 @@ class MicrotenantsAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
 
-    def update_microtenant(self, microtenant_id: str, microtenant, **kwargs) -> tuple:
+    def update_microtenant(self, microtenant_id: str, **kwargs) -> tuple:
         """
         Updates the specified microtenant.
 
@@ -332,12 +329,10 @@ class MicrotenantsAPI(APIClient):
             /microtenants/{microtenant_id}
         """)
 
-        # Ensure the connector_group is in dictionary format
-        if isinstance(microtenant, dict):
-            body = microtenant
-        else:
-            body = microtenant.as_dict()
+        # Start with an empty body or an existing resource's current data
+        body = {}
 
+        # Update the body with the fields passed in kwargs
         body.update(kwargs)
         
         # Use get instead of pop to keep microtenant_id in the body

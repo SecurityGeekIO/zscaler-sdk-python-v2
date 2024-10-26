@@ -137,7 +137,7 @@ class AppSegmentsInspectionAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
 
-    def add_segment_inspection(self, app_segment, **kwargs) -> tuple:
+    def add_segment_inspection(self, **kwargs) -> tuple:
         """
         Create an AppProtection application segment.
 
@@ -203,11 +203,8 @@ class AppSegmentsInspectionAPI(APIClient):
             /application
         """)
 
-        # Ensure app_segment is a dictionary
-        if isinstance(app_segment, dict):
-            body = app_segment
-        else:
-            body = app_segment.as_dict()
+        # Construct the body from kwargs (as a dictionary)
+        body = kwargs
 
         # Reformat server_group_ids to match the expected API format (serverGroups)
         if "server_group_ids" in body:
@@ -252,7 +249,7 @@ class AppSegmentsInspectionAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
 
-    def update_segment_inspection(self, segment_id: str, app_segment, **kwargs) -> tuple:
+    def update_segment_inspection(self, segment_id: str, **kwargs) -> tuple:
         """
         Update an AppProtection application segment.
 
@@ -317,11 +314,11 @@ class AppSegmentsInspectionAPI(APIClient):
             /application/{segment_id}
         """)
 
-        # Ensure app_segment is a dictionary
-        if isinstance(app_segment, dict):
-            body = app_segment
-        else:
-            body = app_segment.as_dict()
+        # Start with an empty body or an existing resource's current data
+        body = {}
+
+        # Update the body with the fields passed in kwargs
+        body.update(kwargs)
 
         # Reformat server_group_ids to match the expected API format (serverGroups)
         if "server_group_ids" in body:

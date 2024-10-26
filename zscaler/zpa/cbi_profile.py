@@ -100,7 +100,7 @@ class CBIProfileAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
 
-    def add_cbi_profile(self, cbi_profile, **kwargs) -> tuple:
+    def add_cbi_profile(self, **kwargs) -> tuple:
         """
         Adds a new cloud browser isolation profile to the Zscaler platform.
 
@@ -197,13 +197,8 @@ class CBIProfileAPI(APIClient):
             /profiles
         """)
 
-        # Ensure cbi_profile is a dictionary
-        if isinstance(cbi_profile, dict):
-            body = cbi_profile
-        else:
-            body = cbi_profile.as_dict()
-
-        body.update(kwargs)
+        # Construct the body from kwargs (as a dictionary)
+        body = kwargs
 
         # Validation for required fields: region_ids and certificate_ids
         if not body.get("region_ids") or not isinstance(body.get("region_ids"), list) or len(body.get("region_ids")) < 2:
@@ -233,7 +228,7 @@ class CBIProfileAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
 
-    def update_cbi_profile(self, profile_id: str, cbi_profile, **kwargs) -> tuple:
+    def update_cbi_profile(self, profile_id: str, **kwargs) -> tuple:
         """
         Updates an existing cloud browser isolation profile.
 
@@ -298,13 +293,10 @@ class CBIProfileAPI(APIClient):
             /profiles/{profile_id}
         """)
 
-        # Ensure cbi_profile is a dictionary
-        if isinstance(cbi_profile, dict):
-            body = cbi_profile
-        else:
-            body = cbi_profile.as_dict()
+        # Start with an empty body or an existing resource's current data
+        body = {}
 
-        # Update with any additional keyword arguments
+        # Update the body with the fields passed in kwargs
         body.update(kwargs)
 
         # Validation for required fields: regions, certificates, and banner
