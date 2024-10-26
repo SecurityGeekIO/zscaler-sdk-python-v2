@@ -258,10 +258,15 @@ class RequestExecutor:
         if self._cache_enabled():
             # Remove cache entry if not a GET call
             if request["method"].upper() != "GET":
+                logger.debug(f"Deleting cache entry for non-GET request: {url_cache_key}")
                 self._cache.delete(url_cache_key)
+
             # Check if response exists in cache
             if self._cache.contains(url_cache_key):
+                logger.info(f"Cache hit for URL: {request['url']}")
                 return self._cache.get(url_cache_key), None
+            else:
+                logger.debug(f"No cache entry found for URL: {request['url']}")
 
         # Send actual request
         request, response, response_body, error = self.fire_request_helper(request, 0, time.time())
