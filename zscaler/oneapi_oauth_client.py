@@ -15,11 +15,23 @@ class OAuth:
     This class contains the OAuth actions for the Zscaler Client.
     """
 
+    _instance = None
+    _last_config = None
+
+    def __new__(cls, request_executor, config):
+        if cls._instance is None or cls._last_config != config:
+            cls._instance = super(OAuth, cls).__new__(cls)
+            cls._last_config = config
+            cls._instance.__init__(request_executor, config)
+        return cls._instance
+
     def __init__(self, request_executor, config):
-        self._request_executor = request_executor
-        self._config = config
-        self._access_token = None
-        logging.info("OAuth instance created with provided configuration.")
+        if not hasattr(self, "_initialized"):
+            self._request_executor = request_executor
+            self._config = config
+            self._access_token = None
+            logging.info("OAuth instance created with provided configuration.")
+            self._initialized = True
 
     def authenticate(self):
         """

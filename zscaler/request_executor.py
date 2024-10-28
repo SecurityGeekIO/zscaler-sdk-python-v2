@@ -12,6 +12,7 @@ from zscaler.helpers import convert_keys_to_snake_case, convert_keys_to_camel_ca
 
 logger = logging.getLogger(__name__)
 
+
 class RequestExecutor:
     """
     This class handles all of the requests sent by the Zscaler SDK Client (ZIA, ZPA, ZCC, etc.).
@@ -114,13 +115,10 @@ class RequestExecutor:
         logger.info(f"Creating request for endpoint: {endpoint} with method: {method}")
         # Get the appropriate base URL based on the service and cloud environment
         base_url = self.get_base_url(self.cloud)
-        
+
         # Ensure the final URL is constructed by appending the base URL
         final_url = f"{base_url}/{endpoint.lstrip('/')}"
         logger.debug(f"Final URL after service detection and version handling: {final_url}")
-
-        # OAuth
-        self._oauth = OAuth(self, self._config)
 
         # Set headers, including OAuth token if required
         headers = {**self._default_headers, **headers}
@@ -237,6 +235,9 @@ class RequestExecutor:
             None,
         )
 
+    def _cache_enabled(self):
+        return self._config["client"]["cache"]["enabled"] == True
+
     def fire_request(self, request):
         """
         Send request using HTTP client.
@@ -251,21 +252,26 @@ class RequestExecutor:
 
         # Pass both URL and params to create_key
         url_cache_key = self._cache.create_key(request["url"], request["params"])
+        if self._cache_enabled():
+            # Remove cache entry if not a GET call
+            if request["method"].upper() != "GET":
+                logger.debug(f"Deleting cache entry for non-GET request: {url_cache_key}")
+                self._cache.delete(url_cache_key)
 
-        # Remove cache entry if not a GET call
-        if request["method"].upper() != "GET":
-            self._cache.delete(url_cache_key)
-
-        # Check if response exists in cache
-        if self._cache.contains(url_cache_key):
-            return self._cache.get(url_cache_key), None
+            # Check if response exists in cache
+            if self._cache.contains(url_cache_key):
+                logger.info(f"Cache hit for URL: {request['url']}")
+                response, response_body = self._cache.get(url_cache_key)
+                return request, response, response_body, None
+            else:
+                logger.debug(f"No cache entry found for URL: {request['url']}")
 
         # Send actual request
         request, response, response_body, error = self.fire_request_helper(request, 0, time.time())
-
-        if error is None and request["method"].upper() == "GET" and 200 <= response.status_code < 300:
-            logger.info(f"Caching response for URL: {request['url']}")
-            self._cache.add(url_cache_key, (response, response_body))
+        if self._cache_enabled():
+            if error is None and request["method"].upper() == "GET" and 200 <= response.status_code < 300:
+                logger.info(f"Caching response for URL: {request['url']}")
+                self._cache.add(url_cache_key, (response, response_body))
 
         return request, response, response_body, error
 

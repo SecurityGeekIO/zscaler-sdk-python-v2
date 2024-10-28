@@ -20,6 +20,7 @@ from zscaler.zcc.models.devices import Device
 from datetime import datetime
 from urllib.parse import urlencode
 
+
 class DevicesAPI(APIClient):
 
     def __init__(self, request_executor):
@@ -119,13 +120,14 @@ class DevicesAPI(APIClient):
                     )
 
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zcc_base_endpoint}
             /downloadDevices
-        """)
+        """
+        )
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=params)
         if error:
             raise Exception("Error creating request for downloading devices.")
 
@@ -168,11 +170,13 @@ class DevicesAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zcc_base_endpoint}
             /getDevices
-        """)
-        
+        """
+        )
+
         # payload = convert_keys(dict(kwargs))
 
         query_params = query_params or {}
@@ -185,26 +189,20 @@ class DevicesAPI(APIClient):
         # Prepare request body and headers
         body = {}
         headers = {}
-        
-        request, error = self._request_executor\
-            .create_request(
-            http_method, api_url, body, headers
-        )
-        
+
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
+
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
             for item in response.get_body():
-                result.append(Device(
-                    self.form_response_body(item))
-                )
+                result.append(Device(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -264,20 +262,21 @@ class DevicesAPI(APIClient):
 
         """
         http_method = "post".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zcc_base_endpoint}
             /removeDevices
-        """)
-        
+        """
+        )
+
         # payload = convert_keys(dict(kwargs))
 
         if isinstance(remove, dict):
             body = remove
         else:
             body = remove.as_dict()
-            
-        request, error = self._request_executor\
-            .create_request(
+
+        request, error = self._request_executor.create_request(
             method=http_method,
             endpoint=api_url,
             body=body,
@@ -286,8 +285,7 @@ class DevicesAPI(APIClient):
         if error:
             return None, None, error
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return None, response, error
 
