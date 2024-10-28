@@ -291,10 +291,12 @@ class RequestExecutor:
         max_retries = self._max_retries
         req_timeout = self._request_timeout
 
+        # Check for request timeout
         if req_timeout > 0 and (current_req_start_time - request_start_time) > req_timeout:
             logger.error("Request Timeout exceeded.")
             return None, None, None, Exception("Request Timeout exceeded.")
 
+        # Send the actual request
         response, error = self._http_client.send_request(request)
 
         if error:
@@ -302,31 +304,34 @@ class RequestExecutor:
             return None, None, None, error
 
         headers = response.headers
+        self.last_response_headers = headers  # Store headers for proactive rate limit handling
 
+        # Handle rate limiting (429)
         if attempts < max_retries and self.is_retryable_status(response.status_code):
+            # Get the 'Date' header and adjust for clock drift (+1 second)
             date_time = headers.get("Date", "")
             if date_time:
                 date_time = convert_date_time_to_seconds(date_time)
 
-            # Extract the x-ratelimit-reset value and convert it to float
-            retry_limit_reset_header = headers.get("x-ratelimit-reset")  # Get the value for x-ratelimit-reset
-            if retry_limit_reset_header is not None:  # Check if the header exists
-                retry_limit_reset_headers = [float(retry_limit_reset_header)]  # Convert to float
+            # Get the Retry-After header (can be in different cases)
+            # retry_after = headers.get("Retry-After") or headers.get("retry-after")
+            # if retry_after:
+            #     retry_after_seconds = int(retry_after.strip("s"))
+            #     logger.info(f"Retrying request after {retry_after_seconds} seconds (from Retry-After header).")
+            #     time.sleep(retry_after_seconds)
             else:
-                retry_limit_reset_headers = []  # Default to an empty list if not present
+                # If no Retry-After header, fallback to x-ratelimit-reset
+                retry_limit_reset_header = headers.get("x-ratelimit-reset")
+                if retry_limit_reset_header is not None:
+                    retry_limit_reset_seconds = float(retry_limit_reset_header)
+                    backoff_seconds = retry_limit_reset_seconds - date_time + 1  # Adding 1 sec for clock drift
+                    logger.info(f"Retrying request after {backoff_seconds} seconds (from x-ratelimit-reset header).")
+                    time.sleep(backoff_seconds)
+                else:
+                    logger.error("Missing Date or X-Rate-Limit-Reset headers.")
+                    return None, response, response.text, Exception("Missing necessary rate limit headers.")
 
-            retry_after = headers.get("Retry-After") or headers.get("retry-after")
-            if retry_after:
-                retry_after = int(retry_after.strip("s"))
-
-            if not date_time or not retry_limit_reset_headers:
-                logger.error("Missing Date or X-Rate-Limit-Reset headers.")
-                return None, response, response.text, Exception(ERROR_MESSAGE_429_MISSING_DATE_X_RESET)
-            # x-ratelimit-reset: The time (in seconds) remaining in the current window after which the rate limit resets.
-            # so no need to substract the date unix time
-            backoff_seconds = retry_limit_reset_headers[0]
-            logger.info(f"Hit rate limit. Retrying request in {backoff_seconds} seconds.")
-            time.sleep(backoff_seconds)
+            # Retry the request
             attempts += 1
             return self.fire_request_helper(request, attempts, request_start_time)
 
