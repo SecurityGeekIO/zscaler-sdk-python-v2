@@ -120,9 +120,6 @@ class RequestExecutor:
         final_url = f"{base_url}/{endpoint.lstrip('/')}"
         logger.debug(f"Final URL after service detection and version handling: {final_url}")
 
-        # OAuth
-        self._oauth = OAuth(self, self._config)
-
         # Set headers, including OAuth token if required
         headers = {**self._default_headers, **headers}
         headers["Authorization"] = f"Bearer {self._oauth._get_access_token()}"
@@ -264,7 +261,8 @@ class RequestExecutor:
             # Check if response exists in cache
             if self._cache.contains(url_cache_key):
                 logger.info(f"Cache hit for URL: {request['url']}")
-                return self._cache.get(url_cache_key), None
+                response, response_body = self._cache.get(url_cache_key)
+                return request, response, response_body, None
             else:
                 logger.debug(f"No cache entry found for URL: {request['url']}")
 
