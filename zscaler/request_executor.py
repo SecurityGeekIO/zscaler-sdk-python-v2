@@ -304,27 +304,9 @@ class RequestExecutor:
         headers = response.headers
 
         if attempts < max_retries and self.is_retryable_status(response.status_code):
-            date_time = headers.get("Date", "")
-            if date_time:
-                date_time = convert_date_time_to_seconds(date_time)
-
-            # Extract the x-ratelimit-reset value and convert it to float
-            retry_limit_reset_header = headers.get("x-ratelimit-reset")  # Get the value for x-ratelimit-reset
-            if retry_limit_reset_header is not None:  # Check if the header exists
-                retry_limit_reset_headers = [float(retry_limit_reset_header)]  # Convert to float
-            else:
-                retry_limit_reset_headers = []  # Default to an empty list if not present
-
-            retry_after = headers.get("Retry-After") or headers.get("retry-after")
-            if retry_after:
-                retry_after = int(retry_after.strip("s"))
-
-            if not date_time or not retry_limit_reset_headers:
-                logger.error("Missing Date or X-Rate-Limit-Reset headers.")
+            backoff_seconds = self.get_retry_after(headers, logger)
+            if backoff_seconds is None:
                 return None, response, response.text, Exception(ERROR_MESSAGE_429_MISSING_DATE_X_RESET)
-            # x-ratelimit-reset: The time (in seconds) remaining in the current window after which the rate limit resets.
-            # so no need to substract the date unix time
-            backoff_seconds = retry_limit_reset_headers[0]
             logger.info(f"Hit rate limit. Retrying request in {backoff_seconds} seconds.")
             time.sleep(backoff_seconds)
             attempts += 1
@@ -403,3 +385,25 @@ class RequestExecutor:
         """
         logger.debug("Getting custom headers.")
         return self._custom_headers
+
+    def get_retry_after(self, headers, logger):
+        retry_limit_reset_header = headers.get("x-ratelimit-reset") or headers.get("X-RateLimit-Reset")
+        retry_after = headers.get("Retry-After") or headers.get("retry-after")
+
+        if retry_after:
+            try:
+                return int(retry_after.strip("s")) + 1  # Add 1 second padding
+            except ValueError:
+                logger.error(f"Error parsing Retry-After header: {retry_after}")
+                return None
+
+        if retry_limit_reset_header is not None:
+            try:
+                reset_seconds = float(retry_limit_reset_header)
+                return reset_seconds + 1  # Add 1 second padding
+            except ValueError:
+                logger.error(f"Error parsing x-ratelimit-reset header: {retry_limit_reset_header}")
+                return None
+
+        logger.error("Missing Retry-After and X-Rate-Limit-Reset headers.")
+        return None
