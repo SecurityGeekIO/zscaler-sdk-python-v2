@@ -18,6 +18,25 @@ from zscaler.api_client import APIClient
 from zscaler.zpa.models.policyset_controller_v1 import PolicySetControllerV1
 from zscaler.utils import format_url, snake_to_camel, convert_keys, add_id_groups
 from urllib.parse import urlencode
+from threading import Lock
+from functools import wraps
+
+# Define a global lock
+global_rule_lock = Lock()
+
+
+def synchronized(lock):
+    """Decorator to ensure that a function is executed with a lock."""
+
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            with lock:
+                return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 class PolicySetControllerAPI(APIClient):
@@ -189,10 +208,12 @@ class PolicySetControllerAPI(APIClient):
             raise ValueError(f"Incorrect policy type provided: {policy_type}")
 
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint_v1}
             /policySet/policyType/{mapped_policy_type}
-        """)
+        """
+        )
 
         query_params = query_params or {}
         microtenant_id = query_params.get("microtenant_id", None)
@@ -221,10 +242,11 @@ class PolicySetControllerAPI(APIClient):
                 return (None, response, None)
 
             return (response_body, response, None)
-            
+
         except Exception as error:
             return (None, response, error)
 
+    @synchronized(global_rule_lock)
     def get_rule(self, policy_type: str, rule_id: str, query_params=None) -> tuple:
         """
         Returns the specified policy rule.
@@ -262,10 +284,12 @@ class PolicySetControllerAPI(APIClient):
             return (None, None, f"No policy ID found for policy_type: {policy_type}")
 
         # Construct the API URL using the retrieved policy ID
-        api_url = format_url(f"""{
+        api_url = format_url(
+            f"""{
             self._zpa_base_endpoint_v1}
             /policySet/{policy_id}/rule/{rule_id}
-        """)
+        """
+        )
 
         query_params = query_params or {}
         microtenant_id = query_params.get("microtenant_id", None)
@@ -277,13 +301,11 @@ class PolicySetControllerAPI(APIClient):
             api_url += f"?{encoded_query_params}"
 
         # Create and execute the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
@@ -324,10 +346,12 @@ class PolicySetControllerAPI(APIClient):
             raise ValueError(f"Incorrect policy type provided: {policy_type}")
 
         http_method = "GET"
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint_v1}
             /policySet/rules/policyType/{mapped_policy_type}
-        """)
+        """
+        )
 
         query_params = query_params or {}
         microtenant_id = query_params.get("microtenant_id", None)
@@ -441,6 +465,7 @@ class PolicySetControllerAPI(APIClient):
 
         return PolicySetControllerV1(response.get_body())
 
+    @synchronized(global_rule_lock)
     def update_access_rule(
         self,
         rule_id: str,
@@ -576,6 +601,7 @@ class PolicySetControllerAPI(APIClient):
 
         return response.get_body()
 
+    @synchronized(global_rule_lock)
     def update_timeout_rule(self, rule_id: str, **kwargs) -> dict:
         """
         Update an existing policy rule.
@@ -735,6 +761,7 @@ class PolicySetControllerAPI(APIClient):
 
         return response.get_body()
 
+    @synchronized(global_rule_lock)
     def update_client_forwarding_rule(self, rule_id: str, **kwargs) -> dict:
         """
         Update an existing Client Forwarding Policy rule.
@@ -821,6 +848,7 @@ class PolicySetControllerAPI(APIClient):
 
         return response.get_body()
 
+    @synchronized(global_rule_lock)
     def add_isolation_rule(self, name: str, action: str, zpn_isolation_profile_id: str, **kwargs) -> dict:
         """
         Add a new Isolation Policy rule.
@@ -896,6 +924,7 @@ class PolicySetControllerAPI(APIClient):
 
         return response.get_body()
 
+    @synchronized(global_rule_lock)
     def update_isolation_rule(self, rule_id: str, **kwargs) -> dict:
         """
         Update an existing client isolation policy rule.
@@ -1017,6 +1046,7 @@ class PolicySetControllerAPI(APIClient):
 
         return response.get_body()
 
+    @synchronized(global_rule_lock)
     def update_app_protection_rule(self, rule_id: str, **kwargs) -> dict:
         """
         Update an existing app protection policy rule.
@@ -1174,6 +1204,7 @@ class PolicySetControllerAPI(APIClient):
 
         return response.get_body()
 
+    @synchronized(global_rule_lock)
     def update_access_rule_v2(self, rule_id: str, **kwargs) -> dict:
         """
         Update an existing policy rule.
@@ -1252,6 +1283,7 @@ class PolicySetControllerAPI(APIClient):
 
         return response.get_body()
 
+    @synchronized(global_rule_lock)
     def add_timeout_rule_v2(self, name: str, **kwargs) -> dict:
         """
         Update an existing policy rule.
@@ -1325,6 +1357,7 @@ class PolicySetControllerAPI(APIClient):
 
         return response.get_body()
 
+    @synchronized(global_rule_lock)
     def update_timeout_rule_v2(self, rule_id: str, **kwargs) -> dict:
         """
         Update an existing policy rule.
@@ -1402,6 +1435,7 @@ class PolicySetControllerAPI(APIClient):
 
         return response.get_body()
 
+    @synchronized(global_rule_lock)
     def add_client_forwarding_rule_v2(self, name: str, action: str, **kwargs) -> dict:
         """
         Add a new Client Forwarding Policy rule.
@@ -1467,6 +1501,7 @@ class PolicySetControllerAPI(APIClient):
 
         return response.get_body()
 
+    @synchronized(global_rule_lock)
     def update_client_forwarding_rule_v2(self, rule_id: str, **kwargs) -> dict:
         """
         Update an existing client forwarding policy rule.
@@ -1558,6 +1593,7 @@ class PolicySetControllerAPI(APIClient):
 
         return response.get_body()
 
+    @synchronized(global_rule_lock)
     def add_isolation_rule_v2(self, name: str, action: str, zpn_isolation_profile_id: str, **kwargs) -> dict:
         """
         Add a new Isolation Policy rule.
@@ -1625,6 +1661,7 @@ class PolicySetControllerAPI(APIClient):
 
         return response.get_body()
 
+    @synchronized(global_rule_lock)
     def update_isolation_rule_v2(self, rule_id: str, **kwargs) -> dict:
         """
         Update an existing client isolation policy rule.
@@ -1711,6 +1748,7 @@ class PolicySetControllerAPI(APIClient):
 
         return response.get_body()
 
+    @synchronized(global_rule_lock)
     def add_app_protection_rule_v2(self, name: str, action: str, zpn_inspection_profile_id: str, **kwargs) -> dict:
         """
         Update an existing app protection policy rule.
@@ -1793,6 +1831,7 @@ class PolicySetControllerAPI(APIClient):
 
         return response.get_body()
 
+    @synchronized(global_rule_lock)
     def update_app_protection_rule_v2(self, rule_id: str, **kwargs) -> dict:
         """
         Add a new Privileged Remote Access Credential Policy rule.
@@ -1870,6 +1909,7 @@ class PolicySetControllerAPI(APIClient):
 
         return response.get_body()
 
+    @synchronized(global_rule_lock)
     def add_privileged_credential_rule_v2(self, name: str, credential_id: str, **kwargs) -> dict:
         """
         Add a new Privileged Remote Access Credential Policy rule.
@@ -1901,6 +1941,7 @@ class PolicySetControllerAPI(APIClient):
 
         return response.get_body()
 
+    @synchronized(global_rule_lock)
     def update_privileged_credential_rule_v2(self, rule_id: str, **kwargs) -> dict:
         """
         Update an existing privileged credential policy rule.
@@ -1976,6 +2017,7 @@ class PolicySetControllerAPI(APIClient):
 
         return response.get_body()
 
+    @synchronized(global_rule_lock)
     def delete_rule(self, policy_type: str, rule_id: str, **kwargs) -> int:
         """
         Deletes the specified policy rule.
@@ -2019,6 +2061,7 @@ class PolicySetControllerAPI(APIClient):
 
         return response.get_status_code()
 
+    @synchronized(global_rule_lock)
     def reorder_rule(self, policy_type: str, rule_id: str, rule_order: str, **kwargs) -> tuple:
         """
         Change the order of an existing policy rule.
@@ -2061,27 +2104,28 @@ class PolicySetControllerAPI(APIClient):
         """
         http_method = "put".upper()
         policy_id = self.get_policy(policy_type).id
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint_v1}
             /policySet/{policy_id}/rule/{rule_id}/reorder/{rule_order}
-        """)
+        """
+        )
 
         microtenant_id = kwargs.pop("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, {}, params)
+        request, error = self._request_executor.create_request(http_method, api_url, {}, params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
         updated_rule, error = self.get_rule(policy_type, rule_id)
         return (updated_rule, response, error)
 
+    @synchronized(global_rule_lock)
     def bulk_reorder_rules(self, policy_type: str, rules_orders: list[str], **kwargs) -> tuple:
         """
         Bulk change the order of policy rules.
@@ -2149,24 +2193,24 @@ class PolicySetControllerAPI(APIClient):
             return (None, None, f"No policy ID found for policy_type: {policy_type}")
 
         # Construct the API URL using the retrieved policy_set_id
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint_v1}
             /policySet/{policy_set_id}/reorder
-        """)
+        """
+        )
 
         # Extract microtenant_id if present in kwargs
         microtenant_id = kwargs.pop("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         # Call create_request without the need for custom headers
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body=rules_orders, params=params)
+        request, error = self._request_executor.create_request(http_method, api_url, body=rules_orders, params=params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
         return (None, response, None)
