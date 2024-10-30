@@ -1,5 +1,6 @@
 import json
 import logging
+import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +37,7 @@ class ZscalerAPIResponse:
         end_time=None,
     ):
         logger.debug("Initializing ZscalerAPIResponse with service_type: %s", service_type)
-        # Safely handle None values for res_details
+        self._page = 1  # Initialize page for ZPA/ZIA-based pagination
         self._url = res_details.url if res_details and hasattr(res_details, "url") else None
         self._headers = req.get("headers", {})  # Headers for the request
         self._params = req.get("params", {})  # Query parameters like filtering and pagination
@@ -224,13 +225,22 @@ class ZscalerAPIResponse:
             self._params["page"] = self._page
 
         logger.debug("Fetching next page with params: %s", self._params)
-        req = {"headers": self._headers, "params": self._params}  # Include filters like search, sort, etc.
+        req = {
+            "method": "GET",  # Specify the method as GET for pagination
+            "url": self._url,  # Add the URL to the request dictionary
+            "headers": self._headers,
+            "params": self._params,
+            "uuid": uuid.uuid4(),  # Generate a unique identifier for the request
+        }
 
-        # Fire the request for the next page
-        next_response = self._request_executor.fire_request("GET", req)
-        response_body = next_response.get("body", {})
+        # Fire the request for the next page and unpack the needed values
+        _, next_response, response_body, error = self._request_executor.fire_request(req)
 
-        # Update the response with the new page's data
+        if error:
+            logger.error(f"Error fetching the next page: {error}")
+            return [], error
+
+        # Update the response with the new page's data, no need to re-parse response_body
         self.build_json_response(response_body)
 
         # Stop if no data was returned (especially for ZIA and ZDX)
