@@ -15,9 +15,10 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.api_client import APIClient
+from zscaler.request_executor import RequestExecutor
 from zscaler.zpa.models.pra_console import PrivilegedRemoteAccessConsole
 from zscaler.utils import format_url
-from urllib.parse import urlencode
+
 
 class PRAConsoleAPI(APIClient):
     """
@@ -26,10 +27,10 @@ class PRAConsoleAPI(APIClient):
 
     def __init__(self, request_executor, config):
         super().__init__()
-        self._request_executor = request_executor
+        self._request_executor: RequestExecutor = request_executor
         customer_id = config["client"].get("customerId")
         self._zpa_base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
-        
+
     def list_consoles(self, query_params=None) -> tuple:
         """
         Returns a list of all Privileged Remote Access (PRA) consoles.
@@ -46,36 +47,30 @@ class PRAConsoleAPI(APIClient):
             list: A list of `PrivilegedRemoteAccessConsole` instances.
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /praConsole
-        """)
+        """
+        )
 
         query_params = query_params or {}
         microtenant_id = query_params.get("microtenant_id", None)
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
-
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_results():
-                result.append(PrivilegedRemoteAccessConsole(
-                    self.form_response_body(item))
-                )
+            for item in response.get_all_pages_results():
+                result.append(PrivilegedRemoteAccessConsole(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -91,34 +86,28 @@ class PRAConsoleAPI(APIClient):
             PrivilegedRemoteAccessConsole: The corresponding console object.
         """
         http_method = "get".upper()
-        api_url = format_url(f"""{
+        api_url = format_url(
+            f"""{
             self._zpa_base_endpoint}
             /praConsole/{console_id}
-        """)
+        """
+        )
 
         query_params = query_params or {}
         microtenant_id = query_params.get("microtenant_id", None)
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
-
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, PrivilegedRemoteAccessConsole)
+        response, error = self._request_executor.execute(request, PrivilegedRemoteAccessConsole)
         if error:
             return (None, response, error)
 
         try:
-            result = PrivilegedRemoteAccessConsole(
-                self.form_response_body(response.get_body())
-            )
+            result = PrivilegedRemoteAccessConsole(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -134,38 +123,32 @@ class PRAConsoleAPI(APIClient):
             PrivilegedRemoteAccessConsole: The corresponding console object.
         """
         http_method = "get".upper()
-        api_url = format_url(f"""{
+        api_url = format_url(
+            f"""{
             self._zpa_base_endpoint}
             /praConsole/praPortal/{portal_id}
-        """)
+        """
+        )
 
         query_params = query_params or {}
         microtenant_id = query_params.get("microtenant_id", None)
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
-
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, PrivilegedRemoteAccessConsole)
+        response, error = self._request_executor.execute(request, PrivilegedRemoteAccessConsole)
         if error:
             return (None, response, error)
 
         try:
-            result = PrivilegedRemoteAccessConsole(
-                self.form_response_body(response.get_body())
-            )
+            result = PrivilegedRemoteAccessConsole(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
-    
+
     def add_console(self, **kwargs) -> tuple:
         """
         Adds a new Privileged Remote Access (PRA) console.
@@ -183,10 +166,12 @@ class PRAConsoleAPI(APIClient):
             PrivilegedRemoteAccessConsole: The newly created console.
         """
         http_method = "post".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /praConsole
-        """)
+        """
+        )
 
         # Construct the body from kwargs (as a dictionary)
         body = kwargs
@@ -209,20 +194,16 @@ class PRAConsoleAPI(APIClient):
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         # Create and send the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body=body, params=params)
+        request, error = self._request_executor.create_request(http_method, api_url, body=body, params=params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, PrivilegedRemoteAccessConsole)
+        response, error = self._request_executor.execute(request, PrivilegedRemoteAccessConsole)
         if error:
             return (None, response, error)
 
         try:
-            result = PrivilegedRemoteAccessConsole(
-                self.form_response_body(response.get_body())
-            )
+            result = PrivilegedRemoteAccessConsole(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -240,10 +221,12 @@ class PRAConsoleAPI(APIClient):
             PrivilegedRemoteAccessConsole: The updated console.
         """
         http_method = "put".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /praConsole/{console_id}
-        """)
+        """
+        )
 
         # Start with an empty body or an existing resource's current data
         body = {}
@@ -269,13 +252,11 @@ class PRAConsoleAPI(APIClient):
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         # Create and send the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body=body, params=params)
+        request, error = self._request_executor.create_request(http_method, api_url, body=body, params=params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, PrivilegedRemoteAccessConsole)
+        response, error = self._request_executor.execute(request, PrivilegedRemoteAccessConsole)
         if error:
             return (None, response, error)
 
@@ -284,9 +265,7 @@ class PRAConsoleAPI(APIClient):
             return (PrivilegedRemoteAccessConsole({"id": console_id}), None, None)
 
         try:
-            result = PrivilegedRemoteAccessConsole(
-                self.form_response_body(response.get_body())
-            )
+            result = PrivilegedRemoteAccessConsole(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -303,20 +282,20 @@ class PRAConsoleAPI(APIClient):
             int: The status code of the delete operation.
         """
         http_method = "delete".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /praConsole/{console_id}
-        """)
+        """
+        )
 
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
         return (None, response, None)
@@ -332,10 +311,12 @@ class PRAConsoleAPI(APIClient):
             list: A list of newly created PRA consoles.
         """
         http_method = "post".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /praConsole/bulk
-        """)
+        """
+        )
 
         # Build the payload from the list of consoles
         body = []
@@ -346,13 +327,15 @@ class PRAConsoleAPI(APIClient):
                 console_data = console.as_dict()
 
             # Construct each console object for the payload
-            body.append({
-                "name": console_data.get("name"),
-                "enabled": console_data.get("enabled", True),
-                "praApplication": {"id": console_data.get("pra_application_id")},
-                "praPortals": [{"id": portal_id} for portal_id in console_data.get("pra_portal_ids", [])],
-                "description": console_data.get("description", ""),
-            })
+            body.append(
+                {
+                    "name": console_data.get("name"),
+                    "enabled": console_data.get("enabled", True),
+                    "praApplication": {"id": console_data.get("pra_application_id")},
+                    "praPortals": [{"id": portal_id} for portal_id in console_data.get("pra_portal_ids", [])],
+                    "description": console_data.get("description", ""),
+                }
+            )
 
         # Add additional arguments from kwargs to the payload if needed
         for entry in body:
@@ -367,7 +350,7 @@ class PRAConsoleAPI(APIClient):
             method=http_method,
             endpoint=api_url,
             body=None,  # Pass `None` for the body since we'll handle the list separately
-            params=params
+            params=params,
         )
         if error:
             return (None, None, error)

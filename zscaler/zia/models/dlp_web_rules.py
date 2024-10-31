@@ -30,6 +30,7 @@ from zscaler.zia.models import rule_labels as labels
 from zscaler.zia.models import common as common_reference
 from zscaler.zia.models import workload_groups as workload_groups
 
+
 class DLPWebRules(ZscalerObject):
     """
     A class representing a DLP Web Rule object.
@@ -38,137 +39,96 @@ class DLPWebRules(ZscalerObject):
     def __init__(self, config=None):
         super().__init__(config)
         if config:
-            self.id = config["id"]\
-                if "id" in config else None
-            self.name = config["name"]\
-                if "name" in config else None
-            self.description = config["description"]\
-                if "description" in config else None
-            self.rank = config["rank"]\
-                if "rank" in config else None
-            self.access_control = config["accessControl"]\
-                if "accessControl" in config else None
-            self.min_size = config["minSize"]\
-                if "minSize" in config else None
-            self.action = config["action"]\
-                if "action" in config else None
-            self.state = config["state"]\
-                if "state" in config else None
-            self.match_only = config["matchOnly"]\
-                if "matchOnly" in config else False
-            self.without_content_inspection = config["withoutContentInspection"]\
-                if "withoutContentInspection" in config else False
-            self.inspect_http_get_enabled = config["inspectHttpGetEnabled"]\
-                if "inspectHttpGetEnabled" in config else False
-            self.dlp_download_scan_enabled = config["dlpDownloadScanEnabled"]\
-                if "dlpDownloadScanEnabled" in config else False
-            self.zcc_notifications_enabled = config["zccNotificationsEnabled"]\
-                if "zccNotificationsEnabled" in config else False
-            self.severity = config["severity"]\
-                if "severity" in config else None
-            self.parent_rule = config["parentRule"]\
-                if "parentRule" in config else None
-            self.sub_rules = config["subRules"]\
-                if "subRules" in config else None
-            self.order = config["order"]\
-                if "order" in config else None
-            self.eun_template_id = config["eunTemplateId"]\
-                if "eunTemplateId" in config else None
-            self.inspect_http_get_enabled = config["inspectHttpGetEnabled"]\
-                if "inspectHttpGetEnabled" in config else None
-            self.zscaler_incident_receiver = config["zscalerIncidentReceiver"]\
-                if "zscalerIncidentReceiver" in config else None
-            self.external_auditor_email = config["externalAuditorEmail"]\
-                if "externalAuditorEmail" in config else None
+            self.id = config["id"] if "id" in config else None
+            self.name = config["name"] if "name" in config else None
+            self.description = config["description"] if "description" in config else None
+            self.rank = config["rank"] if "rank" in config else None
+            self.access_control = config["accessControl"] if "accessControl" in config else None
+            self.min_size = config["minSize"] if "minSize" in config else None
+            self.action = config["action"] if "action" in config else None
+            self.state = config["state"] if "state" in config else None
+            self.match_only = config["matchOnly"] if "matchOnly" in config else False
+            self.without_content_inspection = (
+                config["withoutContentInspection"] if "withoutContentInspection" in config else False
+            )
+            self.inspect_http_get_enabled = config["inspectHttpGetEnabled"] if "inspectHttpGetEnabled" in config else False
+            self.dlp_download_scan_enabled = config["dlpDownloadScanEnabled"] if "dlpDownloadScanEnabled" in config else False
+            self.zcc_notifications_enabled = (
+                config["zccNotificationsEnabled"] if "zccNotificationsEnabled" in config else False
+            )
+            self.severity = config["severity"] if "severity" in config else None
+            self.parent_rule = config["parentRule"] if "parentRule" in config else None
+            self.sub_rules = config["subRules"] if "subRules" in config else None
+            self.order = config["order"] if "order" in config else None
+            self.eun_template_id = config["eunTemplateId"] if "eunTemplateId" in config else None
+            self.inspect_http_get_enabled = config["inspectHttpGetEnabled"] if "inspectHttpGetEnabled" in config else None
+            self.zscaler_incident_receiver = config["zscalerIncidentReceiver"] if "zscalerIncidentReceiver" in config else None
+            self.external_auditor_email = config["externalAuditorEmail"] if "externalAuditorEmail" in config else None
 
             # Handling lists of simple values
-            self.protocols = ZscalerCollection.form_list(
-                config["protocols"] if "protocols" in config else [],
-                str
-            )
-            self.file_types = ZscalerCollection.form_list(
-                config["fileTypes"] if "fileTypes" in config else [],
-                str
-            )
+            self.protocols = ZscalerCollection.form_list(config["protocols"] if "protocols" in config else [], str)
+            self.file_types = ZscalerCollection.form_list(config["fileTypes"] if "fileTypes" in config else [], str)
             self.cloud_applications = ZscalerCollection.form_list(
-                config["cloudApplications"] if "cloudApplications" in config else [],
-                str
+                config["cloudApplications"] if "cloudApplications" in config else [], str
             )
 
             # Handling nested objects with ZscalerCollection and defensive programming
             self.locations = ZscalerCollection.form_list(
-                config["locations"] if "locations" in config else [],
-                location_management.LocationManagement
+                config["locations"] if "locations" in config else [], location_management.LocationManagement
             )
             self.location_groups = ZscalerCollection.form_list(
-                config["locationGroups"] if "locationGroups" in config else [],
-                location_group.LocationGroup
+                config["locationGroups"] if "locationGroups" in config else [], location_group.LocationGroup
             )
-            self.groups = ZscalerCollection.form_list(
-                config["groups"] if "groups" in config else [],
-                user_management.Groups
-            )
+            self.groups = ZscalerCollection.form_list(config["groups"] if "groups" in config else [], user_management.Groups)
             self.departments = ZscalerCollection.form_list(
-                config["departments"] if "departments" in config else [],
-                user_management.Department
+                config["departments"] if "departments" in config else [], user_management.Department
             )
             self.users = ZscalerCollection.form_list(
-                config["users"] if "users" in config else [],
-                user_management.UserManagement
+                config["users"] if "users" in config else [], user_management.UserManagement
             )
             self.workload_groups = ZscalerCollection.form_list(
-                config["workloadGroups"] if "workloadGroups" in config else [],
-                workload_groups.WorkloadGroups
+                config["workloadGroups"] if "workloadGroups" in config else [], workload_groups.WorkloadGroups
             )
             self.included_domain_profiles = ZscalerCollection.form_list(
                 config["includedDomainProfiles"] if "includedDomainProfiles" in config else [],
-                common_reference.ResourceReference
+                common_reference.ResourceReference,
             )
             self.excluded_domain_profiles = ZscalerCollection.form_list(
                 config["excludedDomainProfiles"] if "excludedDomainProfiles" in config else [],
-                common_reference.ResourceReference
+                common_reference.ResourceReference,
             )
             self.source_ip_groups = ZscalerCollection.form_list(
-                config["sourceIpGroups"] if "sourceIpGroups" in config else [],
-                cloud_firewall_source_groups.IPSourceGroup
+                config["sourceIpGroups"] if "sourceIpGroups" in config else [], cloud_firewall_source_groups.IPSourceGroup
             )
             self.url_categories = ZscalerCollection.form_list(
-                config["urlCategories"] if "urlCategories" in config else [],
-                urlcategory.URLCategory
+                config["urlCategories"] if "urlCategories" in config else [], urlcategory.URLCategory
             )
             self.zpa_app_segments = ZscalerCollection.form_list(
-                config["zpaAppSegments"] if "zpaAppSegments" in config else [],
-                common_reference.ResourceReference
+                config["zpaAppSegments"] if "zpaAppSegments" in config else [], common_reference.ResourceReference
             )
             self.dlp_engines = ZscalerCollection.form_list(
-                config["dlpEngines"] if "dlpEngines" in config else [],
-                dlp_engine.DLPEngine
+                config["dlpEngines"] if "dlpEngines" in config else [], dlp_engine.DLPEngine
             )
             self.labels = ZscalerCollection.form_list(
-                config["labels"] if "labels" in config else [],  # Missing Attribute
-                labels.RuleLabels
+                config["labels"] if "labels" in config else [], labels.RuleLabels  # Missing Attribute
             )
             self.excluded_groups = ZscalerCollection.form_list(
-                config["excludedGroups"] if "excludedGroups" in config else [],  # New Attribute
-                user_management.Groups
+                config["excludedGroups"] if "excludedGroups" in config else [], user_management.Groups  # New Attribute
             )
             self.excluded_departments = ZscalerCollection.form_list(
-                config["excludedDepartments"] if "excludedDepartments" in config else [],
-                user_management.Department
+                config["excludedDepartments"] if "excludedDepartments" in config else [], user_management.Department
             )
             self.excluded_users = ZscalerCollection.form_list(
-                config["excludedUsers"] if "excludedUsers" in config else [],
-                user_management.UserManagement
+                config["excludedUsers"] if "excludedUsers" in config else [], user_management.UserManagement
             )
-            
-            self.auditor = admin_users.AdminUser(config["auditor"])\
-                if "auditor" in config else None
-                
-            self.notification_template = dlp_templates.DLPTemplates(
-                config["notificationTemplate"]) if "notificationTemplate" in config else None
 
-            self.icap_server = dlp_resources.DLPICAPServer(
-                config["icapServer"]) if "icapServer" in config else None
+            self.auditor = admin_users.AdminUser(config["auditor"]) if "auditor" in config else None
+
+            self.notification_template = (
+                dlp_templates.DLPTemplates(config["notificationTemplate"]) if "notificationTemplate" in config else None
+            )
+
+            self.icap_server = dlp_resources.DLPICAPServer(config["icapServer"]) if "icapServer" in config else None
 
         else:
             # Defaults when config is None
@@ -251,19 +211,20 @@ class DLPWebRules(ZscalerObject):
             "zpaAppSegments": [segment.request_format() for segment in (self.zpa_app_segments or [])],
             "workloadGroups": [group.request_format() for group in (self.workload_groups or [])],
             "includedDomainProfiles": [profile.request_format() for profile in (self.included_domain_profiles or [])],
-            "excludedDomainProfiles": [exclude_profile.request_format() for exclude_profile in (self.excluded_domain_profiles or [])],
+            "excludedDomainProfiles": [
+                exclude_profile.request_format() for exclude_profile in (self.excluded_domain_profiles or [])
+            ],
             "sourceIpGroups": [group.request_format() for group in (self.source_ip_groups or [])],
             "labels": [label.request_format() for label in (self.labels or [])],
             "excludedGroups": [group.request_format() for group in (self.excluded_groups or [])],  # New Attribute
-            "excludedDepartments": [department.request_format() for department in (self.excluded_departments or [])],  # New Attribute
+            "excludedDepartments": [
+                department.request_format() for department in (self.excluded_departments or [])
+            ],  # New Attribute
             "excludedUsers": [user.request_format() for user in (self.excluded_users or [])],  # New Attribute
-            "auditor": self.auditor.request_format()\
-                if self.auditor else None,
-            "notificationTemplate": self.notification_template.request_format()\
-                if self.notification_template else None,
-            "icapServer": self.icap_server.request_format()\
-                if self.icap_server else None,
-            "externalAuditorEmail": self.external_auditor_email  # New Attribute
+            "auditor": self.auditor.request_format() if self.auditor else None,
+            "notificationTemplate": self.notification_template.request_format() if self.notification_template else None,
+            "icapServer": self.icap_server.request_format() if self.icap_server else None,
+            "externalAuditorEmail": self.external_auditor_email,  # New Attribute
         }
         parent_req_format.update(current_obj_format)
         return parent_req_format

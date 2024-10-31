@@ -15,26 +15,23 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.api_client import APIClient
+from zscaler.request_executor import RequestExecutor
 from zscaler.zia.models.dlp_engine import DLPEngine, DLPVAlidateExpression
 from zscaler.utils import format_url, snake_to_camel
-from urllib.parse import urlencode
+
 
 class DLPEngineAPI(APIClient):
-
     """
     A Client object for the DLP Engine resource.
     """
 
     _zia_base_endpoint = "/zia/api/v1"
-    
+
     def __init__(self, request_executor):
         super().__init__()
-        self._request_executor = request_executor
-        
-    def list_dlp_engines(
-            self,
-            query_params=None
-    ) -> tuple:
+        self._request_executor: RequestExecutor = request_executor
+
+    def list_dlp_engines(self, query_params=None) -> tuple:
         """
         Returns a list of all DLP Engines.
 
@@ -60,28 +57,23 @@ class DLPEngineAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /dlpEngines
-        """)
-        
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
+        """
+        )
 
         # Prepare request body and headers
         body = {}
         headers = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)
-        
+
         # Execute the request
         response, error = self._request_executor.execute(request)
 
@@ -95,10 +87,8 @@ class DLPEngineAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_body():
-                result.append(DLPEngine(
-                    self.form_response_body(item)
-                ))
+            for item in response.get_all_pages_results():
+                result.append(DLPEngine(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
@@ -119,46 +109,46 @@ class DLPEngineAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /dlpEngines/{engine_id}
-        """)
+        """
+        )
 
         body = {}
         headers = {}
 
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, DLPEngine)
+        response, error = self._request_executor.execute(request, DLPEngine)
 
         if error:
             return (None, response, error)
 
         try:
-            result = DLPEngine(
-                self.form_response_body(response.get_body())
-            )
+            result = DLPEngine(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
     def add_dlp_engine(
-        self, rule: dict, 
+        self,
+        rule: dict,
     ) -> tuple:
         """
         Adds a new dlp engine.
         """
         http_method = "post".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /dlpEngines
-        """)
+        """
+        )
 
         # Ensure the rule is passed as a dictionary
         if isinstance(rule, dict):
@@ -172,10 +162,8 @@ class DLPEngineAPI(APIClient):
             camel_key = snake_to_camel(key)
             payload[camel_key] = value
 
-                # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, payload, {}
-        )
+            # Create the request
+        request, error = self._request_executor.create_request(http_method, api_url, payload, {})
 
         if error:
             return (None, None, error)
@@ -192,10 +180,7 @@ class DLPEngineAPI(APIClient):
 
         return (result, response, None)
 
-    def update_dlp_engine(
-        self, engine_id: int, 
-        engine
-    ) -> tuple:
+    def update_dlp_engine(self, engine_id: int, engine) -> tuple:
         """
         Updates an existing dlp engine.
 
@@ -231,16 +216,18 @@ class DLPEngineAPI(APIClient):
 
         """
         http_method = "put".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /dlpEngines/{engine_id}
-        """)
+        """
+        )
 
         if isinstance(engine, dict):
             payload = engine
         else:
             payload = engine.as_dict()
-            
+
         # Construct the payload using the provided kwargs
         payload = {snake_to_camel(key): value for key, value in payload.items()}
 
@@ -291,8 +278,8 @@ class DLPEngineAPI(APIClient):
             return (None, response, error)
 
         return (None, response, None)
-    
-    def validate_dlp_expression(self, expression: str)  -> tuple:
+
+    def validate_dlp_expression(self, expression: str) -> tuple:
         """
         Validates a DLP engine expression.
 
@@ -304,12 +291,14 @@ class DLPEngineAPI(APIClient):
 
         Examples:
             >>> zia.dlp.validate_dlp_expression("((D63.S > 1) AND (D38.S > 0))")
-        """        
+        """
         http_method = "post".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /dlpEngines/validateDlpExpr
-        """)
+        """
+        )
 
         # Construct the payload
         payload = {"data": expression}

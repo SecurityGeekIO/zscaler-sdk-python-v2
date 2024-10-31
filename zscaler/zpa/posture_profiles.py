@@ -15,9 +15,9 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.api_client import APIClient
+from zscaler.request_executor import RequestExecutor
 from zscaler.zpa.models.posture_profiles import PostureProfile
 from zscaler.utils import format_url, remove_cloud_suffix
-from urllib.parse import urlencode
 
 
 class PostureProfilesAPI(APIClient):
@@ -27,7 +27,7 @@ class PostureProfilesAPI(APIClient):
 
     def __init__(self, request_executor, config):
         super().__init__()
-        self._request_executor = request_executor
+        self._request_executor: RequestExecutor = request_executor
         customer_id = config["client"].get("customerId")
         self._zpa_base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
         self._zpa_base_endpoint_v2 = f"/zpa/mgmtconfig/v2/admin/customers/{customer_id}"
@@ -50,42 +50,33 @@ class PostureProfilesAPI(APIClient):
             >>> posture_profiles = zpa.posture_profiles.list_posture_profiles(search="example")
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint_v2}
             /posture
-        """)
+        """
+        )
 
         query_params = query_params or {}
-
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
 
         # Prepare request body and headers
         body = {}
         headers = {}
 
         # Prepare request
-        request, error = self._request_executor\
-            .create_request(
-                http_method, api_url, body, headers
-            )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_results():
-                result.append(PostureProfile(
-                    self.form_response_body(item))
-                )
+            for item in response.get_all_pages_results():
+                result.append(PostureProfile(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -106,33 +97,31 @@ class PostureProfilesAPI(APIClient):
             ...     pprint(profile)
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /posture/{profile_id}
-        """)
+        """
+        )
 
         # Prepare request body, headers, and form (if needed)
         body = {}
         headers = {}
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, headers)
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
 
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, PostureProfile)
+        response, error = self._request_executor.execute(request, PostureProfile)
 
         if error:
             return (None, response, error)
 
         try:
-            result = PostureProfile(
-                self.form_response_body(response.get_body())
-            )
+            result = PostureProfile(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -187,7 +176,6 @@ class PostureProfilesAPI(APIClient):
             clean_profile_name = remove_cloud_suffix(profile.name)  # Access attribute directly
             if clean_profile_name == search_name or profile.name == search_name:
                 return profile.posture_udid, response, None  # Access posture_udid directly
-
 
         return None, response, None
 

@@ -15,17 +15,17 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
+from zscaler.request_executor import RequestExecutor
 from zscaler.zpa.models.application_servers import AppServers
 from zscaler.api_client import APIClient
 from zscaler.utils import format_url
-from urllib.parse import urlencode
 
 
 class AppServersAPI(APIClient):
 
     def __init__(self, request_executor, config):
         super().__init__()
-        self._request_executor = request_executor
+        self._request_executor: RequestExecutor = request_executor
         customer_id = config["client"].get("customerId")
         self._zpa_base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
@@ -50,39 +50,32 @@ class AppServersAPI(APIClient):
             >>> servers = zpa.servers.list_servers(search="Example 100", pagesize=100, microtenant_id="216199618143464722")
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /server
-        """)
-        
+        """
+        )
+
         query_params = query_params or {}
         microtenant_id = query_params.get("microtenant_id", None)
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
-
         # Prepare request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_results():
-                result.append(AppServers(
-                    self.form_response_body(item))
-                )
+            for item in response.get_all_pages_results():
+                result.append(AppServers(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -98,10 +91,12 @@ class AppServersAPI(APIClient):
             AppServers: The corresponding server object.
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /server/{server_id}
-            """)
+            """
+        )
 
         # Handle optional query parameters
         query_params = query_params or {}
@@ -109,28 +104,19 @@ class AppServersAPI(APIClient):
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
-
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, AppServers)
+        response, error = self._request_executor.execute(request, AppServers)
         if error:
             return (None, response, error)
 
         # Parse the response into an AppConnectorGroup instance
         try:
-            result = AppServers(
-                self.form_response_body(response.get_body())
-            )
+            result = AppServers(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -145,10 +131,12 @@ class AppServersAPI(APIClient):
             enabled (bool): Enable the server. Defaults to True.
         """
         http_method = "post".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /server
-        """)
+        """
+        )
 
         # Ensure connector_group is a dictionary
         if isinstance(server, dict):
@@ -164,23 +152,17 @@ class AppServersAPI(APIClient):
         body.update(kwargs)
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(
-            http_method, api_url, body=body, params=params
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body=body, params=params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, AppServers)
+        response, error = self._request_executor.execute(request, AppServers)
         if error:
             return (None, response, error)
 
         try:
-            result = AppServers(
-                self.form_response_body(response.get_body())
-            )
+            result = AppServers(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -193,10 +175,12 @@ class AppServersAPI(APIClient):
             server_id (str): The unique identifier for the server being updated.
         """
         http_method = "put".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /server/{server_id}
-        """)
+        """
+        )
 
         # Ensure the connector_group is in dictionary format
         if isinstance(group, dict):
@@ -210,16 +194,14 @@ class AppServersAPI(APIClient):
         # Use get instead of pop to keep microtenant_id in the body
         microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
-        
+
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, {}, params)
+        request, error = self._request_executor.create_request(http_method, api_url, body, {}, params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, AppServers)
+        response, error = self._request_executor.execute(request, AppServers)
         if error:
             return (None, response, error)
 
@@ -230,9 +212,7 @@ class AppServersAPI(APIClient):
 
         # Parse the response into an AppConnectorGroup instance
         try:
-            result = AppServers(
-                self.form_response_body(response.get_body())
-            )
+            result = AppServers(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -248,23 +228,23 @@ class AppServersAPI(APIClient):
             int: Status code of the delete operation.
         """
         http_method = "delete".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /server/{server_id}
-        """)
+        """
+        )
 
         # Handle microtenant_id in URL params if provided
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
         return (None, response, None)

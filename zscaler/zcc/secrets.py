@@ -14,7 +14,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
-
+from zscaler.request_executor import RequestExecutor
 from zscaler.utils import format_url, zcc_param_map
 from zscaler.api_client import APIClient
 from zscaler.zcc.models.secrets_otp import OtpResponse
@@ -24,7 +24,7 @@ from zscaler.zcc.models.secrets_passwords import Passwords
 class SecretsAPI(APIClient):
 
     def __init__(self, request_executor):
-        self._request_executor = request_executor
+        self._request_executor: RequestExecutor = request_executor
         self._zcc_base_endpoint = "/zcc/papi/public/v1"
 
     def get_otp(self, device_id: str):
@@ -38,28 +38,25 @@ class SecretsAPI(APIClient):
             OtpResponse: An instance of OtpResponse containing the requested OTP code for the specified device id.
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zcc_base_endpoint}
             /getOtp
-        """)
+        """
+        )
 
         payload = {"udid": device_id}
 
-
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=payload)
+        request, error = self._request_executor.create_request(http_method, api_url, params=payload)
         if error:
             return None, None, error
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return None, response, error
 
         try:
-            result = OtpResponse(
-                self.form_response_body(response.get_body())
-            )
+            result = OtpResponse(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -92,25 +89,23 @@ class SecretsAPI(APIClient):
         }
 
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zcc_base_endpoint}
             /getPasswords
-        """)
-        
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=params)
+        """
+        )
+
+        request, error = self._request_executor.create_request(http_method, api_url, params=params)
         if error:
             return None, None, error
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return None, response, error
 
         try:
-            result = Passwords(
-                self.form_response_body(response.get_body())
-            )
+            result = Passwords(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)

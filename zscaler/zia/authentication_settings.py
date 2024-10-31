@@ -15,8 +15,10 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.api_client import APIClient
+from zscaler.request_executor import RequestExecutor
 from zscaler.zia.models.authentication_settings import AuthenticationSettings
 from zscaler.utils import format_url
+
 
 class AuthenticationSettingsAPI(APIClient):
     """
@@ -24,10 +26,10 @@ class AuthenticationSettingsAPI(APIClient):
     """
 
     _zia_base_endpoint = "/zia/api/v1"
-    
+
     def __init__(self, request_executor):
         super().__init__()
-        self._request_executor = request_executor
+        self._request_executor: RequestExecutor = request_executor
 
     def get_exempted_urls(self) -> tuple:
         """
@@ -40,35 +42,31 @@ class AuthenticationSettingsAPI(APIClient):
             >>> exempted_urls, response, error = zia.authentication_settings.get_exempted_urls()
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /authSettings/exemptedUrls
-        """)
+        """
+        )
 
         # Prepare request body and headers
         body = {}
         headers = {}
 
-        request, error = self._request_executor\
-            .create_request(
-            http_method, api_url, body, headers
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_body():
-                result.append(AuthenticationSettings(
-                    self.form_response_body(item)
-                ))
+            for item in response.get_all_pages_results():
+                result.append(AuthenticationSettings(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -87,10 +85,12 @@ class AuthenticationSettingsAPI(APIClient):
             >>> exempted_urls, response, error = zia.authentication_settings.add_urls_to_exempt_list(["example.com"])
         """
         http_method = "post".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /authSettings/exemptedUrls?action=ADD_TO_LIST
-            """)
+            """
+        )
 
         payload = {"urls": url_list}
 
@@ -98,9 +98,7 @@ class AuthenticationSettingsAPI(APIClient):
         body = {}
         headers = {}
 
-        request, error = self._request_executor.create_request(
-            http_method, api_url, payload, body, headers
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, payload, body, headers)
 
         if error:
             return (None, None, error)
@@ -126,16 +124,16 @@ class AuthenticationSettingsAPI(APIClient):
             >>> exempted_urls, response, error = zia.authentication_settings.delete_urls_from_exempt_list(["example.com"])
         """
         http_method = "post".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /authSettings/exemptedUrls?action=REMOVE_FROM_LIST
-        """)
+        """
+        )
 
         payload = {"urls": url_list}
 
-        request, error = self._request_executor.create_request(
-            http_method, api_url, payload, {}, {}
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, payload, {}, {})
 
         if error:
             return (None, None, error)

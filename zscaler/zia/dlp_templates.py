@@ -15,25 +15,25 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.api_client import APIClient
+from zscaler.request_executor import RequestExecutor
 from zscaler.zia.models.dlp_templates import DLPTemplates
 from zscaler.utils import format_url, snake_to_camel
-from urllib.parse import urlencode
+
 
 class DLPTemplatesAPI(APIClient):
-
     """
     A Client object for the DLP Templates resource.
     """
 
     _zia_base_endpoint = "/zia/api/v1"
-    
+
     def __init__(self, request_executor):
         super().__init__()
-        self._request_executor = request_executor
-        
+        self._request_executor: RequestExecutor = request_executor
+
     def list_dlp_templates(
-            self,
-            query_params=None,
+        self,
+        query_params=None,
     ) -> tuple:
         """
         Returns the list of ZIA DLP Notification Templates.
@@ -60,34 +60,28 @@ class DLPTemplatesAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /dlpNotificationTemplates
-        """)
+        """
+        )
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
-
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
 
         # Prepare request body and headers
         body = {}
         headers = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
@@ -95,10 +89,8 @@ class DLPTemplatesAPI(APIClient):
         # Parse the response into AdminUser instances
         try:
             result = []
-            for item in response.get_body():
-                result.append(DLPTemplates(
-                    self.form_response_body(item)
-                ))
+            for item in response.get_all_pages_results():
+                result.append(DLPTemplates(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
@@ -119,25 +111,24 @@ class DLPTemplatesAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /dlpNotificationTemplates/{template_id}
-        """)
+        """
+        )
 
         body = {}
         headers = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
 
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, DLPTemplates)
+        response, error = self._request_executor.execute(request, DLPTemplates)
         if error:
             return (None, response, error)
 
@@ -175,8 +166,8 @@ class DLPTemplatesAPI(APIClient):
             ...                         html_message="<html><body>HTML message content</body></html>")
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/dlpNotificationTemplates")
-        
+        api_url = format_url(f"{self._zia_base_endpoint}/dlpNotificationTemplates")
+
         payload = {
             "name": name,
             "subject": subject,
@@ -224,11 +215,11 @@ class DLPTemplatesAPI(APIClient):
 
         """
         http_method = "put".upper()
-        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/dlpNotificationTemplates/{template_id}")
+        api_url = format_url(f"{self._zia_base_endpoint}/dlpNotificationTemplates/{template_id}")
 
         # Construct the payload using the provided kwargs
         payload = {snake_to_camel(key): value for key, value in kwargs.items()}
-        
+
         # Ensure mandatory fields are included if they were not provided
         mandatory_fields = ["plainTextMessage", "htmlMessage"]
         for field in mandatory_fields:
@@ -266,7 +257,7 @@ class DLPTemplatesAPI(APIClient):
 
         """
         http_method = "delete".upper()
-        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/dlpNotificationTemplates/{template_id}")
+        api_url = format_url(f"{self._zia_base_endpoint}/dlpNotificationTemplates/{template_id}")
 
         request, error = self._request_executor.create_request(http_method, api_url, {}, {}, {})
         if error:

@@ -15,9 +15,9 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.api_client import APIClient
+from zscaler.request_executor import RequestExecutor
 from zscaler.zpa.models.policyset_controller_v1 import PolicySetControllerV1
 from zscaler.utils import format_url, snake_to_camel, convert_keys, add_id_groups
-from urllib.parse import urlencode
 
 
 class PolicySetControllerAPI(APIClient):
@@ -27,7 +27,7 @@ class PolicySetControllerAPI(APIClient):
 
     def __init__(self, request_executor, config):
         super().__init__()
-        self._request_executor = request_executor
+        self._request_executor: RequestExecutor = request_executor
         customer_id = config["client"].get("customerId")
         self._zpa_base_endpoint_v1 = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
         self._zpa_base_endpoint_v2 = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
@@ -189,20 +189,17 @@ class PolicySetControllerAPI(APIClient):
             raise ValueError(f"Incorrect policy type provided: {policy_type}")
 
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint_v1}
             /policySet/policyType/{mapped_policy_type}
-        """)
+        """
+        )
 
         query_params = query_params or {}
         microtenant_id = query_params.get("microtenant_id", None)
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
-
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
 
         # Prepare the request
         request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
@@ -221,7 +218,7 @@ class PolicySetControllerAPI(APIClient):
                 return (None, response, None)
 
             return (response_body, response, None)
-            
+
         except Exception as error:
             return (None, response, error)
 
@@ -262,28 +259,24 @@ class PolicySetControllerAPI(APIClient):
             return (None, None, f"No policy ID found for policy_type: {policy_type}")
 
         # Construct the API URL using the retrieved policy ID
-        api_url = format_url(f"""{
+        api_url = format_url(
+            f"""{
             self._zpa_base_endpoint_v1}
             /policySet/{policy_id}/rule/{rule_id}
-        """)
+        """
+        )
 
         query_params = query_params or {}
         microtenant_id = query_params.get("microtenant_id", None)
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
-
         # Create and execute the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
@@ -324,20 +317,17 @@ class PolicySetControllerAPI(APIClient):
             raise ValueError(f"Incorrect policy type provided: {policy_type}")
 
         http_method = "GET"
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint_v1}
             /policySet/rules/policyType/{mapped_policy_type}
-        """)
+        """
+        )
 
         query_params = query_params or {}
         microtenant_id = query_params.get("microtenant_id", None)
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
-
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
 
         # Prepare request
         request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
@@ -351,7 +341,7 @@ class PolicySetControllerAPI(APIClient):
 
         try:
             # Directly return the results as a list of dictionaries
-            result = [self.form_response_body(item) for item in response.get_results()]
+            result = [self.form_response_body(item) for item in response.get_all_pages_results()]
         except Exception as error:
             return (None, response, error)
 
@@ -2061,21 +2051,21 @@ class PolicySetControllerAPI(APIClient):
         """
         http_method = "put".upper()
         policy_id = self.get_policy(policy_type).id
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint_v1}
             /policySet/{policy_id}/rule/{rule_id}/reorder/{rule_order}
-        """)
+        """
+        )
 
         microtenant_id = kwargs.pop("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, {}, params)
+        request, error = self._request_executor.create_request(http_method, api_url, {}, params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
@@ -2149,24 +2139,24 @@ class PolicySetControllerAPI(APIClient):
             return (None, None, f"No policy ID found for policy_type: {policy_type}")
 
         # Construct the API URL using the retrieved policy_set_id
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint_v1}
             /policySet/{policy_set_id}/reorder
-        """)
+        """
+        )
 
         # Extract microtenant_id if present in kwargs
         microtenant_id = kwargs.pop("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         # Call create_request without the need for custom headers
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body=rules_orders, params=params)
+        request, error = self._request_executor.create_request(http_method, api_url, body=rules_orders, params=params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
         return (None, response, None)

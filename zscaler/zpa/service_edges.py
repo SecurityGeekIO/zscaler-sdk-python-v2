@@ -15,8 +15,8 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.api_client import APIClient
+from zscaler.request_executor import RequestExecutor
 from zscaler.zpa.models.service_edges import ServiceEdge
-from urllib.parse import urlencode
 from zscaler.utils import format_url, snake_to_camel
 
 
@@ -29,11 +29,11 @@ class ServiceEdgeControllerAPI(APIClient):
 
     def __init__(self, request_executor, config):
         super().__init__()
-        self._request_executor = request_executor
+        self._request_executor: RequestExecutor = request_executor
         customer_id = config["client"].get("customerId")
         self._base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
-    def list_service_edges(self, query_params=None, keep_empty_params=False) -> tuple:
+    def list_service_edges(self, query_params=None) -> tuple:
         """
         Enumerates service edges in your organization with pagination.
         A subset of service edges can be returned that match a supported
@@ -46,7 +46,6 @@ class ServiceEdgeControllerAPI(APIClient):
                 [query_params.microtenant_id] {str}: ID of the microtenant, if applicable.
                 [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
                 [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
-            keep_empty_params {bool}: Whether to include empty parameters in the query string.
 
         Returns:
             tuple: A tuple containing (list of AppConnectorGroup instances, Response, error)
@@ -60,20 +59,13 @@ class ServiceEdgeControllerAPI(APIClient):
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
-
         # Prepare request body and headers
         body = {}
         headers = {}
         form = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, form, params=query_params)
 
         if error:
             return (None, None, error)
@@ -87,7 +79,7 @@ class ServiceEdgeControllerAPI(APIClient):
         # Parse the response into AppConnectorGroup instances
         try:
             result = []
-            for item in response.get_body():
+            for item in response.get_all_pages_results():
                 result.append(ServiceEdge(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
@@ -140,22 +132,6 @@ class ServiceEdgeControllerAPI(APIClient):
                 return edge
         return None
 
-    def get_service_edge_by_name(self, name: str, **kwargs) -> ServiceEdge:
-        """
-        Returns information on the service edge with the specified name.
-
-        Args:
-            name (str): The name of the service edge.
-
-        Returns:
-            ServiceEdge: The corresponding Service Edge object or None if not found.
-        """
-        service_edges = self.list_service_edges(**kwargs)
-        for edge in service_edges:
-            if edge.name == name:
-                return edge
-        return None
-
     def update_service_edge(self, service_edge_id: str, **kwargs) -> ServiceEdge:
         """
         Updates the specified ZPA Service Edge.
@@ -187,7 +163,7 @@ class ServiceEdgeControllerAPI(APIClient):
         if error:
             return None
 
-        response, error = self._request_executor.execute(request)
+        _, error = self._request_executor.execute(request)
         if error:
             return None
 

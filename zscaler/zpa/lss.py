@@ -15,9 +15,9 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.api_client import APIClient
+from zscaler.request_executor import RequestExecutor
 from zscaler.zpa.models.lss import LSSConfig
-from zscaler.utils import format_url, snake_to_camel, keys_exists, convert_keys
-from urllib.parse import urlencode
+from zscaler.utils import format_url, snake_to_camel
 
 
 class LSSConfigControllerAPI(APIClient):
@@ -34,7 +34,7 @@ class LSSConfigControllerAPI(APIClient):
 
     def __init__(self, request_executor, config):
         super().__init__()
-        self._request_executor = request_executor
+        self._request_executor: RequestExecutor = request_executor
         customer_id = config["client"].get("customerId")
         self._zpa_lss_base_endpoint_v2 = f"/zpa/mgmtconfig/v2/admin/customers/{customer_id}"
         self._zpa_base_lss_url_v2 = "/zpa/mgmtconfig/v2/admin/lssConfig"
@@ -109,36 +109,29 @@ class LSSConfigControllerAPI(APIClient):
             >>> lss_configs = zpa.lss.list_configs(search="example", pagesize=100)
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_lss_base_endpoint_v2}
             /lssConfig
-        """)
+        """
+        )
 
         query_params = query_params or {}
 
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
-
         # Prepare request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_results():
-                result.append(LSSConfig(
-                    self.form_response_body(item))
-                )
+            for item in response.get_all_pages_results():
+                result.append(LSSConfig(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -154,31 +147,25 @@ class LSSConfigControllerAPI(APIClient):
             LSSConfig: The corresponding LSS Receiver config object.
         """
         http_method = "get".upper()
-        api_url = format_url(f"""{
+        api_url = format_url(
+            f"""{
             self._zpa_lss_base_endpoint_v2}
             /lssConfig/{lss_config_id}
-        """)
+        """
+        )
 
         query_params = query_params or {}
 
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
-
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, LSSConfig)
+        response, error = self._request_executor.execute(request, LSSConfig)
         if error:
             return (None, response, error)
 
         try:
-            result = LSSConfig(
-                self.form_response_body(response.get_body())
-            )
+            result = LSSConfig(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -246,11 +233,13 @@ class LSSConfigControllerAPI(APIClient):
                 )
         """
         http_method = "post".upper()
-        api_url = format_url(f"""{
+        api_url = format_url(
+            f"""{
             self._zpa_lss_base_endpoint_v2}
             /lssConfig
-        """)
-        
+        """
+        )
+
         # Map the source log type to ZPA internal log codes
         source_log_type = self.source_log_map[source_log_type]
 
@@ -290,23 +279,17 @@ class LSSConfigControllerAPI(APIClient):
             payload[snake_to_camel(key)] = value
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(
-            http_method, api_url, body=payload
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body=payload)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, LSSConfig)
+        response, error = self._request_executor.execute(request, LSSConfig)
         if error:
             return (None, response, error)
 
         try:
-            result = LSSConfig(
-                self.form_response_body(response.get_body())
-            )
+            result = LSSConfig(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -347,10 +330,12 @@ class LSSConfigControllerAPI(APIClient):
                     source_log_type="user_status")
         """
         http_method = "put".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_lss_base_endpoint_v2}
             /lssConfig/{lss_config_id}
-        """)
+        """
+        )
 
         # Fetch the current configuration so we can merge with the new values
         current_config, _, error = self.get_config(lss_config_id)
@@ -382,15 +367,17 @@ class LSSConfigControllerAPI(APIClient):
         current_config["config"]["id"] = lss_config_id
 
         # Prepare the payload by merging the current configuration with the new changes
-        current_config["config"].update({
-            "enabled": kwargs.get("enabled", current_config["config"].get("enabled", True)),
-            "lssHost": kwargs.get("lss_host", current_config["config"].get("lssHost")),
-            "lssPort": kwargs.get("lss_port", current_config["config"].get("lssPort")),
-            "name": kwargs.get("name", current_config["config"].get("name")),
-            "format": log_stream_content,
-            "sourceLogType": source_log_type,
-            "useTls": kwargs.get("use_tls", current_config["config"].get("useTls", False)),
-        })
+        current_config["config"].update(
+            {
+                "enabled": kwargs.get("enabled", current_config["config"].get("enabled", True)),
+                "lssHost": kwargs.get("lss_host", current_config["config"].get("lssHost")),
+                "lssPort": kwargs.get("lss_port", current_config["config"].get("lssPort")),
+                "name": kwargs.get("name", current_config["config"].get("name")),
+                "format": log_stream_content,
+                "sourceLogType": source_log_type,
+                "useTls": kwargs.get("use_tls", current_config["config"].get("useTls", False)),
+            }
+        )
 
         # Update connector groups if provided
         if "app_connector_group_ids" in kwargs:
@@ -447,20 +434,20 @@ class LSSConfigControllerAPI(APIClient):
             int: Status code of the delete operation.
         """
         http_method = "delete".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_lss_base_endpoint_v2}
             /lssConfig/{lss_config_id}
-        """)
+        """
+        )
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url)
+        request, error = self._request_executor.create_request(http_method, api_url)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
@@ -481,18 +468,18 @@ class LSSConfigControllerAPI(APIClient):
             >>> web_browser_type = zpa.lss.get_client_types('web_browser')
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_lss_endpoint_v2}
             /clientTypes
-        """)
+        """
+        )
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url)
+        request, error = self._request_executor.create_request(http_method, api_url)
         if error:
             return None
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return None
 
@@ -523,25 +510,24 @@ class LSSConfigControllerAPI(APIClient):
 
         # Check if a specific log_type is provided; if so, use the specific endpoint
         if log_type:
-            api_url = format_url(f"""
+            api_url = format_url(
+                f"""
                 {self._zpa_lss_base_endpoint_v2}
                 /lssConfig/logType/formats
-            """)
+            """
+            )
             query_params["logType"] = log_type
         else:
             # Otherwise, fetch all log formats
-            api_url = format_url(f"""
+            api_url = format_url(
+                f"""
                 {self._zpa_base_lss_url_v2}
                 /logType/formats
-            """)
-
-        # Encode the query parameters if provided
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
+            """
+            )
 
         # Prepare request and execute
-        request, error = self._request_executor.create_request(http_method, api_url)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return None
 
@@ -567,18 +553,18 @@ class LSSConfigControllerAPI(APIClient):
             >>> user_activity_codes = zpa.lss.get_status_codes(log_type="user_activity")
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_lss_url_v2}
             /statusCodes
-        """)
+        """
+        )
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url)
+        request, error = self._request_executor.create_request(http_method, api_url)
         if error:
             return None
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return None
 

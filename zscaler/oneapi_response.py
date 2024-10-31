@@ -37,8 +37,7 @@ class ZscalerAPIResponse:
         end_time=None,
     ):
         logger.debug("Initializing ZscalerAPIResponse with service_type: %s", service_type)
-        self._page = 1  # Initialize page for ZPA/ZIA-based pagination
-        self._url = res_details.url if res_details and hasattr(res_details, "url") else None
+        self._url = req.get("url", None)
         self._headers = req.get("headers", {})  # Headers for the request
         self._params = req.get("params", {})  # Query parameters like filtering and pagination
         self._resp_headers = res_details.headers if res_details and hasattr(res_details, "headers") else {}
@@ -50,6 +49,7 @@ class ZscalerAPIResponse:
         # Custom options
         self._max_items = max_items  # Max number of items to return, if provided
         self._max_pages = max_pages  # Max number of pages to return, if provided
+        self._page = 1  # Initialize page for ZPA/ZIA-based pagination
         self._items_fetched = 0  # Tracks the total number of items fetched
         self._pages_fetched = 0  # Tracks the total number of pages fetched
 
@@ -78,18 +78,18 @@ class ZscalerAPIResponse:
         if res_details:
             content_type = res_details.headers.get("Content-Type", "").lower()
             if "application/json" in content_type:
-                self.build_json_response(response_body)
+                self._build_json_response(response_body)
             else:
                 # Attempt to parse as JSON, if fails, save as plain text
                 try:
-                    self.build_json_response(response_body)
+                    self._build_json_response(response_body)
                 except json.JSONDecodeError:
                     # Save response as plain text if not JSON
                     self._body = response_body
         else:
             # If no res_details, assume it's JSON and try to parse
             try:
-                self.build_json_response(response_body)
+                self._build_json_response(response_body)
             except json.JSONDecodeError:
                 # Save response as plain text if not JSON
                 self._body = response_body
@@ -132,7 +132,7 @@ class ZscalerAPIResponse:
         logger.debug("Fetching response status code: %s", self._status)
         return self._status
 
-    def build_json_response(self, response_body):
+    def _build_json_response(self, response_body):
         """
         Converts JSON response text into Python dictionary or list depending on the service.
         Handles ZPA's totalPages/totalCount, ZIA's raw list response, and ZDX offset/limit.
@@ -167,17 +167,49 @@ class ZscalerAPIResponse:
         logger.debug("Fetching results list")
         return self._list
 
-    def get_total_count(self):
+    def get_all_pages_results(self):
         """
-        Returns the total number of items in the API response (if available for ZPA).
+        Fetches and returns all pages of results.
         """
-        if self._service_type == "ZPA":
-            logger.debug("Total count for ZPA: %d", self._total_count)
-            return self._total_count
-        logger.debug("Total count not available for service type: %s", self._service_type)
-        return None  # ZIA and ZDX do not provide totalCount
+        logger.debug("Starting to fetch all results")
 
-    def has_next(self):
+        # Reset pagination tracking variables
+        self._items_fetched = 0
+        self._pages_fetched = 0
+        self._page = 1
+        # Start with the current list of results from the first page
+        all_results = self._list.copy()
+        prev_results = all_results
+        self._items_fetched += len(all_results)
+        self._pages_fetched += 1
+        logger.debug(f"Initial results count: {len(all_results)}")
+        # Continue fetching pages as long as there are more pages available
+        while self._has_next():
+            logger.debug("Fetching next page of results")
+
+            # Fetch the next page of results
+            next_page_results = self._next()
+
+            # If no more data is returned, break out of the loop
+            if not next_page_results:
+                logger.debug("No more data returned, stopping pagination")
+                break
+            if prev_results == next_page_results:
+                # could happen for ZIA
+                logger.debug("No new data returned, stopping pagination")
+                break
+            # Add the results from the next page to the overall results
+            all_results.extend(next_page_results)
+            self._items_fetched += len(next_page_results)
+            self._pages_fetched += 1
+            prev_results = next_page_results
+            logger.debug(f"Extended results count: {len(all_results)}")
+
+        logger.debug(f"Total results fetched: {len(all_results)}")
+        # Return the complete list of results from all pages
+        return all_results
+
+    def _has_next(self):
         """
         Determines if there are more pages to fetch.
         - For ZPA: Checks if the current page is less than totalPages.
@@ -205,7 +237,7 @@ class ZscalerAPIResponse:
             logger.debug("Has next page for ZIA/ZCC: %s", has_next)
             return has_next
 
-    def next(self):
+    def _next(self):
         """
         Fetches the next page of results.
         - Stops for ZIA and ZCC when no data is returned.
@@ -213,7 +245,7 @@ class ZscalerAPIResponse:
         - For ZDX, stops when next_offset becomes null.
         - Custom: Stops if max_items or max_pages limits are reached.
         """
-        if not self.has_next():
+        if not self._has_next():
             logger.debug("No more pages to fetch")
             return []  # No more pages to fetch
 
@@ -234,18 +266,22 @@ class ZscalerAPIResponse:
         }
 
         # Fire the request for the next page and unpack the needed values
-        _, next_response, response_body, error = self._request_executor.fire_request(req)
+        _, _, response_body, error = self._request_executor.fire_request(req)
 
         if error:
             logger.error(f"Error fetching the next page: {error}")
             return [], error
 
         # Update the response with the new page's data, no need to re-parse response_body
-        self.build_json_response(response_body)
+        self._build_json_response(response_body)
 
         # Stop if no data was returned (especially for ZIA and ZDX)
         if not self._list:
             logger.debug("No data returned for the next page")
+            # reset pagination tracking variables
+            self._items_fetched = 0
+            self._pages_fetched = 0
+            self._page = 1
             return []
 
         return self._list

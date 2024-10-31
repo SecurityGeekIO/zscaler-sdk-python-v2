@@ -15,17 +15,17 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.api_client import APIClient
+from zscaler.request_executor import RequestExecutor
 from zscaler.utils import format_url, zcc_param_map
 from zscaler.zcc.models.devices import Device
 from datetime import datetime
-from urllib.parse import urlencode
 
 
 class DevicesAPI(APIClient):
 
     def __init__(self, request_executor):
         super().__init__()
-        self._request_executor = request_executor
+        self._request_executor: RequestExecutor = request_executor
         self._zcc_base_endpoint = "/zcc/papi/public/v1"
 
     def download_devices(
@@ -177,20 +177,13 @@ class DevicesAPI(APIClient):
         """
         )
 
-        # payload = convert_keys(dict(kwargs))
-
         query_params = query_params or {}
-
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
 
         # Prepare request body and headers
         body = {}
         headers = {}
 
-        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)
@@ -201,7 +194,7 @@ class DevicesAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_body():
+            for item in response.get_all_pages_results():
                 result.append(Device(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)

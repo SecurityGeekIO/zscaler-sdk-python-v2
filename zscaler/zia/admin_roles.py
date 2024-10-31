@@ -15,9 +15,10 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.api_client import APIClient
+from zscaler.request_executor import RequestExecutor
 from zscaler.zia.models.admin_roles import AdminRoles
 from zscaler.utils import format_url
-from urllib.parse import urlencode
+
 
 class AdminRolesAPI(APIClient):
     """
@@ -25,14 +26,14 @@ class AdminRolesAPI(APIClient):
     """
 
     _zia_base_endpoint = "/zia/api/v1"
-    
+
     def __init__(self, request_executor):
         super().__init__()
-        self._request_executor = request_executor
+        self._request_executor: RequestExecutor = request_executor
 
     def list_roles(
-            self, query_params=None,
-            keep_empty_params=False
+        self,
+        query_params=None,
     ) -> tuple:
         """
         Return a list of the configured admin roles in ZIA.
@@ -46,7 +47,6 @@ class AdminRolesAPI(APIClient):
                 [query_params.pagesize] {int}: Specifies the page size. The default size is 100, but the maximum size is 1000.
                 [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
                 [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
-            keep_empty_params {bool}: Whether to include empty parameters in the query string.
 
         Returns:
             tuple: A tuple containing (list of AdminRole instances, Response, error)
@@ -63,19 +63,17 @@ class AdminRolesAPI(APIClient):
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
 
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
-
         # Prepare request body and headers
         body = {}
         headers = {}
-        form = {}
 
         # Create the request
         request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
+            http_method,
+            api_url,
+            body,
+            headers,
+            params=query_params,
         )
 
         if error:
@@ -90,10 +88,9 @@ class AdminRolesAPI(APIClient):
         # Parse the response into AdminUser instances
         try:
             result = []
-            for item in response.get_body():
-                result.append(AdminRoles(
-                    self.form_response_body(item)
-                ))
+            # this endpoint does not support pagination
+            for item in response.get_results():
+                result.append(AdminRoles(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 

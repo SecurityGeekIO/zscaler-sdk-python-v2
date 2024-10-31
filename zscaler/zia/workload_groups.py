@@ -15,9 +15,10 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.api_client import APIClient
+from zscaler.request_executor import RequestExecutor
 from zscaler.zia.models.workload_groups import WorkloadGroups
 from zscaler.utils import format_url
-from urllib.parse import urlencode
+
 
 class WorkloadGroupsAPI(APIClient):
     """
@@ -25,13 +26,14 @@ class WorkloadGroupsAPI(APIClient):
     """
 
     _zia_base_endpoint = "/zia/api/v1"
-    
+
     def __init__(self, request_executor):
         super().__init__()
-        self._request_executor = request_executor
+        self._request_executor: RequestExecutor = request_executor
 
     def list_groups(
-            self, query_params=None,
+        self,
+        query_params=None,
     ) -> tuple:
         """
         Returns the list of workload groups configured in the ZIA Admin Portal.
@@ -53,22 +55,18 @@ class WorkloadGroupsAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}/workloadGroups
-        """)
-
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
+        """
+        )
 
         # Prepare request body and headers
         body = {}
         headers = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers)
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)
@@ -81,10 +79,8 @@ class WorkloadGroupsAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_body():
-                result.append(WorkloadGroups(
-                    self.form_response_body(item)
-                ))
+            for item in response.get_all_pages_results():
+                result.append(WorkloadGroups(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 

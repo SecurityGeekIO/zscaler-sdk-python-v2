@@ -15,23 +15,17 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.api_client import APIClient
+from zscaler.request_executor import RequestExecutor
 from zscaler.zia.models.dlp_web_rules import DLPWebRules
 
-from zscaler.utils import (
-    convert_keys,
-    recursive_snake_to_camel,
-    snake_to_camel,
-    transform_common_id_fields,
-    format_url
-)
-from urllib.parse import urlencode
+from zscaler.utils import convert_keys, recursive_snake_to_camel, snake_to_camel, transform_common_id_fields, format_url
 
 
 class DLPWebRuleAPI(APIClient):
     """
     A Client object for the DLP Web Rule resource.
     """
-    
+
     reformat_params = [
         ("auditor", "auditor"),
         ("dlp_engines", "dlpEngines"),
@@ -50,15 +44,12 @@ class DLPWebRuleAPI(APIClient):
     ]
 
     _zia_base_endpoint = "/zia/api/v1"
-    
+
     def __init__(self, request_executor):
         super().__init__()
-        self._request_executor = request_executor
+        self._request_executor: RequestExecutor = request_executor
 
-    def list_rules(
-            self, query_params=None,
-            keep_empty_params=False
-    ) -> tuple:
+    def list_rules(self, query_params=None) -> tuple:
         """
         Enumerates dlp web rules in your organization with pagination.
         A subset of dlp web rules can be returned that match a supported
@@ -70,7 +61,6 @@ class DLPWebRuleAPI(APIClient):
                 [query_params.search] {str}: Search string for filtering results.
                 [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
                 [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
-            keep_empty_params {bool}: Whether to include empty parameters in the query string.
 
         Returns:
             tuple: A tuple containing (list of DLP Web Rules instances, Response, error)
@@ -85,25 +75,17 @@ class DLPWebRuleAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/ruleLabels")
+        api_url = format_url(f"{self._zia_base_endpoint}/ruleLabels")
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
 
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
-
         # Prepare request body and headers
         body = {}
         headers = {}
-        form = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)
@@ -117,10 +99,8 @@ class DLPWebRuleAPI(APIClient):
         # Parse the response into AppConnectorGroup instances
         try:
             result = []
-            for item in response.get_body():
-                result.append(DLPWebRules(
-                    self.form_response_body(item)
-                ))
+            for item in response.get_all_pages_results():
+                result.append(DLPWebRules(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
@@ -144,16 +124,13 @@ class DLPWebRuleAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/webDlpRules/{rule_id}")
+        api_url = format_url(f"{self._zia_base_endpoint}/webDlpRules/{rule_id}")
 
         body = {}
         headers = {}
-        form = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
 
         if error:
             return (None, None, error)
@@ -172,7 +149,7 @@ class DLPWebRuleAPI(APIClient):
 
         return (result, response, None)
 
-    def list_rules_lite(self) -> tuple:
+    def list_rules_lite(self, query_params: dict = None) -> tuple:
         """
         Returns the name and ID for all DLP policy rules, excluding SaaS Security API DLP policy rules.
 
@@ -188,25 +165,17 @@ class DLPWebRuleAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/webDlpRules/lite")
+        api_url = format_url(f"{self._zia_base_endpoint}/webDlpRules/lite")
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
 
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
-
         # Prepare request body and headers
         body = {}
         headers = {}
-        form = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)
@@ -220,10 +189,8 @@ class DLPWebRuleAPI(APIClient):
         # Parse the response into AdminUser instances
         try:
             result = []
-            for item in response.get_body():
-                result.append(DLPWebRules(
-                    self.form_response_body(item)
-                ))
+            for item in response.get_all_pages_results():
+                result.append(DLPWebRules(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
@@ -289,7 +256,7 @@ class DLPWebRuleAPI(APIClient):
             ...    description='TT#1965432122')
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/webDlpRules")
+        api_url = format_url(f"{self._zia_base_endpoint}/webDlpRules")
 
         # Convert enabled to API format if present
         if "enabled" in kwargs:
@@ -328,7 +295,6 @@ class DLPWebRuleAPI(APIClient):
             return (None, response, error)
 
         return (result, response, None)
-
 
     def update_rule(self, rule_id: str, **kwargs) -> tuple:
         """
@@ -383,7 +349,7 @@ class DLPWebRuleAPI(APIClient):
                 >>> zia.web_dlp.update_rule('976597', description="TT#1965232866")
         """
         http_method = "put".upper()
-        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/webDlpRules/{rule_id}")
+        api_url = format_url(f"{self._zia_base_endpoint}/webDlpRules/{rule_id}")
 
         # Set payload to value of existing record and convert nested dict keys.
         payload = convert_keys(self.get_rule(rule_id))
@@ -409,9 +375,7 @@ class DLPWebRuleAPI(APIClient):
             return (None, response, error)
 
         try:
-            result = DLPWebRules(
-                self.form_response_body(response.get_body())
-            )
+            result = DLPWebRules(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -435,7 +399,7 @@ class DLPWebRuleAPI(APIClient):
 
         """
         http_method = "delete".upper()
-        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/webDlpRules/{rule_id}")
+        api_url = format_url(f"{self._zia_base_endpoint}/webDlpRules/{rule_id}")
 
         request, error = self._request_executor.create_request(http_method, api_url, {}, {}, {})
         if error:

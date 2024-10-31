@@ -15,10 +15,10 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.api_client import APIClient
+from zscaler.request_executor import RequestExecutor
 from zscaler.zpa.models.pra_credential import PrivilegedRemoteAccessCredential
 from zscaler.utils import format_url
-from urllib.parse import urlencode
-from zscaler.utils import is_valid_ssh_key, snake_to_camel, validate_and_convert_times
+from zscaler.utils import is_valid_ssh_key
 
 
 class PRACredentialAPI(APIClient):
@@ -28,10 +28,10 @@ class PRACredentialAPI(APIClient):
 
     def __init__(self, request_executor, config):
         super().__init__()
-        self._request_executor = request_executor
+        self._request_executor: RequestExecutor = request_executor
         customer_id = config["client"].get("customerId")
         self._zpa_base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
-        
+
     def list_credentials(self, query_params=None) -> tuple:
         """
         Returns a list of all privileged remote access credentials.
@@ -48,36 +48,30 @@ class PRACredentialAPI(APIClient):
             tuple: A tuple containing (list of PrivilegedRemoteAccessCredential instances, Response, error)
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /credential
-        """)
+        """
+        )
 
         query_params = query_params or {}
         microtenant_id = query_params.get("microtenant_id", None)
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
-
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_results():
-                result.append(PrivilegedRemoteAccessCredential(
-                    self.form_response_body(item))
-                )
+            for item in response.get_all_pages_results():
+                result.append(PrivilegedRemoteAccessCredential(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -93,34 +87,28 @@ class PRACredentialAPI(APIClient):
             PrivilegedRemoteAccessCredential: The resource record for the credential.
         """
         http_method = "get".upper()
-        api_url = format_url(f"""{
+        api_url = format_url(
+            f"""{
             self._zpa_base_endpoint}
             /credential/{credential_id}
-        """)
+        """
+        )
 
         query_params = query_params or {}
         microtenant_id = query_params.get("microtenant_id", None)
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
-
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, PrivilegedRemoteAccessCredential)
+        response, error = self._request_executor.execute(request, PrivilegedRemoteAccessCredential)
         if error:
             return (None, response, error)
 
         try:
-            result = PrivilegedRemoteAccessCredential(
-                self.form_response_body(response.get_body())
-            )
+            result = PrivilegedRemoteAccessCredential(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -140,11 +128,13 @@ class PRACredentialAPI(APIClient):
             PrivilegedRemoteAccessCredential: The newly created credential resource.
         """
         http_method = "post".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /credential
-        """)
-        
+        """
+        )
+
         # Construct the body from kwargs (as a dictionary)
         body = kwargs
 
@@ -179,23 +169,17 @@ class PRACredentialAPI(APIClient):
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(
-            http_method, api_url, body=body, params=params
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body=body, params=params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, PrivilegedRemoteAccessCredential)
+        response, error = self._request_executor.execute(request, PrivilegedRemoteAccessCredential)
         if error:
             return (None, response, error)
 
         try:
-            result = PrivilegedRemoteAccessCredential(
-                self.form_response_body(response.get_body())
-            )
+            result = PrivilegedRemoteAccessCredential(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -211,10 +195,12 @@ class PRACredentialAPI(APIClient):
             PrivilegedRemoteAccessCredential: The updated credential resource.
         """
         http_method = "put".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /credential/{credential_id}
-        """)
+        """
+        )
 
         # Start with an empty body or an existing resource's current data
         body = {}
@@ -253,14 +239,12 @@ class PRACredentialAPI(APIClient):
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, {}, params)
+        request, error = self._request_executor.create_request(http_method, api_url, body, {}, params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, PrivilegedRemoteAccessCredential)
+        response, error = self._request_executor.execute(request, PrivilegedRemoteAccessCredential)
         if error:
             return (None, response, error)
 
@@ -271,13 +255,11 @@ class PRACredentialAPI(APIClient):
 
         # Parse the response into an AppConnectorGroup instance
         try:
-            result = PrivilegedRemoteAccessCredential(
-                self.form_response_body(response.get_body())
-            )
+            result = PrivilegedRemoteAccessCredential(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
-        
+
     def delete_credential(self, credential_id: str, microtenant_id: str = None) -> tuple:
         """
         Deletes the specified privileged remote access credential.
@@ -290,20 +272,20 @@ class PRACredentialAPI(APIClient):
             int: The HTTP status code of the delete operation.
         """
         http_method = "delete".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /credential/{credential_id}
-        """)
-        
+        """
+        )
+
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
         return (None, response, None)
@@ -315,7 +297,7 @@ class PRACredentialAPI(APIClient):
         Args:
             credential_id (str): The unique identifier of the credential.
             move_data (dict or object): Dictionary or object that contains the move-related data.
-            target_microtenant_id (str): The unique identifier of the target microtenant. 
+            target_microtenant_id (str): The unique identifier of the target microtenant.
                                         For Default microtenant, 0 should be passed.
 
         Returns:
@@ -333,10 +315,12 @@ class PRACredentialAPI(APIClient):
             raise ValueError("target_microtenant_id must be provided.")
 
         # Build the URL with both microtenantId and targetMicrotenantId as query parameters
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /credential/{credential_id}/move?microtenantId={microtenant_id}&targetMicrotenantId={target_microtenant_id}
-        """)
+        """
+        )
 
         # Ensure move_data is a dictionary or an object with an as_dict method
         if isinstance(move_data, dict):
@@ -347,14 +331,12 @@ class PRACredentialAPI(APIClient):
             move_body = {}
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body=move_body)
+        request, error = self._request_executor.create_request(http_method, api_url, body=move_body)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, PrivilegedRemoteAccessCredential)
+        response, error = self._request_executor.execute(request, PrivilegedRemoteAccessCredential)
         if error:
             return (None, response, error)
 
@@ -364,9 +346,7 @@ class PRACredentialAPI(APIClient):
 
         # Parse the response if available
         try:
-            result = PrivilegedRemoteAccessCredential(
-                self.form_response_body(response.get_body())
-            )
+            result = PrivilegedRemoteAccessCredential(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
 

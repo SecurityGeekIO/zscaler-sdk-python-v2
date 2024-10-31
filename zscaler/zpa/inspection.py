@@ -15,12 +15,12 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.api_client import APIClient
+from zscaler.request_executor import RequestExecutor
 from zscaler.zpa.models.inspection import InspectionProfile
 from zscaler.zpa.models.inspection import AppProtectionCustomControl
 from zscaler.zpa.models.inspection import PredefinedInspectionControl
 from zscaler.utils import format_url, convert_keys, snake_to_camel
 from requests.utils import quote
-from urllib.parse import urlencode
 
 
 class InspectionControllerAPI(APIClient):
@@ -30,11 +30,14 @@ class InspectionControllerAPI(APIClient):
 
     def __init__(self, request_executor, config):
         super().__init__()
-        self._request_executor = request_executor
+        self._request_executor: RequestExecutor = request_executor
         customer_id = config["client"].get("customerId")
         self._base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
-    def list_profiles(self, query_params=None, keep_empty_params=False) -> tuple:
+    def list_profiles(
+        self,
+        query_params=None,
+    ) -> tuple:
         """
         Enumerates App Protection Profile in your organization with pagination.
         A subset of App Protection Profile can be returned that match a supported
@@ -47,7 +50,6 @@ class InspectionControllerAPI(APIClient):
                 [query_params.microtenant_id] {str}: ID of the microtenant, if applicable.
                 [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
                 [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
-            keep_empty_params {bool}: Whether to include empty parameters in the query string.
 
         Returns:
             tuple: A tuple containing (list of InspectionProfile instances, Response, error)
@@ -58,20 +60,13 @@ class InspectionControllerAPI(APIClient):
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
 
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
-
         # Prepare request body and headers
         body = {}
         headers = {}
         form = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, form, params=query_params)
 
         if error:
             return (None, None, error)
@@ -85,7 +80,7 @@ class InspectionControllerAPI(APIClient):
         # Parse the response into IDP instances
         try:
             result = []
-            for item in response.get_body():
+            for item in response.get_all_pages_results():
                 result.append(InspectionProfile(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
@@ -319,7 +314,10 @@ class InspectionControllerAPI(APIClient):
 
         return self.get_profile(profile_id)
 
-    def list_custom_controls(self, query_params=None, keep_empty_params=False) -> tuple:
+    def list_custom_controls(
+        self,
+        query_params=None,
+    ) -> tuple:
         """
         Enumerates App Protection Custom Control in your organization with pagination.
         A subset of App Protection Custom Control can be returned that match a supported
@@ -332,7 +330,6 @@ class InspectionControllerAPI(APIClient):
                 [query_params.microtenant_id] {str}: ID of the microtenant, if applicable.
                 [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
                 [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
-            keep_empty_params {bool}: Whether to include empty parameters in the query string.
 
         Returns:
             tuple: A tuple containing (list of AppProtectionCustomControl instances, Response, error)
@@ -343,20 +340,13 @@ class InspectionControllerAPI(APIClient):
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
 
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
-
         # Prepare request body and headers
         body = {}
         headers = {}
         form = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, form, params=query_params)
 
         if error:
             return (None, None, error)
@@ -370,7 +360,7 @@ class InspectionControllerAPI(APIClient):
         # Parse the response into IDP instances
         try:
             result = []
-            for item in response.get_body():
+            for item in response.get_all_pages_results():
                 result.append(AppProtectionCustomControl(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
@@ -528,7 +518,11 @@ class InspectionControllerAPI(APIClient):
 
         return response.status_code
 
-    def list_predef_controls(self, version: str = "OWASP_CRS/3.3.0", query_params=None, keep_empty_params=False) -> tuple:
+    def list_predef_controls(
+        self,
+        version: str = "OWASP_CRS/3.3.0",
+        query_params=None,
+    ) -> tuple:
         """
         Returns a list of predefined ZPA Inspection Controls.
 
@@ -537,7 +531,6 @@ class InspectionControllerAPI(APIClient):
             query_params {dict}: Map of additional query parameters for the request.
                 [query_params.search] {str}: Search string for filtering results by features or fields.
                 [query_params.search_field] {str}: Field to search by. Default is "name".
-            keep_empty_params (bool): Whether to include empty parameters in the query string.
 
         Returns:
             tuple: A tuple containing (list of PredefinedInspectionControl objects, Response, error).
@@ -553,21 +546,15 @@ class InspectionControllerAPI(APIClient):
         http_method = "get".upper()
         encoded_version = quote(version, safe="")
 
-        api_url = format_url(f"{self._base_endpoint}/inspectionControls/predefined?version={encoded_version}")
+        api_url = format_url(f"{self._base_endpoint}/inspectionControls/predefined")
 
         # Handle query parameters
         query_params = query_params or {}
         search = query_params.pop("search", None)
         search_field = query_params.pop("search_field", "name")
-
+        query_params["version"] = encoded_version
         if search:
-            encoded_search = quote(f"{search_field}+EQ+{search}", safe="")
-            api_url += f"&search={encoded_search}"
-
-        # Append any additional query parameters, if provided
-        if query_params:
-            additional_params = "&".join(f"{key}={quote(str(value))}" for key, value in query_params.items())
-            api_url += f"&{additional_params}"
+            query_params["search"] = quote(f"{search_field}+EQ+{search}", safe="")
 
         # Prepare request body and headers
         body = {}
@@ -575,9 +562,7 @@ class InspectionControllerAPI(APIClient):
         form = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, form, params=query_params)
 
         if error:
             return (None, None, error)
@@ -591,7 +576,7 @@ class InspectionControllerAPI(APIClient):
         # Parse the response into PredefinedInspectionControl instances
         try:
             result = []
-            for item in response.get_body():
+            for item in response.get_all_pages_results():
                 result.append(PredefinedInspectionControl(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
@@ -612,7 +597,13 @@ class InspectionControllerAPI(APIClient):
         Examples:
             >>> print(inspection.get_predef_control_by_name("Failed to parse request body"))
         """
-        control_groups = self.list_predef_controls(search=name, version=version)
+        control_groups = self.list_predef_controls(
+            version=version,
+            query_params={
+                "search": name,
+                "search_field": "name",
+            },
+        )
         for control_group in control_groups:
             for control in control_group.predefined_inspection_controls:
                 if control.name == name:
@@ -636,7 +627,9 @@ class InspectionControllerAPI(APIClient):
         Examples:
             >>> print(zpa.inspection.get_predef_control_group_by_name("Protocol Issues"))
         """
-        control_groups = self.list_predef_controls(search=group_name, search_field="controlGroup", version=version)
+        control_groups = self.list_predef_controls(
+            version=version, query_params={"search": group_name, "search_field": "controlGroup"}
+        )
         for control_group in control_groups:
             if control_group.control_group == group_name:
                 return control_group

@@ -14,10 +14,8 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
-
-from box import Box
-
 from zscaler.api_client import APIClient
+from zscaler.request_executor import RequestExecutor
 
 
 class SSLInspectionAPI(APIClient):
@@ -26,38 +24,44 @@ class SSLInspectionAPI(APIClient):
     """
 
     _zia_base_endpoint = "/zia/api/v1"
-    
+
     def __init__(self, request_executor):
         super().__init__()
-        self._request_executor = request_executor
+        self._request_executor: RequestExecutor = request_executor
 
-    def get_csr(self) -> str:
+    def get_csr(self) -> tuple:
         """
         Downloads a CSR after it has been generated.
-
-        Returns:
-            :obj:`str`: Base64 encoded PKCS#10 CSR text.
-
-        Examples:
-            Retrieve the CSR for use in another function.
-
-            >>> csr = zia.ssl.get_csr()
-
         """
-        return self.rest.get("sslSettings/downloadcsr").text
+        http_method = "get".upper()
+        api_url = f"{self._zia_base_endpoint}/sslSettings/downloadcsr"
 
-    def get_intermediate_ca(self) -> Box:
+        request, error = self._request_executor.create_request(http_method, api_url, {}, {})
+        if error:
+            return (None, None, error)
+
+        response, error = self._request_executor.execute(request)
+        if error:
+            return (None, response, error)
+
+        return (response.get_body().text, response, None)
+
+    def get_intermediate_ca(self) -> tuple:
         """
         Returns information on the signed Intermediate Root CA certificate.
-
-        Returns:
-            :obj:`Box`: The Intermediate Root CA resource record.
-
-        Examples:
-            >>> pprint(zia.ssl.get_intermediate_ca())
-
         """
-        return self.rest.get("sslSettings/showcert")
+        http_method = "get".upper()
+        api_url = f"{self._zia_base_endpoint}/sslSettings/showcert"
+
+        request, error = self._request_executor.create_request(http_method, api_url, {}, {})
+        if error:
+            return (None, None, error)
+
+        response, error = self._request_executor.execute(request)
+        if error:
+            return (None, response, error)
+
+        return (self.form_response_body(response.get_body()), response, None)
 
     def generate_csr(
         self,
@@ -69,39 +73,13 @@ class SSLInspectionAPI(APIClient):
         state: str,
         country: str,
         signature: str,
-    ) -> int:
+    ) -> tuple:
         """
         Generates a Certificate Signing Request.
-
-        Args:
-            cert_name (str): Certificate Name
-            cn (str): Common Name
-            org (str): Organisation
-            dept (str): Department
-            city (str): City
-            state (str): State
-            country (str): Country. Must be in the two-letter country code (ISO 3166-1 alpha-2) format and prefixed by
-                `COUNTRY`. E.g.::
-
-                    United States = US = COUNTRY_US
-                    Australia = AU = COUNTRY_AU
-
-            signature  (str): Certificate signature algorithm. Accepted values are `SHA_1` and `SHA_256`.
-
-        Returns:
-            :obj:`int`: The response code for the operation.
-
-        Examples:
-            >>> zia.ssl.generate_csr(cert_name='Example.com Intermediate CA 2',
-            ...    cn='Example.com Intermediate CA 2',
-            ...    org='Example.com',
-            ...    dept='IT',
-            ...    city='Sydney',
-            ...    state='NSW',
-            ...    country='COUNTRY_AU',
-            ...    signature='SHA_256')
-
         """
+        http_method = "post".upper()
+        api_url = f"{self._zia_base_endpoint}/sslSettings/generatecsr"
+
         payload = {
             "certName": cert_name,
             "commName": cn,
@@ -113,64 +91,67 @@ class SSLInspectionAPI(APIClient):
             "signatureAlgorithm": signature,
         }
 
-        return self.rest.post("sslSettings/generatecsr", json=payload, box=False).status_code
+        request, error = self._request_executor.create_request(http_method, api_url, payload, {}, {})
+        if error:
+            return (None, None, error)
 
-    def upload_int_ca_cert(self, cert: tuple) -> int:
+        response, error = self._request_executor.execute(request)
+        if error:
+            return (None, response, error)
+
+        return (response.get_body(), response, None)
+
+    def upload_int_ca_cert(self, cert: tuple) -> tuple:
         """
         Uploads a signed Intermediate Root CA certificate.
-
-        Args:
-            cert (tuple): The Intermediate Root CA certificate tuple in the following format, where `int_ca_pem` is a
-                ``File Object`` representation of the Intermediate Root CA certificate PEM file::
-
-                ('filename.pem', int_ca_pem)
-
-        Returns:
-            :obj:`int`: The status code for the operation.
-
-        Examples:
-            Upload an Intermediate Root CA certificate from a file:
-
-            >>> zia.ssl.upload_int_ca_cert(('int_ca.pem', open('int_ca.pem', 'rb')))
-
         """
+        http_method = "post".upper()
+        api_url = f"{self._zia_base_endpoint}/sslSettings/uploadcert/text"
 
         payload = {"fileUpload": cert}
 
-        return self.rest.post("sslSettings/uploadcert/text", files=payload, box=False).status_code
+        request, error = self._request_executor.create_request(http_method, api_url, payload, {}, {}, files=True)
+        if error:
+            return (None, None, error)
 
-    def upload_int_ca_chain(self, cert: tuple) -> int:
+        response, error = self._request_executor.execute(request)
+        if error:
+            return (None, response, error)
+
+        return (response.get_body(), response, None)
+
+    def upload_int_ca_chain(self, cert: tuple) -> tuple:
         """
         Uploads the Intermediate Root CA certificate chain.
-
-        Args:
-            cert (tuple): The Intermediate Root CA chain certificate tuple in the following format, where
-                `int_ca_chain_pem` is a ``File Object`` representation of the Intermediate Root CA certificate chain
-                PEM file::
-
-                ('filename.pem', int_ca_chain_pem)
-
-
-        Returns:
-            :obj:`int`: The status code for the operation
-
-        Examples:
-            Upload an Intermediate Root CA chain from a file:
-
-            >>> zia.ssl.upload_int_ca_chain(('int_ca_chain.pem', open('int_ca_chain.pem', 'rb')))
-
         """
+        http_method = "post".upper()
+        api_url = f"{self._zia_base_endpoint}/sslSettings/uploadcertchain/text"
 
         payload = {"fileUpload": cert}
 
-        return self.rest.post("sslSettings/uploadcertchain/text", files=payload, box=False).status_code
+        request, error = self._request_executor.create_request(http_method, api_url, payload, {}, {}, files=True)
+        if error:
+            return (None, None, error)
 
-    def delete_int_chain(self) -> int:
+        response, error = self._request_executor.execute(request)
+        if error:
+            return (None, response, error)
+
+        return (response.get_body(), response, None)
+
+    def delete_int_chain(self) -> tuple:
         """
         Deletes the Intermediate Root CA certificate chain.
-
-        Returns:
-            :obj:`int`: The status code for the operation.
-
         """
-        return self.rest.delete("sslSettings/certchain", box=False).status_code
+        http_method = "delete".upper()
+        api_url = f"{self._zia_base_endpoint}/sslSettings/certchain"
+
+        request, error = self._request_executor.create_request(http_method, api_url, {}, {})
+        if error:
+            return (None, None, error)
+
+        response, error = self._request_executor.execute(request)
+        if error:
+            return (None, response, error)
+
+        return (response.get_body(), response, None)

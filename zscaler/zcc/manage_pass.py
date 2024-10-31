@@ -15,13 +15,15 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.api_client import APIClient
+from zscaler.request_executor import RequestExecutor
 from zscaler.zcc.models.manage_pass import ManagePassResponseContract
 from zscaler.utils import format_url
+
 
 class ManagePassAPI(APIClient):
 
     def __init__(self, request_executor):
-        self._request_executor = request_executor
+        self._request_executor: RequestExecutor = request_executor
         self._zcc_base_endpoint = "/zcc/papi/public/v1"
 
     def update_manage_pass(self, manage_pass):
@@ -35,31 +37,29 @@ class ManagePassAPI(APIClient):
             dict: A dictionary containing the response from the API.
         """
         http_method = "post".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zcc_base_endpoint}
             /managePass
-        """)
-        
+        """
+        )
+
         # Ensure app_segment is a dictionary
         if isinstance(manage_pass, dict):
             body = manage_pass
         else:
             body = manage_pass.as_dict()
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body=body)
+        request, error = self._request_executor.create_request(http_method, api_url, body=body)
         if error:
             return None, None, error
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return None, response, error
 
         try:
-            result = ManagePassResponseContract(
-                self.form_response_body(response.get_body())
-            )
+            result = ManagePassResponseContract(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)

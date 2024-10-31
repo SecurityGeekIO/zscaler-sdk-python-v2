@@ -14,11 +14,10 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
-import os
 from zscaler.api_client import APIClient
+from zscaler.request_executor import RequestExecutor
 from zscaler.zpa.models.service_edge_groups import ServiceEdgeGroup
-from zscaler.utils import format_url, snake_to_camel, pick_version_profile, add_id_groups
-from urllib.parse import urlencode
+from zscaler.utils import format_url
 
 
 class ServiceEdgeGroupAPI(APIClient):
@@ -28,7 +27,7 @@ class ServiceEdgeGroupAPI(APIClient):
 
     def __init__(self, request_executor, config):
         super().__init__()
-        self._request_executor = request_executor
+        self._request_executor: RequestExecutor = request_executor
         customer_id = config["client"].get("customerId")
         self._zpa_base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
@@ -50,39 +49,32 @@ class ServiceEdgeGroupAPI(APIClient):
             tuple: A tuple containing (list of AppConnectorGroup instances, Response, error)
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /serviceEdgeGroup
-        """)
+        """
+        )
 
         query_params = query_params or {}
         microtenant_id = query_params.get("microtenant_id", None)
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
-
         # Prepare request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_results():
-                result.append(ServiceEdgeGroup(
-                    self.form_response_body(item))
-                )
+            for item in response.get_all_pages_results():
+                result.append(ServiceEdgeGroup(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -98,10 +90,12 @@ class ServiceEdgeGroupAPI(APIClient):
             ServiceEdgeGroup: The service edge group object.
         """
         http_method = "get".upper()
-        api_url = format_url(f"""{
+        api_url = format_url(
+            f"""{
             self._zpa_base_endpoint}
             /serviceEdgeGroup/{group_id}
-        """)
+        """
+        )
 
         # Handle optional query parameters
         query_params = query_params or {}
@@ -109,28 +103,19 @@ class ServiceEdgeGroupAPI(APIClient):
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
-
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, ServiceEdgeGroup)
+        response, error = self._request_executor.execute(request, ServiceEdgeGroup)
         if error:
             return (None, response, error)
 
         # Parse the response into an AppConnectorGroup instance
         try:
-            result = ServiceEdgeGroup(
-                self.form_response_body(response.get_body())
-            )
+            result = ServiceEdgeGroup(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -149,10 +134,12 @@ class ServiceEdgeGroupAPI(APIClient):
             ServiceEdgeGroup: The newly created service edge group object.
         """
         http_method = "post".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /serviceEdgeGroup
-        """)
+        """
+        )
 
         # Construct the body from kwargs (as a dictionary)
         body = kwargs
@@ -161,27 +148,18 @@ class ServiceEdgeGroupAPI(APIClient):
         microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        # Log for debugging to ensure the URL construct
-        print(f"Final URL: {api_url}?{urlencode(params)}" if params else api_url)
-
         # Create the request
-        request, error = self._request_executor\
-            .create_request(
-            http_method, api_url, body=body, params=params
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body=body, params=params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, ServiceEdgeGroup)
+        response, error = self._request_executor.execute(request, ServiceEdgeGroup)
         if error:
             return (None, response, error)
 
         try:
-            result = ServiceEdgeGroup(
-                self.form_response_body(response.get_body())
-            )
+            result = ServiceEdgeGroup(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -197,10 +175,12 @@ class ServiceEdgeGroupAPI(APIClient):
             ServiceEdgeGroup: The updated service edge group object.
         """
         http_method = "put".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /serviceEdgeGroup/{group_id}
-        """)
+        """
+        )
 
         # Start with an empty body or an existing resource's current data
         body = {}
@@ -212,18 +192,13 @@ class ServiceEdgeGroupAPI(APIClient):
         microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        # Log for debugging to ensure the URL construct
-        print(f"Final URL: {api_url}?{urlencode(params)}" if params else api_url)
-
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body=body, params=params)
+        request, error = self._request_executor.create_request(http_method, api_url, body=body, params=params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, ServiceEdgeGroup)
+        response, error = self._request_executor.execute(request, ServiceEdgeGroup)
         if error:
             return (None, response, error)
 
@@ -233,9 +208,7 @@ class ServiceEdgeGroupAPI(APIClient):
 
         # Parse the response into a ServiceEdgeGroup instance
         try:
-            result = ServiceEdgeGroup(
-                self.form_response_body(response.get_body())
-            )
+            result = ServiceEdgeGroup(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -251,23 +224,23 @@ class ServiceEdgeGroupAPI(APIClient):
             int: Status code of the delete operation.
         """
         http_method = "delete".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /serviceEdgeGroup/{group_id}
-        """)
+        """
+        )
 
         # Handle microtenant_id in URL params if provided
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
         return (None, response, None)

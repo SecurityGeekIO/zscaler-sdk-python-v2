@@ -15,9 +15,9 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.api_client import APIClient
+from zscaler.request_executor import RequestExecutor
 from zscaler.zpa.models.pra_approval import PrivilegedRemoteAccessApproval
 from zscaler.utils import format_url
-from urllib.parse import urlencode
 from zscaler.utils import validate_and_convert_times
 
 
@@ -28,10 +28,10 @@ class PRAApprovalAPI(APIClient):
 
     def __init__(self, request_executor, config):
         super().__init__()
-        self._request_executor = request_executor
+        self._request_executor: RequestExecutor = request_executor
         customer_id = config["client"].get("customerId")
         self._zpa_base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
-        
+
     def list_approval(self, query_params=None) -> tuple:
         """
         Returns a list of all privileged remote access approvals.
@@ -48,36 +48,30 @@ class PRAApprovalAPI(APIClient):
             tuple: A tuple containing (list of PrivilegedRemoteAccessApproval instances, Response, error)
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /approval
-        """)
+        """
+        )
 
         query_params = query_params or {}
         microtenant_id = query_params.get("microtenant_id", None)
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
-
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_results():
-                result.append(PrivilegedRemoteAccessApproval(
-                    self.form_response_body(item))
-                )
+            for item in response.get_all_pages_results():
+                result.append(PrivilegedRemoteAccessApproval(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -95,34 +89,28 @@ class PRAApprovalAPI(APIClient):
             tuple: A tuple containing (PrivilegedRemoteAccessApproval instance, Response, error).
         """
         http_method = "get".upper()
-        api_url = format_url(f"""{
+        api_url = format_url(
+            f"""{
             self._zpa_base_endpoint}
             /approval/{approval_id}
-        """)
+        """
+        )
 
         query_params = query_params or {}
         microtenant_id = query_params.get("microtenant_id", None)
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
-
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, PrivilegedRemoteAccessApproval)
+        response, error = self._request_executor.execute(request, PrivilegedRemoteAccessApproval)
         if error:
             return (None, response, error)
 
         try:
-            result = PrivilegedRemoteAccessApproval(
-                self.form_response_body(response.get_body())
-            )
+            result = PrivilegedRemoteAccessApproval(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -143,10 +131,12 @@ class PRAApprovalAPI(APIClient):
             PrivilegedRemoteAccessApproval: The newly created PRA approval.
         """
         http_method = "post".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /approval
-        """)
+        """
+        )
 
         # Construct the body from kwargs (as a dictionary)
         body = kwargs
@@ -155,26 +145,25 @@ class PRAApprovalAPI(APIClient):
         start_time = body.pop("start_time", None)
         end_time = body.pop("end_time", None)
         working_hours = body.get("working_hours", {})
-        
+
         if start_time and end_time:
             start_epoch, end_epoch = validate_and_convert_times(start_time, end_time, working_hours["time_zone"])
-            body.update({
-                "startTime": start_epoch,
-                "endTime": end_epoch
-            })
+            body.update({"startTime": start_epoch, "endTime": end_epoch})
 
         # Add applications and working hours to the body
-        body.update({
-            "applications": [{"id": app_id} for app_id in body.pop("application_ids", [])],
-            "workingHours": {
-                "startTimeCron": working_hours.get("start_time_cron"),
-                "endTimeCron": working_hours.get("end_time_cron"),
-                "startTime": working_hours.get("start_time"),
-                "endTime": working_hours.get("end_time"),
-                "days": working_hours.get("days"),
-                "timeZone": working_hours.get("time_zone"),
+        body.update(
+            {
+                "applications": [{"id": app_id} for app_id in body.pop("application_ids", [])],
+                "workingHours": {
+                    "startTimeCron": working_hours.get("start_time_cron"),
+                    "endTimeCron": working_hours.get("end_time_cron"),
+                    "startTime": working_hours.get("start_time"),
+                    "endTime": working_hours.get("end_time"),
+                    "days": working_hours.get("days"),
+                    "timeZone": working_hours.get("time_zone"),
+                },
             }
-        })
+        )
 
         # Merge in additional keyword arguments
         body.update(kwargs)
@@ -184,14 +173,12 @@ class PRAApprovalAPI(APIClient):
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body=body, params=params)
+        request, error = self._request_executor.create_request(http_method, api_url, body=body, params=params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, PrivilegedRemoteAccessApproval)
+        response, error = self._request_executor.execute(request, PrivilegedRemoteAccessApproval)
         if error:
             return (None, response, error)
 
@@ -212,10 +199,12 @@ class PRAApprovalAPI(APIClient):
             PrivilegedRemoteAccessApproval: The updated approval resource.
         """
         http_method = "put".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /approval/{approval_id}
-        """)
+        """
+        )
 
         # Start with an empty body or an existing resource's current data
         body = {}
@@ -230,23 +219,22 @@ class PRAApprovalAPI(APIClient):
 
         if start_time and end_time:
             start_epoch, end_epoch = validate_and_convert_times(start_time, end_time, working_hours.get("time_zone"))
-            body.update({
-                "startTime": start_epoch,
-                "endTime": end_epoch
-            })
+            body.update({"startTime": start_epoch, "endTime": end_epoch})
 
         # Add applications and working hours to the body
-        body.update({
-            "applications": [{"id": app_id} for app_id in body.pop("application_ids", [])],
-            "workingHours": {
-                "startTimeCron": working_hours.get("start_time_cron"),
-                "endTimeCron": working_hours.get("end_time_cron"),
-                "startTime": working_hours.get("start_time"),
-                "endTime": working_hours.get("end_time"),
-                "days": working_hours.get("days"),
-                "timeZone": working_hours.get("time_zone"),
+        body.update(
+            {
+                "applications": [{"id": app_id} for app_id in body.pop("application_ids", [])],
+                "workingHours": {
+                    "startTimeCron": working_hours.get("start_time_cron"),
+                    "endTimeCron": working_hours.get("end_time_cron"),
+                    "startTime": working_hours.get("start_time"),
+                    "endTime": working_hours.get("end_time"),
+                    "days": working_hours.get("days"),
+                    "timeZone": working_hours.get("time_zone"),
+                },
             }
-        })
+        )
 
         # Merge in additional keyword arguments
         body.update(kwargs)
@@ -288,20 +276,20 @@ class PRAApprovalAPI(APIClient):
             int: Status code of the delete operation.
         """
         http_method = "delete".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /approval/{approval_id}
-        """)
+        """
+        )
 
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
@@ -315,20 +303,20 @@ class PRAApprovalAPI(APIClient):
             int: Status code of the delete operation.
         """
         http_method = "delete".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /approval/expired
-        """)
+        """
+        )
 
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
         return (None, response, None)

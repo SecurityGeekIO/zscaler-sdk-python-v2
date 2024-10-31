@@ -14,25 +14,23 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
-
 from zscaler.api_client import APIClient
-from zscaler.zia.models.shadow_it_report import ShadowITReport
+from zscaler.request_executor import RequestExecutor
 from zscaler.zia.models.shadow_it_report import CloudapplicationsAndTags
-from zscaler.zia.models.shadow_it_report import CloudApplicationBulkUpdate
 
 from zscaler.utils import format_url, convert_keys
-from urllib.parse import urlencode
 
 
 class CloudAppsAPI(APIClient):
     """
     A Client object for the predefined and custom Cloud Applications resource.
     """
+
     _zia_base_endpoint = "/zia/api/v1"
-    
+
     def __init__(self, request_executor):
         super().__init__()
-        self._request_executor = request_executor
+        self._request_executor: RequestExecutor = request_executor
 
     @staticmethod
     def _convert_ids_to_dict_list(id_list):
@@ -62,21 +60,18 @@ class CloudAppsAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /cloudApplications/lite
-        """)
-
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
+        """
+        )
 
         # Prepare request headers (no need for body or form in a GET request)
         headers = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, {}, headers, {})
+        request, error = self._request_executor.create_request(http_method, api_url, {}, headers, {}, params=query_params)
 
         if error:
             return (None, None, error)
@@ -90,7 +85,7 @@ class CloudAppsAPI(APIClient):
         # Parse the response into RuleLabels instances
         try:
             result = []
-            for item in response.get_body():
+            for item in response.get_all_pages_results():
                 result.append(CloudapplicationsAndTags(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
@@ -113,21 +108,18 @@ class CloudAppsAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /customTags
-        """)
-
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
+        """
+        )
 
         # Prepare request headers (no need for body or form in a GET request)
         headers = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, {}, headers, {})
+        request, error = self._request_executor.create_request(http_method, api_url, {}, headers, {}, params=query_params)
 
         if error:
             return (None, None, error)
@@ -141,14 +133,14 @@ class CloudAppsAPI(APIClient):
         # Parse the response into RuleLabels instances
         try:
             result = []
-            for item in response.get_body():
+            for item in response.get_all_pages_results():
                 result.append(CloudapplicationsAndTags(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
         return (result, response, None)
 
-    def bulk_update(self, sanction_state: str, **kwargs) -> tuple: 
+    def bulk_update(self, sanction_state: str, **kwargs) -> tuple:
         """
         Updates application status and tag information for predefined or custom cloud applications based on the
         IDs specified.
@@ -183,10 +175,12 @@ class CloudAppsAPI(APIClient):
 
         """
         http_method = "put".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /cloudApplications/bulkUpdate
-        """)
+        """
+        )
 
         # Mapping for user-friendly sanction state values to API-expected values
         sanction_state_mapping = {
@@ -225,7 +219,7 @@ class CloudAppsAPI(APIClient):
 
         return (response.get_body(), response, None)
 
-    def export_shadow_it_report(self, duration: str = "LAST_1_DAYS", **kwargs) -> str:
+    def export_shadow_it_report(self, duration: str = "LAST_1_DAYS", **kwargs) -> tuple:
         """
         Export the Shadow IT Report (in CSV format) for the cloud applications recognized by Zscaler
         based on their usage in your organisation.
@@ -420,22 +414,22 @@ class CloudAppsAPI(APIClient):
 
         """
         http_method = "post".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /shadowIT/applications/export
-        """)
+        """
+        )
 
         payload = {"duration": duration}
-        convert_keys(payload.update(kwargs))
+        payload.update(kwargs)  # Update the payload with kwargs
+        convert_keys(payload)  # Convert keys after updating
 
         body = {}
         headers = {"Accept": "text/csv"}  # Explicitly request a CSV response
-        form = {}
 
         # Creating the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
 
         if error:
             return (None, error)
@@ -444,10 +438,10 @@ class CloudAppsAPI(APIClient):
         response, error = self._request_executor.execute(request)
 
         if error:
-            return (response, error)
+            return (response.get_body(), error)
 
         # Return the CSV content directly
-        return (response.content, None)
+        return (response.get_body(), None)
 
     def export_shadow_it_csv(self, application: str, entity: str, duration: str = "LAST_1_DAYS", **kwargs):
         """
@@ -519,16 +513,15 @@ class CloudAppsAPI(APIClient):
             if id_list is not None:
                 payload[key] = self._convert_ids_to_dict_list(id_list)
 
-        convert_keys(payload.update(kwargs))
+        payload.update(kwargs)
+        convert_keys(payload)
 
         body = {}
         headers = {"Accept": "text/csv"}  # Explicitly request a CSV response
-        form = {}
+        params = {}
 
         # Creating the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=params)
 
         if error:
             return (None, error)
@@ -537,7 +530,7 @@ class CloudAppsAPI(APIClient):
         response, error = self._request_executor.execute(request)
 
         if error:
-            return (response, error)
+            return (response.get_body(), error)
 
         # Return the CSV content directly
-        return (response.content, None)
+        return (response.get_body(), None)
