@@ -21,6 +21,8 @@ from zscaler.zpa.models import server_group\
     as server_group
 from zscaler.zpa.models import service_edge_groups\
     as service_edge_groups
+from zscaler.zpa.models import policyset_controller_v2\
+    as credentials
 from zscaler.oneapi_collection import ZscalerCollection 
 
 class PolicySetControllerV1(ZscalerObject):
@@ -33,21 +35,54 @@ class PolicySetControllerV1(ZscalerObject):
 
         if config:
             # Handle fields
-            self.id = config["id"] if "id" in config else None
-            self.modified_time = config["modifiedTime"] if "modifiedTime" in config else None
-            self.creation_time = config["creationTime"] if "creationTime" in config else None
-            self.modified_by = config["modifiedBy"] if "modifiedBy" in config else None
-            self.name = config["name"] if "name" in config else None
-            self.description = config["description"] if "description" in config else None
-            self.rule_order = config["ruleOrder"] if "ruleOrder" in config else None
-            self.priority = config["priority"] if "priority" in config else None
-            self.policy_type = config["policyType"] if "policyType" in config else None
-            self.operator = config["operator"] if "operator" in config else None
-            self.action = config["action"] if "action" in config else None
-            self.custom_msg = config["customMsg"] if "customMsg" in config else None
-            self.disabled = config["disabled"] if "disabled" in config else None
-            self.extranet_enabled = config.get("extranetEnabled", False)
-            self.default_rule = config.get("defaultRule", False)
+            self.id = config["id"]\
+                if "id" in config else None
+            self.policy_set_id = config["policySetId"]\
+                if "policySetId" in config else None
+            self.modified_time = config["modifiedTime"]\
+                if "modifiedTime" in config else None
+            self.creation_time = config["creationTime"]\
+                if "creationTime" in config else None
+            self.modified_by = config["modifiedBy"]\
+                if "modifiedBy" in config else None
+            self.name = config["name"]\
+                if "name" in config else None
+            self.description = config["description"]\
+                if "description" in config else None
+            self.rule_order = config["ruleOrder"]\
+                if "ruleOrder" in config else None
+            self.priority = config["priority"]\
+                if "priority" in config else None
+            self.policy_type = config["policyType"]\
+                if "policyType" in config else None
+            self.operator = config["operator"]\
+                if "operator" in config else None
+            self.action = config["action"]\
+                if "action" in config else None
+            self.reauth_idle_timeout = config["reauthIdleTimeout"]\
+                if "reauthIdleTimeout" in config else None
+            self.reauth_timeout = config["reauthTimeout"]\
+                if "reauthTimeout" in config else None
+            self.custom_msg = config["customMsg"]\
+                if "customMsg" in config else None
+            self.disabled = config["disabled"]\
+                if "disabled" in config else None
+            self.extranet_enabled = config["extranetEnabled"]\
+                if "extranetEnabled" in config else False
+            self.microtenant_id = config["microtenantId"]\
+                if "microtenantId" in config else None
+            self.microtenant_name = config["microtenantName"]\
+                if "microtenantName" in config else None
+            self.zpn_isolation_profile_id = config["zpnIsolationProfileId"]\
+                if "zpnIsolationProfileId" in config else None
+            self.zpn_inspection_profile_id = config["zpnInspectionProfileId"]\
+                if "zpnInspectionProfileId" in config else None
+            self.zpn_inspection_profile_name = config["zpnInspectionProfileName"]\
+                if "zpnInspectionProfileName" in config else None
+            self.version = config["version"]\
+                if "version" in config else None
+            self.default_rule = config["defaultRule"]\
+                if "defaultRule" in config else False
 
             # Handle conditions using ZscalerCollection
             self.conditions = ZscalerCollection.form_list(config.get("conditions", []), Condition)
@@ -79,6 +114,13 @@ class PolicySetControllerV1(ZscalerObject):
                     else:
                         self.service_edge_groups.append(service_edge_groups.ServiceEdgeGroup(group))
 
+            # Handle privileged capabilities
+            self.privileged_capabilities = config.get("privilegedCapabilities", {}).get("capabilities", [])
+            self.privileged_portal_capabilities = config.get("privilegedPortalCapabilities", {}).get("capabilities", [])
+
+            # Handle credential using isinstance check
+            self.credential = credentials.Credential(config["credential"]) if isinstance(config.get("credential"), credentials.Credential) else credentials.Credential(config.get("credential")) if "credential" in config else None
+
         else:
             # Defaults when config is None
             self.id = None
@@ -96,6 +138,12 @@ class PolicySetControllerV1(ZscalerObject):
             self.disabled = None
             self.extranet_enabled = False
             self.default_rule = False
+            self.microtenant_id = None
+            self.microtenant_name = None
+            self.version = None
+            self.zpn_isolation_profile_id = None
+            self.zpn_inspection_profile_id = None
+            self.zpn_inspection_profile_name = None
             self.conditions = []
             self.app_connector_groups = []
             self.app_server_groups = []
@@ -119,6 +167,12 @@ class PolicySetControllerV1(ZscalerObject):
             "disabled": self.disabled,
             "extranetEnabled": self.extranet_enabled,
             "defaultRule": self.default_rule,
+            "microtenantId": self.microtenant_id,
+            "microtenantName": self.microtenant_name,
+            "zpnIsolationProfileId": self.zpn_isolation_profile_id,
+            "zpnInspectionProfileId": self.zpn_inspection_profile_id,
+            "zpnInspectionProfileName": self.zpn_inspection_profile_name,
+            "version": self.version,
             "conditions": [condition.request_format() for condition in self.conditions],
             "appConnectorGroups": [group.request_format() for group in self.app_connector_groups],
             "appServerGroups": [group.request_format() for group in self.app_server_groups],
