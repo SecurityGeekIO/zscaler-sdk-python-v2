@@ -68,7 +68,8 @@ class AdminRolesAPI(APIClient):
         headers = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(
+        request, error = self._request_executor\
+            .create_request(
             http_method,
             api_url,
             body,
@@ -80,7 +81,8 @@ class AdminRolesAPI(APIClient):
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, AdminRoles)
+        response, error = self._request_executor\
+            .execute(request, AdminRoles)
 
         if error:
             return (None, response, error)
