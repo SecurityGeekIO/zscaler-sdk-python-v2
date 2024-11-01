@@ -29,6 +29,7 @@ from zscaler.zia.models import cloud_firewall_nw_application_groups as nw_applic
 from zscaler.zia.models import zpa_gateway as zpa_gateway
 from zscaler.zia.models import common as common_reference
 
+
 class ForwardingControlRule(ZscalerObject):
     """
     A class representing a Forwarding Control Rule object.
@@ -37,33 +38,20 @@ class ForwardingControlRule(ZscalerObject):
     def __init__(self, config=None):
         super().__init__(config)
         if config:
-            self.id = config["id"]\
-                if "id" in config else None
-            self.name = config["name"]\
-                if "name" in config else None
-            self.type = config["type"]\
-                if "type" in config else None
-            self.order = config["order"]\
-                if "order" in config else None
-            self.rank = config["rank"]\
-                if "rank" in config else None
-            self.state = config["state"]\
-                if "state" in config else None
-            self.forward_method = config["forwardMethod"]\
-                if "forwardMethod" in config else None
-            self.description = config["description"]\
-                if "description" in config else None
-            self.last_modified_time = config["lastModifiedTime"]\
-                if "lastModifiedTime" in config else None
-            self.last_modified_by = config["lastModifiedBy"]\
-                if "lastModifiedBy" in config else None   
-            self.zpa_broker_rule = config["zpaBrokerRule"]\
-                if "zpaBrokerRule" in config else None
+            self.id = config["id"] if "id" in config else None
+            self.name = config["name"] if "name" in config else None
+            self.type = config["type"] if "type" in config else None
+            self.order = config["order"] if "order" in config else None
+            self.rank = config["rank"] if "rank" in config else None
+            self.state = config["state"] if "state" in config else None
+            self.forward_method = config["forwardMethod"] if "forwardMethod" in config else None
+            self.description = config["description"] if "description" in config else None
+            self.last_modified_time = config["lastModifiedTime"] if "lastModifiedTime" in config else None
+            self.last_modified_by = config["lastModifiedBy"] if "lastModifiedBy" in config else None
+            self.zpa_broker_rule = config["zpaBrokerRule"] if "zpaBrokerRule" in config else None
 
             # Handling lists of simple values
-            self.src_ips = ZscalerCollection.form_list(
-                config["srcIps"] if "srcIps" in config else [], str
-            )
+            self.src_ips = ZscalerCollection.form_list(config["srcIps"] if "srcIps" in config else [], str)
             self.dest_addresses = ZscalerCollection.form_list(
                 config["destAddresses"] if "destAddresses" in config else [], str
             )
@@ -93,9 +81,7 @@ class ForwardingControlRule(ZscalerObject):
             self.departments = ZscalerCollection.form_list(
                 config["departments"] if "departments" in config else [], user_management.Department
             )
-            self.groups = ZscalerCollection.form_list(
-                config["groups"] if "groups" in config else [], user_management.Groups
-            )
+            self.groups = ZscalerCollection.form_list(config["groups"] if "groups" in config else [], user_management.Groups)
             self.users = ZscalerCollection.form_list(
                 config["users"] if "users" in config else [], user_management.UserManagement
             )
@@ -118,17 +104,14 @@ class ForwardingControlRule(ZscalerObject):
                 config["nwServiceGroups"] if "nwServiceGroups" in config else [], nw_service_groups.NetworkServiceGroups
             )
             self.nw_application_groups = ZscalerCollection.form_list(
-                config["nwApplicationGroups"] if "nwApplicationGroups" in config else [], nw_application_groups.NetworkApplicationGroups
+                config["nwApplicationGroups"] if "nwApplicationGroups" in config else [],
+                nw_application_groups.NetworkApplicationGroups,
             )
             self.time_windows = ZscalerCollection.form_list(
                 config["timeWindows"] if "timeWindows" in config else [], time_windows.TimeWindows
             )
-            self.labels = ZscalerCollection.form_list(
-                config["labels"] if "labels" in config else [], rule_labels.RuleLabels
-            )
-            self.devices = ZscalerCollection.form_list(
-                config["devices"] if "devices" in config else [], devices.Devices
-            )
+            self.labels = ZscalerCollection.form_list(config["labels"] if "labels" in config else [], rule_labels.RuleLabels)
+            self.devices = ZscalerCollection.form_list(config["devices"] if "devices" in config else [], devices.Devices)
             self.device_groups = ZscalerCollection.form_list(
                 config["deviceGroups"] if "deviceGroups" in config else [], device_groups.DeviceGroups
             )
@@ -136,18 +119,20 @@ class ForwardingControlRule(ZscalerObject):
                 config["zpaAppSegments"] if "zpaAppSegments" in config else [], common_reference.ResourceReference
             )
             self.zpa_application_segments = ZscalerCollection.form_list(
-                config["zpaApplicationSegments"] if "zpaApplicationSegments" in config else [], common_reference.ResourceReference
+                config["zpaApplicationSegments"] if "zpaApplicationSegments" in config else [],
+                common_reference.ResourceReference,
             )
             self.zpa_application_segment_groups = ZscalerCollection.form_list(
-                config["zpaApplicationSegmentGroups"] if "zpaApplicationSegmentGroups" in config else [], common_reference.ResourceReference
+                config["zpaApplicationSegmentGroups"] if "zpaApplicationSegmentGroups" in config else [],
+                common_reference.ResourceReference,
             )
 
             # Handle nested single objects
-            self.proxy_gateway = common_reference.ResourceReference(config["proxyGateway"])\
-                if "proxyGateway" in config else None
+            self.proxy_gateway = (
+                common_reference.ResourceReference(config["proxyGateway"]) if "proxyGateway" in config else None
+            )
 
-            self.zpa_gateway = zpa_gateway.ZPAGateway(config["zpaGateway"])\
-                if "zpaGateway" in config else None
+            self.zpa_gateway = zpa_gateway.ZPAGateway(config["zpaGateway"]) if "zpaGateway" in config else None
 
         else:
             # Defaults when config is None
@@ -232,10 +217,12 @@ class ForwardingControlRule(ZscalerObject):
             "deviceGroups": [dg.request_format() for dg in (self.device_groups or [])],
             "zpaAppSegments": [zpa.request_format() for zpa in (self.zpa_app_segments or [])],
             "zpaApplicationSegments": [zpa_app.request_format() for zpa_app in (self.zpa_application_segments or [])],
-            "zpaApplicationSegmentGroups": [zpa_app_group.request_format() for zpa_app_group in (self.zpa_application_segment_groups or [])],
+            "zpaApplicationSegmentGroups": [
+                zpa_app_group.request_format() for zpa_app_group in (self.zpa_application_segment_groups or [])
+            ],
             "proxyGateway": self.proxy_gateway.request_format() if self.proxy_gateway else None,
             "zpaGateway": self.zpa_gateway.request_format() if self.zpa_gateway else None,
-            "zpaBrokerRule": self.zpa_broker_rule
+            "zpaBrokerRule": self.zpa_broker_rule,
         }
         parent_req_format.update(current_obj_format)
         return parent_req_format

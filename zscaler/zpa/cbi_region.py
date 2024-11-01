@@ -15,6 +15,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.api_client import APIClient
+from zscaler.request_executor import RequestExecutor
 from zscaler.zpa.models.cbi_region import CBIRegion
 from zscaler.utils import format_url
 
@@ -26,7 +27,7 @@ class CBIRegionAPI(APIClient):
 
     def __init__(self, request_executor, config):
         super().__init__()
-        self._request_executor = request_executor
+        self._request_executor: RequestExecutor = request_executor
         customer_id = config["client"].get("customerId")
         self._zpa_base_endpoint = f"/zpa/cbiconfig/cbi/api/customers/{customer_id}"
 
@@ -42,27 +43,25 @@ class CBIRegionAPI(APIClient):
             ...    pprint(region)
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /regions
-        """)
+        """
+        )
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url)
+        request, error = self._request_executor.create_request(http_method, api_url)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_results():
-                result.append(CBIRegion(
-                    self.form_response_body(item))
-                )
+            for item in response.get_all_pages_results():
+                result.append(CBIRegion(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)

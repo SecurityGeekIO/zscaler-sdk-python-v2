@@ -15,8 +15,8 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.api_client import APIClient
+from zscaler.request_executor import RequestExecutor
 from zscaler.zpa.models.application_segment_inspection import ApplicationSegmentInspection
-from urllib.parse import urlencode
 from zscaler.utils import add_id_groups, format_url
 
 
@@ -31,7 +31,7 @@ class AppSegmentsInspectionAPI(APIClient):
 
     def __init__(self, request_executor, config):
         super().__init__()
-        self._request_executor = request_executor
+        self._request_executor: RequestExecutor = request_executor
         customer_id = config["client"].get("customerId")
         self._zpa_base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
@@ -53,43 +53,36 @@ class AppSegmentsInspectionAPI(APIClient):
         """
         # Initialize URL and HTTP method
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /application
-        """)
-        
+        """
+        )
+
         # Handle optional query parameters
         query_params = query_params or {}
         query_params.update(kwargs)
-            
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
 
         # Prepare request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body={}, headers={})
+        request, error = self._request_executor.create_request(http_method, api_url, body={}, headers={}, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-        .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_results():
-                result.append(ApplicationSegmentInspection(
-                    self.form_response_body(item))
-                )
+            for item in response.get_all_pages_results():
+                result.append(ApplicationSegmentInspection(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def get_segment_inspection(self, segment_id: str) -> tuple:
+    def get_segment_inspection(self, segment_id: str, query_params: dict = None) -> tuple:
         """
         Get information for an AppProtection application segment.
 
@@ -105,34 +98,28 @@ class AppSegmentsInspectionAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /application/{segment_id}
         """
         )
 
         query_params = query_params or {}
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, ApplicationSegmentInspection)
+        response, error = self._request_executor.execute(request, ApplicationSegmentInspection)
         if error:
             return (None, response, error)
 
         # Parse the response into an AppConnectorGroup instance
         try:
-            result = ApplicationSegmentInspection(
-                self.form_response_body(response.get_body())
-            )
+            result = ApplicationSegmentInspection(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -198,10 +185,12 @@ class AppSegmentsInspectionAPI(APIClient):
 
         """
         http_method = "post".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /application
-        """)
+        """
+        )
 
         # Construct the body from kwargs (as a dictionary)
         body = kwargs
@@ -223,25 +212,19 @@ class AppSegmentsInspectionAPI(APIClient):
 
         # Apply add_id_groups to reformat params based on self.reformat_params
         add_id_groups(self.reformat_params, kwargs, body)
-        
+
         # Create the request
-        request, error = self._request_executor\
-            .create_request(
-            http_method, api_url, body=body
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body=body)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, ApplicationSegmentInspection)
+        response, error = self._request_executor.execute(request, ApplicationSegmentInspection)
         if error:
             return (None, response, error)
 
         try:
-            result = ApplicationSegmentInspection(
-                self.form_response_body(response.get_body())
-            )
+            result = ApplicationSegmentInspection(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -306,10 +289,12 @@ class AppSegmentsInspectionAPI(APIClient):
 
         """
         http_method = "put".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /application/{segment_id}
-        """)
+        """
+        )
 
         # Construct the body from kwargs (as a dictionary)
         body = kwargs
@@ -331,25 +316,19 @@ class AppSegmentsInspectionAPI(APIClient):
 
         # Apply add_id_groups to reformat params based on self.reformat_params
         add_id_groups(self.reformat_params, kwargs, body)
-        
+
         # Create the request
-        request, error = self._request_executor\
-            .create_request(
-            http_method, api_url, body=body
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body=body)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, ApplicationSegmentInspection)
+        response, error = self._request_executor.execute(request, ApplicationSegmentInspection)
         if error:
             return (None, response, error)
 
         try:
-            result = ApplicationSegmentInspection(
-                self.form_response_body(response.get_body())
-            )
+            result = ApplicationSegmentInspection(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -378,25 +357,25 @@ class AppSegmentsInspectionAPI(APIClient):
 
         """
         http_method = "delete".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /application/{segment_id}
-        """)
-        
+        """
+        )
+
         # Initialize params and add forceDelete if needed
         params = {}
         if force_delete:
             params["forceDelete"] = "true"
-            
+
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 

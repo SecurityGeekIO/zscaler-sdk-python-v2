@@ -15,8 +15,8 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.api_client import APIClient
+from zscaler.request_executor import RequestExecutor
 from zscaler.zpa.models.enrollment_certificates import EnrollmentCertificate
-from urllib.parse import urlencode
 from zscaler.utils import format_url
 
 
@@ -27,7 +27,7 @@ class EnrollmentCertificateAPI(APIClient):
 
     def __init__(self, request_executor, config):
         super().__init__()
-        self._request_executor = request_executor
+        self._request_executor: RequestExecutor = request_executor
         customer_id = config["client"].get("customerId")
         self._zpa_base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
         self._zpa_base_endpoint_v2 = f"/zpa/mgmtconfig/v2/admin/customers/{customer_id}"
@@ -49,42 +49,33 @@ class EnrollmentCertificateAPI(APIClient):
             tuple: A tuple containing (list of EnrollmentCertificate instances, Response, error)
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint_v2}
             /enrollmentCert
-        """)
+        """
+        )
 
         query_params = query_params or {}
-
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
 
         # Prepare request body and headers
         body = {}
         headers = {}
 
         # Prepare request
-        request, error = self._request_executor\
-            .create_request(
-                http_method, api_url, body, headers
-            )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_results():
-                result.append(EnrollmentCertificate(
-                    self.form_response_body(item))
-                )
+            for item in response.get_all_pages_results():
+                result.append(EnrollmentCertificate(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -100,33 +91,31 @@ class EnrollmentCertificateAPI(APIClient):
             tuple: A tuple containing the `EnrollmentCertificate` instance, response object, and error if any.
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /enrollmentCert/{certificate_id}
-        """)
+        """
+        )
 
         # Prepare request body, headers, and form (if needed)
         body = {}
         headers = {}
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, headers)
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
 
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, EnrollmentCertificate)
+        response, error = self._request_executor.execute(request, EnrollmentCertificate)
 
         if error:
             return (None, response, error)
 
         try:
-            result = EnrollmentCertificate(
-                self.form_response_body(response.get_body())
-            )
+            result = EnrollmentCertificate(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)

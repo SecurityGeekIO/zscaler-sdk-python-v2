@@ -15,10 +15,11 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.api_client import APIClient
+from zscaler.request_executor import RequestExecutor
 from zscaler.zia.models.apptotal import AppTotal
 from zscaler.zia.models.apptotal import AppTotalSearch
 from zscaler.utils import format_url
-from urllib.parse import urlencode
+
 
 class AppTotalAPI(APIClient):
     """
@@ -26,10 +27,10 @@ class AppTotalAPI(APIClient):
     """
 
     _zia_base_endpoint = "/zia/api/v1"
-    
+
     def __init__(self, request_executor):
         super().__init__()
-        self._request_executor = request_executor
+        self._request_executor: RequestExecutor = request_executor
 
     def get_app(self, app_id: str, verbose: bool = False) -> tuple:
         """
@@ -54,22 +55,13 @@ class AppTotalAPI(APIClient):
         api_url = format_url(f"{self._zia_base_endpoint}/apps/app")
 
         # Pass app_id and verbose as query parameters
-        query_params = {
-            "appId": app_id,
-            "verbose": str(verbose).lower()  # API may expect 'true' or 'false' in lowercase
-        }
-
-        # Construct the URL with the query parameters
-        api_url_with_params = f"{api_url}?{urlencode(query_params)}"
+        query_params = {"appId": app_id, "verbose": str(verbose).lower()}  # API may expect 'true' or 'false' in lowercase
 
         body = {}
         headers = {}
-        form = {}
 
         # Create the request with the query params
-        request, error = self._request_executor.create_request(
-            http_method, api_url_with_params, body, headers, form
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)
@@ -131,7 +123,7 @@ class AppTotalAPI(APIClient):
         """
         Searches for an app by name. Any app whose name contains the search term (app_name) is returned.
         Note: The maximum number of results that are returned is 200.
-        
+
         Args:
             app_name (str): The app name to search for.
 
@@ -152,17 +144,11 @@ class AppTotalAPI(APIClient):
             "appName": app_name,  # Ensure correct parameter naming as per API documentation
         }
 
-        # Build the query string
-        api_url_with_params = f"{api_url}?{urlencode(query_params)}"
-
         body = {}
         headers = {}
-        form = {}
 
         # Create the request with query params
-        request, error = self._request_executor.create_request(
-            http_method, api_url_with_params, body, headers, form
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)
@@ -184,7 +170,7 @@ class AppTotalAPI(APIClient):
         """
         Searches for an app by name. Any app whose name contains the search term (app_name) is returned.
         Note: The maximum number of results that are returned is 200.
-        
+
         Args:
             app_name (str): The app name to search for.
 
@@ -205,17 +191,11 @@ class AppTotalAPI(APIClient):
             "appViewId": app_view_id,  # Ensure correct parameter naming as per API documentation
         }
 
-        # Build the query string
-        api_url_with_params = f"{api_url}?{urlencode(query_params)}"
-
         body = {}
         headers = {}
-        form = {}
 
         # Create the request with query params
-        request, error = self._request_executor.create_request(
-            http_method, api_url_with_params, body, headers, form
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)

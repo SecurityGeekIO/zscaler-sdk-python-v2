@@ -15,8 +15,8 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.api_client import APIClient
+from zscaler.request_executor import RequestExecutor
 from zscaler.zpa.models.emergency_access import EmergencyAccessUser
-from urllib.parse import urlencode
 from zscaler.utils import format_url, snake_to_camel
 
 
@@ -27,7 +27,7 @@ class EmergencyAccessAPI(APIClient):
 
     def __init__(self, request_executor, config):
         super().__init__()
-        self._request_executor = request_executor
+        self._request_executor: RequestExecutor = request_executor
         customer_id = config["client"].get("customerId")
         self._zpa_base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
@@ -49,42 +49,35 @@ class EmergencyAccessAPI(APIClient):
             tuple: A tuple containing (list of Emergency Access instances, Response, error)
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /emergencyAccess/users
-        """)
+        """
+        )
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
         query_params.update(kwargs)
-        
+
         microtenant_id = query_params.pop("microtenant_id", None)
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
-
         # Prepare request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body={}, headers={})
+        request, error = self._request_executor.create_request(http_method, api_url, body={}, headers={}, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-        .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_results():
-                result.append(EmergencyAccessUser(
-                    self.form_response_body(item))
-                )
+            for item in response.get_all_pages_results():
+                result.append(EmergencyAccessUser(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -100,38 +93,32 @@ class EmergencyAccessAPI(APIClient):
             tuple: A tuple containing the `EmergencyAccessUser` instance, response object, and error if any.
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /emergencyAccess/user/{user_id}
-        """)
+        """
+        )
 
         query_params = query_params or {}
-        
+
         microtenant_id = query_params.get("microtenant_id", None)
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
-
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, EmergencyAccessUser)
+        response, error = self._request_executor.execute(request, EmergencyAccessUser)
         if error:
             return (None, response, error)
 
         # Parse the response into an AppConnectorGroup instance
         try:
-            result = EmergencyAccessUser(
-                self.form_response_body(response.get_body())
-            )
+            result = EmergencyAccessUser(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -151,10 +138,12 @@ class EmergencyAccessAPI(APIClient):
             tuple: A tuple containing the `EmergencyAccessUser` instance, response object, and error if any.
         """
         http_method = "post".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /emergencyAccess/user
-        """)
+        """
+        )
 
         # Ensure emergency_access is a dictionary
         if isinstance(emergency_access, dict):
@@ -173,9 +162,7 @@ class EmergencyAccessAPI(APIClient):
         query_params = {"activateNow": "true" if activate_now else "false"}
 
         # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body=body, params=query_params
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body=body, params=query_params)
         if error:
             return (None, None, error)
 
@@ -185,9 +172,7 @@ class EmergencyAccessAPI(APIClient):
             return (None, response, error)
 
         try:
-            result = EmergencyAccessUser(
-                self.form_response_body(response.get_body())
-            )
+            result = EmergencyAccessUser(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -208,10 +193,12 @@ class EmergencyAccessAPI(APIClient):
             tuple: A tuple containing the `EmergencyAccessUser` instance, response object, and error if any.
         """
         http_method = "put".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /emergencyAccess/user/{user_id}
-        """)
+        """
+        )
 
         # Ensure emergency_access is a dictionary
         if isinstance(emergency_access, dict):
@@ -230,16 +217,12 @@ class EmergencyAccessAPI(APIClient):
         query_params["activateNow"] = "true" if activate_now else "false"
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(
-            http_method, api_url, body=body, params=query_params
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body=body, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, EmergencyAccessUser)
+        response, error = self._request_executor.execute(request, EmergencyAccessUser)
         if error:
             return (None, response, error)
 
@@ -248,9 +231,7 @@ class EmergencyAccessAPI(APIClient):
             return (EmergencyAccessUser({"id": user_id}), None, None)
 
         try:
-            result = EmergencyAccessUser(
-                self.form_response_body(response.get_body())
-            )
+            result = EmergencyAccessUser(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -267,10 +248,12 @@ class EmergencyAccessAPI(APIClient):
             tuple: A tuple containing the `EmergencyAccessUser` instance, response object, and error if any.
         """
         http_method = "put".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /emergencyAccess/user/{user_id}/activate
-        """)
+        """
+        )
 
         # Query parameters for email notification
         query_params = {"sendEmail": "true"} if send_email else {}
@@ -281,9 +264,7 @@ class EmergencyAccessAPI(APIClient):
             query_params["microtenantId"] = microtenant_id
 
         # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, {}, query_params
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, {}, query_params)
         if error:
             return (None, None, error)
 
@@ -298,9 +279,7 @@ class EmergencyAccessAPI(APIClient):
 
         try:
             # Process the response to return an EmergencyAccessUser instance
-            result = EmergencyAccessUser(
-                self.form_response_body(response.get_body())
-            )
+            result = EmergencyAccessUser(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -316,24 +295,24 @@ class EmergencyAccessAPI(APIClient):
             tuple: A tuple containing the `EmergencyAccessUser` instance, response object, and error if any.
         """
         http_method = "put".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /emergencyAccess/user/{user_id}/deactivate
-        """)
+        """
+        )
 
         # Check if microtenant_id is passed and set as a query parameter if present
         microtenant_id = kwargs.get("microtenant_id")
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 

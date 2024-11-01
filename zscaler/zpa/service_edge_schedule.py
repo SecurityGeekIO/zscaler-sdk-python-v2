@@ -16,9 +16,10 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 import os
 from zscaler.api_client import APIClient
+from zscaler.request_executor import RequestExecutor
 from zscaler.zpa.models.service_edge_schedule import ServiceEdgeSchedule
 from zscaler.utils import format_url
-from urllib.parse import urlencode
+
 
 class ServiceEdgeScheduleAPI(APIClient):
     """
@@ -27,7 +28,7 @@ class ServiceEdgeScheduleAPI(APIClient):
 
     def __init__(self, request_executor, config):
         super().__init__()
-        self._request_executor = request_executor
+        self._request_executor: RequestExecutor = request_executor
         # Attempt to fetch customer_id from config, else fallback to environment variable
         self.customer_id = config["client"].get("customerId") or os.getenv("ZPA_CUSTOMER_ID")
         if not self.customer_id:
@@ -46,10 +47,12 @@ class ServiceEdgeScheduleAPI(APIClient):
             tuple: A tuple containing (AppConnectorSchedule, Response, error)
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /serviceEdgeSchedule
-        """)
+        """
+        )
 
         # Use passed customer_id or fallback to initialized customer_id
         customer_id = customer_id or self.customer_id
@@ -59,26 +62,20 @@ class ServiceEdgeScheduleAPI(APIClient):
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         # Create the request with headers
-        request, error = self._request_executor\
-            .create_request(
-            http_method, api_url, body=None, headers={}, params=params
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body=None, headers={}, params=params)
 
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
 
         try:
             # Expect a single object, not a list
-            result = ServiceEdgeSchedule(
-                self.form_response_body(response.get_body())
-            )
+            result = ServiceEdgeSchedule(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -98,10 +95,12 @@ class ServiceEdgeScheduleAPI(APIClient):
             tuple: A tuple containing (AppConnectorSchedule, Response, error)
         """
         http_method = "post".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /serviceEdgeSchedule
-        """)
+        """
+        )
 
         customer_id = schedule.get("customer_id") or os.getenv("ZPA_CUSTOMER_ID")
         if not customer_id:
@@ -131,27 +130,18 @@ class ServiceEdgeScheduleAPI(APIClient):
         microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        # Log for debugging to ensure the URL construct
-        print(f"Final URL: {api_url}?{urlencode(params)}" if params else api_url)
-
         # Create the request
-        request, error = self._request_executor\
-            .create_request(
-            http_method, api_url, body=payload, params=params
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body=payload, params=params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, ServiceEdgeSchedule)
+        response, error = self._request_executor.execute(request, ServiceEdgeSchedule)
         if error:
             return (None, response, error)
 
         try:
-            result = ServiceEdgeSchedule(
-                self.form_response_body(response.get_body())
-            )
+            result = ServiceEdgeSchedule(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -170,12 +160,14 @@ class ServiceEdgeScheduleAPI(APIClient):
         Returns:
             tuple: A tuple containing (AppConnectorSchedule, Response, error)
         """
-        
+
         http_method = "put".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /serviceEdgeSchedule/{scheduler_id}
-        """)
+        """
+        )
 
         customer_id = schedule.get("customer_id") or os.getenv("ZPA_CUSTOMER_ID")
         if not customer_id:
@@ -205,13 +197,8 @@ class ServiceEdgeScheduleAPI(APIClient):
         microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        # Log for debugging to ensure the URL construct
-        print(f"Final URL: {api_url}?{urlencode(params)}" if params else api_url)
-
         # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, {}, params
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, {}, params)
         if error:
             return (None, None, error)
 
@@ -227,9 +214,7 @@ class ServiceEdgeScheduleAPI(APIClient):
 
         # Parse the response into an AppConnectorGroup instance
         try:
-            result = ServiceEdgeSchedule(
-                self.form_response_body(response.get_body())
-            )
+            result = ServiceEdgeSchedule(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)

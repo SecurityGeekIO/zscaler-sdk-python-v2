@@ -14,7 +14,6 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
-
 import mimetypes
 
 from box import Box
@@ -25,7 +24,7 @@ from zscaler.api_client import APIClient
 class CloudSandboxAPI(APIClient):
     def __init__(self, client: APIClient):
         self.rest = client
-        
+
         self.sandbox_token = client.sandbox_token
         self.env_cloud = client.env_cloud
 
@@ -52,9 +51,6 @@ class CloudSandboxAPI(APIClient):
         content_type, _ = mimetypes.guess_type(file)
         if not content_type:
             content_type = "application/octet-stream"
-        params = {
-            "api_token": self.sandbox_token,
-        }
 
         params = {
             "api_token": self.sandbox_token,

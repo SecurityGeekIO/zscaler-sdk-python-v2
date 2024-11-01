@@ -15,9 +15,9 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.api_client import APIClient
+from zscaler.request_executor import RequestExecutor
 from zscaler.zpa.models.cloud_connector_groups import CloudConnectorGroup
 from zscaler.utils import format_url
-from urllib.parse import urlencode
 
 
 class CloudConnectorGroupsAPI(APIClient):
@@ -27,7 +27,7 @@ class CloudConnectorGroupsAPI(APIClient):
 
     def __init__(self, request_executor, config):
         super().__init__()
-        self._request_executor = request_executor
+        self._request_executor: RequestExecutor = request_executor
         customer_id = config["client"].get("customerId")
         self._zpa_base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
@@ -50,43 +50,34 @@ class CloudConnectorGroupsAPI(APIClient):
             >>> cloud_connector_groups = zpa.cloud_connector_groups.list_cloud_connector_groups(search="example")
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /cloudConnectorGroup
-        """)
+        """
+        )
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
-
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
 
         # Prepare request body and headers
         body = {}
         headers = {}
 
         # Prepare request
-        request, error = self._request_executor\
-            .create_request(
-                http_method, api_url, body, headers
-            )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_results():
-                result.append(CloudConnectorGroup(
-                    self.form_response_body(item))
-                )
+            for item in response.get_all_pages_results():
+                result.append(CloudConnectorGroup(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -108,37 +99,29 @@ class CloudConnectorGroupsAPI(APIClient):
             ...     pprint(group)
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /cloudConnectorGroup/{group_id}
-        """)
+        """
+        )
 
         # Handle optional query parameters
         query_params = query_params or {}
 
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
-
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, CloudConnectorGroup)
+        response, error = self._request_executor.execute(request, CloudConnectorGroup)
         if error:
             return (None, response, error)
 
         # Parse the response into an CloudConnectorGroup instance
         try:
-            result = CloudConnectorGroup(
-                self.form_response_body(response.get_body())
-            )
+            result = CloudConnectorGroup(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
-

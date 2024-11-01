@@ -15,11 +15,11 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.api_client import APIClient
+from zscaler.request_executor import RequestExecutor
 from zscaler.zia.models.dlp_resources import DLPICAPServer
 from zscaler.zia.models.dlp_resources import DLPIDMProfile
 from zscaler.zia.models.dlp_resources import DLPEDMSchema
 from zscaler.utils import format_url
-from urllib.parse import urlencode
 
 
 class DLPResourcesAPI(APIClient):
@@ -28,14 +28,14 @@ class DLPResourcesAPI(APIClient):
     """
 
     _zia_base_endpoint = "/zia/api/v1"
-    
+
     def __init__(self, request_executor):
         super().__init__()
-        self._request_executor = request_executor
+        self._request_executor: RequestExecutor = request_executor
 
     def list_dlp_icap_servers(
-            self,
-            query_params=None,
+        self,
+        query_params=None,
     ) -> tuple:
         """
         Returns the list of ZIA DLP ICAP Servers.
@@ -63,45 +63,38 @@ class DLPResourcesAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /icapServers
-        """)
+        """
+        )
 
         query_params = query_params or {}
-
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
 
         body = {}
         headers = {}
 
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_body():
-                result.append(DLPICAPServer(
-                    self.form_response_body(item)
-                ))
+            for item in response.get_all_pages_results():
+                result.append(DLPICAPServer(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
         return (result, response, None)
 
-    def get_dlp_icap_servers(self, icap_server_id: int) -> tuple:
+    def get_dlp_icap_servers(self, icap_server_id: int, query_params: dict = None) -> tuple:
         """
         Returns the dlp icap server details for a given DLP ICAP Server.
 
@@ -116,48 +109,40 @@ class DLPResourcesAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /icapServers/{icap_server_id}
-        """)
+        """
+        )
 
         query_params = query_params or {}
-
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
 
         # Prepare request body, headers, and form (if needed)
         body = {}
         headers = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
 
         try:
-            result = DLPICAPServer(
-                self.form_response_body(response.get_body())
-            )
+            result = DLPICAPServer(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
-    
+
     def list_dlp_incident_receiver(
-            self,
-            query_params=None,
+        self,
+        query_params=None,
     ) -> tuple:
         """
         Returns the list of ZIA DLP Incident Receiver.
@@ -185,45 +170,38 @@ class DLPResourcesAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /incidentReceiverServers
-        """)
+        """
+        )
 
         query_params = query_params or {}
-
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
 
         body = {}
         headers = {}
 
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_body():
-                result.append(DLPICAPServer(
-                    self.form_response_body(item)
-                ))
+            for item in response.get_all_pages_results():
+                result.append(DLPICAPServer(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
         return (result, response, None)
 
-    def get_dlp_incident_receiver(self, receiver_id: int)  -> tuple:
+    def get_dlp_incident_receiver(self, receiver_id: int) -> tuple:
         """
         Returns the dlp incident receiver details for a given DLP Incident Receiver.
 
@@ -238,41 +216,38 @@ class DLPResourcesAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /incidentReceiverServers/{receiver_id}
-        """)
+        """
+        )
 
         # Prepare request body, headers, and form (if needed)
         body = {}
         headers = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
 
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
 
         try:
-            result = DLPICAPServer(
-                self.form_response_body(response.get_body())
-            )
+            result = DLPICAPServer(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
     def list_dlp_idm_profiles(
-            self,
-            query_params=None,
+        self,
+        query_params=None,
     ) -> tuple:
         """
         Returns the list of ZIA DLP IDM Profiles.
@@ -300,39 +275,32 @@ class DLPResourcesAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /idmprofile
-        """)
+        """
+        )
 
         query_params = query_params or {}
-
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
 
         body = {}
         headers = {}
 
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_body():
-                result.append(DLPIDMProfile(
-                    self.form_response_body(item)
-                ))
+            for item in response.get_all_pages_results():
+                result.append(DLPIDMProfile(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -352,41 +320,38 @@ class DLPResourcesAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /idmprofile/{profile_id}
-        """)
+        """
+        )
 
         # Prepare request body, headers, and form (if needed)
         body = {}
         headers = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
 
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
 
         try:
-            result = DLPIDMProfile(
-                self.form_response_body(response.get_body())
-            )
+            result = DLPIDMProfile(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
     def list_edm_schemas(
-            self,
-            query_params=None,
+        self,
+        query_params=None,
     ) -> tuple:
         """
         Returns the list of ZIA DLP Exact Data Match Schemas.
@@ -408,49 +373,43 @@ class DLPResourcesAPI(APIClient):
             >>> pprint(zia.dlp.list_edm_schemas())
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /dlpExactDataMatchSchemas
-        """)
+        """
+        )
 
         query_params = query_params or {}
-
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
 
         body = {}
         headers = {}
 
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_body():
-                result.append(DLPEDMSchema(
-                    self.form_response_body(item)
-                ))
+            for item in response.get_all_pages_results():
+                result.append(DLPEDMSchema(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
     def list_edm_schema_lite(
-        self, schema_name: str = None,
+        self,
+        schema_name: str = None,
         active_only: bool = None,
         fetch_tokens: bool = None,
         query_params=None,
-        ) -> tuple:
+    ) -> tuple:
         """
         Returns the list of active EDM templates (or EDM schemas) and their criteria (or token details), only.
 
@@ -479,36 +438,27 @@ class DLPResourcesAPI(APIClient):
             params["fetchTokens"] = fetch_tokens
 
         http_method = "get".upper()
-        api_url = format_url(f"{self._zia_base_endpoint}/zia/api/v1/dlpExactDataMatchSchemas/lite")
+        api_url = format_url(f"{self._zia_base_endpoint}/dlpExactDataMatchSchemas/lite")
 
         query_params = query_params or {}
-
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
 
         body = {}
         headers = {}
 
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_body():
-                result.append(DLPEDMSchema(
-                    self.form_response_body(item)
-                ))
+            for item in response.get_all_pages_results():
+                result.append(DLPEDMSchema(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 

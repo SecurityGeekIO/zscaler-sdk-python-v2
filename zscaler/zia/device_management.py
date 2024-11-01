@@ -15,10 +15,10 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.api_client import APIClient
+from zscaler.request_executor import RequestExecutor
 from zscaler.zia.models.devices import Devices
 from zscaler.zia.models.device_groups import DeviceGroups
 from zscaler.utils import format_url
-from urllib.parse import urlencode
 
 
 class DeviceManagementAPI(APIClient):
@@ -27,14 +27,14 @@ class DeviceManagementAPI(APIClient):
     """
 
     _zia_base_endpoint = "/zia/api/v1"
-    
+
     def __init__(self, request_executor):
         super().__init__()
-        self._request_executor = request_executor
+        self._request_executor: RequestExecutor = request_executor
 
     def list_device_groups(
-            self,
-            query_params=None,
+        self,
+        query_params=None,
     ) -> tuple:
         """
         Returns the list of ZIA Device Groups.
@@ -61,24 +61,19 @@ class DeviceManagementAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /deviceGroups
-        """)
-
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
+        """
+        )
 
         # Prepare request body and headers
         body = {}
         headers = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)
@@ -90,18 +85,16 @@ class DeviceManagementAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_body():
-                result.append(DeviceGroups(
-                    self.form_response_body(item)
-                ))
+            for item in response.get_all_pages_results():
+                result.append(DeviceGroups(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
         return (result, response, None)
 
     def list_devices(
-            self,
-            query_params=None,
+        self,
+        query_params=None,
     ) -> tuple:
         """
         Returns the list of Devices.
@@ -110,7 +103,7 @@ class DeviceManagementAPI(APIClient):
             query_params {dict}: Map of query parameters for the request.
                 [query_params.name] {str}: The device group name. This is a `starts with` match.
                 [query_params.user_ids] {list}: Used to list devices for specific users.
-                [query_params.include_all] {bool}: Used to include or exclude Cloud Browser Isolation devices.                       
+                [query_params.include_all] {bool}: Used to include or exclude Cloud Browser Isolation devices.
                 [query_params.page] {int}: Specifies the page offset.
                 [query_params.pagesize] {int}: Specifies the page size. The default size is 100, but the maximum size is 1000.
                 [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
@@ -132,27 +125,22 @@ class DeviceManagementAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /deviceGroups/devices
-        """)
+        """
+        )
 
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
-
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
 
         # Prepare request body and headers
         body = {}
         headers = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)
@@ -164,10 +152,8 @@ class DeviceManagementAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_body():
-                result.append(Devices(
-                    self.form_response_body(item)
-                ))
+            for item in response.get_all_pages_results():
+                result.append(Devices(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -188,18 +174,18 @@ class DeviceManagementAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /deviceGroups/devices/lite
-        """)
+        """
+        )
 
         body = {}
         headers = {}
-        
+
         # Prepare the request (GET request, no body needed)
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers 
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
 
         if error:
             return (None, None, error)
@@ -211,9 +197,8 @@ class DeviceManagementAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_body():
-                result.append(DeviceGroups(self.form_response_body(item))
-                )
+            for item in response.get_all_pages_results():
+                result.append(DeviceGroups(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 

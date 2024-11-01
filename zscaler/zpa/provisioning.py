@@ -15,9 +15,9 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.api_client import APIClient
+from zscaler.request_executor import RequestExecutor
 from zscaler.zpa.models.provisioning_keys import ProvisioningKey
 from zscaler.utils import format_url
-from urllib.parse import urlencode
 
 
 def simplify_key_type(key_type):
@@ -45,7 +45,7 @@ class ProvisioningKeyAPI(APIClient):
 
     def __init__(self, request_executor, config):
         super().__init__()
-        self._request_executor = request_executor
+        self._request_executor: RequestExecutor = request_executor
         customer_id = config["client"].get("customerId")
         self._zpa_base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
@@ -78,39 +78,32 @@ class ProvisioningKeyAPI(APIClient):
             ...    print(key)
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /associationType/{simplify_key_type(key_type)}/provisioningKey
-        """)
+        """
+        )
 
         query_params = query_params or {}
         microtenant_id = query_params.get("microtenant_id", None)
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
-
         # Prepare request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_results():
-                result.append(ProvisioningKey(
-                    self.form_response_body(item))
-                )
+            for item in response.get_all_pages_results():
+                result.append(ProvisioningKey(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -150,39 +143,33 @@ class ProvisioningKeyAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""{
+        api_url = format_url(
+            f"""{
             self._zpa_base_endpoint}
             /associationType/{simplify_key_type(key_type)}/provisioningKey/{key_id}
-        """)
+        """
+        )
 
         query_params = query_params or {}
         microtenant_id = query_params.get("microtenant_id", None)
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
-
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, ProvisioningKey)
+        response, error = self._request_executor.execute(request, ProvisioningKey)
         if error:
             return (None, response, error)
 
         try:
-            result = ProvisioningKey(
-                self.form_response_body(response.get_body())
-            )
+            result = ProvisioningKey(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def add_provisioning_key(self, provisioning,  **kwargs) -> tuple:
+    def add_provisioning_key(self, provisioning, **kwargs) -> tuple:
         """
         Adds a new provisioning key to ZPA.
 
@@ -208,11 +195,13 @@ class ProvisioningKeyAPI(APIClient):
             raise ValueError("key_type must be provided.")
 
         http_method = "post".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /associationType/{simplify_key_type(key_type)}/provisioningKey
-        """)
-    
+        """
+        )
+
         # Ensure provisioning is a dictionary
         if isinstance(provisioning, dict):
             body = provisioning
@@ -223,9 +212,6 @@ class ProvisioningKeyAPI(APIClient):
         microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        # Log for debugging to ensure the URL construct
-        print(f"Final URL: {api_url}?{urlencode(params)}" if params else api_url)
-
         # Extract and set attributes from the body
         name = body.pop("name", None)
         max_usage = body.pop("max_usage", None)
@@ -233,34 +219,25 @@ class ProvisioningKeyAPI(APIClient):
         component_id = body.get("component_id")
 
         # Add extracted values to the body
-        body.update({
-            "name": name,
-            "maxUsage": max_usage,
-            "enrollmentCertId": enrollment_cert_id,
-            "zcomponentId": component_id
-        })
+        body.update(
+            {"name": name, "maxUsage": max_usage, "enrollmentCertId": enrollment_cert_id, "zcomponentId": component_id}
+        )
 
         # Add any additional attributes from kwargs
         body.update(kwargs)
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(
-            http_method, api_url, body=body, params=params
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body=body, params=params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, ProvisioningKey)
+        response, error = self._request_executor.execute(request, ProvisioningKey)
         if error:
             return (None, response, error)
 
         try:
-            result = ProvisioningKey(
-                self.form_response_body(response.get_body())
-            )
+            result = ProvisioningKey(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -285,11 +262,13 @@ class ProvisioningKeyAPI(APIClient):
             raise ValueError("key_type must be provided.")
 
         http_method = "put".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /associationType/{simplify_key_type(key_type)}/provisioningKey/{key_id}
-        """)
-        
+        """
+        )
+
         # Ensure provisioning is in dictionary format
         if isinstance(provisioning, dict):
             body = provisioning
@@ -300,9 +279,6 @@ class ProvisioningKeyAPI(APIClient):
         microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        # Log for debugging to ensure the URL construct
-        print(f"Final URL: {api_url}?{urlencode(params)}" if params else api_url)
-
         # Extract and set attributes from the body
         name = body.pop("name", None)
         max_usage = body.pop("max_usage", None)
@@ -310,27 +286,20 @@ class ProvisioningKeyAPI(APIClient):
         component_id = body.get("component_id")
 
         # Add extracted values to the body
-        body.update({
-            "name": name,
-            "maxUsage": max_usage,
-            "enrollmentCertId": enrollment_cert_id,
-            "zcomponentId": component_id
-        })
+        body.update(
+            {"name": name, "maxUsage": max_usage, "enrollmentCertId": enrollment_cert_id, "zcomponentId": component_id}
+        )
 
         # Add any additional attributes from kwargs
         body.update(kwargs)
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(
-            http_method, api_url, body=body, params=params
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body=body, params=params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, ProvisioningKey)
+        response, error = self._request_executor.execute(request, ProvisioningKey)
         if error:
             return (None, response, error)
 
@@ -338,11 +307,9 @@ class ProvisioningKeyAPI(APIClient):
         if response is None:
             # Return a meaningful result to indicate success
             return (ProvisioningKey({"id": key_id}), None, None)
-        
+
         try:
-            result = ProvisioningKey(
-                self.form_response_body(response.get_body())
-            )
+            result = ProvisioningKey(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -377,23 +344,23 @@ class ProvisioningKeyAPI(APIClient):
 
         """
         http_method = "delete".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /associationType/{simplify_key_type(key_type)}/provisioningKey/{key_id}
-        """)
-        
+        """
+        )
+
         # Handle microtenant_id in URL params if provided
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 

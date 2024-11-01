@@ -15,15 +15,16 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.api_client import APIClient
+from zscaler.request_executor import RequestExecutor
 from zscaler.zpa.models.server_group import ServerGroup
 from zscaler.utils import format_url, add_id_groups
-from urllib.parse import urlencode
 
 
 class ServerGroupsAPI(APIClient):
     """
     A client object for the Server Groups resource.
     """
+
     reformat_params = [
         ("server_ids", "servers"),
         ("app_connector_group_ids", "appConnectorGroups"),
@@ -31,7 +32,7 @@ class ServerGroupsAPI(APIClient):
 
     def __init__(self, request_executor, config):
         super().__init__()
-        self._request_executor = request_executor
+        self._request_executor: RequestExecutor = request_executor
         customer_id = config["client"].get("customerId")
         self._zpa_base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
@@ -56,39 +57,32 @@ class ServerGroupsAPI(APIClient):
             >>> server_groups = zpa.server_groups.list_groups(search="example")
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /serverGroup
-        """)
+        """
+        )
 
         query_params = query_params or {}
         microtenant_id = query_params.get("microtenant_id", None)
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
-
         # Prepare request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_results():
-                result.append(ServerGroup(
-                    self.form_response_body(item))
-                )
+            for item in response.get_all_pages_results():
+                result.append(ServerGroup(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -104,10 +98,12 @@ class ServerGroupsAPI(APIClient):
             tuple: A tuple containing (ServerGroup, Response, error)
         """
         http_method = "get".upper()
-        api_url = format_url(f"""{
+        api_url = format_url(
+            f"""{
             self._zpa_base_endpoint}
             /serverGroup/{group_id}
-        """)
+        """
+        )
 
         # Handle optional query parameters
         query_params = query_params or {}
@@ -115,28 +111,19 @@ class ServerGroupsAPI(APIClient):
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
-
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, ServerGroup)
+        response, error = self._request_executor.execute(request, ServerGroup)
         if error:
             return (None, response, error)
 
         # Parse the response into an AppConnectorGroup instance
         try:
-            result = ServerGroup(
-                self.form_response_body(response.get_body())
-            )
+            result = ServerGroup(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -153,10 +140,12 @@ class ServerGroupsAPI(APIClient):
             tuple: A tuple containing (ServerGroup, Response, error)
         """
         http_method = "post".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /serverGroup
-        """)
+        """
+        )
 
         # Construct the body from kwargs (as a dictionary)
         body = kwargs
@@ -175,23 +164,17 @@ class ServerGroupsAPI(APIClient):
         add_id_groups(self.reformat_params, kwargs, body)
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(
-            http_method, api_url, body=body, params=params
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body=body, params=params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, ServerGroup)
+        response, error = self._request_executor.execute(request, ServerGroup)
         if error:
             return (None, response, error)
 
         try:
-            result = ServerGroup(
-                self.form_response_body(response.get_body())
-            )
+            result = ServerGroup(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -207,16 +190,18 @@ class ServerGroupsAPI(APIClient):
             tuple: A tuple containing (ServerGroup, Response, error)
         """
         http_method = "put".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /serverGroup/{group_id}
-        """)
+        """
+        )
 
         # Fetch the existing group to ensure mandatory fields like appConnectorGroups are preserved
         existing_group, _, err = self.get_group(group_id)
         if err:
             return (None, None, f"Error fetching the existing group: {err}")
-        
+
         # Use the existing group's data as the base body, to ensure mandatory fields are preserved
         body = existing_group.request_format()  # Fetch the current group representation
 
@@ -274,23 +259,23 @@ class ServerGroupsAPI(APIClient):
             tuple: A tuple containing (None, Response, error)
         """
         http_method = "delete".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /serverGroup/{group_id}
-        """)
+        """
+        )
 
         # Handle microtenant_id in URL params if provided
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
         return (None, response, None)

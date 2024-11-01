@@ -15,8 +15,8 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.api_client import APIClient
+from zscaler.request_executor import RequestExecutor
 from zscaler.zpa.models.scim_attributes import SCIMAttributeHeader
-from urllib.parse import urlencode
 from zscaler.utils import format_url
 
 
@@ -27,7 +27,7 @@ class ScimAttributeHeaderAPI(APIClient):
 
     def __init__(self, request_executor, config):
         super().__init__()
-        self._request_executor = request_executor
+        self._request_executor: RequestExecutor = request_executor
         customer_id = config["client"].get("customerId")
         self._zpa_base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
         self._zpa_base_endpoint_userconfig = f"/zpa/userconfig/v1/customers/{customer_id}"
@@ -53,42 +53,33 @@ class ScimAttributeHeaderAPI(APIClient):
             ...    pprint(scim_attribute)
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /idp/{idp_id}/scimattribute
-        """)
+        """
+        )
 
         query_params = query_params or {}
-
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
 
         # Prepare request body and headers
         body = {}
         headers = {}
 
         # Prepare request
-        request, error = self._request_executor\
-            .create_request(
-                http_method, api_url, body, headers
-            )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_results():
-                result.append(SCIMAttributeHeader(
-                    self.form_response_body(item))
-                )
+            for item in response.get_all_pages_results():
+                result.append(SCIMAttributeHeader(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -108,31 +99,25 @@ class ScimAttributeHeaderAPI(APIClient):
             >>> attribute = zpa.scim_attributes.get_attribute('99999', scim_attribute_id="88888")
         """
         http_method = "get".upper()
-        api_url = format_url(f"""{
+        api_url = format_url(
+            f"""{
             self._zpa_base_endpoint}
             /idp/{idp_id}/scimattribute/{attribute_id}
-        """)
+        """
+        )
 
         query_params = query_params or {}
 
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
-
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, SCIMAttributeHeader)
+        response, error = self._request_executor.execute(request, SCIMAttributeHeader)
         if error:
             return (None, response, error)
 
         try:
-            result = SCIMAttributeHeader(
-                self.form_response_body(response.get_body())
-            )
+            result = SCIMAttributeHeader(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -158,41 +143,34 @@ class ScimAttributeHeaderAPI(APIClient):
             >>> values = zpa.scim_attributes.get_values('99999', '88888')
         """
         http_method = "get".upper()
-        api_url = format_url(f"""{
+        api_url = format_url(
+            f"""{
             self._zpa_base_endpoint_userconfig}
             /scimattribute/idpId/{idp_id}/attributeId/{attribute_id}
-        """)
+        """
+        )
 
         query_params = query_params or {}
-
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
 
         # Prepare request body and headers
         body = {}
         headers = {}
 
         # Prepare request
-        request, error = self._request_executor\
-            .create_request(
-                http_method, api_url, body, headers
-            )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
         try:
             body = response.get_body()
             # Assuming the API returns a list in the 'list' field as per the Postman response
-            result = body.get('list', [])
+            result = body.get("list", [])
         except Exception as error:
             return (None, response, error)
-        
+
         return (result, response, None)

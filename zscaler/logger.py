@@ -72,7 +72,10 @@ def dump_request(logger, url: str, method: str, json, params, headers, request_u
     if body:
         request_body = jsonp.dumps(json)
     log_lines.append(f"\n---[ ZSCALER SDK REQUEST | ID:{request_uuid} ]-------------------------------")
-    log_lines.append(f"{method} {url}")
+    full_url = url
+    if params:
+        full_url += "?" + urlencode(params)
+    log_lines.append(f"{method} {full_url}")
     for key, value in request_headers_filtered.items():
         log_lines.append(f"{key}: {value}")
     if body and request_body != "" and request_body != "null":

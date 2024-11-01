@@ -1,3 +1,4 @@
+from zscaler.request_executor import RequestExecutor
 from zscaler.zpa.authdomains import AuthDomainsAPI
 from zscaler.zpa.application_segment import ApplicationSegmentAPI
 from zscaler.zpa.application_segment_inspection import AppSegmentsInspectionAPI
@@ -43,7 +44,7 @@ class ZPAService:
     """ZPA Service client, exposing various ZPA APIs."""
 
     def __init__(self, request_executor, config):
-        self._request_executor = request_executor
+        self._request_executor: RequestExecutor = request_executor
         self._config = config
 
     @property
@@ -117,7 +118,7 @@ class ZPAService:
 
         """
         return CBIZPAProfileAPI(self._request_executor, self._config)
-    
+
     @property
     def certificates(self):
         """
@@ -149,7 +150,7 @@ class ZPAService:
 
         """
         return AppConnectorGroupAPI(self._request_executor, self._config)
-    
+
     @property
     def connectors(self):
         """
@@ -165,7 +166,7 @@ class ZPAService:
 
         """
         return AppConnectorScheduleAPI(self._request_executor, self._config)
-    
+
     @property
     def emergency_access(self):
         """
@@ -181,7 +182,7 @@ class ZPAService:
 
         """
         return EnrollmentCertificateAPI(self._request_executor, self._config)
-    
+
     @property
     def idp(self):
         """
@@ -269,7 +270,7 @@ class ZPAService:
 
         """
         return PRAPortalAPI(self._request_executor, self._config)
-   
+
     @property
     def provisioning(self):
         """
@@ -349,7 +350,7 @@ class ZPAService:
 
         """
         return ServiceEdgeScheduleAPI(self._request_executor, self._config)
-    
+
     @property
     def trusted_networks(self):
         """

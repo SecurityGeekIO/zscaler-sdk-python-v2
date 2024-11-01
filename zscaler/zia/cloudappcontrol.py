@@ -15,17 +15,11 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.api_client import APIClient
+from zscaler.request_executor import RequestExecutor
 from zscaler.zia.models.cloudappcontrol import CloudApplicationControl
 from zscaler.zia.models.cloudappcontrol import Application
 
-from zscaler.utils import (
-    convert_keys,
-    recursive_snake_to_camel,
-    snake_to_camel,
-    transform_common_id_fields,
-    format_url
-)
-from urllib.parse import urlencode
+from zscaler.utils import convert_keys, recursive_snake_to_camel, snake_to_camel, transform_common_id_fields, format_url
 
 
 class CloudAppControlAPI(APIClient):
@@ -47,17 +41,17 @@ class CloudAppControlAPI(APIClient):
     ]
 
     _zia_base_endpoint = "/zia/api/v1"
-    
+
     def __init__(self, request_executor):
         super().__init__()
-        self._request_executor = request_executor
+        self._request_executor: RequestExecutor = request_executor
 
     def list_available_actions(self, rule_type: str) -> tuple:
         """
         Retrieves a list of granular actions supported for a specific rule type.
 
         Args:
-            rule_type (str): The type of rule for which actions should be retrieved 
+            rule_type (str): The type of rule for which actions should be retrieved
                              (e.g., "STREAMING_MEDIA").
 
         Returns:
@@ -78,19 +72,19 @@ class CloudAppControlAPI(APIClient):
 
         """
         http_method = "post".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /webApplicationRules/{rule_type}/availableActions"
-        """)
+        """
+        )
 
         # Prepare request body and headers
         body = {}
         headers = {}
-        
+
         # Prepare the request (GET request, no body needed)
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
 
         if error:
             return (None, None, error)
@@ -104,19 +98,18 @@ class CloudAppControlAPI(APIClient):
         # Parse the response into Application instances
         try:
             result = []
-            for item in response.get_body():
-                result.append(Application(
-                    self.form_response_body(item)
-                ))
+            for item in response.get_all_pages_results():
+                result.append(Application(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
         return (result, response, None)
 
     def list_rules(
-        self, rule_type: str,
+        self,
+        rule_type: str,
         query_params=None,
-        ) -> tuple:
+    ) -> tuple:
         """
         Returns a list of all Cloud App Control rules for the specified rule type.
 
@@ -134,24 +127,19 @@ class CloudAppControlAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /webApplicationRules/{rule_type}
-        """)
-
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
+        """
+        )
 
         # Prepare request body and headers
         body = {}
         headers = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)
@@ -165,10 +153,8 @@ class CloudAppControlAPI(APIClient):
         # Parse the response into AppConnectorGroup instances
         try:
             result = []
-            for item in response.get_body():
-                result.append(CloudApplicationControl(
-                    self.form_response_body(item)
-                ))
+            for item in response.get_all_pages_results():
+                result.append(CloudApplicationControl(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
@@ -192,34 +178,31 @@ class CloudAppControlAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /webApplicationRules/{rule_type}/{rule_id}
-        """)
+        """
+        )
 
         body = {}
         headers = {}
 
         # Create the reques
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
 
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, CloudApplicationControl)
+        response, error = self._request_executor.execute(request, CloudApplicationControl)
 
         if error:
             return (None, response, error)
 
         # Parse the response
         try:
-            result = CloudApplicationControl(
-                self.form_response_body(response.get_body())
-            )
+            result = CloudApplicationControl(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -389,10 +372,12 @@ class CloudAppControlAPI(APIClient):
                 - `ISOLATE_WEBMAIL_VIEW`
         """
         http_method = "post".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /webApplicationRules/{rule_type}
-        """)
+        """
+        )
 
         # Convert enabled to API format if present
         if "enabled" in kwargs:
@@ -601,10 +586,12 @@ class CloudAppControlAPI(APIClient):
                 - `ISOLATE_WEBMAIL_VIEW`
         """
         http_method = "put".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /webApplicationRules/{rule_type}/{rule_id}
-        """)
+        """
+        )
 
         # Set payload to value of existing record and convert nested dict keys.
         payload = convert_keys(self.get_rule(rule_type, rule_id))
@@ -630,9 +617,7 @@ class CloudAppControlAPI(APIClient):
             return (None, response, error)
 
         try:
-            result = CloudApplicationControl(
-                self.form_response_body(response.get_body())
-            )
+            result = CloudApplicationControl(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -731,7 +716,8 @@ class CloudAppControlAPI(APIClient):
                 )
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._zia_base_endpoint}/webApplicationRules/{rule_type}/duplicate/{rule_id}?name={name}")
+        params = {"name": name}
+        api_url = format_url(f"{self._zia_base_endpoint}/webApplicationRules/{rule_type}/duplicate/{rule_id}")
 
         # Convert enabled to API format if present
         if "enabled" in kwargs:
@@ -757,7 +743,7 @@ class CloudAppControlAPI(APIClient):
         camel_payload = recursive_snake_to_camel(payload)
 
         # Use camel_payload in the API request
-        request, error = self._request_executor.create_request(http_method, api_url, camel_payload, {}, {})
+        request, error = self._request_executor.create_request(http_method, api_url, camel_payload, {}, params=params)
         if error:
             return (None, None, error)
 

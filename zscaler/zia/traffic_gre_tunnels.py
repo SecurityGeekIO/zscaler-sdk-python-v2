@@ -14,12 +14,12 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
-
 from zscaler.api_client import APIClient
+from zscaler.request_executor import RequestExecutor
 from zscaler.zia.models.traffic_gre_tunnels import TrafficGRETunnel
 from zscaler.zia.models.traffic_gre_recommended_list import TrafficGRERecommendedVIP
 from zscaler.utils import format_url
-from urllib.parse import urlencode
+
 
 class TrafficForwardingGRETunnelAPI(APIClient):
     """
@@ -27,10 +27,10 @@ class TrafficForwardingGRETunnelAPI(APIClient):
     """
 
     _zia_base_endpoint = "/zia/api/v1"
-    
+
     def __init__(self, request_executor):
         super().__init__()
-        self._request_executor = request_executor
+        self._request_executor: RequestExecutor = request_executor
 
     def list_gre_tunnels(self, query_params=None) -> tuple:
         """
@@ -65,48 +65,39 @@ class TrafficForwardingGRETunnelAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /greTunnels
-        """)
+        """
+        )
 
         query_params = query_params or {}
-
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
 
         # Prepare request body and headers
         body = {}
         headers = {}
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(
-            http_method, api_url, body, headers
-        )
-        
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
+
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_body():
-                result.append(TrafficGRETunnel(
-                    self.form_response_body(item)
-                ))
+            for item in response.get_all_pages_results():
+                result.append(TrafficGRETunnel(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
-    
+
     def get_gre_tunnel(self, tunnel_id: int) -> tuple:
         """
         Returns information for the specified GRE tunnel.
@@ -123,32 +114,28 @@ class TrafficForwardingGRETunnelAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /greTunnels/{tunnel_id}
-        """)
-        
+        """
+        )
+
         body = {}
         headers = {}
 
-        request, error = self._request_executor\
-            .create_request(
-            http_method, api_url, body, headers
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, TrafficGRETunnel)
+        response, error = self._request_executor.execute(request, TrafficGRETunnel)
 
         if error:
             return (None, response, error)
 
         try:
-            result = TrafficGRETunnel(
-                self.form_response_body(response.get_body())
-            )
+            result = TrafficGRETunnel(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -201,10 +188,12 @@ class TrafficForwardingGRETunnelAPI(APIClient):
         """
         # Define the HTTP method and API endpoint
         http_method = "post".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /greTunnels
-        """)
+        """
+        )
 
         if isinstance(gre_tunnel, dict):
             body = gre_tunnel
@@ -228,17 +217,14 @@ class TrafficForwardingGRETunnelAPI(APIClient):
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, TrafficGRETunnel)
+        response, error = self._request_executor.execute(request, TrafficGRETunnel)
 
         if error:
             return (None, response, error)
 
         try:
             # Parse the response and return it as a TrafficGRETunnel object
-            result = TrafficGRETunnel(
-                self.form_response_body(response.get_body())
-            )
+            result = TrafficGRETunnel(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -249,14 +235,16 @@ class TrafficForwardingGRETunnelAPI(APIClient):
         """
         # Define the HTTP method and API endpoint
         http_method = "put".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /greTunnels/{tunnel_id}
-        """)
+        """
+        )
 
         if tunnel_id is None:
             raise ValueError("tunnel_id is a required parameter for updating a GRE tunnel.")
-        
+
         if isinstance(gre_tunnel, dict):
             payload = gre_tunnel
         else:
@@ -308,20 +296,20 @@ class TrafficForwardingGRETunnelAPI(APIClient):
 
         """
         http_method = "delete".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /greTunnels/{tunnel_id}
-        """)
+        """
+        )
 
         params = {}
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
         return (None, response, None)
@@ -355,19 +343,16 @@ class TrafficForwardingGRETunnelAPI(APIClient):
         """
         # Define the HTTP method and API endpoint
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /vips/recommendedList
-        """)
+        """
+        )
 
         # Prepare the query parameters
         query_params = query_params or {}
         query_params["sourceIp"] = source_ip
-
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
 
         # Prepare headers and body (no body is needed for GET)
         headers = {}
@@ -375,10 +360,7 @@ class TrafficForwardingGRETunnelAPI(APIClient):
 
         # Create the request
         request, error = self._request_executor.create_request(
-            method=http_method,
-            endpoint=api_url,
-            body=body,
-            headers=headers
+            method=http_method, endpoint=api_url, body=body, headers=headers, params=query_params
         )
 
         if error:
@@ -392,10 +374,8 @@ class TrafficForwardingGRETunnelAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_body():
-                result.append(TrafficGRERecommendedVIP(
-                    self.form_response_body(item)
-                ))
+            for item in response.get_all_pages_results():
+                result.append(TrafficGRERecommendedVIP(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
@@ -418,19 +398,19 @@ class TrafficForwardingGRETunnelAPI(APIClient):
         """
         # Fetch the recommended VIPs
         vips_list, _, err = self.list_vips_recommended(source_ip=ip_address)
-        
+
         if err:
             raise ValueError(f"Error fetching recommended VIPs: {err}")
-        
+
         if not vips_list:
             raise ValueError("No VIPs found for the given source IP.")
-        
+
         # Find the preferred VIP (first entry)
         preferred_vip = vips_list[0]  # First entry is closest VIP
 
         # Find the next closest VIP that is in a different city
         secondary_vip = next((vip for vip in vips_list if vip.city != preferred_vip.city), None)
-        
+
         if not secondary_vip:
             raise ValueError("No diverse VIPs found in different cities.")
 
@@ -438,7 +418,6 @@ class TrafficForwardingGRETunnelAPI(APIClient):
         recommended_vips = (preferred_vip.id, secondary_vip.id)
 
         return recommended_vips
-
 
     def list_vip_group_by_dc(self, query_params=None) -> tuple:
         """
@@ -475,39 +454,32 @@ class TrafficForwardingGRETunnelAPI(APIClient):
             return (None, None, ValueError("sourceIp is a required query parameter."))
 
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /vips/groupByDatacenter
-        """)
-
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
+        """
+        )
 
         # Prepare request body and headers (no body is needed for GET)
         body = {}
         headers = {}
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(
-            http_method, api_url, body, headers
-        )
-        
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
+
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_body():
+            for item in response.get_all_pages_results():
                 result.append(item)  # Directly append the dictionary item as there is no model
 
         except Exception as error:
@@ -545,26 +517,22 @@ class TrafficForwardingGRETunnelAPI(APIClient):
             >>> vips, response, err = zia.vips.list_vips(query_params={"page_size": 200, "max_pages": 2})
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /vips
-        """)
+        """
+        )
 
         query_params = query_params or {}
-
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
 
         # Prepare request body and headers
         body = {}
         headers = {}
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, headers)
-        
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
+
         if error:
             return (None, None, error)
 
@@ -576,7 +544,7 @@ class TrafficForwardingGRETunnelAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_body():
+            for item in response.get_all_pages_results():
                 result.append(item)  # No model is used, directly handling the response as dictionaries
 
         except Exception as error:

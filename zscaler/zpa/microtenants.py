@@ -15,14 +15,15 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.api_client import APIClient
+from zscaler.request_executor import RequestExecutor
 from zscaler.zpa.models.microtenants import Microtenant
 from zscaler.zpa.models.microtenants import MicrotenantSearch
-from urllib.parse import urlencode
 from zscaler.utils import format_url
-import logging 
+import logging
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+
 
 class MicrotenantsAPI(APIClient):
     """
@@ -31,7 +32,7 @@ class MicrotenantsAPI(APIClient):
 
     def __init__(self, request_executor, config):
         super().__init__()
-        self._request_executor = request_executor
+        self._request_executor: RequestExecutor = request_executor
         customer_id = config["client"].get("customerId")
         self._zpa_base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
@@ -53,10 +54,12 @@ class MicrotenantsAPI(APIClient):
             tuple: A tuple containing (list of Microtenants instances, Response, error)
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /microtenants
-        """)
+        """
+        )
 
         # Set default pagination values
         query_params = query_params or {}
@@ -69,12 +72,8 @@ class MicrotenantsAPI(APIClient):
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        # Build the query string
-        encoded_query_params = urlencode(query_params)
-        api_url += f"?{encoded_query_params}"
-
         # Prepare request
-        request, error = self._request_executor.create_request(http_method, api_url)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
@@ -86,7 +85,7 @@ class MicrotenantsAPI(APIClient):
         # Process response and create Microtenant instances
         try:
             result = []
-            for item in response.get_results():
+            for item in response.get_all_pages_results():
                 result.append(Microtenant(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
@@ -107,31 +106,25 @@ class MicrotenantsAPI(APIClient):
             >>> microtenant = zpa.microtenants.get_microtenant('216199618143364393')
         """
         http_method = "get".upper()
-        api_url = format_url(f"""{
+        api_url = format_url(
+            f"""{
             self._zpa_base_endpoint}
             /microtenants/{microtenant_id}
-        """)
+        """
+        )
 
         query_params = query_params or {}
 
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
-
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, Microtenant)
+        response, error = self._request_executor.execute(request, Microtenant)
         if error:
             return (None, response, error)
 
         try:
-            result = Microtenant(
-                self.form_response_body(response.get_body())
-            )
+            result = Microtenant(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -147,10 +140,12 @@ class MicrotenantsAPI(APIClient):
             >>> summary = zpa.microtenants.get_microtenant_summary()
         """
         http_method = "get".upper()
-        api_url = format_url(f"""{
+        api_url = format_url(
+            f"""{
             self._zpa_base_endpoint}
             /microtenants/summary
-        """)
+        """
+        )
 
         # Create the request without any body or payload, as it's a simple GET request
         request, error = self._request_executor.create_request(http_method, api_url)
@@ -165,7 +160,7 @@ class MicrotenantsAPI(APIClient):
         # Parse the response as a list of Microtenant objects
         microtenant_list = []
         response_body = response.get_body()
-        
+
         if isinstance(response_body, list):
             for item in response_body:
                 microtenant_list.append(Microtenant(item))
@@ -191,10 +186,12 @@ class MicrotenantsAPI(APIClient):
 
         """
         http_method = "post".upper()
-        api_url = format_url(f"""{
+        api_url = format_url(
+            f"""{
             self._zpa_base_endpoint}
             /microtenants/search
-        """)
+        """
+        )
 
         # Ensure provisioning is a dictionary
         if isinstance(microtenant, dict):
@@ -206,23 +203,17 @@ class MicrotenantsAPI(APIClient):
         body.update(kwargs)
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(
-            http_method, api_url, body=body
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body=body)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, MicrotenantSearch)
+        response, error = self._request_executor.execute(request, MicrotenantSearch)
         if error:
             return (None, response, error)
 
         try:
-            result = MicrotenantSearch(
-                self.form_response_body(response.get_body())
-            )
+            result = MicrotenantSearch(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -252,10 +243,12 @@ class MicrotenantsAPI(APIClient):
                 )
         """
         http_method = "post".upper()
-        api_url = format_url(f"""{
+        api_url = format_url(
+            f"""{
             self._zpa_base_endpoint}
             /microtenants
-        """)
+        """
+        )
 
         # Construct the body from kwargs (as a dictionary)
         body = kwargs
@@ -265,35 +258,30 @@ class MicrotenantsAPI(APIClient):
         criteria_attribute = body.pop("criteria_attribute", None)
         criteria_attribute_values = body.pop("criteria_attribute_values", [])
 
-
         # Add extracted values to the body
-        body.update({
-            "name": name,
-            "criteriaAttribute": criteria_attribute,
-            "criteriaAttributeValues": criteria_attribute_values,
-        })
+        body.update(
+            {
+                "name": name,
+                "criteriaAttribute": criteria_attribute,
+                "criteriaAttributeValues": criteria_attribute_values,
+            }
+        )
 
         # Add any additional attributes from kwargs
         body.update(kwargs)
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(
-            http_method, api_url, body=body
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body=body)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, Microtenant)
+        response, error = self._request_executor.execute(request, Microtenant)
         if error:
             return (None, response, error)
 
         try:
-            result = Microtenant(
-                self.form_response_body(response.get_body())
-            )
+            result = Microtenant(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -324,30 +312,30 @@ class MicrotenantsAPI(APIClient):
                 )
         """
         http_method = "put".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /microtenants/{microtenant_id}
-        """)
+        """
+        )
 
         # Start with an empty body or an existing resource's current data
         body = {}
 
         # Update the body with the fields passed in kwargs
         body.update(kwargs)
-        
+
         # Use get instead of pop to keep microtenant_id in the body
         microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, {}, params)
+        request, error = self._request_executor.create_request(http_method, api_url, body, {}, params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, Microtenant)
+        response, error = self._request_executor.execute(request, Microtenant)
         if error:
             return (None, response, error)
 
@@ -359,9 +347,7 @@ class MicrotenantsAPI(APIClient):
 
         # Parse the response into an AppConnectorGroup instance
         try:
-            result = Microtenant(
-                self.form_response_body(response.get_body())
-            )
+            result = Microtenant(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -380,20 +366,20 @@ class MicrotenantsAPI(APIClient):
             >>> zpa.microtenants.delete_microtenant('99999')
         """
         http_method = "delete".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /microtenants/{microtenant_id}
-        """)
+        """
+        )
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url)
+        request, error = self._request_executor.create_request(http_method, api_url)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 

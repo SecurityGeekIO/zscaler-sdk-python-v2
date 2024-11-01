@@ -15,10 +15,10 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.api_client import APIClient
+from zscaler.request_executor import RequestExecutor
 from zscaler.zia.models.location_management import LocationManagement
 from zscaler.zia.models.location_group import LocationGroup
 from zscaler.utils import format_url
-from urllib.parse import urlencode
 
 
 class LocationsAPI(APIClient):
@@ -27,10 +27,10 @@ class LocationsAPI(APIClient):
     """
 
     _zia_base_endpoint = "/zia/api/v1"
-    
+
     def __init__(self, request_executor):
         super().__init__()
-        self._request_executor = request_executor
+        self._request_executor: RequestExecutor = request_executor
 
     def list_locations(self, query_params=None) -> tuple:
         """
@@ -80,44 +80,35 @@ class LocationsAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /locations
-        """)
+        """
+        )
 
         query_params = query_params or {}
-
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
 
         # Prepare request body and headers
         body = {}
         headers = {}
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(
-            http_method, api_url, body, headers
-        )
-        
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
+
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_body():
-                result.append(LocationManagement(
-                    self.form_response_body(item)
-                ))
+            for item in response.get_all_pages_results():
+                result.append(LocationManagement(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -138,32 +129,28 @@ class LocationsAPI(APIClient):
             >>> location = zia.locations.get_location_name(name='stockholm_office')
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /locations/{location_id}
-        """)
-        
+        """
+        )
+
         body = {}
         headers = {}
 
-        request, error = self._request_executor\
-            .create_request(
-            http_method, api_url, body, headers
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, LocationManagement)
+        response, error = self._request_executor.execute(request, LocationManagement)
 
         if error:
             return (None, response, error)
 
         try:
-            result = LocationManagement(
-                self.form_response_body(response.get_body())
-            )
+            result = LocationManagement(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -279,7 +266,8 @@ class LocationsAPI(APIClient):
 
         """
         http_method = "post".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /locations
         """
@@ -302,16 +290,13 @@ class LocationsAPI(APIClient):
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, LocationManagement)
+        response, error = self._request_executor.execute(request, LocationManagement)
 
         if error:
             return (None, response, error)
 
         try:
-            result = LocationManagement(
-                self.form_response_body(response.get_body())
-            )
+            result = LocationManagement(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -436,10 +421,12 @@ class LocationsAPI(APIClient):
 
         """
         http_method = "put".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /locations/{location_id}
-        """)
+        """
+        )
 
         # If label is already a dictionary, use it, otherwise convert the label object to a dictionary
         if isinstance(location, dict):
@@ -448,22 +435,18 @@ class LocationsAPI(APIClient):
             body = location.as_dict()
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, {}, {})
+        request, error = self._request_executor.create_request(http_method, api_url, body, {}, {})
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, LocationManagement)
+        response, error = self._request_executor.execute(request, LocationManagement)
         if error:
             return (None, response, error)
 
         # Parse the response into a RuleLabels instance
         try:
-            result = LocationManagement(
-                self.form_response_body(response.get_body())
-            )
+            result = LocationManagement(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -484,20 +467,20 @@ class LocationsAPI(APIClient):
 
         """
         http_method = "delete".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /locations/{location_id}
-        """)
+        """
+        )
 
         params = {}
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
         return (None, response, None)
@@ -517,10 +500,12 @@ class LocationsAPI(APIClient):
 
         """
         http_method = "post".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /locations/bulkDelete
-        """)
+        """
+        )
 
         payload = {"ids": location_ids}
 
@@ -535,7 +520,7 @@ class LocationsAPI(APIClient):
 
         return (response.get_body(), response, None)
 
-    def list_sub_locations(self, location_id: int) -> tuple:
+    def list_sub_locations(self, location_id: int, query_params: dict = None) -> tuple:
         """
         Returns sub-location information for the specified location ID.
 
@@ -578,44 +563,35 @@ class LocationsAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /locations/{location_id}/sublocations
-        """)
+        """
+        )
 
         query_params = query_params or {}
-
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
 
         # Prepare request body and headers
         body = {}
         headers = {}
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(
-            http_method, api_url, body, headers
-        )
-        
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
+
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_body():
-                result.append(LocationManagement(
-                    self.form_response_body(item)
-                ))
+            for item in response.get_all_pages_results():
+                result.append(LocationManagement(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -666,44 +642,35 @@ class LocationsAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /locations/lite
-        """)
+        """
+        )
 
         query_params = query_params or {}
-
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
 
         # Prepare request body and headers
         body = {}
         headers = {}
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(
-            http_method, api_url, body, headers
-        )
-        
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
+
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_body():
-                result.append(LocationManagement(
-                    self.form_response_body(item)
-                ))
+            for item in response.get_all_pages_results():
+                result.append(LocationManagement(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -730,48 +697,38 @@ class LocationsAPI(APIClient):
             >>> location = zia.locations.list_location_groups()
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /locations/groups
-        """)
+        """
+        )
 
         query_params = query_params or {}
-
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
 
         # Prepare request body and headers
         body = {}
         headers = {}
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(
-            http_method, api_url, body, headers
-        )
-        
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
+
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_body():
-                result.append(LocationGroup(
-                    self.form_response_body(item)
-                ))
+            for item in response.get_all_pages_results():
+                result.append(LocationGroup(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
-        return self.rest.get("locations/groups")
 
     def list_location_groups_lite(self, query_params=None) -> tuple:
         """
@@ -791,44 +748,35 @@ class LocationsAPI(APIClient):
             >>> location = zia.locations.list_location_groups_lite()
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /locations/groups/lite
-        """)
+        """
+        )
 
         query_params = query_params or {}
-
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
 
         # Prepare request body and headers
         body = {}
         headers = {}
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(
-            http_method, api_url, body, headers
-        )
-        
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
+
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_body():
-                result.append(LocationGroup(
-                    self.form_response_body(item)
-                ))
+            for item in response.get_all_pages_results():
+                result.append(LocationGroup(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -861,44 +809,35 @@ class LocationsAPI(APIClient):
             >>> location = zia.locations.list_location_groups_count(group_type='Static', name='Corporate')
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /locations/groups/count
-        """)
+        """
+        )
 
         query_params = query_params or {}
-
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
 
         # Prepare request body and headers
         body = {}
         headers = {}
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(
-            http_method, api_url, body, headers
-        )
-        
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
+
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_body():
-                result.append(LocationGroup(
-                    self.form_response_body(item)
-                ))
+            for item in response.get_all_pages_results():
+                result.append(LocationGroup(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -928,20 +867,15 @@ class LocationsAPI(APIClient):
 
         # Define the HTTP method and API endpoint
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /region/byGeoCoordinates
-        """)
+        """
+        )
 
         # Build query parameters with latitude and longitude
-        query_params = {
-            "latitude": latitude,
-            "longitude": longitude
-        }
-
-        # Encode the query string
-        encoded_query_params = urlencode(query_params)
-        api_url += f"?{encoded_query_params}"
+        query_params = {"latitude": latitude, "longitude": longitude}
 
         # Prepare request body and headers
         body = {}
@@ -949,10 +883,7 @@ class LocationsAPI(APIClient):
 
         # Create the request
         request, error = self._request_executor.create_request(
-            method=http_method,
-            endpoint=api_url,
-            body=body,
-            headers=headers
+            method=http_method, endpoint=api_url, body=body, headers=headers, params=query_params
         )
 
         if error:
@@ -970,7 +901,6 @@ class LocationsAPI(APIClient):
             return (None, response, error)
 
         return (result, response, None)
-
 
     def get_geo_by_ip(self, ip: str) -> tuple:
         """
@@ -994,10 +924,12 @@ class LocationsAPI(APIClient):
 
         # Define the HTTP method and API endpoint
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /region/byIPAddress/{ip}
-        """)
+        """
+        )
 
         # Prepare request body and headers
         body = {}
@@ -1005,10 +937,7 @@ class LocationsAPI(APIClient):
 
         # Create the request
         request, error = self._request_executor.create_request(
-            method=http_method,
-            endpoint=api_url,
-            body=body,
-            headers=headers
+            method=http_method, endpoint=api_url, body=body, headers=headers
         )
 
         if error:
@@ -1026,7 +955,6 @@ class LocationsAPI(APIClient):
             return (None, response, error)
 
         return (result, response, None)
-
 
     def list_cities_by_name(self, query_params=None) -> tuple:
         """
@@ -1059,17 +987,14 @@ class LocationsAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /region/search
-        """)
+        """
+        )
 
         query_params = query_params or {}
-
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
 
         # Prepare request body and headers
         body = {}
@@ -1077,10 +1002,7 @@ class LocationsAPI(APIClient):
 
         # Create the request
         request, error = self._request_executor.create_request(
-            method=http_method,
-            endpoint=api_url,
-            body=body,
-            headers=headers
+            method=http_method, endpoint=api_url, body=body, headers=headers, params=query_params
         )
 
         if error:
@@ -1094,11 +1016,9 @@ class LocationsAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_body():
+            for item in response.get_all_pages_results():
                 # Directly append the dictionary response as we are moving to a dictionary-based approach
-                result.append(
-                    self.form_response_body(item)
-                )
+                result.append(self.form_response_body(item))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)

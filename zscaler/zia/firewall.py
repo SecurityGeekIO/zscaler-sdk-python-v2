@@ -14,21 +14,17 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
-from zscaler.utils import (
-    snake_to_camel,
-    format_url
-)
+from zscaler.request_executor import RequestExecutor
+from zscaler.utils import snake_to_camel, format_url
 from zscaler.api_client import APIClient
 from zscaler.zia.models.cloud_firewall_rules import FirewallRule
 from zscaler.zia.models.cloud_firewall_destination_groups import IPDestinationGroups
 from zscaler.zia.models.cloud_firewall_source_groups import IPSourceGroup
 from zscaler.zia.models.cloud_firewall_nw_application_groups import NetworkApplicationGroups
 from zscaler.zia.models.cloud_firewall_nw_applications import NetworkApplications
-from zscaler.zia.models.cloud_firewall_app_services import AppServices
 from zscaler.zia.models.cloud_firewall_nw_service_groups import NetworkServiceGroups
 from zscaler.zia.models.cloud_firewall_nw_service import NetworkServices
 from zscaler.zia.models.cloud_firewall_time_windows import TimeWindows
-from urllib.parse import urlencode
 
 
 class FirewallPolicyAPI(APIClient):
@@ -54,14 +50,14 @@ class FirewallPolicyAPI(APIClient):
     ]
 
     _zia_base_endpoint = "/zia/api/v1"
-    
+
     def __init__(self, request_executor):
         super().__init__()
-        self._request_executor = request_executor
+        self._request_executor: RequestExecutor = request_executor
 
     def list_rules(
-            self,
-            query_params=None,
+        self,
+        query_params=None,
     ) -> tuple:
         """
         Lists firewall rules in your organization with pagination.
@@ -84,27 +80,23 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /firewallFilteringRules
-        """)
+        """
+        )
 
         query_params = query_params or {}
-
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
 
         # Prepare request body and headers
         body = {}
         headers = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers
-        )
-        
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, headers, params=query_params)
+
         if error:
             return (None, None, error)
 
@@ -117,16 +109,17 @@ class FirewallPolicyAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_body():
-                result.append(FirewallRule(
-                    self.form_response_body(item)
-                ))
+            for item in response.get_all_pages_results():
+                result.append(FirewallRule(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
         return (result, response, None)
 
-    def get_rule(self, rule_id: int,) -> tuple:
+    def get_rule(
+        self,
+        rule_id: int,
+    ) -> tuple:
         """
         Returns information for the specified firewall filter rule.
 
@@ -141,17 +134,17 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /firewallFilteringRules/{rule_id}
-            """)
+            """
+        )
 
         body = {}
         headers = {}
 
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
 
         if error:
             return (None, None, error)
@@ -163,15 +156,14 @@ class FirewallPolicyAPI(APIClient):
             return (None, response, error)
 
         try:
-            result = FirewallRule(
-                self.form_response_body(response.get_body())
-            )
+            result = FirewallRule(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
     def add_rule(
-        self, rule: dict,
+        self,
+        rule: dict,
     ) -> tuple:
         """
         Adds a new firewall filter rule.
@@ -226,10 +218,12 @@ class FirewallPolicyAPI(APIClient):
             ...    description='TT#1965432122')
         """
         http_method = "post".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /firewallFilteringRules
-        """)
+        """
+        )
 
         # Ensure the rule is passed as a dictionary
         if isinstance(rule, dict):
@@ -252,25 +246,19 @@ class FirewallPolicyAPI(APIClient):
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, FirewallRule)
+        response, error = self._request_executor.execute(request, FirewallRule)
 
         if error:
             return (None, response, error)
 
         try:
             # Parse the response and return it as a FirewallRule object
-            result = FirewallRule(
-                self.form_response_body(response.get_body())
-            )
+            result = FirewallRule(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def update_rule(
-        self, rule_id: int, 
-        rule
-    ) -> tuple:
+    def update_rule(self, rule_id: int, rule) -> tuple:
         """
         Updates an existing firewall filter rule.
 
@@ -322,10 +310,12 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "put".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /firewallFilteringRules/{rule_id}
-        """)
+        """
+        )
 
         if isinstance(rule, dict):
             payload = rule
@@ -341,16 +331,13 @@ class FirewallPolicyAPI(APIClient):
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, FirewallRule)
+        response, error = self._request_executor.execute(request, FirewallRule)
 
         if error:
             return (None, response, error)
 
         try:
-            result = FirewallRule(
-                self.form_response_body(response.get_body())
-            )
+            result = FirewallRule(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -370,10 +357,12 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "delete".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /firewallFilteringRules/{rule_id}
-        """)
+        """
+        )
 
         params = {}
 
@@ -387,10 +376,7 @@ class FirewallPolicyAPI(APIClient):
 
         return (None, response, None)
 
-    def list_ip_destination_groups(
-        self, exclude_type: str = None,
-        query_params=None
-    ) -> tuple:
+    def list_ip_destination_groups(self, exclude_type: str = None, query_params=None) -> tuple:
         """
         Returns a list of IP Destination Groups.
 
@@ -424,10 +410,12 @@ class FirewallPolicyAPI(APIClient):
             raise ValueError(f"Invalid exclude_type: {exclude_type}. Supported values are: {', '.join(valid_exclude_types)}")
 
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /ipDestinationGroups
-        """)
+        """
+        )
 
         query_params = query_params or {}
 
@@ -435,19 +423,12 @@ class FirewallPolicyAPI(APIClient):
         if exclude_type:
             query_params["excludeType"] = exclude_type
 
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
-
         # Prepare request body and headers
         body = {}
         headers = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)
@@ -461,15 +442,12 @@ class FirewallPolicyAPI(APIClient):
         # Parse the response into IPDestinationGroups instances
         try:
             result = []
-            for item in response.get_body():
-                result.append(IPDestinationGroups(
-                    self.form_response_body(item)
-                ))
+            for item in response.get_all_pages_results():
+                result.append(IPDestinationGroups(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
         return (result, response, None)
-
 
     def get_ip_destination_group(self, group_id: int) -> tuple:
         """
@@ -486,31 +464,28 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /ipDestinationGroups/{group_id}
-        """)
+        """
+        )
 
         body = {}
         headers = {}
 
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, IPDestinationGroups)
+        response, error = self._request_executor.execute(request, IPDestinationGroups)
 
         if error:
             return (None, response, error)
 
         try:
-            result = IPDestinationGroups(
-                self.form_response_body(response.get_body())
-            )
+            result = IPDestinationGroups(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -555,10 +530,12 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "post".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /ipDestinationGroups
-        """)
+        """
+        )
 
         if isinstance(group, dict):
             body = group
@@ -575,22 +552,20 @@ class FirewallPolicyAPI(APIClient):
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, IPDestinationGroups)
+        response, error = self._request_executor.execute(request, IPDestinationGroups)
 
         if error:
             return (None, response, error)
 
         try:
-            result = IPDestinationGroups(
-                self.form_response_body(response.get_body())
-            )
+            result = IPDestinationGroups(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
-    
+
     def update_ip_destination_group(
-        self, group_id: str,
+        self,
+        group_id: str,
         dest_group,
     ) -> tuple:
         """
@@ -624,38 +599,35 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "put".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /ipDestinationGroups/{group_id}
-        """)
+        """
+        )
 
         if isinstance(dest_group, dict):
             body = dest_group
         else:
             body = dest_group.as_dict()
 
-        form = {}
+        params = {}
 
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, form
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, params)
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, IPDestinationGroups)
+        response, error = self._request_executor.execute(request, IPDestinationGroups)
 
         if error:
             return (None, response, error)
 
         try:
-            result = IPDestinationGroups(
-                self.form_response_body(response.get_body())
-            )
+            result = IPDestinationGroups(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
-        return (result, response, None)   
+        return (result, response, None)
 
     def delete_ip_destination_group(self, group_id: int) -> tuple:
         """
@@ -672,7 +644,8 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "delete".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /ipDestinationGroups/{group_id}
         """
@@ -690,8 +663,8 @@ class FirewallPolicyAPI(APIClient):
         return (None, response, None)
 
     def list_ip_source_groups(
-            self,
-            query_params=None,
+        self,
+        query_params=None,
     ) -> tuple:
         """
         Returns a list of all IP Source Groups.
@@ -719,43 +692,35 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /ipSourceGroups
-        """)
-        
-        query_params = query_params or {}
+        """
+        )
 
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
+        query_params = query_params or {}
 
         # Prepare request body and headers
         body = {}
         headers = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers
-        )
-        
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
+
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_body():
-                result.append(IPSourceGroup(
-                    self.form_response_body(item)
-                ))
+            for item in response.get_all_pages_results():
+                result.append(IPSourceGroup(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
@@ -773,31 +738,28 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /ipSourceGroups/{group_id}
-        """)
-        
+        """
+        )
+
         body = {}
         headers = {}
 
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, IPSourceGroup)
+        response, error = self._request_executor.execute(request, IPSourceGroup)
 
         if error:
             return (None, response, error)
 
         try:
-            result = IPSourceGroup(
-                self.form_response_body(response.get_body())
-            )
+            result = IPSourceGroup(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -823,11 +785,13 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "post".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /ipSourceGroups
-        """)
-        
+        """
+        )
+
         if isinstance(group, dict):
             body = group
         else:
@@ -843,24 +807,18 @@ class FirewallPolicyAPI(APIClient):
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, IPSourceGroup)
+        response, error = self._request_executor.execute(request, IPSourceGroup)
 
         if error:
             return (None, response, error)
 
         try:
-            result = IPSourceGroup(
-                self.form_response_body(response.get_body())
-            )
+            result = IPSourceGroup(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def update_ip_source_group(
-        self, group_id: str,
-        source_group
-    ) -> tuple:
+    def update_ip_source_group(self, group_id: str, source_group) -> tuple:
         """
         Update an IP Source Group.
 
@@ -892,36 +850,33 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "put".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /ipSourceGroups/{group_id}
-        """)
+        """
+        )
 
         if isinstance(source_group, dict):
             body = source_group
         else:
             body = source_group.as_dict()
 
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body)
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, IPSourceGroup)
+        response, error = self._request_executor.execute(request, IPSourceGroup)
 
         if error:
             return (None, response, error)
 
         try:
-            result = IPSourceGroup(
-                self.form_response_body(response.get_body())
-            )
+            result = IPSourceGroup(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
-        return (result, response, None)   
+        return (result, response, None)
 
     def delete_ip_source_group(self, group_id: int) -> tuple:
         """
@@ -938,15 +893,16 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "delete".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /ipSourceGroups/{group_id}
-        """)
-        
+        """
+        )
+
         params = {}
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
@@ -956,10 +912,7 @@ class FirewallPolicyAPI(APIClient):
 
         return (None, response, None)
 
-    def list_network_app_groups(
-            self,
-            query_params=None
-    ) -> tuple:
+    def list_network_app_groups(self, query_params=None) -> tuple:
         """
         Returns a list of all Network Application Groups.
 
@@ -979,49 +932,43 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /networkApplicationGroups
-        """)
-        
-        query_params = query_params or {}
+        """
+        )
 
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
+        query_params = query_params or {}
 
         # Prepare request body and headers
         body = {}
         headers = {}
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(
-            http_method, api_url, body, headers
-        )
-        
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
+
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_body():
-                result.append(NetworkApplicationGroups(
-                    self.form_response_body(item)
-                ))
+            for item in response.get_all_pages_results():
+                result.append(NetworkApplicationGroups(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
-    
-    def get_network_app_group(self, group_id: int,) -> tuple:
+
+    def get_network_app_group(
+        self,
+        group_id: int,
+    ) -> tuple:
         """
         Returns information for the specified Network Application Group.
 
@@ -1037,31 +984,27 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /networkApplicationGroups/{group_id}
-        """)
+        """
+        )
         body = {}
         headers = {}
 
-        request, error = self._request_executor\
-            .create_request(
-            http_method, api_url, body, headers
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, NetworkApplicationGroups)
+        response, error = self._request_executor.execute(request, NetworkApplicationGroups)
 
         if error:
             return (None, response, error)
 
         try:
-            result = NetworkApplicationGroups(
-                self.form_response_body(response.get_body())
-            )
+            result = NetworkApplicationGroups(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -1087,10 +1030,12 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "post".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /networkApplicationGroups
-        """)
+        """
+        )
 
         payload = {
             "name": name,
@@ -1111,15 +1056,15 @@ class FirewallPolicyAPI(APIClient):
             return (None, response, error)
 
         try:
-            result = NetworkApplicationGroups(
-                self.form_response_body(response.get_body()))
+            result = NetworkApplicationGroups(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
 
         return (result, response, None)
-    
+
     def update_network_app_group(
-        self, group_id: int, 
+        self,
+        group_id: int,
         network_app_group,
     ) -> tuple:
         """
@@ -1152,10 +1097,12 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "put".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /networkApplicationGroups/{group_id}
-        """)
+        """
+        )
 
         if isinstance(network_app_group, dict):
             body = network_app_group
@@ -1163,27 +1110,24 @@ class FirewallPolicyAPI(APIClient):
             body = network_app_group.as_dict()
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, {}, {})
+        request, error = self._request_executor.create_request(http_method, api_url, body, {}, {})
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, NetworkApplicationGroups)
+        response, error = self._request_executor.execute(request, NetworkApplicationGroups)
 
         if error:
             return (None, response, error)
 
         try:
-            result = NetworkApplicationGroups(
-                self.form_response_body(response.get_body())
-            )
+            result = NetworkApplicationGroups(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
-        return (result, response, None)   
+        return (result, response, None)
 
     def delete_network_app_group(
-        self, group_id: int,
+        self,
+        group_id: int,
     ) -> tuple:
         """
         Deletes the specified Network Application Group.
@@ -1199,27 +1143,27 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "delete".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /networkApplicationGroups/{group_id}
-        """)
+        """
+        )
 
         params = {}
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
         return (None, response, None)
 
     def list_network_apps(
-            self, 
-            query_params=None,
+        self,
+        query_params=None,
     ) -> tuple:
         """
         Lists Network Applications in your organization with pagination.
@@ -1245,43 +1189,34 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /networkApplications
-        """)
+        """
+        )
 
         query_params = query_params or {}
-
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
 
         # Prepare request body and headers
         body = {}
         headers = {}
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(
-            http_method, api_url, body, headers
-        )
-        
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
+
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_body():
-                result.append(NetworkApplications(
-                    self.form_response_body(item)
-                ))
+            for item in response.get_all_pages_results():
+                result.append(NetworkApplications(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -1298,37 +1233,34 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /networkApplications/{app_id}
-        """)
+        """
+        )
 
         body = {}
         headers = {}
 
-        request, error = self._request_executor\
-            .create_request(
-            http_method, api_url, body, headers
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, NetworkApplications)
+        response, error = self._request_executor.execute(request, NetworkApplications)
         if error:
             return (None, response, error)
 
         try:
-            result = NetworkApplications(
-                self.form_response_body(response.get_body())
-            )
+            result = NetworkApplications(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
     def list_network_svc_groups(
-            self, query_params=None,
+        self,
+        query_params=None,
     ) -> tuple:
         """
         Lists network service groups in your organization with pagination.
@@ -1351,40 +1283,32 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /networkServiceGroups
-        """)
+        """
+        )
 
         query_params = query_params or {}
-
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
 
         body = {}
         headers = {}
 
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, NetworkServiceGroups
-        )
+        response, error = self._request_executor.execute(request, NetworkServiceGroups)
 
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_body():
-                result.append(NetworkServiceGroups(
-                    self.form_response_body(item)
-                ))
+            for item in response.get_all_pages_results():
+                result.append(NetworkServiceGroups(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
@@ -1402,34 +1326,29 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /networkServiceGroups/{group_id}
-        """)
+        """
+        )
 
         body = {}
         headers = {}
 
-        request, error = self._request_executor\
-            .create_request(
-            http_method, api_url, body, headers
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
 
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, NetworkServiceGroups
-        )
+        response, error = self._request_executor.execute(request, NetworkServiceGroups)
 
         if error:
             return (None, response, error)
 
         try:
-            result = NetworkServiceGroups(
-                self.form_response_body(response.get_body())
-            )
+            result = NetworkServiceGroups(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
 
@@ -1456,7 +1375,8 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "post".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /networkServiceGroups
         """
@@ -1484,15 +1404,14 @@ class FirewallPolicyAPI(APIClient):
             return (None, response, error)
 
         try:
-            result = NetworkServiceGroups(
-                self.form_response_body(response.get_body())
-            )
+            result = NetworkServiceGroups(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
-    
+
     def update_network_svc_group(
-        self, group_id: int, 
+        self,
+        group_id: int,
         svc_group,
     ) -> tuple:
         """
@@ -1519,33 +1438,31 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "put".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /networkServiceGroups/{group_id}
-        """)
-        
+        """
+        )
+
         if isinstance(svc_group, dict):
             body = svc_group
         else:
             body = svc_group.as_dict()
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, {}, {})
+        request, error = self._request_executor.create_request(http_method, api_url, body, {}, {})
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, NetworkServiceGroups)
+        response, error = self._request_executor.execute(request, NetworkServiceGroups)
         if error:
             return (None, response, error)
 
         # Parse the response into a RuleLabels instance
         try:
-            result = NetworkServiceGroups(
-                self.form_response_body(response.get_body())
-            )
+            result = NetworkServiceGroups(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -1565,20 +1482,20 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "delete".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /networkServiceGroups/{group_id}
-        """)
+        """
+        )
 
         params = {}
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
         return (None, response, None)
@@ -1605,43 +1522,34 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /networkServices
-        """)
+        """
+        )
         query_params = query_params or {}
-
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
 
         # Prepare request body and headers
         body = {}
         headers = {}
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(
-            http_method, api_url, body, headers
-        )
-        
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
+
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_body():
-                result.append(NetworkServices(
-                    self.form_response_body(item)
-                ))
+            for item in response.get_all_pages_results():
+                result.append(NetworkServices(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -1661,32 +1569,28 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /networkServices/{service_id}
-        """)
-        
+        """
+        )
+
         body = {}
         headers = {}
 
-        request, error = self._request_executor\
-            .create_request(
-            http_method, api_url, body, headers
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, NetworkServices)
+        response, error = self._request_executor.execute(request, NetworkServices)
 
         if error:
             return (None, response, error)
 
         try:
-            result = NetworkServices(
-                self.form_response_body(response.get_body())
-            )
+            result = NetworkServices(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -1738,10 +1642,12 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "post".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /networkServices
-        """)
+        """
+        )
 
         # Set the payload based on the network_service argument
         if isinstance(network_service, dict):
@@ -1767,22 +1673,20 @@ class FirewallPolicyAPI(APIClient):
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, NetworkServices)
+        response, error = self._request_executor.execute(request, NetworkServices)
 
         if error:
             return (None, response, error)
 
         try:
-            result = NetworkServices(
-                self.form_response_body(response.get_body())
-            )
+            result = NetworkServices(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
     def update_network_service(
-        self, service_id: str,
+        self,
+        service_id: str,
         network_service,
         ports: list = None,
     ) -> tuple:
@@ -1828,10 +1732,12 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "put".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /networkServices/{service_id}
-        """)
+        """
+        )
 
         # Set the payload based on the network_service argument
         if isinstance(network_service, dict):
@@ -1848,25 +1754,19 @@ class FirewallPolicyAPI(APIClient):
                 body.setdefault(f"{items[0]}{items[1].title()}Ports", []).append(port_dict)
 
         # Create and send the request
-        request, error = self._request_executor\
-            .create_request(
-            http_method, api_url, body, {}, {}
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, {}, {})
 
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, NetworkServices)
+        response, error = self._request_executor.execute(request, NetworkServices)
 
         if error:
             return (None, response, error)
 
         try:
-            result = NetworkServices(
-                self.form_response_body(response.get_body())
-            )
+            result = NetworkServices(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -1886,20 +1786,20 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "delete".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /networkServices/{service_id}
-        """)
+        """
+        )
 
         params = {}
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
         return (None, response, None)
@@ -1916,24 +1816,23 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /timeWindows
-        """)
+        """
+        )
 
         body = {}
         headers = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
@@ -1941,9 +1840,7 @@ class FirewallPolicyAPI(APIClient):
         try:
             result = []
             for item in response.get_body():
-                result.append(TimeWindows(
-                    self.form_response_body(item)
-                ))
+                result.append(TimeWindows(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
@@ -1961,35 +1858,32 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
             /timeWindows/lite
-        """)
+        """
+        )
 
         body = {}
         headers = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
 
         if error:
             return (None, None, error)
 
         # Execute the request, associating with the TimeWindowLite model
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_body():
-                result.append(TimeWindows(
-                    self.form_response_body(item)
-                ))
+            for item in response.get_all_pages_results():
+                result.append(TimeWindows(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 

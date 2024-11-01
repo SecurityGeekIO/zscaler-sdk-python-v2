@@ -109,60 +109,26 @@ class RequestExecutor:
         method: str,
         endpoint: str,
         body: dict = None,
-        headers: dict = {},
-        params: dict = {},
+        headers: dict = None,
+        params: dict = None,
     ):
-        logger.info(f"Creating request for endpoint: {endpoint} with method: {method}")
-        # Get the appropriate base URL based on the service and cloud environment
+        body = body or {}
+        headers = headers or {}
+        params = params or {}
+
         base_url = self.get_base_url(self.cloud)
-
-        # Ensure the final URL is constructed by appending the base URL
         final_url = f"{base_url}/{endpoint.lstrip('/')}"
-        logger.debug(f"Final URL after service detection and version handling: {final_url}")
 
-        # Set headers, including OAuth token if required
-        headers = {**self._default_headers, **headers}
-        headers["Authorization"] = f"Bearer {self._oauth._get_access_token()}"
+        headers = self._prepare_headers(headers)
+        json_payload = self._prepare_body(endpoint, body)
+        params = self._prepare_params(endpoint, params, body)
+        # Extract and append query parameters from URL to request params
+        final_url, params = self._extract_and_append_query_params(final_url, params)
 
-        # Convert body and params to camelCase globally
-        if body:
-            body = convert_keys_to_camel_case(body)
-
-        if params:
-            params = convert_keys_to_camel_case(params)
-
-        # Handle ZPA-specific cases, especially the /reorder endpoint which expects a JSON list
-        if "/zpa/" in endpoint and "/reorder" in endpoint and isinstance(body, list):
-            # For the /reorder endpoint, handle the body as a list
-            print(f"Handling ZPA reorder endpoint with list body: {body}")
-            json_payload = body
-        else:
-            json_payload = body
-
-        if "/zpa/" in endpoint:
-            # Check for microtenantId in body, params, and config (in that order)
-            microtenant_id = None
-            if body and isinstance(body, dict) and "microtenantId" in body and body["microtenantId"]:
-                microtenant_id = body["microtenantId"]
-            elif params and "microtenantId" in params and params["microtenantId"]:
-                microtenant_id = params["microtenantId"]
-            elif self.microtenant_id:
-                microtenant_id = self.microtenant_id
-
-            # Set microtenantId in params if found
-            if microtenant_id:
-                params["microtenantId"] = microtenant_id
-        else:
-            if params.get("microtenantId") is not None:
-                del params["microtenantId"]
-
-        print(f"Final request body (before JSON serialization): {json_payload}")
-
-        # Construct the request dictionary
         request = {
             "method": method,
             "url": final_url,
-            "json": body,  # Always use 'json' for JSON payloads
+            "json": json_payload,
             "params": params,
             "headers": headers,
             "uuid": uuid.uuid4(),
@@ -170,6 +136,36 @@ class RequestExecutor:
 
         logger.debug(f"Request created: {request}")
         return request, None
+
+    def _prepare_headers(self, headers):
+        headers = {**self._default_headers, **headers}
+        headers["Authorization"] = f"Bearer {self._oauth._get_access_token()}"
+        return headers
+
+    def _prepare_body(self, endpoint, body):
+        if body:
+            body = convert_keys_to_camel_case(body)
+        if "/zpa/" in endpoint and "/reorder" in endpoint and isinstance(body, list):
+            return body
+        return body
+
+    def _prepare_params(self, endpoint, params, body):
+        if params:
+            params = convert_keys_to_camel_case(params)
+        if "/zpa/" in endpoint:
+            microtenant_id = self._get_microtenant_id(body, params)
+            if microtenant_id:
+                params["microtenantId"] = microtenant_id
+        else:
+            params.pop("microtenantId", None)
+        return params
+
+    def _get_microtenant_id(self, body, params):
+        if body and isinstance(body, dict) and "microtenantId" in body and body["microtenantId"]:
+            return body["microtenantId"]
+        if params and "microtenantId" in params and params["microtenantId"]:
+            return params["microtenantId"]
+        return self.microtenant_id
 
     def execute(self, request, response_type=None):
         """
@@ -184,6 +180,9 @@ class RequestExecutor:
         """
         logger.info(f"Executing request to URL: {request['url']}")
         logger.debug(f"Request details: {request}")
+
+        # Extract and append query parameters from URL to request params
+        request["url"], request["params"] = self._extract_and_append_query_params(request["url"], request.get("params", {}))
 
         # Fire the request
         try:
@@ -234,6 +233,33 @@ class RequestExecutor:
             ),
             None,
         )
+
+    def _extract_and_append_query_params(self, url, params):
+        """
+        Extracts query parameters from the URL and appends them to the params dictionary.
+
+        Args:
+            url (str): The URL containing potential query parameters.
+            params (dict): The existing parameters dictionary.
+
+        Returns:
+            tuple: Cleaned URL and updated parameters dictionary with query parameters from the URL.
+        """
+        from urllib.parse import urlparse, parse_qs, urlunparse
+
+        parsed_url = urlparse(url)
+        query_params = parse_qs(parsed_url.query)
+
+        # Flatten the query_params dictionary and update the params
+        for key, value in query_params.items():
+            if key not in params:
+                params[key] = value[0] if len(value) == 1 else value
+
+        # Reconstruct the URL without query parameters
+        cleaned_url = urlunparse(parsed_url._replace(query=""))
+
+        # Return the cleaned URL and updated params dictionary
+        return cleaned_url, params
 
     def _cache_enabled(self):
         return self._config["client"]["cache"]["enabled"] == True

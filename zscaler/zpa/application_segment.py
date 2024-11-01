@@ -15,8 +15,8 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.api_client import APIClient
+from zscaler.request_executor import RequestExecutor
 from zscaler.zpa.models.application_segment import ApplicationSegment
-from urllib.parse import urlencode
 from zscaler.utils import format_url, add_id_groups
 
 
@@ -31,7 +31,7 @@ class ApplicationSegmentAPI(APIClient):
 
     def __init__(self, request_executor, config):
         super().__init__()
-        self._request_executor = request_executor
+        self._request_executor: RequestExecutor = request_executor
         customer_id = config["client"].get("customerId")
         self._zpa_base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
@@ -53,42 +53,35 @@ class ApplicationSegmentAPI(APIClient):
             tuple: A tuple containing (list of ApplicationSegment instances, Response, error)
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /application
-        """)
+        """
+        )
 
         # Handle optional query parameters
         query_params = query_params or {}
         query_params.update(kwargs)
-        
+
         microtenant_id = query_params.get("microtenant_id", None)
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
-            
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
 
         # Prepare request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body={}, headers={})
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-        .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_results():
-                result.append(ApplicationSegment(
-                    self.form_response_body(item))
-                )
+            for item in response.get_all_pages_results():
+                result.append(ApplicationSegment(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -107,40 +100,33 @@ class ApplicationSegmentAPI(APIClient):
             tuple: A tuple containing the `ApplicationSegment` instance, response object, and error if any.
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /application/{segment_id}
-        """)
+        """
+        )
 
         # Handle optional query parameters
         query_params = query_params or {}
-        
+
         microtenant_id = query_params.get("microtenant_id", None)
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
-
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, ApplicationSegment)
+        response, error = self._request_executor.execute(request, ApplicationSegment)
         if error:
             return (None, response, error)
 
         # Parse the response into an AppConnectorGroup instance
         try:
-            result = ApplicationSegment(
-                self.form_response_body(response.get_body())
-            )
+            result = ApplicationSegment(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -162,14 +148,16 @@ class ApplicationSegmentAPI(APIClient):
             tuple: A tuple containing the `ApplicationSegment` instance, response object, and error if any.
         """
         http_method = "post".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /application
-        """)
+        """
+        )
 
         # Construct the body from kwargs (as a dictionary)
         body = kwargs
-        
+
         # Check if microtenant_id is set in kwargs or the body, and use it to set query parameter
         microtenant_id = kwargs.get("microtenant_id") or body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
@@ -190,25 +178,19 @@ class ApplicationSegmentAPI(APIClient):
 
         # Apply add_id_groups to reformat params based on self.reformat_params
         add_id_groups(self.reformat_params, kwargs, body)
-    
+
         # Create the request
-        request, error = self._request_executor\
-            .create_request(
-            http_method, api_url, body=body, params=params
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body=body, params=params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, ApplicationSegment)
+        response, error = self._request_executor.execute(request, ApplicationSegment)
         if error:
             return (None, response, error)
 
         try:
-            result = ApplicationSegment(
-                self.form_response_body(response.get_body())
-            )
+            result = ApplicationSegment(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -227,10 +209,12 @@ class ApplicationSegmentAPI(APIClient):
             tuple: A tuple containing the updated `ApplicationSegment` instance, response object, and error if any.
         """
         http_method = "put".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /application/{segment_id}
-        """)
+        """
+        )
 
         # Construct the body from kwargs (as a dictionary)
         body = kwargs
@@ -283,7 +267,7 @@ class ApplicationSegmentAPI(APIClient):
             return (None, response, error)
 
         return (result, response, None)
-    
+
     def delete_segment(self, segment_id: str, force_delete: bool = False, microtenant_id: str = None) -> tuple:
         """
         Deletes the specified Application Segment from ZPA.
@@ -298,26 +282,26 @@ class ApplicationSegmentAPI(APIClient):
             tuple: A tuple containing the response and error (if any).
         """
         http_method = "delete".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /application/{segment_id}
-        """)
+        """
+        )
 
         # Handle microtenant_id in URL params if provided
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         if force_delete:
             params["forceDelete"] = "true"
-    
+
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
@@ -355,10 +339,12 @@ class ApplicationSegmentAPI(APIClient):
             raise ValueError("The 'application_type' parameter must be provided.")
 
         http_method = "GET"
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /application/getAppsByType
-        """)
+        """
+        )
 
         # Initialize query parameters and update with additional kwargs
         query_params = query_params or {}
@@ -375,13 +361,8 @@ class ApplicationSegmentAPI(APIClient):
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
-
         # Prepare request
-        request, error = self._request_executor.create_request(http_method, api_url, body={}, headers={})
+        request, error = self._request_executor.create_request(http_method, api_url, body={}, headers={}, params=query_params)
         if error:
             return (None, None, error)
 
@@ -392,7 +373,7 @@ class ApplicationSegmentAPI(APIClient):
 
         try:
             # Directly return the raw response data as a list of dictionaries
-            result = response.get_results()  # Assuming `get_results()` returns the list from the API
+            result = response.get_all_pages_results()
         except Exception as error:
             return (None, response, error)
 

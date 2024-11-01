@@ -15,10 +15,11 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.api_client import APIClient
+from zscaler.request_executor import RequestExecutor
 from zscaler.zia.models.admin_users import AdminUser
 from zscaler.utils import format_url
-from zscaler.utils import  snake_to_camel
-from urllib.parse import urlencode
+from zscaler.utils import snake_to_camel
+
 
 class AdminUsersAPI(APIClient):
     """
@@ -26,14 +27,14 @@ class AdminUsersAPI(APIClient):
     """
 
     _zia_base_endpoint = "/zia/api/v1"
-    
+
     def __init__(self, request_executor):
         super().__init__()
-        self._request_executor = request_executor
+        self._request_executor: RequestExecutor = request_executor
 
     def list_admin_users(
-            self, query_params=None,
-            keep_empty_params=False
+        self,
+        query_params=None,
     ) -> tuple:
         """
         Returns a list of admin users.
@@ -47,7 +48,6 @@ class AdminUsersAPI(APIClient):
                 [query_params.pagesize] {int}: Specifies the page size. The default size is 100, but the maximum size is 1000.
                 [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
                 [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
-            keep_empty_params {bool}: Whether to include empty parameters in the query string.
 
         Returns:
             tuple: A tuple containing (list of AdminUser instances, Response, error)
@@ -62,20 +62,12 @@ class AdminUsersAPI(APIClient):
         # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
 
-        # Build the query string
-        if query_params:
-            encoded_query_params = urlencode(query_params)
-            api_url += f"?{encoded_query_params}"
-
         # Prepare request body and headers
         body = {}
         headers = {}
-        form = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form, keep_empty_params=keep_empty_params
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)
@@ -89,15 +81,13 @@ class AdminUsersAPI(APIClient):
         # Parse the response into AdminUser instances
         try:
             result = []
-            for item in response.get_body():
-                result.append(AdminUser(
-                    self.form_response_body(item)
-                ))
+            for item in response.get_all_pages_results():
+                result.append(AdminUser(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
         return (result, response, None)
-    
+
     def get_admin_user(self, user_id: str) -> tuple:
         """
         Returns information on the specified admin user id.
@@ -117,12 +107,9 @@ class AdminUsersAPI(APIClient):
 
         body = {}
         headers = {}
-        form = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body, headers, form
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
 
         if error:
             return (None, None, error)
@@ -141,10 +128,7 @@ class AdminUsersAPI(APIClient):
 
         return (result, response, None)
 
-    def add_admin_user(
-            self, name: str, login_name: str, email: str, password: str,
-            keep_empty_params=False, **kwargs
-    ) -> tuple:
+    def add_admin_user(self, name: str, login_name: str, email: str, password: str, **kwargs) -> tuple:
         """
         Adds a new admin user to ZIA.
 
@@ -235,9 +219,7 @@ class AdminUsersAPI(APIClient):
             else:
                 payload[snake_to_camel(key)] = value
 
-        request, error = self._request_executor.create_request(
-            http_method, api_url, payload, {}, {}, keep_empty_params=keep_empty_params
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, payload, {}, {})
 
         if error:
             return (None, None, error)
@@ -254,10 +236,7 @@ class AdminUsersAPI(APIClient):
 
         return (result, response, None)
 
-    def update_admin_user(
-            self, user_id: str, query_params=None,
-            keep_empty_params=False, **kwargs
-    ) -> tuple:
+    def update_admin_user(self, user_id: str, **kwargs) -> tuple:
         """
         Update an admin user.
 
@@ -328,9 +307,7 @@ class AdminUsersAPI(APIClient):
             else:
                 payload[snake_to_camel(key)] = value
 
-        request, error = self._request_executor.create_request(
-            http_method, api_url, payload, {}, {}, keep_empty_params=keep_empty_params
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, payload, {}, {})
 
         if error:
             return (None, None, error)
@@ -359,7 +336,7 @@ class AdminUsersAPI(APIClient):
         http_method = "delete".upper()
         api_url = format_url(f"{self._zia_base_endpoint}/adminUsers/{user_id}")
 
-        request, error = self._request_executor.create_request(http_method, api_url, {}, {}, {}, keep_empty_params=False)
+        request, error = self._request_executor.create_request(http_method, api_url, {}, {}, {})
 
         if error:
             return (None, error)
