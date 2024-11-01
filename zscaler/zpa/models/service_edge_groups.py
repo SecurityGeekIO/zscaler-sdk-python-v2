@@ -61,14 +61,15 @@ class ServiceEdgeGroup(ZscalerObject):
                 if "altCloud" in config else None
             self.city_country = config["cityCountry"]\
                 if "cityCountry" in config else None
-            self.country_code = config["countryCode"] if "countryCode" in config else None
+            self.country_code = config["countryCode"]\
+                if "countryCode" in config else None
             self.upgrade_day = config["upgradeDay"]\
                 if "upgradeDay" in config else None
             self.upgrade_time_in_secs = config["upgradeTimeInSecs"]\
                 if "upgradeTimeInSecs" in config else None
             self.is_public = config["isPublic"]\
                 if "isPublic" in config else None
-            self.geoLocation_id = config["geoLocationId"]\
+            self.geolocation_id = config["geoLocationId"]\
                 if "geoLocationId" in config else None
             self.grace_distance_enabled = config["graceDistanceEnabled"]\
                 if "graceDistanceEnabled" in config else False
