@@ -32,21 +32,42 @@ class PolicySetControllerV2(ZscalerObject):
         super().__init__(config)
         
         if config:
-            # Handle fields
-            self.policy_set_id = config["policySetId"] if "policySetId" in config else None
-            self.name = config["name"] if "name" in config else None
-            self.description = config["description"] if "description" in config else None
-            self.action = config["action"] if "action" in config else None
-            self.custom_msg = config["customMsg"] if "customMsg" in config else None
-            self.reauth_idle_timeout = config["reauthIdleTimeout"] if "reauthIdleTimeout" in config else None
-            self.reauth_timeout = config["reauthTimeout"] if "reauthTimeout" in config else None
-            self.rule_order = config["ruleOrder"] if "ruleOrder" in config else None
-            self.microtenant_id = config["microtenantId"] if "microtenantId" in config else None
-            self.microtenant_name = config["microtenantName"] if "microtenantName" in config else None
-            self.zpn_isolation_profile_id = config["zpnIsolationProfileId"] if "zpnIsolationProfileId" in config else None
-            self.zpn_inspection_profile_id = config["zpnInspectionProfileId"] if "zpnInspectionProfileId" in config else None
-            self.zpn_inspection_profile_name = config["zpnInspectionProfileName"] if "zpnInspectionProfileName" in config else None
-            self.extranet_enabled = config.get("extranetEnabled", False)
+            self.id = config["id"]\
+                if "id" in config else None
+            self.policy_set_id = config["policySetId"]\
+                if "policySetId" in config else None
+            self.name = config["name"]\
+                if "name" in config else None
+            self.description = config["description"]\
+                if "description" in config else None
+            self.action = config["action"]\
+                if "action" in config else None
+            self.custom_msg = config["customMsg"]\
+                if "customMsg" in config else None
+            self.disabled = config["disabled"]\
+                if "disabled" in config else None
+            self.reauth_idle_timeout = config["reauthIdleTimeout"]\
+                if "reauthIdleTimeout" in config else None
+            self.reauth_timeout = config["reauthTimeout"]\
+                if "reauthTimeout" in config else None
+            self.rule_order = config["ruleOrder"]\
+                if "ruleOrder" in config else None
+            self.microtenant_id = config["microtenantId"]\
+                if "microtenantId" in config else None
+            self.microtenant_name = config["microtenantName"]\
+                if "microtenantName" in config else None
+            self.zpn_isolation_profile_id = config["zpnIsolationProfileId"]\
+                if "zpnIsolationProfileId" in config else None
+            self.zpn_inspection_profile_id = config["zpnInspectionProfileId"]\
+                if "zpnInspectionProfileId" in config else None
+            self.zpn_inspection_profile_name = config["zpnInspectionProfileName"]\
+                if "zpnInspectionProfileName" in config else None
+            self.extranet_enabled = config["extranetEnabled"]\
+                if "extranetEnabled" in config else False
+            self.version = config["version"]\
+                if "version" in config else None
+            self.default_rule = config["defaultRule"]\
+                if "defaultRule" in config else False
 
             # Handle conditions using ZscalerCollection and isinstance check for reusability
             self.conditions = ZscalerCollection.form_list(config.get("conditions", []), Condition)
@@ -130,6 +151,7 @@ class PolicySetControllerV2(ZscalerObject):
             "credential": self.credential.request_format() if self.credential else None,
             "serviceEdgeGroups": [group.request_format() for group in self.service_edge_groups],
             "customMsg": self.custom_msg,
+            "disabled": self.disabled,
             "reauthIdleTimeout": self.reauth_idle_timeout,
             "reauthTimeout": self.reauth_timeout,
             "ruleOrder": self.rule_order,
