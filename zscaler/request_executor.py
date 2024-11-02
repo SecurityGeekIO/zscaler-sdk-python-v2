@@ -95,7 +95,7 @@ class RequestExecutor:
         return self.BASE_URL
 
     def get_service_type(self, url):
-        if "/zia" in url:
+        if "/zia" in url or "/zscsb" in url:
             return "zia"
         elif "/zcc" in url:
             return "zcc"
@@ -119,11 +119,13 @@ class RequestExecutor:
         base_url = self.get_base_url(self.cloud)
         final_url = f"{base_url}/{endpoint.lstrip('/')}"
 
-        headers = self._prepare_headers(headers)
+        headers = self._prepare_headers(headers, endpoint)
         json_payload = self._prepare_body(endpoint, body)
         params = self._prepare_params(endpoint, params, body)
         # Extract and append query parameters from URL to request params
         final_url, params = self._extract_and_append_query_params(final_url, params)
+        if "/zscsb" in endpoint:
+            params["api_token"] = self._config["client"]["sandboxToken"]
 
         request = {
             "method": method,
@@ -137,9 +139,10 @@ class RequestExecutor:
         logger.debug(f"Request created: {request}")
         return request, None
 
-    def _prepare_headers(self, headers):
+    def _prepare_headers(self, headers, endpoint=""):
         headers = {**self._default_headers, **headers}
-        headers["Authorization"] = f"Bearer {self._oauth._get_access_token()}"
+        if "/zscsb" not in endpoint:
+            headers["Authorization"] = f"Bearer {self._oauth._get_access_token()}"
         return headers
 
     def _prepare_body(self, endpoint, body):
