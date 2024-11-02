@@ -29,7 +29,7 @@ class CBIRegionAPI(APIClient):
         super().__init__()
         self._request_executor: RequestExecutor = request_executor
         customer_id = config["client"].get("customerId")
-        self._zpa_base_endpoint = f"/zpa/cbiconfig/cbi/api/customers/{customer_id}"
+        self._cbi_base_endpoint = f"/zpa/cbiconfig/cbi/api/customers/{customer_id}"
 
     def list_cbi_regions(self) -> list:
         """
@@ -45,7 +45,7 @@ class CBIRegionAPI(APIClient):
         http_method = "get".upper()
         api_url = format_url(
             f"""
-            {self._zpa_base_endpoint}
+            {self._cbi_base_endpoint}
             /regions
         """
         )

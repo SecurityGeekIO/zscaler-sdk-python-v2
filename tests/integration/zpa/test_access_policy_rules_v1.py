@@ -42,7 +42,7 @@ class TestAccessPolicyRule:
             # Prerequisite: Create an App Connector Group
             connector_group_name = "tests-" + generate_random_string()
             connector_group_description = "Integration test for connector group"
-            created_connector_group = client.connectors.add_connector_group(
+            created_connector_group = client.zpa.app_connector_groups.add_connector_group(
                 name=connector_group_name,
                 description=connector_group_description,
                 enabled=True,
@@ -66,12 +66,12 @@ class TestAccessPolicyRule:
 
         try:
             # Test listing SCIM groups
-            idps = client.idp.list_idps()
+            idps = client.zpa.idp.list_idps()
             user_idp = next((idp for idp in idps if "USER" in idp.get("sso_type", [])), None)
             assert user_idp is not None, "No IdP with sso_type 'USER' found."
 
             user_idp_id = user_idp["id"]
-            resp = client.scim_groups.list_groups(user_idp_id)
+            resp = client.zpa.scim_groups.list_scim_groups(user_idp_id)
             assert isinstance(resp, list), "Response is not in the expected list format."
             assert len(resp) >= 2, "Less than 2 SCIM groups were found for the specified IdP."
 
@@ -84,7 +84,7 @@ class TestAccessPolicyRule:
             # Create an Access Policy Rule
             rule_name = "tests-" + generate_random_string()
             rule_description = "Integration test for access policy rule"
-            created_rule = client.policies.add_access_rule(
+            created_rule = client.zpa.policies.add_access_rule(
                 name=rule_name,
                 description=rule_description,
                 action="allow",
@@ -100,7 +100,7 @@ class TestAccessPolicyRule:
 
         try:
             # Test listing access policy rules
-            all_access_rules = client.policies.list_rules("access")
+            all_access_rules = client.zpa.policies.list_rules("access")
             if not any(rule["id"] == rule_id for rule in all_access_rules):
                 raise AssertionError("Access Policy rules not found in list")
         except Exception as exc:
@@ -108,7 +108,7 @@ class TestAccessPolicyRule:
 
         try:
             # Test retrieving the specific Access Policy Rule
-            retrieved_rule = client.policies.get_rule("access", rule_id)
+            retrieved_rule = client.zpa.policies.get_rule("access", rule_id)
             if retrieved_rule["id"] != rule_id:
                 raise AssertionError("Failed to retrieve the correct Access Policy Rule")
         except Exception as exc:
@@ -117,7 +117,7 @@ class TestAccessPolicyRule:
         try:
             # Update the Access Policy Rule
             updated_rule_description = "Updated " + generate_random_string()
-            updated_rule = client.policies.update_access_rule(
+            updated_rule = client.zpa.policies.update_access_rule(
                 rule_id=rule_id,
                 description=updated_rule_description,
                 conditions=[
@@ -134,7 +134,7 @@ class TestAccessPolicyRule:
             if rule_id:
                 try:
                     # Cleanup: Delete the Access Policy Rule
-                    delete_status_rule = client.policies.delete_rule("access", rule_id)
+                    delete_status_rule = client.zpa.policies.delete_rule("access", rule_id)
                     if delete_status_rule != 204:
                         raise AssertionError("Failed to delete Access Policy Rule")
                 except Exception as exc:
@@ -142,7 +142,7 @@ class TestAccessPolicyRule:
 
             if connector_group_id:
                 try:
-                    client.connectors.delete_connector_group(connector_group_id)
+                    client.zpa.app_connector_groups.delete_connector_group(connector_group_id)
                 except Exception as exc:
                     errors.append(f"Cleanup failed for Connector Group: {exc}")
 

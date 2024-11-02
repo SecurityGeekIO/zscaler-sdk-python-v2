@@ -40,12 +40,12 @@ class TestAccessPolicyBulkReorderRule:
             for i in range(5):
                 rule_name = f"tests-{generate_random_string()}"
                 rule_description = f"tests-{generate_random_string()}"
-                response = client.policies.add_access_rule(name=rule_name, description=rule_description, action="allow")
+                response = client.zpa.policies.add_access_rule(name=rule_name, description=rule_description, action="allow")
                 created_rules.append(response)
                 pprint(response)
 
             # Step 2: List the created rules
-            all_rules = client.policies.list_rules(policy_type="access")
+            all_rules = client.zpa.policies.list_rules(policy_type="access")
             all_rule_ids = [rule.id for rule in all_rules]
 
             # Identify the IDs of the newly created rules
@@ -61,10 +61,10 @@ class TestAccessPolicyBulkReorderRule:
             new_rule_order = reversed_rule_ids + all_rule_ids
 
             # Step 5: Bulk reorder the rules
-            client.policies.bulk_reorder_rules(policy_type="access", rules_orders=new_rule_order)
+            client.zpa.policies.bulk_reorder_rules(policy_type="access", rules_orders=new_rule_order)
 
             # Verify the order by listing the rules again
-            reordered_rules = client.policies.list_rules(policy_type="access")
+            reordered_rules = client.zpa.policies.list_rules(policy_type="access")
             reordered_rule_ids = [rule.id for rule in reordered_rules]
 
             # Check if the top N rule IDs match the reversed order of the created rules
@@ -77,7 +77,7 @@ class TestAccessPolicyBulkReorderRule:
             # Clean up: delete the created rules
             for rule in created_rules:
                 try:
-                    client.policies.delete_rule(policy_type="access", rule_id=rule.id)
+                    client.zpa.policies.delete_rule(policy_type="access", rule_id=rule.id)
                 except Exception as exc:
                     errors.append(f"Deleting rule {rule.id} failed: {exc}")
 

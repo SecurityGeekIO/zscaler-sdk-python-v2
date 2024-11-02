@@ -40,12 +40,12 @@ class TestAccessPolicyIsolationRuleV2:
 
         try:
             # Test listing SCIM groups
-            idps = client.idp.list_idps()
+            idps = client.zpa.idp.list_idps()
             user_idp = next((idp for idp in idps if "USER" in idp.get("sso_type", [])), None)
             assert user_idp is not None, "No IdP with sso_type 'USER' found."
 
             user_idp_id = user_idp["id"]
-            resp = client.scim_groups.list_groups(user_idp_id)
+            resp = client.zpa.scim_groups.list_scim_groups(user_idp_id)
             assert isinstance(resp, list), "Response is not in the expected list format."
             assert len(resp) >= 2, "Less than 2 SCIM groups were found for the specified IdP."
 
@@ -56,7 +56,7 @@ class TestAccessPolicyIsolationRuleV2:
 
         try:
             # Test listing Isolation profiles
-            profiles = client.isolation.list_profiles()
+            profiles = client.zpa.cbi_zpa_profile.list_isolation_profiles()
             assert isinstance(profiles, list), "Response is not in the expected list format."
             assert len(profiles) > 0, "No Isolation profiles were found."
             profile_id = profiles[0]["id"]
@@ -68,7 +68,7 @@ class TestAccessPolicyIsolationRuleV2:
             # Create an Isolation Policy Rule
             rule_name = "tests-" + generate_random_string()
             rule_description = "updated-" + generate_random_string()
-            created_rule = client.policies.add_isolation_rule_v2(
+            created_rule = client.zpa.policies.add_isolation_rule_v2(
                 name=rule_name,
                 description=rule_description,
                 action="isolate",
@@ -84,14 +84,14 @@ class TestAccessPolicyIsolationRuleV2:
 
         try:
             # Test listing Isolation Policy Rules
-            all_forwarding_rules = client.policies.list_rules("isolation")
+            all_forwarding_rules = client.zpa.policies.list_rules("isolation")
             assert any(rule["id"] == rule_id for rule in all_forwarding_rules), "Isolation Policy Rules not found in list"
         except Exception as exc:
             errors.append(f"Failed to list Isolation Policy Rules: {exc}")
 
         try:
             # Test retrieving the specific Isolation Policy Rule
-            retrieved_rule = client.policies.get_rule("isolation", rule_id)
+            retrieved_rule = client.zpa.policies.get_rule("isolation", rule_id)
             assert retrieved_rule["id"] == rule_id, "Failed to retrieve the correct Isolation Policy Rule"
         except Exception as exc:
             errors.append(f"Failed to retrieve Isolation Policy Rule: {exc}")
@@ -99,7 +99,7 @@ class TestAccessPolicyIsolationRuleV2:
         try:
             # Update the Isolation Policy Rule
             updated_rule_description = "Updated " + generate_random_string()
-            updated_rule = client.policies.update_isolation_rule_v2(
+            updated_rule = client.zpa.policies.update_isolation_rule_v2(
                 rule_id=rule_id,
                 description=updated_rule_description,
                 action="isolate",
@@ -118,7 +118,7 @@ class TestAccessPolicyIsolationRuleV2:
             # Ensure cleanup is performed even if there are errors
             if rule_id:
                 try:
-                    delete_status_rule = client.policies.delete_rule("isolation", rule_id)
+                    delete_status_rule = client.zpa.policies.delete_rule("isolation", rule_id)
                     assert delete_status_rule == 204, "Failed to delete Isolation Policy Rule"
                 except Exception as cleanup_exc:
                     errors.append(f"Cleanup failed: {cleanup_exc}")

@@ -41,9 +41,9 @@ class TestMachineGroups:
             assert err is None, f"Error listing machine groups: {err}"
             assert isinstance(groups_response, list), "Expected a list of machine groups"
             if groups_response:  # If there are any machine groups, proceed with further operations
-                first_idp = groups_response[0]
-                group_id = first_idp.id  # Access the 'id' attribute using dot notation
-                assert group_id is not None, "IDP ID should not be None"
+                first_group = groups_response[0]
+                group_id = first_group.id  # Access the 'id' attribute using dot notation
+                assert group_id is not None, "Machine Group ID should not be None"
         except Exception as exc:
             errors.append(f"Listing machine groups failed: {str(exc)}")
             

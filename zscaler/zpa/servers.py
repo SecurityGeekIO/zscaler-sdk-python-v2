@@ -50,12 +50,10 @@ class AppServersAPI(APIClient):
             >>> servers = zpa.servers.list_servers(search="Example 100", pagesize=100, microtenant_id="216199618143464722")
         """
         http_method = "get".upper()
-        api_url = format_url(
-            f"""
+        api_url = format_url(f"""
             {self._zpa_base_endpoint}
             /server
-        """
-        )
+        """)
 
         query_params = query_params or {}
         microtenant_id = query_params.get("microtenant_id", None)
@@ -63,19 +61,23 @@ class AppServersAPI(APIClient):
             query_params["microtenantId"] = microtenant_id
 
         # Prepare request
-        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
             for item in response.get_all_pages_results():
-                result.append(AppServers(self.form_response_body(item)))
+                result.append(AppServers(
+                    self.form_response_body(item))
+                )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -91,12 +93,10 @@ class AppServersAPI(APIClient):
             AppServers: The corresponding server object.
         """
         http_method = "get".upper()
-        api_url = format_url(
-            f"""
+        api_url = format_url(f"""
             {self._zpa_base_endpoint}
             /server/{server_id}
-            """
-        )
+        """)
 
         # Handle optional query parameters
         query_params = query_params or {}
@@ -105,23 +105,26 @@ class AppServersAPI(APIClient):
             query_params["microtenantId"] = microtenant_id
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, AppServers)
+        response, error = self._request_executor\
+            .execute(request, AppServers)
         if error:
             return (None, response, error)
 
-        # Parse the response into an AppConnectorGroup instance
         try:
-            result = AppServers(self.form_response_body(response.get_body()))
+            result = AppServers(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def add_server(self, server, **kwargs) -> tuple:
+    def add_server(self, **kwargs) -> tuple:
         """
         Add a new application server.
 
@@ -131,33 +134,26 @@ class AppServersAPI(APIClient):
             enabled (bool): Enable the server. Defaults to True.
         """
         http_method = "post".upper()
-        api_url = format_url(
-            f"""
+        api_url = format_url(f"""
             {self._zpa_base_endpoint}
-            /server
-        """
-        )
+            /server""")
 
-        # Ensure connector_group is a dictionary
-        if isinstance(server, dict):
-            body = server
-        else:
-            body = server.as_dict()
+        # Construct the body from kwargs (as a dictionary)
+        body = kwargs
 
         # Check if microtenant_id is set in the body, and use it to set query parameter
         microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        # Add any additional fields from kwargs to the body
-        body.update(kwargs)
-
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body=body, params=params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body=body, params=params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, AppServers)
+        response, error = self._request_executor\
+            .execute(request, AppServers)
         if error:
             return (None, response, error)
 
@@ -167,7 +163,7 @@ class AppServersAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
 
-    def update_server(self, server_id: str, group, **kwargs) -> tuple:
+    def update_server(self, server_id: str, **kwargs) -> tuple:
         """
         Updates the specified server.
 
@@ -175,20 +171,15 @@ class AppServersAPI(APIClient):
             server_id (str): The unique identifier for the server being updated.
         """
         http_method = "put".upper()
-        api_url = format_url(
-            f"""
+        api_url = format_url(f"""
             {self._zpa_base_endpoint}
             /server/{server_id}
-        """
-        )
+        """)
 
-        # Ensure the connector_group is in dictionary format
-        if isinstance(group, dict):
-            body = group
-        else:
-            body = group.as_dict()
+        # Start with an empty body or an existing resource's current data
+        body = {}
 
-        # Add any additional fields from kwargs to the body
+        # Update the body with the fields passed in kwargs
         body.update(kwargs)
 
         # Use get instead of pop to keep microtenant_id in the body
@@ -196,12 +187,14 @@ class AppServersAPI(APIClient):
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body, {}, params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, {}, params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, AppServers)
+        response, error = self._request_executor\
+            .execute(request, AppServers)
         if error:
             return (None, response, error)
 
@@ -212,7 +205,9 @@ class AppServersAPI(APIClient):
 
         # Parse the response into an AppConnectorGroup instance
         try:
-            result = AppServers(self.form_response_body(response.get_body()))
+            result = AppServers(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -228,23 +223,23 @@ class AppServersAPI(APIClient):
             int: Status code of the delete operation.
         """
         http_method = "delete".upper()
-        api_url = format_url(
-            f"""
+        api_url = format_url(f"""
             {self._zpa_base_endpoint}
             /server/{server_id}
-        """
-        )
+        """)
 
         # Handle microtenant_id in URL params if provided
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, params=params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
         return (None, response, None)

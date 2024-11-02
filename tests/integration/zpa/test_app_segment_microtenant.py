@@ -49,7 +49,7 @@ class TestAppSegmentMicrotenants:
 
         # Step 1: Create Microtenant Resource along with a segment_group, app_connector_group, and server_group
         try:
-            auth_domains = client.authdomains.get_auth_domains()
+            auth_domains = client.zpa.authdomains.get_auth_domains()
             available_domains = auth_domains.auth_domains
             if not available_domains:
                 errors.append("No available authentication domains found.")
@@ -61,7 +61,7 @@ class TestAppSegmentMicrotenants:
         for domain in available_domains:
             try:
                 # Create a new microtenant with the current domain
-                created_microtenant = client.microtenants.add_microtenant(
+                created_microtenant = client.zpa.microtenants.add_microtenant(
                     name=microtenant_name,
                     description=microtenant_description,
                     enabled=True,
@@ -95,7 +95,7 @@ class TestAppSegmentMicrotenants:
             # Create an App Connector Group for the microtenant
             app_connector_group_name = "tests-" + generate_random_string()
             app_connector_group_description = "tests-" + generate_random_string()
-            created_app_connector_group = client.connectors.add_connector_group(
+            created_app_connector_group = client.zpa.app_connector_groups.add_connector_group(
                 name=app_connector_group_name,
                 description=app_connector_group_description,
                 enabled=True,
@@ -122,7 +122,7 @@ class TestAppSegmentMicrotenants:
             # Create a Server Group for the microtenant
             server_group_name = "tests-" + generate_random_string()
             server_group_description = "tests-" + generate_random_string()
-            created_server_group = client.server_groups.add_group(
+            created_server_group = client.zpa.server_groups.add_group(
                 name=server_group_name,
                 description=server_group_description,
                 enabled=True,
@@ -137,7 +137,7 @@ class TestAppSegmentMicrotenants:
         try:
             # Create a Segment Group for the microtenant
             segment_group_name = "tests-" + generate_random_string()
-            created_segment_group = client.segment_groups.add_group(
+            created_segment_group = client.zpa.segment_groups.add_group(
                 name=segment_group_name, enabled=True, microtenant_id=microtenant_id
             )
             segment_group_id = created_segment_group["id"]
@@ -149,7 +149,7 @@ class TestAppSegmentMicrotenants:
             # Create an App Connector Group for the default tenant
             default_app_connector_group_name = "tests-" + generate_random_string()
             default_app_connector_group_description = "tests-" + generate_random_string()
-            created_default_app_connector_group = client.connectors.add_connector_group(
+            created_default_app_connector_group = client.zpa.app_connector_groups.add_connector_group(
                 name=default_app_connector_group_name,
                 description=default_app_connector_group_description,
                 enabled=True,
@@ -174,7 +174,7 @@ class TestAppSegmentMicrotenants:
         try:
             # Create a Segment Group for the default tenant
             default_segment_group_name = "tests-" + generate_random_string()
-            created_default_segment_group = client.segment_groups.add_group(name=default_segment_group_name, enabled=True)
+            created_default_segment_group = client.zpa.segment_groups.add_group(name=default_segment_group_name, enabled=True)
             default_segment_group_id = created_default_segment_group["id"]
         except Exception as exc:
             errors.append(f"Creating Default Segment Group failed: {exc}")
@@ -183,7 +183,7 @@ class TestAppSegmentMicrotenants:
             # Create a Server Group for the default tenant
             default_server_group_name = "tests-" + generate_random_string()
             default_server_group_description = "tests-" + generate_random_string()
-            created_default_server_group = client.server_groups.add_group(
+            created_default_server_group = client.zpa.server_groups.add_group(
                 name=default_server_group_name,
                 description=default_server_group_description,
                 enabled=True,
@@ -198,7 +198,7 @@ class TestAppSegmentMicrotenants:
             # Create an Application Segment for the default tenant
             default_app_segment_name = "tests-" + generate_random_string()
             default_app_segment_description = "tests-" + generate_random_string()
-            default_app_segment = client.app_segments.add_segment(
+            default_app_segment = client.zpa.app_segments.add_segment(
                 name=default_app_segment_name,
                 description=default_app_segment_description,
                 enabled=True,
@@ -218,7 +218,7 @@ class TestAppSegmentMicrotenants:
             assert server_group_id is not None, "server_group_id is None"
             assert microtenant_id is not None, "microtenant_id is None"
 
-            client.app_segments.app_segment_move(
+            client.zpa.app_segments.app_segment_move(
                 application_id=default_app_segment_id,
                 target_segment_group_id=segment_group_id,
                 target_server_group_id=server_group_id,
@@ -231,32 +231,32 @@ class TestAppSegmentMicrotenants:
             # Cleanup resources
             if microtenant_id:
                 try:
-                    client.microtenants.delete_microtenant(microtenant_id=microtenant_id)
+                    client.zpa.microtenants.delete_microtenant(microtenant_id=microtenant_id)
                 except Exception as exc:
                     errors.append(f"Deleting Microtenant failed: {exc}")
 
             # Delete resources under the default tenant
             try:
                 if default_app_segment_id:
-                    client.app_segments.delete_segment(default_app_segment_id)
+                    client.zpa.app_segments.delete_segment(default_app_segment_id)
             except Exception as exc:
                 errors.append(f"Deleting Default Application Segment failed: {exc}")
 
             try:
                 if default_server_group_id:
-                    client.server_groups.delete_group(default_server_group_id)
+                    client.zpa.server_groups.delete_group(default_server_group_id)
             except Exception as exc:
                 errors.append(f"Deleting Default Server Group failed: {exc}")
 
             try:
                 if default_segment_group_id:
-                    client.segment_groups.delete_group(default_segment_group_id)
+                    client.zpa.segment_groups.delete_group(default_segment_group_id)
             except Exception as exc:
                 errors.append(f"Deleting Default Segment Group failed: {exc}")
 
             try:
                 if default_app_connector_group_id:
-                    client.connectors.delete_connector_group(default_app_connector_group_id)
+                    client.zpa.connectors.delete_connector_group(default_app_connector_group_id)
             except Exception as exc:
                 errors.append(f"Deleting Default App Connector Group failed: {exc}")
 
@@ -281,7 +281,7 @@ class TestAppSegmentMicrotenants:
 
         # Step 1: Retrieve available authentication domains and create Microtenant1 and Microtenant2
         try:
-            auth_domains = client.authdomains.get_auth_domains()
+            auth_domains = client.zpa.authdomains.get_auth_domains()
             available_domains = auth_domains.auth_domains
             if len(available_domains) < 2:
                 errors.append("Not enough available authentication domains found.")
@@ -294,7 +294,7 @@ class TestAppSegmentMicrotenants:
 
         try:
             # Create Microtenant1 with domain1
-            created_microtenant1 = client.microtenants.add_microtenant(
+            created_microtenant1 = client.zpa.microtenants.add_microtenant(
                 name=microtenant1_name,
                 description=microtenant1_description,
                 enabled=True,
@@ -315,7 +315,7 @@ class TestAppSegmentMicrotenants:
 
         try:
             # Create Microtenant2 with domain2
-            created_microtenant2 = client.microtenants.add_microtenant(
+            created_microtenant2 = client.zpa.microtenants.add_microtenant(
                 name=microtenant2_name,
                 description=microtenant2_description,
                 enabled=True,
@@ -342,7 +342,7 @@ class TestAppSegmentMicrotenants:
             # Create an App Connector Group for Microtenant1
             app_connector_group_name = "tests-" + generate_random_string()
             app_connector_group_description = "tests-" + generate_random_string()
-            created_app_connector_group = client.connectors.add_connector_group(
+            created_app_connector_group = client.zpa.connectors.add_connector_group(
                 name=app_connector_group_name,
                 description=app_connector_group_description,
                 enabled=True,
@@ -369,7 +369,7 @@ class TestAppSegmentMicrotenants:
             # Create a Server Group for Microtenant1
             server_group_name = "tests-" + generate_random_string()
             server_group_description = "tests-" + generate_random_string()
-            created_server_group = client.server_groups.add_group(
+            created_server_group = client.zpa.server_groups.add_group(
                 name=server_group_name,
                 description=server_group_description,
                 enabled=True,
@@ -384,7 +384,7 @@ class TestAppSegmentMicrotenants:
         try:
             # Create a Segment Group for Microtenant1
             segment_group_name = "tests-" + generate_random_string()
-            created_segment_group = client.segment_groups.add_group(
+            created_segment_group = client.zpa.segment_groups.add_group(
                 name=segment_group_name, enabled=True, microtenant_id=microtenant1_id
             )
             segment_group_id = created_segment_group["id"]
@@ -395,7 +395,7 @@ class TestAppSegmentMicrotenants:
             # Create an Application Segment for Microtenant1
             app_segment_name = "tests-" + generate_random_string()
             app_segment_description = "tests-" + generate_random_string()
-            created_app_segment = client.app_segments.add_segment(
+            created_app_segment = client.zpa.app_segments.add_segment(
                 name=app_segment_name,
                 description=app_segment_description,
                 enabled=True,
@@ -414,7 +414,7 @@ class TestAppSegmentMicrotenants:
             assert app_segment_id is not None, "app_segment_id is None"
             assert microtenant2_id is not None, "microtenant2_id is None"
 
-            client.app_segments.app_segment_share(
+            client.zpa.app_segments.app_segment_share(
                 application_id=app_segment_id,
                 share_to_microtenants=[microtenant2_id],
                 microtenant_id=microtenant1_id,  # Source microtenant
@@ -427,7 +427,7 @@ class TestAppSegmentMicrotenants:
             assert app_segment_id is not None, "app_segment_id is None"
             assert microtenant2_id is not None, "microtenant2_id is None"
 
-            client.app_segments.app_segment_share(
+            client.zpa.app_segments.app_segment_share(
                 application_id=app_segment_id,
                 share_to_microtenants=[],
                 microtenant_id=microtenant1_id,  # Source microtenant
@@ -439,13 +439,13 @@ class TestAppSegmentMicrotenants:
             # Cleanup resources
             if microtenant1_id:
                 try:
-                    client.microtenants.delete_microtenant(microtenant_id=microtenant1_id)
+                    client.zpa.microtenants.delete_microtenant(microtenant_id=microtenant1_id)
                 except Exception as exc:
                     errors.append(f"Deleting Microtenant1 failed: {exc}")
 
             if microtenant2_id:
                 try:
-                    client.microtenants.delete_microtenant(microtenant_id=microtenant2_id)
+                    client.zpa.microtenants.delete_microtenant(microtenant_id=microtenant2_id)
                 except Exception as exc:
                     errors.append(f"Deleting Microtenant2 failed: {exc}")
 

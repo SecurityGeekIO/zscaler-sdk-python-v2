@@ -40,12 +40,12 @@ class TestAccessPolicyForwardingRuleV1:
 
         try:
             # Test listing SCIM groups
-            idps = client.idp.list_idps()
+            idps = client.zpa.idp.list_idps()
             user_idp = next((idp for idp in idps if "USER" in idp.get("sso_type", [])), None)
             assert user_idp is not None, "No IdP with sso_type 'USER' found."
 
             user_idp_id = user_idp["id"]
-            resp = client.scim_groups.list_groups(user_idp_id)
+            resp = client.zpa.scim_groups.list_scim_groups(user_idp_id)
             assert isinstance(resp, list), "Response is not in the expected list format."
             assert len(resp) >= 2, "Less than 2 SCIM groups were found for the specified IdP."
 
@@ -56,7 +56,7 @@ class TestAccessPolicyForwardingRuleV1:
 
         try:
             # Test listing Trusted Network Profiles
-            networks = client.trusted_networks.list_networks()
+            networks = client.zpa.trusted_networks.list_trusted_networks()
             assert isinstance(networks, list), "Response is not in the expected list format."
             assert len(networks) > 0, "No Trusted Network Profile were found."
             network_id = networks[0]["network_id"]
@@ -68,7 +68,7 @@ class TestAccessPolicyForwardingRuleV1:
             # Create a Forwarding Policy Rule
             rule_name = "tests-" + generate_random_string()
             rule_description = "updated-" + generate_random_string()
-            created_rule = client.policies.add_client_forwarding_rule(
+            created_rule = client.zpa.policies.add_client_forwarding_rule(
                 name=rule_name,
                 description=rule_description,
                 action="intercept",
@@ -85,14 +85,14 @@ class TestAccessPolicyForwardingRuleV1:
 
         try:
             # Test listing Forwarding Policy Rules
-            all_timeout_rules = client.policies.list_rules("client_forwarding")
+            all_timeout_rules = client.zpa.policies.list_rules("client_forwarding")
             assert any(rule["id"] == rule_id for rule in all_timeout_rules), "Forwarding Policy Rules not found in list"
         except Exception as exc:
             errors.append(f"Failed to list Forwarding Policy Rules: {exc}")
 
         try:
             # Test retrieving the specific Forwarding Policy Rule
-            retrieved_rule = client.policies.get_rule("client_forwarding", rule_id)
+            retrieved_rule = client.zpa.policies.get_rule("client_forwarding", rule_id)
             assert retrieved_rule["id"] == rule_id, "Failed to retrieve the correct Forwarding Policy Rule"
         except Exception as exc:
             errors.append(f"Failed to retrieve Forwarding Policy Rule: {exc}")
@@ -100,7 +100,7 @@ class TestAccessPolicyForwardingRuleV1:
         try:
             # Update the Forwarding Policy Rule
             updated_rule_description = "Updated " + generate_random_string()
-            updated_rule = client.policies.update_client_forwarding_rule(
+            updated_rule = client.zpa.policies.update_client_forwarding_rule(
                 rule_id=rule_id,
                 description=updated_rule_description,
                 action="intercept",
@@ -119,7 +119,7 @@ class TestAccessPolicyForwardingRuleV1:
             # Ensure cleanup is performed even if there are errors
             if rule_id:
                 try:
-                    client.policies.delete_rule("client_forwarding", rule_id)
+                    client.zpa.policies.delete_rule("client_forwarding", rule_id)
                 except Exception as cleanup_exc:
                     errors.append(f"Cleanup failed: {cleanup_exc}")
 

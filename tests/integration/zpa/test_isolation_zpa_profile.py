@@ -43,7 +43,7 @@ class TestZPACBIProfile:
             if profiles_response:  # If there are any ZPA CBI Profiles, proceed with further operations
                 first_profile = profiles_response[0]
                 cbi_profile_id = first_profile.id  # Access the 'id' attribute using dot notation
-                assert cbi_profile_id is not None, "IDP ID should not be None"
+                assert cbi_profile_id is not None, "Isolation Profile ID should not be None"
         except Exception as exc:
             errors.append(f"Listing ZPA CBI Profile failed: {str(exc)}")
 

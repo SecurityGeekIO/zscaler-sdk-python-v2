@@ -40,13 +40,13 @@ class TestAppProtectionProfile:
         try:
             # Fetch predefined controls by control group name
             control_group_name = "Protocol Issues"
-            control_group = client.inspection.get_predef_control_group_by_name(control_group_name)
+            control_group = client.zpa.inspection.get_predef_control_group_by_name(control_group_name)
             predefined_controls = [
                 (control["id"], control["default_action"]) for control in control_group["predefined_inspection_controls"]
             ]
 
             # Create a new app protection security profile with predefined controls
-            created_profile = client.inspection.add_profile(
+            created_profile = client.zpa.inspection.add_profile(
                 name=profile_name,
                 paranoia_level=1,
                 predef_controls_version="OWASP_CRS/3.3.0",
@@ -62,12 +62,12 @@ class TestAppProtectionProfile:
             if profile_id:
                 # Update the app protection security profile
                 updated_name = profile_name + " Updated"
-                client.inspection.update_profile(profile_id, name=updated_name)
-                updated_profile = client.inspection.get_profile(profile_id)
+                client.zpa.inspection.update_profile(profile_id, name=updated_name)
+                updated_profile = client.zpa.inspection.get_profile(profile_id)
                 assert updated_profile.name == updated_name  # Verify update by checking the updated attribute
 
                 # List app protection security profiles and ensure the updated profile is in the list
-                profiles_list = client.inspection.list_profiles()
+                profiles_list = client.zpa.inspection.list_profiles()
                 assert any(profile.id == profile_id for profile in profiles_list)
 
         except Exception as exc:
@@ -77,7 +77,7 @@ class TestAppProtectionProfile:
             # Cleanup resources
             if profile_id:
                 try:
-                    client.inspection.delete_profile(profile_id=profile_id)
+                    client.zpa.inspection.delete_profile(profile_id=profile_id)
                 except Exception as exc:
                     errors.append(f"Deleting app protection security profile failed: {exc}")
 

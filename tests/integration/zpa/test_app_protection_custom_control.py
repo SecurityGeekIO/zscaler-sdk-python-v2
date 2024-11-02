@@ -39,7 +39,7 @@ class TestAppProtectionCustomControl:
 
         try:
             # Create a new custom control
-            created_control = client.inspection.add_custom_control(
+            created_control = client.zpa.inspection.add_custom_control(
                 name=control_name,
                 description=control_name,
                 action="PASS",
@@ -71,12 +71,12 @@ class TestAppProtectionCustomControl:
             if control_id:
                 # Update the custom control
                 updated_name = control_name + " Updated"
-                client.inspection.update_custom_control(control_id, name=updated_name)
-                updated_control = client.inspection.get_custom_control(control_id)
+                client.zpa.inspection.update_custom_control(control_id, name=updated_name)
+                updated_control = client.zpa.inspection.get_custom_control(control_id)
                 assert updated_control.name == updated_name  # Verify update by checking the updated attribute
 
                 # List custom controls and ensure the updated banner is in the list
-                controls_list = client.inspection.list_custom_controls()
+                controls_list = client.zpa.inspection.list_custom_controls()
                 assert any(control.id == control_id for control in controls_list)
 
         except Exception as exc:
@@ -86,7 +86,7 @@ class TestAppProtectionCustomControl:
             # Cleanup resources
             if control_id:
                 try:
-                    client.inspection.delete_custom_control(control_id=control_id)
+                    client.zpa.inspection.delete_custom_control(control_id=control_id)
                 except Exception as exc:
                     errors.append(f"Deleting custom control failed: {exc}")
 

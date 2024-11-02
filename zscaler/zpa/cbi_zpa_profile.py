@@ -17,6 +17,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 from zscaler.api_client import APIClient
 from zscaler.request_executor import RequestExecutor
 from zscaler.zpa.models.cbi_zpa_profile import ZPACBIProfile
+from zscaler.zpa.models.cbi_zpa_profile import CBIProfile
 from zscaler.utils import format_url
 
 
@@ -29,7 +30,8 @@ class CBIZPAProfileAPI(APIClient):
         super().__init__()
         self._request_executor: RequestExecutor = request_executor
         customer_id = config["client"].get("customerId")
-        self._zpa_base_endpoint = f"/zpa/cbiconfig/cbi/api/customers/{customer_id}"
+        self._cbi_base_endpoint = f"/zpa/cbiconfig/cbi/api/customers/{customer_id}"
+        self._zpa_base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
     def list_cbi_zpa_profiles(self, query_params=None, **kwargs) -> tuple:
         """
@@ -43,31 +45,76 @@ class CBIZPAProfileAPI(APIClient):
             tuple: A tuple containing a list of `ZPAProfile` instances, response object, and error if any.
         """
         http_method = "get".upper()
-        api_url = format_url(
-            f"""
-            {self._zpa_base_endpoint}
+        api_url = format_url(f"""
+            {self._cbi_base_endpoint}
             /zpaprofiles
-        """
-        )
+        """)
 
         # Handle optional query parameters
         query_params = query_params or {}
         query_params.update(kwargs)
 
         # Prepare request
-        request, error = self._request_executor.create_request(http_method, api_url, body={}, headers={}, params=query_params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body={}, headers={}, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
             for item in response.get_all_pages_results():
-                result.append(ZPACBIProfile(self.form_response_body(item)))
+                result.append(ZPACBIProfile(
+                    self.form_response_body(item))
+                )
+        except Exception as error:
+            return (None, response, error)
+        return (result, response, None)
+
+    def list_isolation_profiles(self, query_params=None, **kwargs) -> tuple:
+        """
+        Returns a list of all cloud browser isolation ZPA profiles, with options to filter by disabled status and scope.
+
+        Args:
+            show_disabled (bool, optional): If set to True, the response includes disabled profiles.
+            scope_id (str, optional): The unique identifier of the scope of the tenant to filter the profiles.
+
+        Returns:
+            tuple: A tuple containing a list of `ZPAProfile` instances, response object, and error if any.
+        """
+        http_method = "get".upper()
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint}
+            /isolation/profiles
+        """)
+
+        # Handle optional query parameters
+        query_params = query_params or {}
+        query_params.update(kwargs)
+
+        # Prepare request
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body={}, headers={}, params=query_params)
+        if error:
+            return (None, None, error)
+
+        # Execute the request
+        response, error = self._request_executor\
+            .execute(request)
+        if error:
+            return (None, response, error)
+
+        try:
+            result = []
+            for item in response.get_all_pages_results():
+                result.append(ZPACBIProfile(
+                    self.form_response_body(item))
+                )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)

@@ -53,12 +53,10 @@ class SegmentGroupsAPI(APIClient):
             >>> segment_groups = zpa.segment_groups.list_groups(search="example", pagesize=100)
         """
         http_method = "get".upper()
-        api_url = format_url(
-            f"""
+        api_url = format_url(f"""
             {self._zpa_base_endpoint}
             /segmentGroup
-        """
-        )
+        """)
 
         query_params = query_params or {}
         microtenant_id = query_params.get("microtenant_id", None)
@@ -66,19 +64,23 @@ class SegmentGroupsAPI(APIClient):
             query_params["microtenantId"] = microtenant_id
 
         # Prepare request
-        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
             for item in response.get_all_pages_results():
-                result.append(SegmentGroup(self.form_response_body(item)))
+                result.append(SegmentGroup(
+                    self.form_response_body(item))
+                )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -94,12 +96,10 @@ class SegmentGroupsAPI(APIClient):
             SegmentGroup: The corresponding segment group object.
         """
         http_method = "get".upper()
-        api_url = format_url(
-            f"""
+        api_url = format_url(f"""
             {self._zpa_base_endpoint}
             /segmentGroup/{group_id}
-        """
-        )
+        """)
 
         # Handle optional query parameters
         query_params = query_params or {}
@@ -151,17 +151,21 @@ class SegmentGroupsAPI(APIClient):
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body=body, params=params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body=body, params=params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, SegmentGroup)
+        response, error = self._request_executor\
+            .execute(request, SegmentGroup)
         if error:
             return (None, response, error)
 
         try:
-            result = SegmentGroup(self.form_response_body(response.get_body()))
+            result = SegmentGroup(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -195,12 +199,14 @@ class SegmentGroupsAPI(APIClient):
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body, {}, params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, {}, params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, SegmentGroup)
+        response, error = self._request_executor\
+            .execute(request, SegmentGroup)
         if error:
             return (None, response, error)
 
@@ -210,7 +216,9 @@ class SegmentGroupsAPI(APIClient):
 
         # Parse the response into a SegmentGroup instance
         try:
-            result = SegmentGroup(self.form_response_body(response.get_body()))
+            result = SegmentGroup(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -241,12 +249,14 @@ class SegmentGroupsAPI(APIClient):
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body, {}, params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, {}, params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, SegmentGroup)
+        response, error = self._request_executor\
+            .execute(request, SegmentGroup)
         if error:
             return (None, response, error)
 
@@ -256,7 +266,9 @@ class SegmentGroupsAPI(APIClient):
 
         # Parse the response into a SegmentGroup instance
         try:
-            result = SegmentGroup(self.form_response_body(response.get_body()))
+            result = SegmentGroup(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -272,22 +284,22 @@ class SegmentGroupsAPI(APIClient):
             int: Status code of the delete operation.
         """
         http_method = "delete".upper()
-        api_url = format_url(
-            f"""
+        api_url = format_url(f"""
             {self._zpa_base_endpoint}
             /segmentGroup/{group_id}
-        """
-        )
+        """)
 
         # Handle microtenant_id in URL params if provided
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, params=params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=params)
         if error:
             return (None, error)
 
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
 
         if error:
             return (None, response, error)

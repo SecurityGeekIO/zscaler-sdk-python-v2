@@ -48,7 +48,7 @@ class TestEmergencyAccessIntegration:
                 first_name = "UserTest" + generate_random_string()
                 last_name = "Access" + generate_random_string()
                 user_id = "user1" + generate_random_string()
-                created_user = client.emergency_access.add_user(
+                created_user = client.zpa.emergency_access.add_user(
                     email_id=email_id,
                     first_name=first_name,
                     last_name=last_name,
@@ -69,7 +69,7 @@ class TestEmergencyAccessIntegration:
 
             try:
                 # Test Get User
-                got_user = client.emergency_access.get_user(user_id)
+                got_user = client.zpa.emergency_access.get_user(user_id)
                 assert "user_id" in got_user, "user_id key not found in get_user response"
                 assert got_user["user_id"] == user_id, "Failed to get the correct emergency access user"
                 pprint(got_user)
@@ -83,7 +83,7 @@ class TestEmergencyAccessIntegration:
             try:
                 # Test Update User
                 updated_first_name = "UpdatedUser1"
-                updated_user = client.emergency_access.update_user(user_id, first_name=updated_first_name)
+                updated_user = client.zpa.emergency_access.update_user(user_id, first_name=updated_first_name)
                 assert "first_name" in updated_user, "first_name key not found in update_user response"
                 assert updated_user["first_name"] == updated_first_name, "Failed to update the emergency access user"
                 pprint(updated_user)
@@ -93,7 +93,7 @@ class TestEmergencyAccessIntegration:
 
             try:
                 # Test Deactivate User
-                deactivated_user = client.emergency_access.deactivate_user(user_id)
+                deactivated_user = client.zpa.emergency_access.deactivate_user(user_id)
                 assert "user_id" in deactivated_user, "user_id key not found in deactivate_user response"
                 assert deactivated_user["user_id"] == user_id, "Failed to deactivate the emergency access user"
                 pprint(deactivated_user)
@@ -103,7 +103,7 @@ class TestEmergencyAccessIntegration:
 
             try:
                 # Test Activate User
-                activated_user = client.emergency_access.activate_user(user_id, send_email=True)
+                activated_user = client.zpa.emergency_access.activate_user(user_id, send_email=True)
                 assert "user_id" in activated_user, "user_id key not found in activate_user response"
                 assert activated_user["user_id"] == user_id, "Failed to activate the emergency access user"
                 pprint(activated_user)
@@ -113,7 +113,7 @@ class TestEmergencyAccessIntegration:
 
             try:
                 # Deactivate again before deletion
-                deactivated_user = client.emergency_access.deactivate_user(user_id)
+                deactivated_user = client.zpa.emergency_access.deactivate_user(user_id)
                 assert "user_id" in deactivated_user, "user_id key not found in final deactivate_user response"
                 assert deactivated_user["user_id"] == user_id, "Failed to deactivate the emergency access user"
                 pprint(deactivated_user)
@@ -123,7 +123,7 @@ class TestEmergencyAccessIntegration:
 
             try:
                 # Test Reactivate User
-                reactivated_user = client.emergency_access.activate_user(user_id, send_email=True)
+                reactivated_user = client.zpa.emergency_access.activate_user(user_id, send_email=True)
                 assert "user_id" in reactivated_user, "user_id key not found in reactivate_user response"
                 assert reactivated_user["user_id"] == user_id, "Failed to reactivate the emergency access user"
                 pprint(reactivated_user)

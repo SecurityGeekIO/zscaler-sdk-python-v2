@@ -29,7 +29,7 @@ class CBIProfileAPI(APIClient):
         super().__init__()
         self._request_executor: RequestExecutor = request_executor
         customer_id = config["client"].get("customerId")
-        self._zpa_base_endpoint = f"/zpa/cbiconfig/cbi/api/customers/{customer_id}"
+        self._cbi_base_endpoint = f"/zpa/cbiconfig/cbi/api/customers/{customer_id}"
 
     def list_cbi_profiles(self) -> tuple:
         """
@@ -42,25 +42,27 @@ class CBIProfileAPI(APIClient):
             tuple: A tuple containing a list of `CBIProfile` instances, response object, and error if any.
         """
         http_method = "get".upper()
-        api_url = format_url(
-            f"""
-            {self._zpa_base_endpoint}
+        api_url = format_url(f"""
+            {self._cbi_base_endpoint}
             /profiles
-        """
-        )
+        """)
 
-        request, error = self._request_executor.create_request(http_method, api_url)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
             for item in response.get_all_pages_results():
-                result.append(CBIProfile(self.form_response_body(item)))
+                result.append(CBIProfile(
+                    self.form_response_body(item))
+                )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -76,23 +78,25 @@ class CBIProfileAPI(APIClient):
             tuple: A tuple containing the `CBIProfile` instance, response object, and error if any.
         """
         http_method = "get".upper()
-        api_url = format_url(
-            f"""
-            {self._zpa_base_endpoint}
+        api_url = format_url(f"""
+            {self._cbi_base_endpoint}
             /profiles/{profile_id}
-        """
-        )
+        """)
 
-        request, error = self._request_executor.create_request(http_method, api_url)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request, CBIProfile)
+        response, error = self._request_executor\
+            .execute(request, CBIProfile)
         if error:
             return (None, response, error)
 
         try:
-            result = CBIProfile(self.form_response_body(response.get_body()))
+            result = CBIProfile(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -189,12 +193,10 @@ class CBIProfileAPI(APIClient):
 
         """
         http_method = "post".upper()
-        api_url = format_url(
-            f"""
-            {self._zpa_base_endpoint}
+        api_url = format_url(f"""
+            {self._cbi_base_endpoint}
             /profiles
-        """
-        )
+        """)
 
         # Construct the body from kwargs (as a dictionary)
         body = kwargs
@@ -207,16 +209,20 @@ class CBIProfileAPI(APIClient):
             return (None, None, "Validation Error: 'certificate_ids' is required and must be a list.")
 
         # Proceed with request creation and execution
-        request, error = self._request_executor.create_request(http_method, api_url, body=body)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body=body)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request, CBIProfile)
+        response, error = self._request_executor\
+            .execute(request, CBIProfile)
         if error:
             return (None, response, error)
 
         try:
-            result = CBIProfile(self.form_response_body(response.get_body()))
+            result = CBIProfile(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -283,10 +289,9 @@ class CBIProfileAPI(APIClient):
         http_method = "put".upper()
         api_url = format_url(
             f"""
-            {self._zpa_base_endpoint}
+            {self._cbi_base_endpoint}
             /profiles/{profile_id}
-        """
-        )
+        """)
 
         # Start with an empty body or an existing resource's current data
         body = {}
@@ -305,11 +310,13 @@ class CBIProfileAPI(APIClient):
             return (None, None, "Validation Error: 'banner' is required and must contain a valid 'id'.")
 
         # Proceed with request creation and execution
-        request, error = self._request_executor.create_request(http_method, api_url, body, {})
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, {})
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request, CBIProfile)
+        response, error = self._request_executor\
+            .execute(request, CBIProfile)
         if error:
             return (None, response, error)
 
@@ -318,7 +325,9 @@ class CBIProfileAPI(APIClient):
             return (CBIProfile({"id": profile_id}), None, None)
 
         try:
-            result = CBIProfile(self.form_response_body(response.get_body()))
+            result = CBIProfile(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
 
@@ -335,18 +344,18 @@ class CBIProfileAPI(APIClient):
             tuple: A tuple containing the response object and error if any.
         """
         http_method = "delete".upper()
-        api_url = format_url(
-            f"""
-            {self._zpa_base_endpoint}
+        api_url = format_url(f"""
+            {self._cbi_base_endpoint}
             /profiles/{profile_id}
-        """
-        )
+        """)
 
-        request, error = self._request_executor.create_request(http_method, api_url)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 

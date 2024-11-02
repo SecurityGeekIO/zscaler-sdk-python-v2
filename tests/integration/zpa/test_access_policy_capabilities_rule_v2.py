@@ -39,12 +39,12 @@ class TestAccessPolicyCapabilitiesRuleV2:
 
         try:
             # Test listing SCIM groups
-            idps = client.idp.list_idps()
+            idps = client.zpa.idp.list_idps()
             user_idp = next((idp for idp in idps if "USER" in idp.get("sso_type", [])), None)
             assert user_idp is not None, "No IdP with sso_type 'USER' found."
 
             user_idp_id = user_idp["id"]
-            resp = client.scim_groups.list_groups(user_idp_id)
+            resp = client.zpa.scim_groups.list_scim_groups(user_idp_id)
             assert isinstance(resp, list), "Response is not in the expected list format."
             assert len(resp) >= 2, "Less than 2 SCIM groups were found for the specified IdP."
 
@@ -57,7 +57,7 @@ class TestAccessPolicyCapabilitiesRuleV2:
             # Create a Access Capabilities Policy Rule
             rule_name = "tests-" + generate_random_string()
             rule_description = "updated-" + generate_random_string()
-            created_rule = client.policies.add_capabilities_rule_v2(
+            created_rule = client.zpa.policies.add_capabilities_rule_v2(
                 name=rule_name,
                 description=rule_description,
                 conditions=[
@@ -78,7 +78,7 @@ class TestAccessPolicyCapabilitiesRuleV2:
 
         try:
             # Test listing Access Capabilities Policy Rules
-            all_forwarding_rules = client.policies.list_rules("capabilities")
+            all_forwarding_rules = client.zpa.policies.list_rules("capabilities")
             assert any(
                 rule["id"] == rule_id for rule in all_forwarding_rules
             ), "Access Capabilities Policy Rules not found in list"
@@ -87,7 +87,7 @@ class TestAccessPolicyCapabilitiesRuleV2:
 
         try:
             # Test retrieving the specific Access Capabilities Policy Rule
-            retrieved_rule = client.policies.get_rule("capabilities", rule_id)
+            retrieved_rule = client.zpa.policies.get_rule("capabilities", rule_id)
             assert retrieved_rule["id"] == rule_id, "Failed to retrieve the correct Access Capabilities Policy Rule"
         except Exception as exc:
             errors.append(f"Failed to retrieve Access Capabilities Policy Rule: {exc}")
@@ -95,7 +95,7 @@ class TestAccessPolicyCapabilitiesRuleV2:
         try:
             # Update the Access Capabilities Policy Rule
             updated_rule_description = "Updated " + generate_random_string()
-            client.policies.update_capabilities_rule_v2(
+            client.zpa.policies.update_capabilities_rule_v2(
                 rule_id=rule_id,
                 description=updated_rule_description,
                 conditions=[
@@ -110,7 +110,7 @@ class TestAccessPolicyCapabilitiesRuleV2:
                 },
             )
             # Fetch the updated rule to verify the changes
-            updated_rule = client.policies.get_rule("capabilities", rule_id)
+            updated_rule = client.zpa.policies.get_rule("capabilities", rule_id)
             assert (
                 updated_rule["description"] == updated_rule_description
             ), "Failed to update description for Access Capabilities Policy Rule"
@@ -121,7 +121,7 @@ class TestAccessPolicyCapabilitiesRuleV2:
             # Ensure cleanup is performed even if there are errors
             if rule_id:
                 try:
-                    delete_status_rule = client.policies.delete_rule("capabilities", rule_id)
+                    delete_status_rule = client.zpa.policies.delete_rule("capabilities", rule_id)
                     assert delete_status_rule == 204, "Failed to delete Access Capabilities Policy Rule"
                 except Exception as cleanup_exc:
                     errors.append(f"Cleanup failed: {cleanup_exc}")

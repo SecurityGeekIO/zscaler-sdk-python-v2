@@ -39,7 +39,7 @@ class TestAccessPolicyReorderRule:
             for i in range(5):
                 rule_name = f"New_Policy_Rule_{generate_random_string()}"
                 rule_description = f"New_Policy_Rule_Description_{generate_random_string()}"
-                response = client.policies.add_access_rule(name=rule_name, description=rule_description, action="allow")
+                response = client.zpa.policies.add_access_rule(name=rule_name, description=rule_description, action="allow")
                 created_rules.append(response)
                 # pprint(response)
 
@@ -48,7 +48,7 @@ class TestAccessPolicyReorderRule:
                 try:
                     rule_id = rule.id
                     rule_order = index + 1
-                    client.policies.reorder_rule(policy_type="access", rule_id=rule_id, rule_order=str(rule_order))
+                    client.zpa.policies.reorder_rule(policy_type="access", rule_id=rule_id, rule_order=str(rule_order))
                 except Exception as exc:
                     errors.append(f"Reordering rule {rule_id} failed: {exc}")
 
@@ -59,7 +59,7 @@ class TestAccessPolicyReorderRule:
             # Clean up: delete the created rules
             for rule in created_rules:
                 try:
-                    client.policies.delete_rule(policy_type="access", rule_id=rule.id)
+                    client.zpa.policies.delete_rule(policy_type="access", rule_id=rule.id)
                 except Exception as exc:
                     errors.append(f"Deleting rule {rule.id} failed: {exc}")
 

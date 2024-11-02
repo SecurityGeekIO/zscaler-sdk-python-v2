@@ -32,7 +32,7 @@ class TestAppProtectionControls:
         client = MockZPAClient(fs)
         errors = []  # Initialize an empty list to collect errors
         try:
-            action_types = client.inspection.list_control_action_types()
+            action_types = client.zpa.inspection.list_control_action_types()
             assert len(action_types) > 0, "No action types returned"
             print("Action Types:", action_types)
         except Exception as exc:
@@ -44,7 +44,7 @@ class TestAppProtectionControls:
         client = MockZPAClient(fs)
         errors = []  # Initialize an empty list to collect errors
         try:
-            severity_types = client.inspection.list_control_severity_types()
+            severity_types = client.zpa.inspection.list_control_severity_types()
             assert len(severity_types) > 0, "No severity types returned"
             print("Severity Types:", severity_types)
         except Exception as exc:
@@ -56,7 +56,7 @@ class TestAppProtectionControls:
         client = MockZPAClient(fs)
         errors = []  # Initialize an empty list to collect errors
         try:
-            control_types = client.inspection.list_control_types()
+            control_types = client.zpa.inspection.list_control_types()
             assert len(control_types) > 0, "No control types returned"
             print("Control Types:", control_types)
         except Exception as exc:
@@ -68,7 +68,7 @@ class TestAppProtectionControls:
         client = MockZPAClient(fs)
         errors = []  # Initialize an empty list to collect errors
         try:
-            http_methods = client.inspection.list_custom_http_methods()
+            http_methods = client.zpa.inspection.list_custom_http_methods()
             assert len(http_methods) > 0, "No HTTP methods returned"
             print("HTTP Methods:", http_methods)
         except Exception as exc:
@@ -80,7 +80,7 @@ class TestAppProtectionControls:
         client = MockZPAClient(fs)
         errors = []  # Initialize an empty list to collect errors
         try:
-            versions = client.inspection.list_predef_control_versions()
+            versions = client.zpa.inspection.list_predef_control_versions()
             assert len(versions) > 0, "No versions returned"
             print("Versions:", versions)
         except Exception as exc:
@@ -95,12 +95,12 @@ class TestAppProtectionControls:
 
         try:
             # Fetch predefined controls without search term
-            predef_controls = client.inspection.list_predef_controls(version=version)
+            predef_controls = client.zpa.inspection.list_predef_controls(version=version)
             assert len(predef_controls) > 0, "No predefined controls returned for version"
             print("Predefined Controls for Version:", predef_controls)
 
             # Fetch predefined controls with search term
-            predef_controls_with_search = client.inspection.list_predef_controls(version=version)
+            predef_controls_with_search = client.zpa.inspection.list_predef_controls(version=version)
             assert len(predef_controls_with_search) > 0, "No predefined controls returned for search"
             print("Predefined Controls for Search Term:", predef_controls_with_search)
 
@@ -114,7 +114,7 @@ class TestAppProtectionControls:
         client = MockZPAClient(fs)
         errors = []  # Initialize an empty list to collect errors
         try:
-            control = client.inspection.get_predef_control_by_name(name="Failed to parse request body")
+            control = client.zpa.inspection.get_predef_control_by_name(name="Failed to parse request body")
             assert control is not None, "No predefined control found with the specified name"
             print("Predefined Control:", control)
         except Exception as exc:
@@ -126,7 +126,7 @@ class TestAppProtectionControls:
         client = MockZPAClient(fs)
         errors = []  # Initialize an empty list to collect errors
         try:
-            control_group = client.inspection.get_predef_control_group_by_name(group_name="Anomalies")
+            control_group = client.zpa.inspection.get_predef_control_group_by_name(group_name="Anomalies")
             assert control_group is not None, "No predefined control group found with the specified name"
             print("Predefined Control Group:", control_group)
         except Exception as exc:
