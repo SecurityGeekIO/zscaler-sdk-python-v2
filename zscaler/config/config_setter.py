@@ -27,6 +27,7 @@ class ConfigSetter:
             "customerId": "",
             "microtenantId": "",
             "sandboxToken": "",
+            "sandboxCloud": "",
             "connectionTimeout": 30,
             "requestTimeout": 0,
             "cache": {

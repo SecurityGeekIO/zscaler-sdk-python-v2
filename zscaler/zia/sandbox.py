@@ -283,14 +283,12 @@ class CloudSandboxAPI:
         http_method = "put".upper()
         api_url = f"{self._zia_base_endpoint}/behavioralAnalysisAdvancedSettings"
 
-        # Prepare request parameters
         payload = {"fileHashesToBeBlocked": file_hashes_to_be_blocked}
 
-        # Create the request
         request, error = self._request_executor.create_request(
             method=http_method,
             endpoint=api_url,
-            json=payload,
+            body=payload
         )
 
         if error:

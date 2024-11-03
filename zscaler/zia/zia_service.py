@@ -6,7 +6,7 @@ from zscaler.zia.audit_logs import AuditLogsAPI
 from zscaler.zia.authentication_settings import AuthenticationSettingsAPI
 from zscaler.zia.cloudappcontrol import CloudAppControlAPI
 from zscaler.zia.isolation_profile import CBIProfileAPI
-# from zscaler.zia.sandbox import CloudSandboxAPI
+from zscaler.zia.sandbox import CloudSandboxAPI
 from zscaler.zia.dlp_dictionary import DLPDictionaryAPI
 from zscaler.zia.dlp_engine import DLPEngineAPI
 from zscaler.zia.dlp_web_rules import DLPWebRuleAPI
@@ -100,13 +100,13 @@ class ZIAService:
         """
         return CBIProfileAPI(self._request_executor)
 
-    # @property
-    # def sandbox(self):
-    #     """
-    #     The interface object for the :ref:`ZIA Cloud Sandbox interface <zia-sandbox>`.
+    @property
+    def sandbox(self):
+        """
+        The interface object for the :ref:`ZIA Cloud Sandbox interface <zia-sandbox>`.
 
-    #     """
-    #     return CloudSandboxAPI(self._request_executor)
+        """
+        return CloudSandboxAPI(self._request_executor)
 
     @property
     def dlp_dictionary(self):
