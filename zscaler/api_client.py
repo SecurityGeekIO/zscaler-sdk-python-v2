@@ -5,12 +5,12 @@ class APIClient:
     """
     Base class for handling responses and converting keys between camelCase and snake_case.
     """
+
     def __init__(self):
         """
         Automatically set the base URL from the request executor (inherited by each API class).
         """
-        # Base URL remains empty in resource classes, filled dynamically in methods
-        self._base_url = ""
+        pass
 
     @staticmethod
     def form_response_body(body: dict):

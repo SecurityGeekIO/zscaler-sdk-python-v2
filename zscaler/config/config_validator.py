@@ -46,7 +46,9 @@ class ConfigValidator:
             proxy_errors = self._validate_proxy_settings(client["proxy"])
             logging.debug(f"Proxy errors: {proxy_errors}")
             errors += proxy_errors
-
+        sandbox_token = client.get("sandboxToken", "")
+        if sandbox_token:
+            return
         # Validate OAuth2 Client ID and Client Secret or PrivateKey
         client_id = client.get("clientId", "")
         client_secret = client.get("clientSecret", "")

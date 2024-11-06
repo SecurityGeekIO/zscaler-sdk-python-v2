@@ -46,13 +46,10 @@ class RequestExecutor:
 
         # Retrieve cloud, service, and customer ID (optional)
         self.cloud = self._config["client"].get("cloud", "production").lower()
+        self.sandbox_cloud = self._config["client"].get("sandboxCloud", "").lower()
         self.service = self._config["client"].get("service", "zia")  # Default to ZIA
         self.customer_id = self._config["client"].get("customerId")  # Optional for ZIA/ZCC
         self.microtenant_id = self._config["client"].get("microtenantId")  # Optional for ZIA/ZCC
-
-        # Initialize base URL based on the cloud setting
-        self._base_url = self.get_base_url(self.cloud)
-        logger.debug(f"Base URL set to: {self._base_url}")
 
         # OAuth2 setup
         self._oauth = OAuth(self, self._config)
@@ -79,19 +76,20 @@ class RequestExecutor:
         # Initialize custom headers as an empty dictionary
         self._custom_headers = {}
 
-    def get_base_url(self, cloud: str) -> str:
+    def get_base_url(self, endpoint: str) -> str:
         """
         Gets the appropriate base URL based on the cloud value.
 
         Args:
-            cloud (str): The cloud environment (e.g., "beta", "production").
-
+            endpoint (str): The endpoint to be used to determine the base URL.
         Returns:
             str: The constructed base URL for API requests.
         """
-        logger.debug(f"Determining base URL for cloud: {cloud}")
-        if cloud and cloud != "production":
-            return f"https://api.{cloud}.zsapi.net"
+        logger.debug(f"Determining base URL for cloud: {self.cloud}")
+        if "/zscsb" in endpoint:
+            return f"https://csbapi.{self.sandbox_cloud}.net"
+        if self.cloud and self.cloud != "production":
+            return f"https://api.{self.cloud}.zsapi.net"
         return self.BASE_URL
 
     def get_service_type(self, url):
@@ -111,16 +109,16 @@ class RequestExecutor:
         body: dict = None,
         headers: dict = None,
         params: dict = None,
+        use_raw_data_for_body: bool = False,
     ):
         body = body or {}
         headers = headers or {}
         params = params or {}
 
-        base_url = self.get_base_url(self.cloud)
+        base_url = self.get_base_url(endpoint)
         final_url = f"{base_url}/{endpoint.lstrip('/')}"
 
         headers = self._prepare_headers(headers, endpoint)
-        json_payload = self._prepare_body(endpoint, body)
         params = self._prepare_params(endpoint, params, body)
         # Extract and append query parameters from URL to request params
         final_url, params = self._extract_and_append_query_params(final_url, params)
@@ -130,13 +128,15 @@ class RequestExecutor:
         request = {
             "method": method,
             "url": final_url,
-            "json": json_payload,
             "params": params,
             "headers": headers,
             "uuid": uuid.uuid4(),
         }
-
-        logger.debug(f"Request created: {request}")
+        if use_raw_data_for_body:
+            request["data"] = body
+        else:
+            json_payload = self._prepare_body(endpoint, body)
+            request["json"] = json_payload
         return request, None
 
     def _prepare_headers(self, headers, endpoint=""):
@@ -182,7 +182,6 @@ class RequestExecutor:
             ZscalerAPIResponse or error
         """
         logger.info(f"Executing request to URL: {request['url']}")
-        logger.debug(f"Request details: {request}")
 
         # Extract and append query parameters from URL to request params
         request["url"], request["params"] = self._extract_and_append_query_params(request["url"], request.get("params", {}))
@@ -277,11 +276,11 @@ class RequestExecutor:
         Returns:
             request, response, response_body, error
         """
-        logger.debug(f"Sending request: {request}")
+        is_sandbox_request = "/zscsb" in request["url"]
 
         # Pass both URL and params to create_key
         url_cache_key = self._cache.create_key(request["url"], request["params"])
-        if self._cache_enabled():
+        if self._cache_enabled() and not is_sandbox_request:
             # Remove cache entry if not a GET call
             if request["method"].upper() != "GET":
                 logger.debug(f"Deleting cache entry for non-GET request: {url_cache_key}")
@@ -297,7 +296,7 @@ class RequestExecutor:
 
         # Send actual request
         request, response, response_body, error = self.fire_request_helper(request, 0, time.time())
-        if self._cache_enabled():
+        if self._cache_enabled() and not is_sandbox_request:
             if error is None and request["method"].upper() == "GET" and 200 <= response.status_code < 300:
                 logger.info(f"Caching response for URL: {request['url']}")
                 self._cache.add(url_cache_key, (response, response_body))

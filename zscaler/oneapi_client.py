@@ -57,12 +57,13 @@ class Client:
         self._private_key = self._config["client"].get("privateKey", os.getenv("ZSCALER_PRIVATE_KEY"))
         self._vanity_domain = self._config["client"].get("vanityDomain", os.getenv("ZSCALER_VANITY_DOMAIN"))
         self._cloud = self._config["client"].get("cloud", os.getenv("ZSCALER_CLOUD", "PRODUCTION"))
+        self._sandbox_token = self._config["client"].get("sandboxToken", os.getenv("ZSCALER_SANDBOX_TOKEN"))
         self._auth_token = None
 
         # Ensure required fields are set, either through inline config or environment variables
-        if not self._client_id:
+        if not self._client_id and not self._sandbox_token:
             raise ValueError("Client ID is required. Please set 'clientId' or 'ZSCALER_CLIENT_ID' environment variable.")
-        if not (self._client_secret or self._private_key):
+        if not self._sandbox_token and not (self._client_secret or self._private_key):
             raise ValueError("Either Client Secret or Private Key is required. Please set 'clientSecret' or 'privateKey'.")
 
         self.logger.debug(f"Client ID: {self._client_id}")
@@ -132,7 +133,6 @@ class Client:
         # Create and set up a session using 'requests' library for sync.
         self._session = requests.Session()
         self._request_executor.set_session(self._session)
-        self.authenticate()  # Authenticate when entering the context
         self.logger.debug("Session setup and authentication complete.")
         return self
 

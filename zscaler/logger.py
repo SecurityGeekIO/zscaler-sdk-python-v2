@@ -105,9 +105,6 @@ def dump_response(
     if params:
         full_url += "?" + urlencode(params)
     log_lines = []
-    response_body = ""
-    if resp.text:
-        response_body = resp.text
 
     if from_cache:
         log_lines.append(
@@ -118,6 +115,9 @@ def dump_response(
     log_lines.append(f"{method} {full_url}")
     for key, value in response_headers_dict.items():
         log_lines.append(f"{key}: {value}")
+    response_body = ""
+    if resp.text:
+        response_body = resp.text
     if response_body and response_body != "" and response_body != "null":
         log_lines.append(f"\n{response_body}")
     log_lines.append("-" * 68)

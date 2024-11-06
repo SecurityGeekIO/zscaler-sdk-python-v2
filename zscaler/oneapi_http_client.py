@@ -31,7 +31,7 @@ class HTTPClient:
             self._proxy = self._setup_proxy(http_config["proxy"])
         else:
             self._proxy = None
-            
+
         # Setup SSL context or handle disableHttpsCheck
         if "sslContext" in http_config:
             self._ssl_context = http_config["sslContext"]  # Use the custom SSL context
@@ -75,7 +75,6 @@ class HTTPClient:
 
             logger.info(f"Preparing to send {request['method']} request to {request['url']}")
             logger.debug(f"Request Headers: {headers}")
-            logger.debug(f"Request Data: {request.get('json') or request.get('data')}")
             logger.debug(f"Request Params: {request.get('params')}")
 
             # Prepare request parameters
@@ -92,7 +91,7 @@ class HTTPClient:
             if request.get("json"):
                 params["json"] = request["json"]
             elif request.get("data"):
-                params["data"] = json.dumps(request["data"])
+                params["data"] = request["data"]
             elif request.get("form"):
                 params["data"] = request["form"]
             if request["params"]:
@@ -107,7 +106,7 @@ class HTTPClient:
                 params.get("params"),
                 params.get("headers"),
                 request["uuid"],
-                body=True,
+                body=not ("/zscsb" in request["url"]),
             )
             start_time = time.time()  # Capture the start time before sending the request
             response = self._session.request(**params) if self._session else requests.request(**params)

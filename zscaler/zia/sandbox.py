@@ -67,6 +67,7 @@ class CloudSandboxAPI:
             body=file_content,
             params=params,
             headers={"Content-Type": "application/octet-stream"},
+            use_raw_data_for_body=True,
         )
 
         if error:
@@ -114,6 +115,7 @@ class CloudSandboxAPI:
             body=file_content,
             params=params,
             headers={"Content-Type": content_type},
+            use_raw_data_for_body=True,
         )
 
         if error:
@@ -285,11 +287,7 @@ class CloudSandboxAPI:
 
         payload = {"fileHashesToBeBlocked": file_hashes_to_be_blocked}
 
-        request, error = self._request_executor.create_request(
-            method=http_method,
-            endpoint=api_url,
-            body=payload
-        )
+        request, error = self._request_executor.create_request(method=http_method, endpoint=api_url, body=payload)
 
         if error:
             return (None, None, error)
