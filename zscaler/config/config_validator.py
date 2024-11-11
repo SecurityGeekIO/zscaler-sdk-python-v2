@@ -75,7 +75,7 @@ class ConfigValidator:
                 f"{newline}Errors:" f"{newline + newline.join(errors) + 2*newline}" f"Please check your configuration."
             )
         else:
-            logging.info("Configuration validation completed successfully.")
+            logging.debug("Configuration validation completed successfully.")
 
     def _validate_client_id(self, client_id):
         client_id_errors = []

@@ -73,10 +73,6 @@ class HTTPClient:
             if "Authorization" in headers:
                 headers["Authorization"] = "Bearer <TOKEN>"
 
-            logger.info(f"Preparing to send {request['method']} request to {request['url']}")
-            logger.debug(f"Request Headers: {headers}")
-            logger.debug(f"Request Params: {request.get('params')}")
-
             # Prepare request parameters
             params = {
                 "method": request["method"],
@@ -97,7 +93,6 @@ class HTTPClient:
             if request["params"]:
                 params["params"] = request["params"]
 
-            logger.info("Sending request...")
             dump_request(
                 logger,
                 params["url"],
@@ -139,11 +134,6 @@ class HTTPClient:
         Returns:
             Tuple(dict repr of response (if no error), any error found)
         """
-        logger.info(f"Checking response from {url}")
-        logger.debug(f"Response Status Code: {response_details.status_code}")
-        logger.debug(f"Response Headers: {response_details.headers}")
-        logger.debug(f"Response Body: {response_body}")
-
         # Check if response is JSON and parse it
         if "application/json" in response_details.headers.get("Content-Type", ""):
             try:
@@ -156,7 +146,6 @@ class HTTPClient:
             formatted_response = response_body
 
         if 200 <= response_details.status_code < 300:
-            logger.info("Response indicates success")
             return formatted_response, None
 
         logger.error(f"Error response from {url}: {response_details.status_code} - {formatted_response}")

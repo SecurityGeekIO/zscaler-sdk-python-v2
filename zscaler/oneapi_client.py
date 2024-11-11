@@ -37,16 +37,15 @@ class Client:
         client_config_setter = ConfigSetter()
         client_config_setter._apply_config({"client": user_config})
         self._config = client_config_setter.get_config()
-        self.logger.debug(f"Configuration applied: {self._config}")
 
         # Retrieve optional customerId from config or environment
         self._customer_id = self._config["client"].get("customerId", os.getenv("ZSCALER_CUSTOMER_ID"))
-        self.logger.debug(f"Customer ID set to: {self._customer_id}")
 
         # Prune unnecessary configuration fields
         self._config = client_config_setter._prune_config(self._config)
-        self.logger.debug(f"Configuration after pruning: {self._config}")
-
+        # Setup logging based on config
+        client_config_setter._setup_logging()
+        self.logger.debug(f"Customer ID set to: {self._customer_id}")
         # Validate configuration
         ConfigValidator(self._config)
         self.logger.debug("Configuration validated successfully.")

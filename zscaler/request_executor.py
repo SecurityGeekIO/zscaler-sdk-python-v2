@@ -181,8 +181,6 @@ class RequestExecutor:
         Returns:
             ZscalerAPIResponse or error
         """
-        logger.info(f"Executing request to URL: {request['url']}")
-
         # Extract and append query parameters from URL to request params
         request["url"], request["params"] = self._extract_and_append_query_params(request["url"], request.get("params", {}))
 

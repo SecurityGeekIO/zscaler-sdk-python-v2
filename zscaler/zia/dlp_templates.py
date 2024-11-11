@@ -67,7 +67,6 @@ class DLPTemplatesAPI(APIClient):
         """
         )
 
-        # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
 
         # Prepare request body and headers
