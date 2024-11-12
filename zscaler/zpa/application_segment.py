@@ -54,14 +54,11 @@ class ApplicationSegmentAPI(APIClient):
             tuple: A tuple containing (list of ApplicationSegment instances, Response, error)
         """
         http_method = "get".upper()
-        api_url = format_url(
-            f"""
+        api_url = format_url(f"""
             {self._zpa_base_endpoint}
             /application
-        """
-        )
+        """)
 
-        # Handle optional query parameters
         query_params = query_params or {}
         query_params.update(kwargs)
 
@@ -69,20 +66,22 @@ class ApplicationSegmentAPI(APIClient):
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        # Prepare request
-        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        # Execute the request
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
             for item in response.get_all_pages_results():
-                result.append(ApplicationSegment(self.form_response_body(item)))
+                result.append(ApplicationSegment(
+                    self.form_response_body(item))
+                )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -101,14 +100,11 @@ class ApplicationSegmentAPI(APIClient):
             tuple: A tuple containing the `ApplicationSegment` instance, response object, and error if any.
         """
         http_method = "get".upper()
-        api_url = format_url(
-            f"""
+        api_url = format_url(f"""
             {self._zpa_base_endpoint}
             /application/{segment_id}
-        """
-        )
+        """)
 
-        # Handle optional query parameters
         query_params = query_params or {}
 
         microtenant_id = query_params.get("microtenant_id", None)
@@ -116,18 +112,21 @@ class ApplicationSegmentAPI(APIClient):
             query_params["microtenantId"] = microtenant_id
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, ApplicationSegment)
+        response, error = self._request_executor\
+            .execute(request, ApplicationSegment)
         if error:
             return (None, response, error)
 
-        # Parse the response into an AppConnectorGroup instance
         try:
-            result = ApplicationSegment(self.form_response_body(response.get_body()))
+            result = ApplicationSegment(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -149,12 +148,10 @@ class ApplicationSegmentAPI(APIClient):
             tuple: A tuple containing the `ApplicationSegment` instance, response object, and error if any.
         """
         http_method = "post".upper()
-        api_url = format_url(
-            f"""
+        api_url = format_url(f"""
             {self._zpa_base_endpoint}
             /application
-        """
-        )
+        """)
 
         # Construct the body from kwargs (as a dictionary)
         body = kwargs
@@ -181,17 +178,21 @@ class ApplicationSegmentAPI(APIClient):
         add_id_groups(self.reformat_params, kwargs, body)
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body=body, params=params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body=body, params=params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, ApplicationSegment)
+        response, error = self._request_executor\
+            .execute(request, ApplicationSegment)
         if error:
             return (None, response, error)
 
         try:
-            result = ApplicationSegment(self.form_response_body(response.get_body()))
+            result = ApplicationSegment(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -210,12 +211,10 @@ class ApplicationSegmentAPI(APIClient):
             tuple: A tuple containing the updated `ApplicationSegment` instance, response object, and error if any.
         """
         http_method = "put".upper()
-        api_url = format_url(
-            f"""
+        api_url = format_url(f"""
             {self._zpa_base_endpoint}
             /application/{segment_id}
-        """
-        )
+        """)
 
         # Construct the body from kwargs (as a dictionary)
         body = kwargs
@@ -244,32 +243,36 @@ class ApplicationSegmentAPI(APIClient):
         if kwargs.get("udp_port_ranges"):
             body["udpPortRange"] = [{"from": ports[0], "to": ports[1]} for ports in kwargs.pop("udp_port_ranges")]
 
-        # Apply reformatting of certain fields (if necessary)
         add_id_groups(self.reformat_params, kwargs, body)
 
-        # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body, {}, params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, {}, params)
         if error:
             return (None, None, error)
 
-        # Execute the request
-        response, error = self._request_executor.execute(request, ApplicationSegment)
+        response, error = self._request_executor\
+            .execute(request, ApplicationSegment)
         if error:
             return (None, response, error)
 
-        # Handle case where no content is returned (204 No Content)
         if response is None:
-            # Return a meaningful result to indicate success
             return (ApplicationSegment({"id": segment_id}), None, None)
 
         try:
-            result = ApplicationSegment(self.form_response_body(response.get_body()))
+            result = ApplicationSegment(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
 
         return (result, response, None)
 
-    def delete_segment(self, segment_id: str, force_delete: bool = False, microtenant_id: str = None) -> tuple:
+    def delete_segment(
+        self,
+        segment_id: str,
+        force_delete: bool = False,
+        microtenant_id: str = None
+    ) -> tuple:
         """
         Deletes the specified Application Segment from ZPA.
 
@@ -308,7 +311,12 @@ class ApplicationSegmentAPI(APIClient):
 
         return (None, response, None)
 
-    def get_segments_by_type(self, application_type: str, expand_all: bool = False, query_params=None, **kwargs) -> tuple:
+    def get_segments_by_type(
+        self,
+        application_type: str,
+        expand_all: bool = False,
+        query_params=None, **kwargs
+    ) -> tuple:
         """
         Retrieve all configured application segments of a specified type, optionally expanding all related data.
 
@@ -335,7 +343,6 @@ class ApplicationSegmentAPI(APIClient):
             >>> search = "ba_server01"
             >>> app_segments = zpa.app_segments.get_segments_by_type(app_type, expand_all, search=search)
         """
-        # Ensure the applicationType is provided
         if not application_type:
             raise ValueError("The 'application_type' parameter must be provided.")
 
@@ -347,35 +354,26 @@ class ApplicationSegmentAPI(APIClient):
         """
         )
 
-        # Initialize query parameters and update with additional kwargs
         query_params = query_params or {}
         query_params.update(kwargs)
-
-        # Ensure applicationType is always present in the query parameters
         query_params["applicationType"] = application_type
+        query_params["expandAll"] = str(expand_all).lower()
 
-        # Handle optional expandAll parameter (add even when False as per API requirement)
-        query_params["expandAll"] = str(expand_all).lower()  # Converts True/False to 'true'/'false'
-
-        # Handle microtenant_id if provided
         microtenant_id = query_params.get("microtenant_id", None)
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        # Prepare request
         request, error = self._request_executor\
             .create_request(http_method, api_url, body={}, headers={}, params=query_params)
         if error:
             return (None, None, error)
 
-        # Execute the request
         response, error = self._request_executor\
             .execute(request)
         if error:
             return (None, response, error)
 
         try:
-            # Directly return the raw response data as a list of dictionaries
             result = response.get_all_pages_results()
         except Exception as error:
             return (None, response, error)
@@ -420,39 +418,33 @@ class ApplicationSegmentAPI(APIClient):
             /application/{application_id}/move
         """)
 
-        # Construct the payload based on endpoint requirements
         payload = {
             "targetSegmentGroupId": kwargs.pop("target_segment_group_id", None),
             "targetMicrotenantId": kwargs.pop("target_microtenant_id", None),
             "targetServerGroupId": kwargs.pop("target_server_group_id", None),
         }
 
-        # Handle optional microtenant_id query parameter if passed
         microtenant_id = kwargs.pop("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        # Create the request with the constructed payload and params
         request, error = self._request_executor.create_request(
             method=http_method,
             endpoint=api_url,
             body=payload,
-            params=params  # This will append microtenantId to the URL as a query parameter
+            params=params
         )
 
         if error:
             return (None, None, error)
 
-        # Execute the request
         response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
-        # Handle 204 No Content response
         if response and response.status_code == 204:
             logger.debug("Move operation completed successfully with 204 No Content.")
             return ({"message": "Move operation completed successfully."}, response, None)
 
-        # Attempt to retrieve the response body if available for other status codes
         try:
             result = response.get_body() if response else {}
         except Exception as error:
@@ -498,32 +490,27 @@ class ApplicationSegmentAPI(APIClient):
             "shareToMicrotenants": kwargs.pop("share_to_microtenants", None),
         }
         
-        # Handle optional microtenant_id query parameter if passed
         microtenant_id = kwargs.pop("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        # Create the request with the constructed payload and params
         request, error = self._request_executor.create_request(
             method=http_method,
             endpoint=api_url,
             body=payload,
-            params=params  # This will append microtenantId to the URL as a query parameter
+            params=params
         )
 
         if error:
             return (None, None, error)
 
-        # Execute the request
         response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
-        # Handle 204 No Content response
         if response and response.status_code == 204:
             logger.debug("Sharing operation completed successfully with 204 No Content.")
             return ({"message": "Shareing operation completed successfully."}, response, None)
 
-        # Attempt to retrieve the response body if available for other status codes
         try:
             result = response.get_body() if response else {}
         except Exception as error:
