@@ -5,7 +5,6 @@ from zscaler.oneapi_http_client import HTTPClient
 from zscaler.oneapi_response import ZscalerAPIResponse
 from zscaler.oneapi_oauth_client import OAuth
 from zscaler.user_agent import UserAgent
-from zscaler.utils import convert_date_time_to_seconds
 from zscaler.error_messages import ERROR_MESSAGE_429_MISSING_DATE_X_RESET
 from http import HTTPStatus
 from zscaler.helpers import convert_keys_to_snake_case, convert_keys_to_camel_case

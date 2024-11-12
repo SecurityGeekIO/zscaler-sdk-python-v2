@@ -18,7 +18,8 @@ from zscaler.api_client import APIClient
 from zscaler.request_executor import RequestExecutor
 from zscaler.zpa.models.application_segment import ApplicationSegment
 from zscaler.utils import format_url, add_id_groups
-
+import logging
+logger = logging.getLogger(__name__)
 
 class ApplicationSegmentAPI(APIClient):
     reformat_params = [
@@ -362,7 +363,82 @@ class ApplicationSegmentAPI(APIClient):
             query_params["microtenantId"] = microtenant_id
 
         # Prepare request
-        request, error = self._request_executor.create_request(http_method, api_url, body={}, headers={}, params=query_params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body={}, headers={}, params=query_params)
+        if error:
+            return (None, None, error)
+
+        # Execute the request
+        response, error = self._request_executor\
+            .execute(request)
+        if error:
+            return (None, response, error)
+
+        try:
+            # Directly return the raw response data as a list of dictionaries
+            result = response.get_all_pages_results()
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
+
+    def app_segment_move(self, application_id: str, **kwargs) -> tuple:
+        """
+        Moves application segments from one microtenant to another
+        Note: Application segments can only be moved from a Default Microtenant microtenant_id as 0 to a child tenant
+
+        Args:
+            application_id (str):
+                The unique identifier of the Application Segment.
+            target_segment_group_id (str):
+                The unique identifier of the target segment group that the application segment is being moved to.
+            target_server_group_id (str):
+                The unique identifier of the target server group that the application segment is being moved to.
+            target_microtenant_id (str):
+                The unique identifier of the Microtenant that the application segment is being moved to.
+
+        Keyword Args:
+            ...
+
+        Returns:
+            :obj:`Box`: The resource record for the moved application segment.
+
+        Examples:
+            Moving an application segment to another microtenant:
+
+            >>> zpa.app_segments.app_segment_move(
+            ...    application_id='216199618143373016',
+            ...    target_segment_group_id='216199618143373010',
+            ...    target_server_group_id='216199618143373012',
+            ...    target_microtenant_id='216199618143372994'
+            ... )
+
+        """
+        http_method = "post".upper()
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint}
+            /application/{application_id}/move
+        """)
+
+        # Construct the payload based on endpoint requirements
+        payload = {
+            "targetSegmentGroupId": kwargs.pop("target_segment_group_id", None),
+            "targetMicrotenantId": kwargs.pop("target_microtenant_id", None),
+            "targetServerGroupId": kwargs.pop("target_server_group_id", None),
+        }
+
+        # Handle optional microtenant_id query parameter if passed
+        microtenant_id = kwargs.pop("microtenant_id", None)
+        params = {"microtenantId": microtenant_id} if microtenant_id else {}
+
+        # Create the request with the constructed payload and params
+        request, error = self._request_executor.create_request(
+            method=http_method,
+            endpoint=api_url,
+            body=payload,
+            params=params  # This will append microtenantId to the URL as a query parameter
+        )
+
         if error:
             return (None, None, error)
 
@@ -371,10 +447,87 @@ class ApplicationSegmentAPI(APIClient):
         if error:
             return (None, response, error)
 
+        # Handle 204 No Content response
+        if response and response.status_code == 204:
+            logger.debug("Move operation completed successfully with 204 No Content.")
+            return ({"message": "Move operation completed successfully."}, response, None)
+
+        # Attempt to retrieve the response body if available for other status codes
         try:
-            # Directly return the raw response data as a list of dictionaries
-            result = response.get_all_pages_results()
+            result = response.get_body() if response else {}
         except Exception as error:
+            logger.debug(f"Error retrieving response body: {error}")
+            return (None, response, error)
+
+        return (result, response, None)
+
+    def app_segment_share(self, application_id: str, **kwargs) -> tuple:
+        """
+        Moves application segments from one microtenant to another
+        Note: Application segments can only be shared between child tenants.
+
+        Args:
+            application_id (str):
+                The unique identifier of the Application Segment.
+            share_to_microtenants (:obj:`list` of :obj:`str`):
+                The unique identifier of the Microtenant that the application segment is being shared to.
+                This field is required if you want to share an application segment.
+                To remove the share send the attribute as an empty list.
+        Keyword Args:
+            ...
+
+        Returns:
+            :obj:`Box`: An empty Box object if the operation is successful.
+
+        Examples:
+            Moving an application segment to another microtenant:
+
+            >>> zpa.app_segments.app_segment_share(
+            ...    application_id='216199618143373016',
+            ...    share_to_microtenants=['216199618143373010']
+            ... )
+
+        """
+        http_method = "put".upper()
+        api_url = format_url(f"""
+            {self._zpa_base_endpoint}
+            /application/{application_id}/share
+        """)
+        
+        payload = {
+            "shareToMicrotenants": kwargs.pop("share_to_microtenants", None),
+        }
+        
+        # Handle optional microtenant_id query parameter if passed
+        microtenant_id = kwargs.pop("microtenant_id", None)
+        params = {"microtenantId": microtenant_id} if microtenant_id else {}
+
+        # Create the request with the constructed payload and params
+        request, error = self._request_executor.create_request(
+            method=http_method,
+            endpoint=api_url,
+            body=payload,
+            params=params  # This will append microtenantId to the URL as a query parameter
+        )
+
+        if error:
+            return (None, None, error)
+
+        # Execute the request
+        response, error = self._request_executor.execute(request)
+        if error:
+            return (None, response, error)
+
+        # Handle 204 No Content response
+        if response and response.status_code == 204:
+            logger.debug("Sharing operation completed successfully with 204 No Content.")
+            return ({"message": "Shareing operation completed successfully."}, response, None)
+
+        # Attempt to retrieve the response body if available for other status codes
+        try:
+            result = response.get_body() if response else {}
+        except Exception as error:
+            logger.debug(f"Error retrieving response body: {error}")
             return (None, response, error)
 
         return (result, response, None)

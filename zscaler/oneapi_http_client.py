@@ -138,7 +138,7 @@ class HTTPClient:
         if "application/json" in response_details.headers.get("Content-Type", ""):
             try:
                 formatted_response = json.loads(response_body)
-                logger.debug("Successfully parsed JSON response")
+                # logger.debug("Successfully parsed JSON response")
             except json.JSONDecodeError as e:
                 logger.error(f"Failed to parse JSON response: {e}")
                 return None, e
