@@ -27,6 +27,7 @@ class ConfigSetter:
             "customerId": "",
             "microtenantId": "",
             "sandboxToken": "",
+            "sandboxCloud": "",
             "connectionTimeout": 30,
             "requestTimeout": 0,
             "cache": {
@@ -53,8 +54,6 @@ class ConfigSetter:
         self._config = ConfigSetter._DEFAULT_CONFIG
         # Update configuration
         self._update_config()
-        # Setup logging based on config
-        self._setup_logging()
 
     def get_config(self):
         """
@@ -113,11 +112,11 @@ class ConfigSetter:
         verbose_logging = self._config["client"]["logging"].get("verbose", False)
 
         if logging_enabled:
-            logger.info("Enabling logging for Zscaler SDK.")
+            logger.debug("Enabling logging for Zscaler SDK.")
             os.environ["ZSCALER_SDK_LOG"] = "true"
             os.environ["ZSCALER_SDK_VERBOSE"] = "true" if verbose_logging else "false"
         else:
-            logger.info("Disabling logging for Zscaler SDK.")
+            logger.debug("Disabling logging for Zscaler SDK.")
             os.environ["ZSCALER_SDK_LOG"] = "false"
 
     def _apply_default_values(self):

@@ -30,7 +30,7 @@ class OAuth:
             self._request_executor = request_executor
             self._config = config
             self._access_token = None
-            logging.info("OAuth instance created with provided configuration.")
+            logging.debug("OAuth instance created with provided configuration.")
             self._initialized = True
 
     def authenticate(self):
@@ -93,7 +93,7 @@ class OAuth:
             "User-Agent": user_agent,
         }
 
-        logging.info(f"Sending authentication request to {auth_url}.")
+        logging.debug(f"Sending authentication request to {auth_url}.")
         # Synchronous HTTP request (with form data in the body)
         response = requests.post(auth_url, data=form_data, headers=headers)
 
@@ -101,7 +101,7 @@ class OAuth:
             logging.error(f"Error authenticating: {response.status_code}, {response.text}")
             raise Exception(f"Error authenticating: {response.status_code}, {response.text}")
 
-        logging.info("Authentication with client secret successful.")
+        logging.debug("Authentication with client secret successful.")
         return response
 
     def _authenticate_with_private_key(self, client_id, private_key_path):
@@ -152,7 +152,7 @@ class OAuth:
             "User-Agent": user_agent,
         }
 
-        logging.info(f"Sending authentication request to {auth_url} with JWT.")
+        logging.debug(f"Sending authentication request to {auth_url} with JWT.")
         # Synchronous HTTP request
         response = requests.post(auth_url, data=form_data, headers=headers)
 
@@ -187,7 +187,7 @@ class OAuth:
                 # Extract access token from the parsed response
                 if isinstance(parsed_response, dict):
                     self._access_token = parsed_response.get("access_token")
-                    logging.info("Access token successfully retrieved.")
+                    logging.debug("Access token successfully retrieved.")
                 else:
                     logging.error("Parsed response is not a dictionary as expected.")
                     raise ValueError("Parsed response is not a dictionary as expected")

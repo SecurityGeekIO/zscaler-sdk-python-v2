@@ -76,8 +76,6 @@ class DLPWebRuleAPI(APIClient):
         """
         http_method = "get".upper()
         api_url = format_url(f"{self._zia_base_endpoint}/ruleLabels")
-
-        # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
 
         # Prepare request body and headers
@@ -166,8 +164,6 @@ class DLPWebRuleAPI(APIClient):
         """
         http_method = "get".upper()
         api_url = format_url(f"{self._zia_base_endpoint}/webDlpRules/lite")
-
-        # Handle query parameters (including microtenant_id if provided)
         query_params = query_params or {}
 
         # Prepare request body and headers

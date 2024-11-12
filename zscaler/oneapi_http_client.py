@@ -31,7 +31,7 @@ class HTTPClient:
             self._proxy = self._setup_proxy(http_config["proxy"])
         else:
             self._proxy = None
-            
+
         # Setup SSL context or handle disableHttpsCheck
         if "sslContext" in http_config:
             self._ssl_context = http_config["sslContext"]  # Use the custom SSL context
@@ -73,11 +73,6 @@ class HTTPClient:
             if "Authorization" in headers:
                 headers["Authorization"] = "Bearer <TOKEN>"
 
-            logger.info(f"Preparing to send {request['method']} request to {request['url']}")
-            logger.debug(f"Request Headers: {headers}")
-            logger.debug(f"Request Data: {request.get('json') or request.get('data')}")
-            logger.debug(f"Request Params: {request.get('params')}")
-
             # Prepare request parameters
             params = {
                 "method": request["method"],
@@ -92,13 +87,12 @@ class HTTPClient:
             if request.get("json"):
                 params["json"] = request["json"]
             elif request.get("data"):
-                params["data"] = json.dumps(request["data"])
+                params["data"] = request["data"]
             elif request.get("form"):
                 params["data"] = request["form"]
             if request["params"]:
                 params["params"] = request["params"]
 
-            logger.info("Sending request...")
             dump_request(
                 logger,
                 params["url"],
@@ -107,7 +101,7 @@ class HTTPClient:
                 params.get("params"),
                 params.get("headers"),
                 request["uuid"],
-                body=True,
+                body=not ("/zscsb" in request["url"]),
             )
             start_time = time.time()  # Capture the start time before sending the request
             response = self._session.request(**params) if self._session else requests.request(**params)
@@ -140,16 +134,11 @@ class HTTPClient:
         Returns:
             Tuple(dict repr of response (if no error), any error found)
         """
-        logger.info(f"Checking response from {url}")
-        logger.debug(f"Response Status Code: {response_details.status_code}")
-        logger.debug(f"Response Headers: {response_details.headers}")
-        logger.debug(f"Response Body: {response_body}")
-
         # Check if response is JSON and parse it
         if "application/json" in response_details.headers.get("Content-Type", ""):
             try:
                 formatted_response = json.loads(response_body)
-                logger.debug("Successfully parsed JSON response")
+                # logger.debug("Successfully parsed JSON response")
             except json.JSONDecodeError as e:
                 logger.error(f"Failed to parse JSON response: {e}")
                 return None, e
@@ -157,7 +146,6 @@ class HTTPClient:
             formatted_response = response_body
 
         if 200 <= response_details.status_code < 300:
-            logger.info("Response indicates success")
             return formatted_response, None
 
         logger.error(f"Error response from {url}: {response_details.status_code} - {formatted_response}")

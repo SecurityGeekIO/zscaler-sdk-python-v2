@@ -46,7 +46,9 @@ class ConfigValidator:
             proxy_errors = self._validate_proxy_settings(client["proxy"])
             logging.debug(f"Proxy errors: {proxy_errors}")
             errors += proxy_errors
-
+        sandbox_token = client.get("sandboxToken", "")
+        if sandbox_token:
+            return
         # Validate OAuth2 Client ID and Client Secret or PrivateKey
         client_id = client.get("clientId", "")
         client_secret = client.get("clientSecret", "")
@@ -73,7 +75,7 @@ class ConfigValidator:
                 f"{newline}Errors:" f"{newline + newline.join(errors) + 2*newline}" f"Please check your configuration."
             )
         else:
-            logging.info("Configuration validation completed successfully.")
+            logging.debug("Configuration validation completed successfully.")
 
     def _validate_client_id(self, client_id):
         client_id_errors = []
