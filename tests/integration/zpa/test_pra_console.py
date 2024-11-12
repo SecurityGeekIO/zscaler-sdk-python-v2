@@ -132,7 +132,7 @@ class TestAccessPrivilegedConsoleV2:
             # Get the Application Segment ID for the newly created segment
             try:
                 search_name = app_segment_config_name
-                app_segments = client.app_segments.get_segments_by_type(
+                app_segments = client.zpa.app_segments.get_segments_by_type(
                     application_type="SECURE_REMOTE_ACCESS", search=search_name
                 )
                 assert app_segments and len(app_segments) > 0, "No segments found with the specified name."

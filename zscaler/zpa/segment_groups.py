@@ -50,7 +50,19 @@ class SegmentGroupsAPI(APIClient):
             tuple: A tuple containing (list of SegmentGroup instances, Response, error)
 
         Example:
-            >>> segment_groups = zpa.segment_groups.list_groups(search="example", pagesize=100)
+            # Fetch all segment groups without filtering
+            >>> segment_groups, response, err = zpa.segment_groups.list_groups()
+
+            # Fetch segment groups with a search term
+            >>> segment_groups, response, err = zpa.segment_groups.list_groups(
+            ...     query_params={"search": "example"}
+            ... )
+
+            # Fetch segment groups with a specific microtenant ID
+            >>> microtenant_id = "216196257331380392"
+            >>> segment_groups, response, err = zpa.segment_groups.list_groups(
+            ...     query_params={"microtenant_id": microtenant_id, "pagesize": 100}
+            ... )
         """
         http_method = "get".upper()
         api_url = format_url(f"""
@@ -94,6 +106,17 @@ class SegmentGroupsAPI(APIClient):
 
         Returns:
             SegmentGroup: The corresponding segment group object.
+            
+        Example:
+            # Retrieve details of a specific segment group
+            >>> group_id = "216196257331370181"
+            >>> segment_group, response, err = zpa.segment_groups.get_group(group_id)
+
+            # Retrieve segment group details for a specific microtenant
+            >>> microtenant_id = "216196257331380392"
+            >>> segment_group, response, err = zpa.segment_groups.get_group(
+            ...     group_id, query_params={"microtenant_id": microtenant_id}
+            ... )
         """
         http_method = "get".upper()
         api_url = format_url(f"""
@@ -101,25 +124,25 @@ class SegmentGroupsAPI(APIClient):
             /segmentGroup/{group_id}
         """)
 
-        # Handle optional query parameters
         query_params = query_params or {}
         microtenant_id = query_params.get("microtenant_id", None)
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        # Execute the request
-        response, error = self._request_executor.execute(request, SegmentGroup)
+        response, error = self._request_executor\
+            .execute(request, SegmentGroup)
         if error:
             return (None, response, error)
 
-        # Parse the response into an AppConnectorGroup instance
         try:
-            result = SegmentGroup(self.form_response_body(response.get_body()))
+            result = SegmentGroup(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -130,33 +153,44 @@ class SegmentGroupsAPI(APIClient):
 
         Args:
             name (str): The name of the segment group.
+            description (str): The description of the segment group.
             enabled (bool): Enable the segment group. Defaults to True.
 
         Returns:
             SegmentGroup: The created segment group object.
+            
+        Example:
+            # Basic example: Add a new segment group
+            >>> new_group, response, err = zpa.segment_groups.add_group(
+            ...     name="Example Group",
+            ...     description="This is an example segment group.",
+            ...     enabled=True
+            ... )
+
+            # Adding a new segment group for a specific microtenant
+            >>> new_group, response, err = zpa.segment_groups.add_group(
+            ...     name="Tenant Group",
+            ...     description="Segment group for microtenant",
+            ...     enabled=True,
+            ...     microtenant_id="216196257331380392"
+            ... )
         """
         http_method = "post".upper()
-        api_url = format_url(
-            f"""
+        api_url = format_url(f"""
             {self._zpa_base_endpoint}
             /segmentGroup
-        """
-        )
+        """)
 
-        # Construct the body from kwargs (as a dictionary)
         body = kwargs
 
-        # Check if microtenant_id is set in the body, and use it to set query parameter
         microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        # Create the request
         request, error = self._request_executor\
             .create_request(http_method, api_url, body=body, params=params)
         if error:
             return (None, None, error)
 
-        # Execute the request
         response, error = self._request_executor\
             .execute(request, SegmentGroup)
         if error:
@@ -179,42 +213,53 @@ class SegmentGroupsAPI(APIClient):
 
         Returns:
             SegmentGroup: The updated segment group object.
+
+        Example:
+            # Basic example: Update an existing segment group
+            >>> group_id = "216196257331370181"
+            >>> updated_group, response, err = zpa.segment_groups.update_group(
+            ...     group_id,
+            ...     name="Updated Group Name",
+            ...     description="Updated description for the segment group",
+            ...     enabled=False
+            ... )
+
+            # Updating a segment group for a specific microtenant
+            >>> group_id = "216196257331370181"
+            >>> updated_group, response, err = zpa.segment_groups.update_group(
+            ...     group_id,
+            ...     name="Tenant-Specific Group Update",
+            ...     description="Updated segment group for microtenant",
+            ...     enabled=True,
+            ...     microtenant_id="216196257331380392"
+            ... )
         """
         http_method = "put".upper()
-        api_url = format_url(
-            f"""
+        api_url = format_url(f"""
             {self._zpa_base_endpoint}
             /segmentGroup/{group_id}
-        """
-        )
+        """)
 
-        # Start with an empty body or an existing resource's current data
         body = {}
 
-        # Update the body with the fields passed in kwargs
         body.update(kwargs)
 
-        # Use get instead of pop to keep microtenant_id in the body
         microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        # Create the request
         request, error = self._request_executor\
             .create_request(http_method, api_url, body, {}, params)
         if error:
             return (None, None, error)
 
-        # Execute the request
         response, error = self._request_executor\
             .execute(request, SegmentGroup)
         if error:
             return (None, response, error)
 
-        # If no response body, return a minimal SegmentGroup instance with just the ID
         if response is None:
             return (SegmentGroup({"id": group_id}), None, None)
 
-        # Parse the response into a SegmentGroup instance
         try:
             result = SegmentGroup(
                 self.form_response_body(response.get_body())
@@ -232,39 +277,50 @@ class SegmentGroupsAPI(APIClient):
 
         Returns:
             SegmentGroup: The updated segment group object.
+        Example:
+            # Basic example: Update an existing segment group
+            >>> group_id = "216196257331370181"
+            >>> updated_group, response, err = zpa.segment_groups.update_group_v2(
+            ...     group_id,
+            ...     name="Updated Group Name",
+            ...     description="Updated description for the segment group",
+            ...     enabled=False
+            ... )
+
+            # Updating a segment group for a specific microtenant
+            >>> group_id = "216196257331370181"
+            >>> updated_group, response, err = zpa.segment_groups.update_group_v2(
+            ...     group_id,
+            ...     name="Tenant-Specific Group Update",
+            ...     description="Updated segment group for microtenant",
+            ...     enabled=True,
+            ...     microtenant_id="216196257331380392"
+            ... )
         """
         http_method = "put".upper()
-        api_url = format_url(
-            f"""
+        api_url = format_url(f"""
             {self._zpa_base_endpoint_v2}
             /segmentGroup/{group_id}
-        """
-        )
+        """)
 
-        # Add any additional fields from kwargs to the body
         body = kwargs
 
-        # Use get instead of pop to keep microtenant_id in the body
         microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        # Create the request
         request, error = self._request_executor\
             .create_request(http_method, api_url, body, {}, params)
         if error:
             return (None, None, error)
 
-        # Execute the request
         response, error = self._request_executor\
             .execute(request, SegmentGroup)
         if error:
             return (None, response, error)
 
-        # If no response body, return a minimal SegmentGroup instance with just the ID
         if response is None:
             return (SegmentGroup({"id": group_id}), None, None)
 
-        # Parse the response into a SegmentGroup instance
         try:
             result = SegmentGroup(
                 self.form_response_body(response.get_body())
@@ -282,6 +338,13 @@ class SegmentGroupsAPI(APIClient):
 
         Returns:
             int: Status code of the delete operation.
+
+        Example:
+            # Delete a segment group by ID
+            >>> zpa.segment_groups.delete_group("216196257331370181")
+
+            # Delete a segment group for a specific microtenant
+            >>> zpa.segment_groups.delete_group("216196257331370181", microtenant_id="216196257331380392")
         """
         http_method = "delete".upper()
         api_url = format_url(f"""
@@ -289,7 +352,6 @@ class SegmentGroupsAPI(APIClient):
             /segmentGroup/{group_id}
         """)
 
-        # Handle microtenant_id in URL params if provided
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         # Create the request
@@ -303,5 +365,4 @@ class SegmentGroupsAPI(APIClient):
 
         if error:
             return (None, response, error)
-
         return (None, response, error)

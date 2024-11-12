@@ -16,6 +16,7 @@ from zscaler.zia.device_management import DeviceManagementAPI
 from zscaler.zia.firewall import FirewallPolicyAPI
 from zscaler.zia.forwarding_control import ForwardingControlAPI
 from zscaler.zia.locations import LocationsAPI
+from zscaler.zia.pac_files import PacFilesAPI
 from zscaler.zia.rule_labels import RuleLabelsAPI
 from zscaler.zia.security_policy_settings import SecurityPolicyAPI
 from zscaler.zia.ssl_inspection import SSLInspectionAPI
@@ -189,6 +190,14 @@ class ZIAService:
         """
         return RuleLabelsAPI(self._request_executor)
 
+    @property
+    def pac_files(self):
+        """
+        The interface object for the :ref:`ZIA Pac Files interface <zia-pac_files>`.
+
+        """
+        return PacFilesAPI(self._request_executor)
+    
     @property
     def security_policy_settings(self):
         """
