@@ -80,12 +80,10 @@ class FirewallPolicyAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(
-            f"""
+        api_url = format_url(f"""
             {self._zia_base_endpoint}
             /firewallFilteringRules
-        """
-        )
+        """)
 
         query_params = query_params or {}
 

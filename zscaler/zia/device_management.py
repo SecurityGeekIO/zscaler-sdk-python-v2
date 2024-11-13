@@ -73,12 +73,14 @@ class DeviceManagementAPI(APIClient):
         headers = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
 
         if error:
             return (None, response, error)
@@ -86,7 +88,9 @@ class DeviceManagementAPI(APIClient):
         try:
             result = []
             for item in response.get_all_pages_results():
-                result.append(DeviceGroups(self.form_response_body(item)))
+                result.append(DeviceGroups(
+                    self.form_response_body(item))
+                )
         except Exception as error:
             return (None, response, error)
 
@@ -125,12 +129,10 @@ class DeviceManagementAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(
-            f"""
+        api_url = format_url(f"""
             {self._zia_base_endpoint}
             /deviceGroups/devices
-        """
-        )
+        """)
         query_params = query_params or {}
 
         # Prepare request body and headers
@@ -138,12 +140,14 @@ class DeviceManagementAPI(APIClient):
         headers = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
 
         if error:
             return (None, response, error)
@@ -151,7 +155,9 @@ class DeviceManagementAPI(APIClient):
         try:
             result = []
             for item in response.get_all_pages_results():
-                result.append(Devices(self.form_response_body(item)))
+                result.append(Devices(
+                    self.form_response_body(item))
+                )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)

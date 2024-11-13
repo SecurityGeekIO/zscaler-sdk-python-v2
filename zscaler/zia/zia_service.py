@@ -19,7 +19,7 @@ from zscaler.zia.locations import LocationsAPI
 from zscaler.zia.pac_files import PacFilesAPI
 from zscaler.zia.rule_labels import RuleLabelsAPI
 from zscaler.zia.security_policy_settings import SecurityPolicyAPI
-from zscaler.zia.ssl_inspection import SSLInspectionAPI
+from zscaler.zia.intermediate_certificates import IntermediateCertsAPI
 from zscaler.zia.traffic_gre_tunnels import TrafficForwardingGRETunnelAPI
 from zscaler.zia.traffic_vpn_credentials import TrafficVPNCredentialAPI
 from zscaler.zia.traffic_static_ip import TrafficStaticIPAPI
@@ -207,12 +207,12 @@ class ZIAService:
         return SecurityPolicyAPI(self._request_executor)
 
     @property
-    def ssl_inspection(self):
+    def intermediate_certificates(self):
         """
-        The interface object for the :ref:`ZIA SSL Inspection interface <zia-ssl_inspection>`.
+        The interface object for the :ref:`ZIA Intermediate Certificate interface <zia-intermediate_certificates>`.
 
         """
-        return SSLInspectionAPI(self._request_executor)
+        return IntermediateCertsAPI(self._request_executor)
 
     @property
     def traffic_gre_tunnel(self):

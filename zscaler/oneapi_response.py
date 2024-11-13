@@ -122,7 +122,7 @@ class ZscalerAPIResponse:
         """
         Returns the response body of the Zscaler API Response.
         """
-        logger.debug("Fetching response body")
+        # logger.debug("Fetching response body")
         return self._body
 
     def get_status(self):
@@ -137,7 +137,7 @@ class ZscalerAPIResponse:
         Converts JSON response text into Python dictionary or list depending on the service.
         Handles ZPA's totalPages/totalCount, ZIA's raw list response, and ZDX offset/limit.
         """
-        logger.debug("Building JSON response")
+        # logger.debug("Building JSON response")
         self._body = json.loads(response_body)
 
         if isinstance(self._body, list):

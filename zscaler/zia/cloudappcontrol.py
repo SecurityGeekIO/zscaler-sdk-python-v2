@@ -18,8 +18,13 @@ from zscaler.api_client import APIClient
 from zscaler.request_executor import RequestExecutor
 from zscaler.zia.models.cloudappcontrol import CloudApplicationControl
 from zscaler.zia.models.cloudappcontrol import Application
-
-from zscaler.utils import convert_keys, recursive_snake_to_camel, snake_to_camel, transform_common_id_fields, format_url
+from zscaler.utils import (
+    convert_keys, 
+    recursive_snake_to_camel, 
+    snake_to_camel, 
+    transform_common_id_fields, 
+    format_url
+)
 
 
 class CloudAppControlAPI(APIClient):
@@ -72,12 +77,10 @@ class CloudAppControlAPI(APIClient):
 
         """
         http_method = "post".upper()
-        api_url = format_url(
-            f"""
+        api_url = format_url(f"""
             {self._zia_base_endpoint}
             /webApplicationRules/{rule_type}/availableActions"
-        """
-        )
+        """)
 
         # Prepare request body and headers
         body = {}
@@ -139,13 +142,15 @@ class CloudAppControlAPI(APIClient):
         headers = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
 
         if error:
             return (None, response, error)
@@ -178,31 +183,33 @@ class CloudAppControlAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(
-            f"""
+        api_url = format_url(f"""
             {self._zia_base_endpoint}
             /webApplicationRules/{rule_type}/{rule_id}
-        """
-        )
+        """)
 
         body = {}
         headers = {}
 
         # Create the reques
-        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, headers)
 
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, CloudApplicationControl)
+        response, error = self._request_executor\
+            .execute(request, CloudApplicationControl)
 
         if error:
             return (None, response, error)
 
         # Parse the response
         try:
-            result = CloudApplicationControl(self.form_response_body(response.get_body()))
+            result = CloudApplicationControl(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
