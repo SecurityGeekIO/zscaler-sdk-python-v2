@@ -84,160 +84,109 @@ class PacFilesAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
 
-    # def get_pac_file(self, pac_id: int) -> tuple:
-    #     """
-    #     Fetches a specific pac files by ID.
+    def get_pac_file(self, pac_id: int, query_params=None) -> tuple:
+        """
+        Retrieves all versions of a PAC file based on the specified ID
 
-    #     Args:
-    #         pac_id (int): The unique identifier for the rule label.
+        Args:
+            pac_id (int): The unique identifier for the Pac File.
 
-    #     Returns:
-    #         tuple: A tuple containing (Rule Label instance, Response, error).
-            
-    #     Example:
-    #         # Retrieve details of a specific segment group
-    #         >>> pac_id = "216196257331370181"
-    #         >>> segment_group, response, err = zpa.segment_groups.get_group(group_id)
-    #     """
-    #     http_method = "get".upper()
-    #     api_url = format_url(
-    #         f"""
-    #         {self._zia_base_endpoint}
-    #         /ruleLabels/{pac_id}
-    #     """
-    #     )
+        Returns:
+            tuple: A tuple containing (Pac File instance, Response, error).
+        """
+        http_method = "get".upper()
+        api_url = format_url(f"""
+            {self._zia_base_endpoint}
+            /pacFiles/{pac_id}/version
+        """)
 
-    #     body = {}
-    #     headers = {}
+        query_params = query_params or {}
 
-    #     request, error = self._request_executor.create_request(http_method, api_url, body, headers)
+        request, error = self._request_executor.create_request(
+            method=http_method, 
+            endpoint=api_url, 
+            params=query_params
+        )
 
-    #     if error:
-    #         return (None, None, error)
+        if error:
+            return (None, None, error)
 
-    #     response, error = self._request_executor.execute(request, RuleLabels)
+        response, error = self._request_executor\
+            .execute(request, PacFiles)
+        if error:
+            return (None, response, error)
 
-    #     if error:
-    #         return (None, response, error)
+        try:
+            result = PacFiles(
+                self.form_response_body(response.get_body())
+            )
+        except Exception as error:
+            return (None, response, error)
+        
+        return (result, response, None)
+    
+    def validate_pac_file(self) -> tuple:
+        """
+        Sends the PAC file content for validation and returns the validation result.
 
-    #     try:
-    #         result = RuleLabels(self.form_response_body(response.get_body()))
-    #     except Exception as error:
-    #         return (None, response, error)
-    #     return (result, response, None)
+        Args:
+            body (str): PAC file content
 
-    # def add_label(self, label) -> tuple:
-    #     """
-    #     Creates a new ZIA Rule Label.
+        Returns:
+            tuple: A tuple containing (intermediate CA certificate instance, Response, error).
+        """
+        http_method = "post".upper()
+        api_url = format_url(f"""
+            {self._zia_base_endpoint}
+            /pacFiles/validate
+        """)
 
-    #     Args:
-    #         label (dict or object):
-    #             The label data to be sent in the request.
+        body = {}
+        headers = {}
 
-    #     Returns:
-    #         tuple: A tuple containing the newly added Rule Label (Box), response, and error.
-    #     """
-    #     http_method = "post".upper()
-    #     api_url = format_url(
-    #         f"""
-    #         {self._zia_base_endpoint}
-    #         /ruleLabels
-    #     """
-    #     )
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, headers)
+        if error:
+            return (None, None, error)
 
-    #     # Ensure the label is in dictionary format
-    #     if isinstance(label, dict):
-    #         body = label
-    #     else:
-    #         body = label.as_dict()
+        response, error = self._request_executor\
+            .execute(request)
+        if error:
+            return (None, response, error)
 
-    #     # Create the request with no empty param handling logic
-    #     request, error = self._request_executor.create_request(
-    #         method=http_method,
-    #         endpoint=api_url,
-    #         body=body,
-    #     )
+        try:
+            result = (
+                self.form_response_body(response.get_body())
+            )
+        except Exception as error:
+            return (None, response, error)
+        return (result, response, None)
 
-    #     if error:
-    #         return (None, None, error)
+    def delete_pac_file(self, pac_id: int) -> tuple:
+        """
+        Deletes an existing PAC file including all of its versions based on the specified ID
 
-    #     # Execute the request
-    #     response, error = self._request_executor.execute(request, RuleLabels)
-    #     if error:
-    #         return (None, response, error)
+        Args:
+            pac_id (str): Specifies the ID of the PAC file
 
-    #     try:
-    #         result = RuleLabels(self.form_response_body(response.get_body()))
-    #     except Exception as error:
-    #         return (None, response, error)
-    #     return (result, response, None)
+        Returns:
+            tuple: A tuple containing the response object and error (if any).
+        """
+        http_method = "delete".upper()
+        api_url = format_url(f"""
+            {self._zia_base_endpoint}
+            /pacFiles/{pac_id}
+        """)
 
-    # def update_label(self, label_id: int, label) -> tuple:
-    #     """
-    #     Updates information for the specified ZIA Rule Label.
+        params = {}
 
-    #     Args:
-    #         label_id (int): The unique ID for the Rule Label.
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=params)
+        if error:
+            return (None, None, error)
 
-    #     Returns:
-    #         tuple: A tuple containing the updated Rule Label, response, and error.
-    #     """
-    #     http_method = "put".upper()
-    #     api_url = format_url(
-    #         f"""
-    #         {self._zia_base_endpoint}
-    #         /ruleLabels/{label_id}
-    #     """
-    #     )
-
-    #     # If label is already a dictionary, use it, otherwise convert the label object to a dictionary
-    #     if isinstance(label, dict):
-    #         body = label
-    #     else:
-    #         body = label.as_dict()
-
-    #     # Create the request
-    #     request, error = self._request_executor.create_request(http_method, api_url, body, {}, {})
-    #     if error:
-    #         return (None, None, error)
-
-    #     # Execute the request
-    #     response, error = self._request_executor.execute(request, RuleLabels)
-    #     if error:
-    #         return (None, response, error)
-
-    #     # Parse the response into a RuleLabels instance
-    #     try:
-    #         result = RuleLabels(self.form_response_body(response.get_body()))
-    #     except Exception as error:
-    #         return (None, response, error)
-    #     return (result, response, None)
-
-    # def delete_label(self, label_id: int) -> tuple:
-    #     """
-    #     Deletes the specified Rule Label.
-
-    #     Args:
-    #         label_id (str): The unique identifier of the Rule Label.
-
-    #     Returns:
-    #         tuple: A tuple containing the response object and error (if any).
-    #     """
-    #     http_method = "delete".upper()
-    #     api_url = format_url(
-    #         f"""
-    #         {self._zia_base_endpoint}
-    #         /ruleLabels/{label_id}
-    #     """
-    #     )
-
-    #     params = {}
-
-    #     request, error = self._request_executor.create_request(http_method, api_url, params=params)
-    #     if error:
-    #         return (None, None, error)
-
-    #     response, error = self._request_executor.execute(request)
-    #     if error:
-    #         return (None, response, error)
-    #     return (None, response, None)
+        response, error = self._request_executor\
+            .execute(request)
+        if error:
+            return (None, response, error)
+        return (None, response, None)

@@ -199,7 +199,9 @@ class DLPDictionaryAPI(APIClient):
 
         """
         http_method = "post".upper()
-        api_url = format_url(f"{self._zia_base_endpoint}/dlpDictionaries")
+        api_url = format_url(f"""
+            {self._zia_base_endpoint}/dlpDictionaries
+        """)
 
         payload = {
             "name": name,

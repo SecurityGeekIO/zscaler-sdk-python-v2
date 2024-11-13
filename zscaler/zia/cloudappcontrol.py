@@ -379,12 +379,10 @@ class CloudAppControlAPI(APIClient):
                 - `ISOLATE_WEBMAIL_VIEW`
         """
         http_method = "post".upper()
-        api_url = format_url(
-            f"""
+        api_url = format_url(f"""
             {self._zia_base_endpoint}
             /webApplicationRules/{rule_type}
-        """
-        )
+        """)
 
         # Convert enabled to API format if present
         if "enabled" in kwargs:
