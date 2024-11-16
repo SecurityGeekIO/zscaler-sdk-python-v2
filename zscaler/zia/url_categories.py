@@ -16,14 +16,11 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 import time
 
-from box import Box, BoxList
-from requests import Response
-
 from zscaler.request_executor import RequestExecutor
 from zscaler.utils import chunker, convert_keys, snake_to_camel
 from zscaler.api_client import APIClient
 from zscaler.zia.models.urlcategory import URLCategory
-
+from zscaler.utils import format_url
 
 class URLCategoriesAPI(APIClient):
     """
@@ -39,9 +36,22 @@ class URLCategoriesAPI(APIClient):
     def lookup(self, urls: list) -> list:
         """
         Lookup the category for the provided URLs.
+        
+        Args:
+            urls (list):
+                The list of URLs to perform a category lookup on.
+
+        Returns:
+            :obj:`BoxList`: A list of URL category reports.
+
+        Examples:
+            >>> zia.url_categories.lookup(['example.com', 'test.com'])
         """
         http_method = "post".upper()
-        api_url = f"{self._zia_base_endpoint}/urlLookup"
+        api_url = format_url(f"""
+            {self._zia_base_endpoint}
+            /urlLookup
+        """)
 
         results = []
         for chunk in chunker(urls, 100):
@@ -63,15 +73,20 @@ class URLCategoriesAPI(APIClient):
         For the specified list of URLs, finds matching entries present in existing custom URL categories.
         """
         http_method = "post".upper()
-        api_url = f"{self._zia_base_endpoint}/urlCategories/review/domains"
+        api_url = format_url(f"""
+            {self._zia_base_endpoint}
+            /urlCategories/review/domains
+        """)
 
         results = []
         for chunk in chunker(urls, 100):
-            request, error = self._request_executor.create_request(http_method, api_url, chunk, {}, {})
+            request, error = self._request_executor\
+                .create_request(http_method, api_url, chunk, {}, {})
             if error:
                 continue
 
-            response, error = self._request_executor.execute(request)
+            response, error = self._request_executor\
+                .execute(request)
             if error:
                 continue
 
@@ -85,15 +100,20 @@ class URLCategoriesAPI(APIClient):
         Adds the list of matching URLs fetched by POST via the review_domains_post method.
         """
         http_method = "put".upper()
-        api_url = f"{self._zia_base_endpoint}/urlCategories/review/domains"
+        api_url = format_url(f"""
+            {self._zia_base_endpoint}
+            /urlCategories/review/domains
+        """)
 
         results = []
         for chunk in chunker(urls, 100):
-            request, error = self._request_executor.create_request(http_method, api_url, chunk, {}, {})
+            request, error = self._request_executor\
+                .create_request(http_method, api_url, chunk, {}, {})
             if error:
                 continue
 
-            response, error = self._request_executor.execute(request)
+            response, error = self._request_executor\
+                .execute(request)
             if error:
                 continue
 
@@ -107,18 +127,23 @@ class URLCategoriesAPI(APIClient):
         Returns information on URL categories.
         """
         http_method = "get".upper()
-        api_url = f"{self._zia_base_endpoint}/urlCategories"
+        api_url = format_url(f"""
+            {self._zia_base_endpoint}
+            /urlCategories
+        """)
 
         params = {
             "customOnly": custom_only,
             "includeOnlyUrlKeywordCounts": only_counts,
         }
 
-        request, error = self._request_executor.create_request(http_method, api_url, {}, {}, params=params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, {}, {}, params=params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 
@@ -130,31 +155,25 @@ class URLCategoriesAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
 
-    def get_category_by_name(self, name: str) -> Box:
-        """
-        Retrieves a specific custom url category by its name.
-        """
-        categories = self.list_categories()
-        for category in categories:
-            if category.get("configured_name") == name:
-                return category
-        return None
-
     def get_quota(self) -> tuple:
         """
         Returns information on URL category quota usage.
         """
         http_method = "get".upper()
-        api_url = f"{self._zia_base_endpoint}/urlCategories/urlQuota"
+        api_url = format_url(f"""
+            {self._zia_base_endpoint}
+            /urlCategories/urlQuota
+        """)
 
-        request, error = self._request_executor.create_request(http_method, api_url, {}, {})
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, {}, {})
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
-
         return (response.get_body(), response, None)
 
     def get_category(self, category_id: str) -> tuple:
@@ -162,13 +181,18 @@ class URLCategoriesAPI(APIClient):
         Returns URL category information for the provided category.
         """
         http_method = "get".upper()
-        api_url = f"{self._zia_base_endpoint}/urlCategories/{category_id}"
+        api_url = format_url(f"""
+            {self._zia_base_endpoint}
+            /urlCategories/{category_id}
+        """)
 
-        request, error = self._request_executor.create_request(http_method, api_url, {}, {})
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, {}, {})
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 
@@ -179,7 +203,10 @@ class URLCategoriesAPI(APIClient):
         Adds a new custom URL category.
         """
         http_method = "post".upper()
-        api_url = f"{self._zia_base_endpoint}/urlCategories"
+        api_url = format_url(f"""
+            {self._zia_base_endpoint}
+            /urlCategories
+        """)
 
         payload = {
             "type": "URL_CATEGORY",
@@ -191,15 +218,23 @@ class URLCategoriesAPI(APIClient):
         for key, value in kwargs.items():
             payload[snake_to_camel(key)] = value
 
-        request, error = self._request_executor.create_request(http_method, api_url, payload, {}, {})
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, payload, {}, {})
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request, URLCategory)
         if error:
             return (None, response, error)
 
-        return (response.get_body(), response, None)
+        try:
+            result = URLCategory(
+                self.form_response_body(response.get_body())
+            )
+        except Exception as error:
+            return (None, response, error)
+        return (result, response, None)
 
     def add_tld_category(self, name: str, tlds: list, **kwargs) -> tuple:
         """
