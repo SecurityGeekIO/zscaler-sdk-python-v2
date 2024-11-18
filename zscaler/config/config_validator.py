@@ -21,7 +21,7 @@ class ConfigValidator:
 
     def __init__(self, config):
         self._config = config
-        logging.info("Initializing ConfigValidator with provided configuration.")
+        # logging.info("Initializing ConfigValidator with provided configuration.")
         self.validate_config()
 
     def validate_config(self):
@@ -34,11 +34,11 @@ class ConfigValidator:
         """
         errors = []
         client = self._config.get("client")
-        logging.debug("Starting configuration validation.")
+        # logging.debug("Starting configuration validation.")
 
         # Validate vanity domain (if required in your SDK)
         vanity_domain_errors = self._validate_vanity_domain(client.get("vanityDomain"))
-        logging.debug(f"Vanity domain errors: {vanity_domain_errors}")
+        # logging.debug(f"Vanity domain errors: {vanity_domain_errors}")
         errors += vanity_domain_errors
 
         # Validate proxy settings (if provided)
@@ -59,12 +59,12 @@ class ConfigValidator:
             logging.warning("Both client secret and private key are missing.")
 
         client_id_errors = self._validate_client_id(client_id)
-        logging.debug(f"Client ID errors: {client_id_errors}")
+        # logging.debug(f"Client ID errors: {client_id_errors}")
         errors += client_id_errors
 
         # Validate cloud (optional parameter)
         cloud_errors = self._validate_cloud(client.get("cloud", ""))
-        logging.debug(f"Cloud errors: {cloud_errors}")
+        # logging.debug(f"Cloud errors: {cloud_errors}")
         errors += cloud_errors
 
         # Raise exception if errors exist
@@ -74,8 +74,8 @@ class ConfigValidator:
             raise ValueError(
                 f"{newline}Errors:" f"{newline + newline.join(errors) + 2*newline}" f"Please check your configuration."
             )
-        else:
-            logging.debug("Configuration validation completed successfully.")
+        # else:
+        #     logging.debug("Configuration validation completed successfully.")
 
     def _validate_client_id(self, client_id):
         client_id_errors = []
@@ -96,7 +96,7 @@ class ConfigValidator:
         vanity_domain_errors = []
 
         # Log the vanity domain to debug
-        logging.debug(f"Validating vanity domain: {vanity_domain}")
+        # logging.debug(f"Validating vanity domain: {vanity_domain}")
 
         # Check if vanity domain is None or empty
         if vanity_domain is None:
@@ -113,7 +113,7 @@ class ConfigValidator:
             logging.warning("Vanity domain is empty after stripping.")
 
         # Log result after validation
-        logging.debug(f"Vanity domain after validation: {vanity_domain}")
+        # logging.debug(f"Vanity domain after validation: {vanity_domain}")
 
         return vanity_domain_errors
 

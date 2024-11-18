@@ -84,7 +84,7 @@ class RequestExecutor:
         Returns:
             str: The constructed base URL for API requests.
         """
-        logger.debug(f"Determining base URL for cloud: {self.cloud}")
+        # logger.debug(f"Determining base URL for cloud: {self.cloud}")
         if "/zscsb" in endpoint:
             return f"https://csbapi.{self.sandbox_cloud}.net"
         if self.cloud and self.cloud != "production":
@@ -394,7 +394,7 @@ class RequestExecutor:
         self._custom_headers.update(headers)
 
     def set_session(self, session):
-        logger.debug("Setting HTTP client session.")
+        # logger.debug("Setting HTTP client session.")
         self._http_client.set_session(session)
 
     def clear_custom_headers(self):

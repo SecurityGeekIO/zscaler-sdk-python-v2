@@ -30,7 +30,7 @@ class OAuth:
             self._request_executor = request_executor
             self._config = config
             self._access_token = None
-            logging.debug("OAuth instance created with provided configuration.")
+            # logging.debug("OAuth instance created with provided configuration.")
             self._initialized = True
 
     def authenticate(self):
@@ -42,7 +42,7 @@ class OAuth:
         Returns:
             str: OAuth access token.
         """
-        logging.debug("Starting authentication process.")
+        # logging.debug("Starting authentication process.")
         client_id = self._config["client"]["clientId"]
         client_secret = self._config["client"].get("clientSecret", "")
         private_key = self._config["client"].get("privateKey", "")
@@ -56,10 +56,10 @@ class OAuth:
             logging.info("Authenticating using JWT private key.")
             response = self._authenticate_with_private_key(client_id, private_key)
         else:
-            logging.info("Authenticating using client secret.")
+            # logging.info("Authenticating using client secret.")
             response = self._authenticate_with_client_secret(client_id, client_secret)
 
-        logging.debug("Authentication process completed.")
+        # logging.debug("Authentication process completed.")
         return response
 
     def _authenticate_with_client_secret(self, client_id, client_secret):
@@ -73,7 +73,7 @@ class OAuth:
         Returns:
             str: OAuth access token.
         """
-        logging.debug("Preparing to authenticate with client secret.")
+        # logging.debug("Preparing to authenticate with client secret.")
         vanity_domain = self._config["client"]["vanityDomain"]
         cloud = self._config["client"].get("cloud", "PRODUCTION").lower()
         auth_url = self._get_auth_url(vanity_domain, cloud)
@@ -93,7 +93,7 @@ class OAuth:
             "User-Agent": user_agent,
         }
 
-        logging.debug(f"Sending authentication request to {auth_url}.")
+        # logging.debug(f"Sending authentication request to {auth_url}.")
         # Synchronous HTTP request (with form data in the body)
         response = requests.post(auth_url, data=form_data, headers=headers)
 
@@ -101,7 +101,7 @@ class OAuth:
             logging.error(f"Error authenticating: {response.status_code}, {response.text}")
             raise Exception(f"Error authenticating: {response.status_code}, {response.text}")
 
-        logging.debug("Authentication with client secret successful.")
+        # logging.debug("Authentication with client secret successful.")
         return response
 
     def _authenticate_with_private_key(self, client_id, private_key_path):
@@ -152,7 +152,7 @@ class OAuth:
             "User-Agent": user_agent,
         }
 
-        logging.debug(f"Sending authentication request to {auth_url} with JWT.")
+        # logging.debug(f"Sending authentication request to {auth_url} with JWT.")
         # Synchronous HTTP request
         response = requests.post(auth_url, data=form_data, headers=headers)
 
@@ -170,7 +170,7 @@ class OAuth:
         Returns:
             str: OAuth access token.
         """
-        logging.debug("Retrieving access token.")
+        # logging.debug("Retrieving access token.")
         # Return token if already generated
         if not self._access_token:
             try:
@@ -187,7 +187,7 @@ class OAuth:
                 # Extract access token from the parsed response
                 if isinstance(parsed_response, dict):
                     self._access_token = parsed_response.get("access_token")
-                    logging.debug("Access token successfully retrieved.")
+                    # logging.debug("Access token successfully retrieved.")
                 else:
                     logging.error("Parsed response is not a dictionary as expected.")
                     raise ValueError("Parsed response is not a dictionary as expected")
@@ -209,7 +209,7 @@ class OAuth:
         Returns:
             str: The fully constructed authentication URL.
         """
-        logging.debug(f"Constructing auth URL for cloud: {cloud}.")
+        # logging.debug(f"Constructing auth URL for cloud: {cloud}.")
         if cloud == "production":
             return f"https://{vanity_domain}.zslogin.net/oauth2/v1/token"
         else:

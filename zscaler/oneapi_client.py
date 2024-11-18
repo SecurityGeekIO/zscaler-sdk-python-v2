@@ -33,7 +33,7 @@ class Client:
         setup_logging("zscaler-sdk-python", enabled=enabled, verbose=verbose)
         self.logger = logging.getLogger(__name__)
 
-        self.logger.debug("Initializing Client with user configuration.")
+        # self.logger.debug("Initializing Client with user configuration.")
         client_config_setter = ConfigSetter()
         client_config_setter._apply_config({"client": user_config})
         self._config = client_config_setter.get_config()
@@ -45,10 +45,10 @@ class Client:
         self._config = client_config_setter._prune_config(self._config)
         # Setup logging based on config
         client_config_setter._setup_logging()
-        self.logger.debug(f"Customer ID set to: {self._customer_id}")
+        # self.logger.debug(f"Customer ID set to: {self._customer_id}")
         # Validate configuration
         ConfigValidator(self._config)
-        self.logger.debug("Configuration validated successfully.")
+        # self.logger.debug("Configuration validated successfully.")
 
         # Check inline configuration first, and if not provided, use environment variables
         self._client_id = self._config["client"].get("clientId", os.getenv("ZSCALER_CLIENT_ID"))
@@ -65,10 +65,10 @@ class Client:
         if not self._sandbox_token and not (self._client_secret or self._private_key):
             raise ValueError("Either Client Secret or Private Key is required. Please set 'clientSecret' or 'privateKey'.")
 
-        self.logger.debug(f"Client ID: {self._client_id}")
-        self.logger.debug(f"Vanity Domain: {self._vanity_domain}")
-        self.logger.debug(f"Cloud: {self._cloud}")
-        self.logger.debug(f"Customer ID: {self._customer_id}")
+        # self.logger.debug(f"Client ID: {self._client_id}")
+        # self.logger.debug(f"Vanity Domain: {self._vanity_domain}")
+        # self.logger.debug(f"Cloud: {self._cloud}")
+        # self.logger.debug(f"Customer ID: {self._customer_id}")
 
         # Handle cache
         cache = NoOpCache()
@@ -85,19 +85,19 @@ class Client:
         self._request_executor = user_config.get("requestExecutor", RequestExecutor)(
             self._config, cache, user_config.get("httpClient", None)
         )
-        self.logger.debug("Request executor initialized.")
+        # self.logger.debug("Request executor initialized.")
 
         # Lazy load ZIA and ZPA clients
         self._zia = None
         self._zpa = None
         self._zcc = None
-        self.logger.debug("Client initialized successfully.")
+        # self.logger.debug("Client initialized successfully.")
 
     def authenticate(self):
         """
         Handles authentication by using either client_secret or private_key.
         """
-        self.logger.debug("Starting authentication process.")
+        # self.logger.debug("Starting authentication process.")
         oauth_client = OAuth(self._request_executor, self._config)
         self._auth_token = oauth_client._get_access_token()
         self.logger.debug("Authentication successful. Access token obtained.")
@@ -128,11 +128,11 @@ class Client:
         """
         Automatically create and set session within context manager.
         """
-        self.logger.debug("Entering context manager, setting up session.")
+        # self.logger.debug("Entering context manager, setting up session.")
         # Create and set up a session using 'requests' library for sync.
         self._session = requests.Session()
         self._request_executor.set_session(self._session)
-        self.logger.debug("Session setup and authentication complete.")
+        # self.logger.debug("Session setup and authentication complete.")
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):

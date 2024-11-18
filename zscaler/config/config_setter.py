@@ -49,7 +49,7 @@ class ConfigSetter:
         Constructor for Configuration Setter class. Sets default config
         and checks for configuration settings to update config.
         """
-        logger.info("Initializing ConfigSetter with default configuration.")
+        # logger.info("Initializing ConfigSetter with default configuration.")
         # Create configuration using default config
         self._config = ConfigSetter._DEFAULT_CONFIG
         # Update configuration
@@ -62,7 +62,7 @@ class ConfigSetter:
         Returns:
             dict -- Dictionary containing the client configuration
         """
-        logger.debug("Fetching current configuration.")
+        # logger.debug("Fetching current configuration.")
         return self._config
 
     def _prune_config(self, config):
@@ -70,7 +70,7 @@ class ConfigSetter:
         This method cleans up the configuration object by removing fields
         with no value
         """
-        logger.debug("Pruning configuration to remove empty fields.")
+        # logger.debug("Pruning configuration to remove empty fields.")
         flat_current_config = FlatDict(config, delimiter="_")
         for key in flat_current_config.keys():
             if flat_current_config.get(key) == "":
@@ -86,7 +86,7 @@ class ConfigSetter:
         3. Checking for a local Zscaler config YAML
         4. Checking for corresponding ENV variables
         """
-        logger.info("Updating configuration with defaults, YAML files, and environment variables.")
+        # logger.info("Updating configuration with defaults, YAML files, and environment variables.")
         # apply default config values to config
         self._apply_default_values()
 
@@ -112,7 +112,7 @@ class ConfigSetter:
         verbose_logging = self._config["client"]["logging"].get("verbose", False)
 
         if logging_enabled:
-            logger.debug("Enabling logging for Zscaler SDK.")
+            # logger.debug("Enabling logging for Zscaler SDK.")
             os.environ["ZSCALER_SDK_LOG"] = "true"
             os.environ["ZSCALER_SDK_VERBOSE"] = "true" if verbose_logging else "false"
         else:
@@ -121,7 +121,7 @@ class ConfigSetter:
 
     def _apply_default_values(self):
         """Apply default values to default client configuration"""
-        logger.debug("Applying default values to configuration.")
+        # logger.debug("Applying default values to configuration.")
         # Ensure both 'client' and 'testing' dictionaries are initialized
         if "client" not in self._config:
             self._config["client"] = {}
@@ -147,7 +147,7 @@ class ConfigSetter:
 
     def _apply_config(self, new_config: dict):
         """Apply a config dictionary to the current config, overwriting values"""
-        logger.debug("Applying new configuration settings.")
+        # logger.debug("Applying new configuration settings.")
         flat_current_client = FlatDict(self._config["client"], delimiter="_")
         flat_current_testing = FlatDict(self._config["testing"], delimiter="_")
 
@@ -175,7 +175,7 @@ class ConfigSetter:
         This method checks the environment variables for any Zscaler
         configuration parameters and applies them if available.
         """
-        logger.debug(f"Applying environment variables for {conf_key} configuration.")
+        # logger.debug(f"Applying environment variables for {conf_key} configuration.")
         # Flatten current config and join with underscores
         # (for environment variable format)
         flattened_config = FlatDict(self._config.get(conf_key, {}), delimiter="_")

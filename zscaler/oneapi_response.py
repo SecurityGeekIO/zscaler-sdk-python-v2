@@ -36,7 +36,7 @@ class ZscalerAPIResponse:
         start_time=None,
         end_time=None,
     ):
-        logger.debug("Initializing ZscalerAPIResponse with service_type: %s", service_type)
+        # logger.debug("Initializing ZscalerAPIResponse with service_type: %s", service_type)
         self._url = req.get("url", None)
         self._headers = req.get("headers", {})  # Headers for the request
         self._params = req.get("params", {})  # Query parameters like filtering and pagination
@@ -105,7 +105,7 @@ class ZscalerAPIResponse:
 
         # If page_size is not provided, use default; otherwise, cap it at the max limit.
         if page_size is None:
-            logger.debug("Page size not provided, using default: %d", default_page_size)
+            # logger.debug("Page size not provided, using default: %d", default_page_size)
             return default_page_size
         validated_size = min(max(int(page_size), limits.get("min", 1)), max_page_size)
         logger.debug("Validated page size: %d", validated_size)
@@ -158,7 +158,7 @@ class ZscalerAPIResponse:
         # Track the number of items fetched in the current page
         self._items_fetched += len(self._list)
         self._pages_fetched += 1
-        logger.debug("Items fetched: %d, Pages fetched: %d", self._items_fetched, self._pages_fetched)
+        #logger.debug("Items fetched: %d, Pages fetched: %d", self._items_fetched, self._pages_fetched)
 
     def get_results(self):
         """
@@ -171,7 +171,7 @@ class ZscalerAPIResponse:
         """
         Fetches and returns all pages of results.
         """
-        logger.debug("Starting to fetch all results")
+        #logger.debug("Starting to fetch all results")
 
         # Reset pagination tracking variables
         self._items_fetched = 0
@@ -182,7 +182,7 @@ class ZscalerAPIResponse:
         prev_results = all_results
         self._items_fetched += len(all_results)
         self._pages_fetched += 1
-        logger.debug(f"Initial results count: {len(all_results)}")
+        #logger.debug(f"Initial results count: {len(all_results)}")
         # Continue fetching pages as long as there are more pages available
         while self._has_next():
             logger.debug("Fetching next page of results")
@@ -192,7 +192,7 @@ class ZscalerAPIResponse:
 
             # If no more data is returned, break out of the loop
             if not next_page_results:
-                logger.debug("No more data returned, stopping pagination")
+                # logger.debug("No more data returned, stopping pagination")
                 break
             if prev_results == next_page_results:
                 # could happen for ZIA
@@ -205,7 +205,7 @@ class ZscalerAPIResponse:
             prev_results = next_page_results
             logger.debug(f"Extended results count: {len(all_results)}")
 
-        logger.debug(f"Total results fetched: {len(all_results)}")
+        # logger.debug(f"Total results fetched: {len(all_results)}")
         # Return the complete list of results from all pages
         return all_results
 
@@ -234,7 +234,7 @@ class ZscalerAPIResponse:
             return has_next
         else:
             has_next = bool(self._list)  # For ZIA and ZCC, stop when no data is returned
-            logger.debug("Has next page for ZIA/ZCC: %s", has_next)
+            #logger.debug("Has next page for ZIA/ZCC: %s", has_next)
             return has_next
 
     def _next(self):
@@ -256,7 +256,7 @@ class ZscalerAPIResponse:
             self._page += 1
             self._params["page"] = self._page
 
-        logger.debug("Fetching next page with params: %s", self._params)
+        #logger.debug("Fetching next page with params: %s", self._params)
         req = {
             "method": "GET",  # Specify the method as GET for pagination
             "url": self._url,  # Add the URL to the request dictionary
@@ -277,7 +277,7 @@ class ZscalerAPIResponse:
 
         # Stop if no data was returned (especially for ZIA and ZDX)
         if not self._list:
-            logger.debug("No data returned for the next page")
+            # logger.debug("No data returned for the next page")
             # reset pagination tracking variables
             self._items_fetched = 0
             self._pages_fetched = 0

@@ -68,6 +68,8 @@ class HTTPClient:
             Tuple(requests.Response, str | Exception) -- A tuple containing the response object and the text or an error.
         """
         try:
+            logger.debug(f"Request: {request}")
+
             # Sanitize the authorization header before logging
             headers = request.get("headers", {}).copy()
             if "Authorization" in headers:
@@ -93,6 +95,14 @@ class HTTPClient:
             if request["params"]:
                 params["params"] = request["params"]
 
+            # Log whether a session is reused or not
+            if self._session:
+                logger.debug("Request with re-usable session.")
+                response = self._session.request(**params)
+            else:
+                logger.debug("Request without re-usable session.")
+                response = requests.request(**params)
+            
             dump_request(
                 logger,
                 params["url"],
@@ -104,8 +114,9 @@ class HTTPClient:
                 body=not ("/zscsb" in request["url"]),
             )
             start_time = time.time()  # Capture the start time before sending the request
-            response = self._session.request(**params) if self._session else requests.request(**params)
+            # response = self._session.request(**params) if self._session else requests.request(**params)
             logger.info(f"Received response with status code: {response.status_code}")
+
             dump_response(
                 logger,
                 request["url"],
@@ -201,3 +212,4 @@ class HTTPClient:
             proxy_string += f":{port}/"
 
         return proxy_string if proxy_string != "" else None
+
