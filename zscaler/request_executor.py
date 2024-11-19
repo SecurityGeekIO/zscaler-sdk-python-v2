@@ -4,6 +4,8 @@ import uuid
 from zscaler.oneapi_http_client import HTTPClient
 from zscaler.oneapi_response import ZscalerAPIResponse
 from zscaler.oneapi_oauth_client import OAuth
+from zscaler.zia import ZIALegacyRequestExecutor
+from zscaler.zpa import ZPALegacyRequestExecutor
 from zscaler.user_agent import UserAgent
 from zscaler.error_messages import ERROR_MESSAGE_429_MISSING_DATE_X_RESET
 from http import HTTPStatus
@@ -43,6 +45,10 @@ class RequestExecutor:
         self._config = config
         self._cache = cache
 
+        # Retrieve client type and legacy service type
+        self.client_type = self._config.get("clientType", "oneapi").lower()
+        self.legacy_service_type = self._config["client"].get("legacyService", "").lower()
+        
         # Retrieve cloud, service, and customer ID (optional)
         self.cloud = self._config["client"].get("cloud", "production").lower()
         self.sandbox_cloud = self._config["client"].get("sandboxCloud", "").lower()
@@ -50,9 +56,22 @@ class RequestExecutor:
         self.customer_id = self._config["client"].get("customerId")  # Optional for ZIA/ZCC
         self.microtenant_id = self._config["client"].get("microtenantId")  # Optional for ZIA/ZCC
 
-        # OAuth2 setup
-        self._oauth = OAuth(self, self._config)
-        self._access_token = None
+        # Initialize request executor based on client type
+        if self.client_type == "legacy":
+            if self.legacy_service_type == "zia":
+                logger.info("Initializing ZIA Legacy Request Executor.")
+                self._legacy_executor = ZIALegacyRequestExecutor(config, cache, http_client)
+            elif self.legacy_service_type == "zpa":
+                logger.info("Initializing ZPA Legacy Request Executor.")
+                self._legacy_executor = ZPALegacyRequestExecutor(config, cache, http_client)
+            else:
+                raise ValueError("Invalid or missing 'legacyService'. Must be 'zia' or 'zpa'.")
+        elif self.client_type == "oneapi":
+            logger.info("Initializing OneAPI Request Executor.")
+            self._oauth = OAuth(self, self._config)
+            self._access_token = None
+        else:
+            raise ValueError("Invalid 'clientType'. Must be 'legacy' or 'oneapi'.")
 
         # Set default headers from config
         self._default_headers = {
@@ -84,6 +103,12 @@ class RequestExecutor:
         Returns:
             str: The constructed base URL for API requests.
         """
+        if self.client_type == "legacy":
+            if self.legacy_service_type == "zia":
+                return self._legacy_executor.get_base_url(endpoint)
+            elif self.legacy_service_type == "zpa":
+                return self._legacy_executor.get_base_url(endpoint)
+
         # logger.debug(f"Determining base URL for cloud: {self.cloud}")
         if "/zscsb" in endpoint:
             return f"https://csbapi.{self.sandbox_cloud}.net"
@@ -140,7 +165,7 @@ class RequestExecutor:
 
     def _prepare_headers(self, headers, endpoint=""):
         headers = {**self._default_headers, **headers}
-        if "/zscsb" not in endpoint:
+        if self.client_type == "oneapi" and "/zscsb" not in endpoint:
             headers["Authorization"] = f"Bearer {self._oauth._get_access_token()}"
         return headers
 
@@ -180,6 +205,9 @@ class RequestExecutor:
         Returns:
             ZscalerAPIResponse or error
         """
+        if self.client_type == "legacy":
+            return self._legacy_executor.execute(request, response_type)
+
         # Extract and append query parameters from URL to request params
         request["url"], request["params"] = self._extract_and_append_query_params(request["url"], request.get("params", {}))
 

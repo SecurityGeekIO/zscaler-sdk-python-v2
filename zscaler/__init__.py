@@ -32,4 +32,8 @@ __contributors__ = [
 __version__ = "1.0.0"
 
 
+# from zscaler.zdx import ZDXClientHelper  # noqa
+# from zscaler.zia import ZIAClientHelper  # noqa
+# from zscaler.zpa import ZPAClientHelper  # noqa
+# from zscaler.zcon import ZCONClientHelper  # noqa
 from zscaler.oneapi_client import Client as ZscalerClient # noqa

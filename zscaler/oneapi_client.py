@@ -12,7 +12,8 @@ from zscaler.oneapi_oauth_client import OAuth
 from zscaler.zcc.zcc_service import ZCCService
 from zscaler.zia.zia_service import ZIAService
 from zscaler.zpa.zpa_service import ZPAService
-
+from zscaler.zia import ZIALegacyRequestExecutor, ZIAClientHelper
+from zscaler.zpa import ZPALegacyRequestExecutor, ZPAClientHelper
 
 # Zscaler Client Connector APIs
 class Client:
@@ -87,24 +88,31 @@ class Client:
         )
         # self.logger.debug("Request executor initialized.")
 
-        # Validate configuration
+        # Determine client type and initialize request executor
         client_type = self._config.get("clientType", "oneapi").lower()
-        if client_type not in ["legacy", "oneapi"]:
-            raise ValueError(f"Invalid clientType '{client_type}'. Must be 'legacy' or 'oneapi'.")
-        self._client_type = client_type
-        self.logger.debug(f"Client type set to: {self._client_type}")
+        legacy_service_type = self._config["client"].get("legacyService", "").lower()
 
-        # Initialize request executor
-        if self._client_type == "legacy":
-            self._initialize_legacy_request_executor()
-        else:  # Default to OneAPI
-            self._initialize_oneapi_request_executor()
+        if client_type == "legacy":
+            if legacy_service_type == "zia":
+                self.logger.info("Initializing ZIA Legacy API client.")
+                self._request_executor = ZIALegacyRequestExecutor(self._config, cache)
+                self._zia = ZIAClientHelper(self._request_executor)
+            elif legacy_service_type == "zpa":
+                self.logger.info("Initializing ZPA Legacy API client.")
+                self._request_executor = ZPALegacyRequestExecutor(self._config, cache)
+                self._zpa = ZPAClientHelper(self._request_executor)
+            else:
+                raise ValueError("Invalid or missing 'legacyService'. Must be 'zia' or 'zpa'.")
+        elif client_type == "oneapi":
+            self.logger.info("Initializing OneAPI client.")
+            self._request_executor = RequestExecutor(self._config, cache)
+        else:
+            raise ValueError("Invalid 'clientType'. Must be 'legacy' or 'oneapi'.")
 
-        # Lazy load ZIA and ZPA clients
+        # Lazy load ZIA, ZPA, and ZCC clients
         self._zia = None
         self._zpa = None
         self._zcc = None
-        # self.logger.debug("Client initialized successfully.")
 
     def authenticate(self):
         """
@@ -119,54 +127,33 @@ class Client:
         self._request_executor._default_headers.update({"Authorization": f"Bearer {self._auth_token}"})
         self.logger.debug("Authorization header updated with access token.")
 
-    def _initialize_oneapi_request_executor(self):
-        """Initialize request executor for OneAPI client."""
-        cache = NoOpCache()
-        if self._config["client"]["cache"]["enabled"]:
-            cache = ZscalerCache(
-                self._config["client"]["cache"]["defaultTtl"],
-                self._config["client"]["cache"]["defaultTti"],
-            )
-        self._request_executor = RequestExecutor(self._config, cache)
-
-    def _initialize_legacy_request_executor(self):
-        """Initialize request executor for Legacy client."""
-        legacy_service = self._config["client"].get("legacyService", "").lower()
-        if legacy_service == "zia":
-            from zscaler.v1_legacy.zia_legacy_request_executor import ZIALegacyRequestExecutor
-            self._request_executor = ZIALegacyRequestExecutor(self._config, None)
-        elif legacy_service == "zpa":
-            from zscaler.v1_legacy.zpa_legacy_request_executor import ZPALegacyRequestExecutor
-            self._request_executor = ZPALegacyRequestExecutor(self._config, None)
-        else:
-            raise ValueError("Invalid or missing 'legacyService' for Legacy client.")
-
     @property
     def zcc(self) -> ZCCService:
         if self._zcc is None:
             self._zcc = ZCCService(self)
         return self._zcc
 
-    @property
     def zia(self):
+        """
+        Dynamically return ZIA service (OneAPI or Legacy).
+        """
+        client_type = self._config.get("clientType", "oneapi").lower()
+        if client_type == "legacy" and isinstance(self._zia, ZIAClientHelper):
+            return self._zia
         if self._zia is None:
-            if self._client_type == "legacy":
-                from zscaler.zia_legacy_client import ZIAClientHelper
-                self._zia = ZIAClientHelper(self._request_executor)
-            else:
-                from zscaler.zia.zia_service import ZIAService
-                self._zia = ZIAService(self)
+            self._zia = ZIAService(self)
         return self._zia
 
     @property
     def zpa(self):
+        """
+        Dynamically return ZPA service (OneAPI or Legacy).
+        """
+        client_type = self._config.get("clientType", "oneapi").lower()
+        if client_type == "legacy" and isinstance(self._zpa, ZPAClientHelper):
+            return self._zpa
         if self._zpa is None:
-            if self._client_type == "legacy":
-                from zscaler.zpa_legacy_client import ZPAClientHelper
-                self._zpa = ZPAClientHelper(self._request_executor)
-            else:
-                from zscaler.zpa.zpa_service import ZPAService
-                self._zpa = ZPAService(self._request_executor, self._config)
+            self._zpa = ZPAService(self._request_executor, self._config)
         return self._zpa
 
     def __enter__(self):

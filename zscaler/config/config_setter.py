@@ -5,7 +5,8 @@ from zscaler.constants import _GLOBAL_YAML_PATH, _LOCAL_YAML_PATH
 from flatdict import FlatDict
 
 from zscaler.helpers import to_snake_case
-from config.config_validator import ConfigValidator
+from zscaler.config.config_validator import ConfigValidator
+
 
 logger = logging.getLogger(__name__)
 
@@ -17,8 +18,9 @@ class ConfigSetter:
 
     _ZSCALER = "ZSCALER"
     _DEFAULT_CONFIG = {
-        "clientType": "oneapi",  # Default to OneAPI client
+        "clientType": "oneapi",  # Default client type
         "client": {
+            "legacyService": "",  # Specify the legacy service (e.g., 'zia' or 'zpa')
             "clientId": "",
             "clientSecret": "",
             "privateKey": "",
@@ -87,27 +89,45 @@ class ConfigSetter:
         3. Checking for a local Zscaler config YAML
         4. Checking for corresponding ENV variables
         """
-        # logger.info("Updating configuration with defaults, YAML files, and environment variables.")
-        # apply default config values to config
+        logger.info("Updating configuration with defaults, YAML files, and environment variables.")
         self._apply_default_values()
 
-        # check if GLOBAL yaml exists, apply if true
+        # Apply global and local YAML configurations
         if os.path.exists(_GLOBAL_YAML_PATH):
             logger.info(f"Applying global YAML configuration from {_GLOBAL_YAML_PATH}.")
             self._apply_yaml_config(_GLOBAL_YAML_PATH)
 
-        # check if LOCAL yaml exists, apply if true
         if os.path.exists(_LOCAL_YAML_PATH):
             logger.info(f"Applying local YAML configuration from {_LOCAL_YAML_PATH}.")
             self._apply_yaml_config(_LOCAL_YAML_PATH)
 
-        # apply existing environment variables
+        # Apply environment variables
         self._apply_env_config("client")
         self._apply_env_config("testing")
-    
-        # Validate configuration (use the correct method name)
-        self.validate_config()  # Ensure this is the correct method
-    
+
+        # Explicitly check and set clientType
+        client_type = self._config.get("clientType", "").lower()
+        if not client_type:
+            # Look for legacy-specific fields to determine clientType
+            if self._config["client"].get("legacyService", "").lower() in ["zia", "zpa"]:
+                client_type = "legacy"
+            else:
+                client_type = "oneapi"
+
+        self._config["clientType"] = client_type
+        logger.info(f"Client type determined as: {client_type}")
+
+        # If clientType is 'legacy', ensure legacyService is valid
+        if client_type == "legacy":
+            legacy_service = self._config["client"].get("legacyService", "").lower()
+            if not legacy_service or legacy_service not in ["zia", "zpa"]:
+                raise ValueError("Invalid or missing 'legacyService'. Must be 'zia' or 'zpa' for Legacy client.")
+            logger.info(f"Legacy client configured for service: {legacy_service}.")
+
+        # Validate configuration
+        ConfigValidator(self._config)
+
+
     def _setup_logging(self):
         """
         Setup logging based on configuration.
@@ -133,10 +153,6 @@ class ConfigSetter:
         if "testing" not in self._config:
             self._config["testing"] = {}
 
-        # Set default values for 'clientType' only if not already provided
-        if "clientType" not in self._config:
-            self._config["clientType"] = "oneapi"  # Default to OneAPI
-
         # Set default values for 'client' and 'testing' configurations
         self._config["client"]["connectionTimeout"] = 30
         self._config["client"]["cache"] = {"enabled": False, "defaultTtl": 300, "defaultTti": 300}
@@ -152,7 +168,7 @@ class ConfigSetter:
 
         # Initialize the 'testing' section with default values
         self._config["testing"]["disableHttpsCheck"] = False
-        
+
     def _apply_config(self, new_config: dict):
         """Apply a config dictionary to the current config, overwriting values"""
         # logger.debug("Applying new configuration settings.")
@@ -166,33 +182,6 @@ class ConfigSetter:
         flat_current_testing.update(flat_new_testing)
 
         self._config = {"client": flat_current_client.as_dict(), "testing": flat_current_testing.as_dict()}
-
-    def validate_config(self):
-        """
-        Validates the client configuration.
-        """
-        ConfigValidator(self._config)
-        errors = []
-        client_type = self._config.get("clientType", "oneapi").lower()
-        logging.debug(f"Validating configuration for clientType: {client_type}")
-
-        # Validate based on client type
-        if client_type == "legacy":
-            logging.info("Validating configuration for Legacy client.")
-            errors += self._validate_legacy_config(self._config["client"])
-        elif client_type == "oneapi":
-            logging.info("Validating configuration for OneAPI client.")
-            errors += self._validate_oneapi_config(self._config["client"])
-        else:
-            errors.append(f"Invalid clientType '{client_type}'. Must be 'oneapi' or 'legacy'.")
-
-        # Raise errors if validation fails
-        if errors:
-            newline = "\n"
-            logging.error(f"Configuration validation failed with errors: {errors}")
-            raise ValueError(
-                f"{newline}Errors:{newline}{newline.join(errors)}{2 * newline}Please check your configuration."
-            )
 
     def _apply_yaml_config(self, path: str):
         """This method applies a YAML configuration to the Zscaler Client Config"""
@@ -228,40 +217,3 @@ class ConfigSetter:
             if env_value is not None:
                 updated_config[key] = env_value
         self._apply_config({conf_key: updated_config.as_dict()})
-
-
-
-    def _validate_oneapi_config(self, client_config):
-        """
-        Validates configuration for OneAPI clients.
-        """
-        errors = []
-        required_fields = ["clientId", "clientSecret", "vanityDomain"]
-
-        for field in required_fields:
-            if not client_config.get(field):
-                errors.append(f"Missing required field '{field}' for OneAPI client.")
-
-        return errors
-
-    def _validate_legacy_config(self, client_config):
-        """
-        Validates configuration for Legacy clients.
-        """
-        errors = []
-        legacy_service_type = client_config.get("legacyService", "").lower()
-        logging.debug(f"Legacy service type: {legacy_service_type}")
-
-        if legacy_service_type == "zia":
-            required_fields = ["username", "password", "api_key", "cloud"]
-        elif legacy_service_type == "zpa":
-            required_fields = ["clientId", "clientSecret", "cloud"]
-        else:
-            errors.append("Invalid or missing 'legacyService' field for Legacy client.")
-            return errors
-
-        for field in required_fields:
-            if not client_config.get(field):
-                errors.append(f"Missing required field '{field}' for Legacy client ({legacy_service_type}).")
-
-        return errors

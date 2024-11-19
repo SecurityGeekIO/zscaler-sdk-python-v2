@@ -25,16 +25,24 @@ class RuleLabelsAPI(APIClient):
     A Client object for the Rule labels resource.
     """
 
-    _zia_base_endpoint = "/zia/api/v1"
+    _zia_oneapi_endpoint = "/zia/api/v1"
+    _zia_legacy_endpoint = "/ruleLabels"
 
     def __init__(self, request_executor):
         super().__init__()
         self._request_executor: RequestExecutor = request_executor
 
+        # Determine the client type and set the base endpoint dynamically
+        self._is_legacy = self._request_executor.client_type == "legacy"
+        if self._is_legacy and self._request_executor.legacy_service_type == "zia":
+            self._base_endpoint = self._request_executor.get_base_url(self._zia_legacy_endpoint)
+        else:
+            self._base_endpoint = f"{self._request_executor.get_base_url('')}{self._zia_oneapi_endpoint}"
+
     def list_labels(self, query_params=None) -> tuple:
         """
         Lists rule labels in your organization with pagination.
-        A subset of rule labels  can be returned that match a supported
+        A subset of rule labels can be returned that match a supported
         filter expression or query.
 
         Args:
@@ -46,29 +54,10 @@ class RuleLabelsAPI(APIClient):
 
         Returns:
             tuple: A tuple containing (list of Rule Labels instances, Response, error)
-
-        Examples:
-            List Rule Labels using default settings:
-
-            >>> for label in zia.labels.list_labels():
-            ...   print(label)
-
-            List labels, limiting to a maximum of 10 items:
-
-            >>> for label in zia.labels.list_labels(max_items=10):
-            ...    print(label)
-
-            List labels, returning 200 items per page for a maximum of 2 pages:
-
-            >>> for label in zia.labels.list_labels(page_size=200, max_pages=2):
-            ...    print(label)
-
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
-            {self._zia_base_endpoint}
-            /ruleLabels
-        """)
+        # Use the appropriate base endpoint
+        api_url = f"{self._base_endpoint}{self._zia_legacy_endpoint if self._is_legacy else '/ruleLabels'}"
 
         query_params = query_params or {}
 
@@ -77,15 +66,13 @@ class RuleLabelsAPI(APIClient):
         headers = {}
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, headers, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
@@ -97,6 +84,7 @@ class RuleLabelsAPI(APIClient):
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
+
 
     def get_label(self, label_id: int) -> tuple:
         """
