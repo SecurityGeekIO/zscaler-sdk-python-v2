@@ -34,6 +34,7 @@ class ConfigValidator:
         """
         errors = []
         client = self._config.get("client")
+        client_type = self._config.get("clientType", "oneapi").lower()
         # logging.debug("Starting configuration validation.")
 
         # Validate vanity domain (if required in your SDK)
@@ -67,6 +68,16 @@ class ConfigValidator:
         # logging.debug(f"Cloud errors: {cloud_errors}")
         errors += cloud_errors
 
+        # Route validation based on client type
+        if client_type == "oneapi":
+            errors += self._validate_oneapi_config(client)
+        elif client_type == "legacy":
+            errors += self._validate_legacy_config(client)
+        else:
+            errors.append(f"Invalid clientType '{client_type}'. Must be 'oneapi' or 'legacy'.")
+            logging.warning(f"Invalid clientType '{client_type}' provided.")
+
+        
         # Raise exception if errors exist
         if errors:
             newline = "\n"
@@ -76,6 +87,47 @@ class ConfigValidator:
             )
         # else:
         #     logging.debug("Configuration validation completed successfully.")
+
+    def _validate_oneapi_config(self, client_config):
+        """
+        Validates configuration for OneAPI clients.
+        """
+        errors = []
+        # Required fields for OneAPI
+        required_fields = ["clientId", "clientSecret", "vanityDomain"]
+
+        for field in required_fields:
+            if not client_config.get(field):
+                errors.append(f"Missing required field '{field}' for OneAPI client.")
+
+        return errors
+
+
+    def _validate_legacy_config(self, client_config):
+        """
+        Validates configuration for Legacy clients (e.g., ZIA or ZPA).
+        """
+        errors = []
+        legacy_service_type = client_config.get("legacyService", "").lower()
+        logging.debug(f"Legacy service type: {legacy_service_type}")
+
+        if legacy_service_type == "zia":
+            # Required fields for ZIA
+            required_fields = ["username", "password", "api_key", "cloud"]
+        elif legacy_service_type == "zpa":
+            # Required fields for ZPA
+            required_fields = ["clientId", "clientSecret", "cloud"]
+        else:
+            errors.append("Invalid or missing 'legacyService' field for Legacy client.")
+            return errors
+
+        # Validate required fields
+        for field in required_fields:
+            if not client_config.get(field):
+                errors.append(f"Missing required field '{field}' for Legacy client ({legacy_service_type}).")
+
+        return errors
+
 
     def _validate_client_id(self, client_id):
         client_id_errors = []
@@ -171,3 +223,4 @@ class ConfigValidator:
                 logging.warning("Proxy port is invalid.")
 
         return proxy_errors
+
