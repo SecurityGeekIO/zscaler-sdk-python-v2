@@ -14,22 +14,38 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-"""Official Python SDK for the Zscaler Products (Beta)
 
-Zscaler SDK Python is an SDK that provides a uniform and easy-to-use
-interface for each of the Zscaler product APIs.
+from zscaler.zia import ZIAClient
 
-Documentation available at https://zscaler-sdk-python.readthedocs.io
 
-"""
+class ActivationV1API:
+    def __init__(self, client: ZIAClient):
+        self.rest = client
 
-__author__ = "Zscaler Inc"
-__email__ = "devrel@zscaler.com"
-__license__ = "MIT"
-__contributors__ = [
-    "William Guilherme",
-]
-__version__ = "1.0.0"
+    def status(self) -> str:
+        """
+        Returns the activation status for a configuration change.
 
-from zscaler.zia import ZIAClientHelper  # noqa
-from zscaler.oneapi_client import Client as ZscalerClient # noqa
+        Returns:
+            :obj:`str`
+                Configuration status.
+
+        Examples:
+            >>> config_status = zia.config.status()
+
+        """
+        return self.rest.get("status").status
+
+    def activate(self) -> str:
+        """
+        Activates configuration changes.
+
+        Returns:
+            :obj:`str`
+                Configuration status.
+
+        Examples:
+            >>> config_activate = zia.config.activate()
+
+        """
+        return self.rest.post("status/activate").status
