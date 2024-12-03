@@ -11,6 +11,7 @@ from zscaler.cache.zscaler_cache import ZscalerCache
 from zscaler.oneapi_oauth_client import OAuth
 from zscaler.zcc.zcc_service import ZCCService
 from zscaler.zia.zia_service import ZIAService
+from zscaler.zpa.legacy import LegacyZPAClientHelper
 from zscaler.zpa.zpa_service import ZPAService
 
 
@@ -18,13 +19,16 @@ from zscaler.zpa.zpa_service import ZPAService
 class Client:
     """A Zscaler client object"""
 
-    def __init__(self, user_config: dict = {}):
+    def __init__(
+        self,
+        user_config: dict = {},
+        zpa_legacy_client: LegacyZPAClientHelper = None,
+    ):
 
         # Assuming user_config is a dictionary or an object with a 'logging' attribute
-        logging_config = (
-            user_config.get("logging", {}) if isinstance(user_config, dict) else getattr(user_config, "logging", {})
-        )
-
+        logging_config = (user_config.get("logging", {}) if isinstance(
+            user_config, dict) else getattr(user_config, "logging", {}))
+        self.zpa_legacy_client = zpa_legacy_client
         # Extract enabled and verbose from the logging configuration
         enabled = logging_config.get("enabled", None)
         verbose = logging_config.get("verbose", None)
@@ -39,7 +43,8 @@ class Client:
         self._config = client_config_setter.get_config()
 
         # Retrieve optional customerId from config or environment
-        self._customer_id = self._config["client"].get("customerId", os.getenv("ZSCALER_CUSTOMER_ID"))
+        self._customer_id = self._config["client"].get(
+            "customerId", os.getenv("ZSCALER_CUSTOMER_ID"))
 
         # Prune unnecessary configuration fields
         self._config = client_config_setter._prune_config(self._config)
@@ -51,19 +56,30 @@ class Client:
         # self.logger.debug("Configuration validated successfully.")
 
         # Check inline configuration first, and if not provided, use environment variables
-        self._client_id = self._config["client"].get("clientId", os.getenv("ZSCALER_CLIENT_ID"))
-        self._client_secret = self._config["client"].get("clientSecret", os.getenv("ZSCALER_CLIENT_SECRET"))
-        self._private_key = self._config["client"].get("privateKey", os.getenv("ZSCALER_PRIVATE_KEY"))
-        self._vanity_domain = self._config["client"].get("vanityDomain", os.getenv("ZSCALER_VANITY_DOMAIN"))
-        self._cloud = self._config["client"].get("cloud", os.getenv("ZSCALER_CLOUD", "PRODUCTION"))
-        self._sandbox_token = self._config["client"].get("sandboxToken", os.getenv("ZSCALER_SANDBOX_TOKEN"))
+        self._client_id = self._config["client"].get(
+            "clientId", os.getenv("ZSCALER_CLIENT_ID"))
+        self._client_secret = self._config["client"].get(
+            "clientSecret", os.getenv("ZSCALER_CLIENT_SECRET"))
+        self._private_key = self._config["client"].get(
+            "privateKey", os.getenv("ZSCALER_PRIVATE_KEY"))
+        self._vanity_domain = self._config["client"].get(
+            "vanityDomain", os.getenv("ZSCALER_VANITY_DOMAIN"))
+        self._cloud = self._config["client"].get(
+            "cloud", os.getenv("ZSCALER_CLOUD", "PRODUCTION"))
+        self._sandbox_token = self._config["client"].get(
+            "sandboxToken", os.getenv("ZSCALER_SANDBOX_TOKEN"))
         self._auth_token = None
 
         # Ensure required fields are set, either through inline config or environment variables
         if not self._client_id and not self._sandbox_token:
-            raise ValueError("Client ID is required. Please set 'clientId' or 'ZSCALER_CLIENT_ID' environment variable.")
-        if not self._sandbox_token and not (self._client_secret or self._private_key):
-            raise ValueError("Either Client Secret or Private Key is required. Please set 'clientSecret' or 'privateKey'.")
+            raise ValueError(
+                "Client ID is required. Please set 'clientId' or 'ZSCALER_CLIENT_ID' environment variable."
+            )
+        if not self._sandbox_token and not (self._client_secret
+                                            or self._private_key):
+            raise ValueError(
+                "Either Client Secret or Private Key is required. Please set 'clientSecret' or 'privateKey'."
+            )
 
         # self.logger.debug(f"Client ID: {self._client_id}")
         # self.logger.debug(f"Vanity Domain: {self._vanity_domain}")
@@ -77,14 +93,18 @@ class Client:
                 time_to_idle = self._config["client"]["cache"]["defaultTti"]
                 time_to_live = self._config["client"]["cache"]["defaultTtl"]
                 cache = ZscalerCache(time_to_live, time_to_idle)
-                self.logger.debug(f"Using default cache with TTL: {time_to_live}, TTI: {time_to_idle}")
+                self.logger.debug(
+                    f"Using default cache with TTL: {time_to_live}, TTI: {time_to_idle}"
+                )
             else:
                 cache = user_config.get("cacheManager")
                 self.logger.debug("Using custom cache manager.")
 
-        self._request_executor = user_config.get("requestExecutor", RequestExecutor)(
-            self._config, cache, user_config.get("httpClient", None)
-        )
+        self._request_executor = user_config.get(
+            "requestExecutor",
+            RequestExecutor)(self._config, cache,
+                             user_config.get("httpClient", None),
+                             self.zpa_legacy_client)
         # self.logger.debug("Request executor initialized.")
 
         # Lazy load ZIA and ZPA clients
@@ -103,7 +123,8 @@ class Client:
         self.logger.debug("Authentication successful. Access token obtained.")
 
         # Update the default headers by setting the Authorization Bearer token
-        self._request_executor._default_headers.update({"Authorization": f"Bearer {self._auth_token}"})
+        self._request_executor._default_headers.update(
+            {"Authorization": f"Bearer {self._auth_token}"})
         self.logger.debug("Authorization header updated with access token.")
 
     @property

@@ -7,6 +7,8 @@ from zscaler.errors.http_error import HTTPError
 from zscaler.errors.zscaler_api_error import ZscalerAPIError
 from zscaler.exceptions import HTTPException, ZscalerAPIException
 from zscaler.logger import dump_request, dump_response
+from zscaler.zpa.legacy import LegacyZPAClientHelper
+from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
 
@@ -19,10 +21,13 @@ class HTTPClient:
 
     raise_exception = False
 
-    def __init__(self, http_config={}):
+    def __init__(self,
+                 http_config={},
+                 zpa_legacy_client: LegacyZPAClientHelper = None):
         # Get headers from Request Executor
         self._default_headers = http_config.get("headers", {})
-
+        self.zpa_legacy_client = zpa_legacy_client
+        self.use_legacy_client = zpa_legacy_client is not None
         # Set timeout for all HTTP requests
         request_timeout = http_config.get("requestTimeout", None)
         self._timeout = request_timeout if request_timeout and request_timeout > 0 else None
@@ -34,8 +39,10 @@ class HTTPClient:
 
         # Setup SSL context or handle disableHttpsCheck
         if "sslContext" in http_config:
-            self._ssl_context = http_config["sslContext"]  # Use the custom SSL context
-        elif "disableHttpsCheck" in http_config and http_config["disableHttpsCheck"]:
+            self._ssl_context = http_config[
+                "sslContext"]  # Use the custom SSL context
+        elif "disableHttpsCheck" in http_config and http_config[
+                "disableHttpsCheck"]:
             self._ssl_context = False  # Disable SSL certificate validation if disableHttpsCheck is true
         else:
             self._ssl_context = True  # Enable SSL certificate validation by default
@@ -81,7 +88,10 @@ class HTTPClient:
                 "url": request["url"],
                 "headers": request.get("headers", {}),
                 "timeout": self._timeout,
-                "proxies": {"http": self._proxy, "https": self._proxy} if self._proxy else None,
+                "proxies": {
+                    "http": self._proxy,
+                    "https": self._proxy
+                } if self._proxy else None,
                 "verify": self._ssl_context,
             }
 
@@ -94,15 +104,36 @@ class HTTPClient:
                 params["data"] = request["form"]
             if request["params"]:
                 params["params"] = request["params"]
+            if self.use_legacy_client:
+                # Parse the URL to extract the path
+                parsed_url = urlparse(request["url"])
+                path = parsed_url.path
 
-            # Log whether a session is reused or not
-            if self._session:
-                logger.debug("Request with re-usable session.")
-                response = self._session.request(**params)
+                # Remove the prefix if it starts with /zpa, /zia, or /zcc
+                for prefix in ["/zpa", "/zia", "/zcc"]:
+                    if path.startswith(prefix):
+                        path = path[len(prefix):]
+                        break
+
+                response, legacy_request = self.zpa_legacy_client.send(
+                    method=request["method"],
+                    path=path,  # Use the modified path
+                    params=request["params"],
+                    json=request.get("json", None)
+                    or request.get("data", None),
+                )
+                params["url"] = legacy_request["url"]
+                params["params"] = legacy_request["params"]
+                params["headers"] = legacy_request["headers"]
             else:
-                logger.debug("Request without re-usable session.")
-                response = requests.request(**params)
-            
+                # Log whether a session is reused or not
+                if self._session:
+                    logger.debug("Request with re-usable session.")
+                    response = self._session.request(**params)
+                else:
+                    logger.debug("Request without re-usable session.")
+                    response = requests.request(**params)
+
             dump_request(
                 logger,
                 params["url"],
@@ -113,14 +144,16 @@ class HTTPClient:
                 request["uuid"],
                 body=not ("/zscsb" in request["url"]),
             )
-            start_time = time.time()  # Capture the start time before sending the request
+            start_time = time.time(
+            )  # Capture the start time before sending the request
             # response = self._session.request(**params) if self._session else requests.request(**params)
-            logger.info(f"Received response with status code: {response.status_code}")
+            logger.info(
+                f"Received response with status code: {response.status_code}")
 
             dump_response(
                 logger,
-                request["url"],
-                request["method"],
+                params["url"],
+                params["method"],
                 response,
                 request.get("params"),
                 request["uuid"],
@@ -146,7 +179,8 @@ class HTTPClient:
             Tuple(dict repr of response (if no error), any error found)
         """
         # Check if response is JSON and parse it
-        if "application/json" in response_details.headers.get("Content-Type", ""):
+        if "application/json" in response_details.headers.get(
+                "Content-Type", ""):
             try:
                 formatted_response = json.loads(response_body)
                 # logger.debug("Successfully parsed JSON response")
@@ -159,7 +193,9 @@ class HTTPClient:
         if 200 <= response_details.status_code < 300:
             return formatted_response, None
 
-        logger.error(f"Error response from {url}: {response_details.status_code} - {formatted_response}")
+        logger.error(
+            f"Error response from {url}: {response_details.status_code} - {formatted_response}"
+        )
 
         status_code = response_details.status_code
 
@@ -169,7 +205,8 @@ class HTTPClient:
         else:
             # create errors
             try:
-                error = ZscalerAPIError(url, response_details, formatted_response)
+                error = ZscalerAPIError(url, response_details,
+                                        formatted_response)
                 if HTTPClient.raise_exception:
                     raise ZscalerAPIException(formatted_response)
             except ZscalerAPIException:
@@ -212,4 +249,3 @@ class HTTPClient:
             proxy_string += f":{port}/"
 
         return proxy_string if proxy_string != "" else None
-

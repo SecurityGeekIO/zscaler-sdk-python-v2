@@ -8,6 +8,7 @@ from zscaler.user_agent import UserAgent
 from zscaler.error_messages import ERROR_MESSAGE_429_MISSING_DATE_X_RESET
 from http import HTTPStatus
 from zscaler.helpers import convert_keys_to_snake_case, convert_keys_to_camel_case
+from zscaler.zpa.legacy import LegacyZPAClientHelper
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +20,11 @@ class RequestExecutor:
 
     BASE_URL = "https://api.zsapi.net"  # Default base URL for API calls
 
-    def __init__(self, config, cache, http_client=None):
+    def __init__(self,
+                 config,
+                 cache,
+                 http_client=None,
+                 zpa_legacy_client: LegacyZPAClientHelper = None):
         """
         Constructor for Request Executor object for Zscaler SDK Client.
 
@@ -28,16 +33,22 @@ class RequestExecutor:
             cache (object): Cache object for storing request responses.
             http_client (object, optional): Custom HTTP client for making requests.
         """
-
+        self.zpa_legacy_client = zpa_legacy_client
+        self.use_legacy_client = zpa_legacy_client is not None
         # Validate and set request timeout
-        self._request_timeout = config["client"].get("requestTimeout", 240)  # Default to 240 seconds
+        self._request_timeout = config["client"].get(
+            "requestTimeout", 240)  # Default to 240 seconds
         if self._request_timeout < 0:
-            raise ValueError(f"Invalid request timeout: {self._request_timeout}. Must be greater than zero.")
+            raise ValueError(
+                f"Invalid request timeout: {self._request_timeout}. Must be greater than zero."
+            )
 
         # Validate and set max retries for rate limiting
         self._max_retries = config["client"]["rateLimit"].get("maxRetries", 2)
         if self._max_retries < 0:
-            raise ValueError(f"Invalid max retries: {self._max_retries}. Must be 0 or greater.")
+            raise ValueError(
+                f"Invalid max retries: {self._max_retries}. Must be 0 or greater."
+            )
 
         # Set configuration and cache
         self._config = config
@@ -45,10 +56,14 @@ class RequestExecutor:
 
         # Retrieve cloud, service, and customer ID (optional)
         self.cloud = self._config["client"].get("cloud", "production").lower()
-        self.sandbox_cloud = self._config["client"].get("sandboxCloud", "").lower()
-        self.service = self._config["client"].get("service", "zia")  # Default to ZIA
-        self.customer_id = self._config["client"].get("customerId")  # Optional for ZIA/ZCC
-        self.microtenant_id = self._config["client"].get("microtenantId")  # Optional for ZIA/ZCC
+        self.sandbox_cloud = self._config["client"].get("sandboxCloud",
+                                                        "").lower()
+        self.service = self._config["client"].get("service",
+                                                  "zia")  # Default to ZIA
+        self.customer_id = self._config["client"].get(
+            "customerId")  # Optional for ZIA/ZCC
+        self.microtenant_id = self._config["client"].get(
+            "microtenantId")  # Optional for ZIA/ZCC
 
         # OAuth2 setup
         self._oauth = OAuth(self, self._config)
@@ -56,9 +71,13 @@ class RequestExecutor:
 
         # Set default headers from config
         self._default_headers = {
-            "User-Agent": UserAgent(config["client"].get("userAgent", None)).get_user_agent_string(),
-            "Accept": "application/json",
-            "Content-Type": "application/json",
+            "User-Agent":
+            UserAgent(config["client"].get("userAgent",
+                                           None)).get_user_agent_string(),
+            "Accept":
+            "application/json",
+            "Content-Type":
+            "application/json",
         }
 
         # Initialize the HTTP client, considering proxy and SSL context from config
@@ -69,8 +88,7 @@ class RequestExecutor:
                 "headers": self._default_headers,
                 "proxy": self._config["client"].get("proxy"),
                 "sslContext": self._config["client"].get("sslContext"),
-            }
-        )
+            }, zpa_legacy_client)
 
         # Initialize custom headers as an empty dictionary
         self._custom_headers = {}
@@ -120,7 +138,8 @@ class RequestExecutor:
         headers = self._prepare_headers(headers, endpoint)
         params = self._prepare_params(endpoint, params, body)
         # Extract and append query parameters from URL to request params
-        final_url, params = self._extract_and_append_query_params(final_url, params)
+        final_url, params = self._extract_and_append_query_params(
+            final_url, params)
         if "/zscsb" in endpoint:
             params["api_token"] = self._config["client"]["sandboxToken"]
 
@@ -140,14 +159,16 @@ class RequestExecutor:
 
     def _prepare_headers(self, headers, endpoint=""):
         headers = {**self._default_headers, **headers}
-        if "/zscsb" not in endpoint:
-            headers["Authorization"] = f"Bearer {self._oauth._get_access_token()}"
+        if "/zscsb" not in endpoint and not self.use_legacy_client:
+            headers[
+                "Authorization"] = f"Bearer {self._oauth._get_access_token()}"
         return headers
 
     def _prepare_body(self, endpoint, body):
         if body:
             body = convert_keys_to_camel_case(body)
-        if "/zpa/" in endpoint and "/reorder" in endpoint and isinstance(body, list):
+        if "/zpa/" in endpoint and "/reorder" in endpoint and isinstance(
+                body, list):
             return body
         return body
 
@@ -163,7 +184,9 @@ class RequestExecutor:
         return params
 
     def _get_microtenant_id(self, body, params):
-        if body and isinstance(body, dict) and "microtenantId" in body and body["microtenantId"]:
+        if body and isinstance(
+                body,
+                dict) and "microtenantId" in body and body["microtenantId"]:
             return body["microtenantId"]
         if params and "microtenantId" in params and params["microtenantId"]:
             return params["microtenantId"]
@@ -181,13 +204,17 @@ class RequestExecutor:
             ZscalerAPIResponse or error
         """
         # Extract and append query parameters from URL to request params
-        request["url"], request["params"] = self._extract_and_append_query_params(request["url"], request.get("params", {}))
+        request["url"], request[
+            "params"] = self._extract_and_append_query_params(
+                request["url"], request.get("params", {}))
 
         # Fire the request
         try:
-            request, response, response_body, error = self.fire_request(request)
+            request, response, response_body, error = self.fire_request(
+                request)
         except Exception as ex:
             logger.error(f"Exception during HTTP request: {ex}")
+            # raise ex
             return None, ex
 
         # Check for an error during execution
@@ -203,7 +230,8 @@ class RequestExecutor:
 
         # Check for any errors in the HTTP response
         try:
-            response_data, error = self._http_client.check_response_for_error(request["url"], response, response_body)
+            response_data, error = self._http_client.check_response_for_error(
+                request["url"], response, response_body)
         except Exception as ex:
             logger.error(f"Exception while checking response for errors: {ex}")
             return None, ex
@@ -276,11 +304,14 @@ class RequestExecutor:
         is_sandbox_request = "/zscsb" in request["url"]
 
         # Pass both URL and params to create_key
-        url_cache_key = self._cache.create_key(request["url"], request["params"])
+        url_cache_key = self._cache.create_key(request["url"],
+                                               request["params"])
         if self._cache_enabled() and not is_sandbox_request:
             # Remove cache entry if not a GET call
             if request["method"].upper() != "GET":
-                logger.debug(f"Deleting cache entry for non-GET request: {url_cache_key}")
+                logger.debug(
+                    f"Deleting cache entry for non-GET request: {url_cache_key}"
+                )
                 self._cache.delete(url_cache_key)
 
             # Check if response exists in cache
@@ -292,9 +323,11 @@ class RequestExecutor:
                 logger.debug(f"No cache entry found for URL: {request['url']}")
 
         # Send actual request
-        request, response, response_body, error = self.fire_request_helper(request, 0, time.time())
+        request, response, response_body, error = self.fire_request_helper(
+            request, 0, time.time())
         if self._cache_enabled() and not is_sandbox_request:
-            if error is None and request["method"].upper() == "GET" and 200 <= response.status_code < 300:
+            if error is None and request["method"].upper(
+            ) == "GET" and 200 <= response.status_code < 300:
                 logger.info(f"Caching response for URL: {request['url']}")
                 self._cache.add(url_cache_key, (response, response_body))
 
@@ -316,7 +349,8 @@ class RequestExecutor:
         max_retries = self._max_retries
         req_timeout = self._request_timeout
 
-        if req_timeout > 0 and (current_req_start_time - request_start_time) > req_timeout:
+        if req_timeout > 0 and (current_req_start_time -
+                                request_start_time) > req_timeout:
             logger.error("Request Timeout exceeded.")
             return None, None, None, Exception("Request Timeout exceeded.")
 
@@ -328,14 +362,19 @@ class RequestExecutor:
 
         headers = response.headers
 
-        if attempts < max_retries and self.is_retryable_status(response.status_code):
+        if attempts < max_retries and self.is_retryable_status(
+                response.status_code):
             backoff_seconds = self.get_retry_after(headers, logger)
             if backoff_seconds is None:
-                return None, response, response.text, Exception(ERROR_MESSAGE_429_MISSING_DATE_X_RESET)
-            logger.info(f"Hit rate limit. Retrying request in {backoff_seconds} seconds.")
+                return None, response, response.text, Exception(
+                    ERROR_MESSAGE_429_MISSING_DATE_X_RESET)
+            logger.info(
+                f"Hit rate limit. Retrying request in {backoff_seconds} seconds."
+            )
             time.sleep(backoff_seconds)
             attempts += 1
-            return self.fire_request_helper(request, attempts, request_start_time)
+            return self.fire_request_helper(request, attempts,
+                                            request_start_time)
 
         return request, response, response.text, None
 
@@ -412,14 +451,16 @@ class RequestExecutor:
         return self._custom_headers
 
     def get_retry_after(self, headers, logger):
-        retry_limit_reset_header = headers.get("x-ratelimit-reset") or headers.get("X-RateLimit-Reset")
+        retry_limit_reset_header = headers.get(
+            "x-ratelimit-reset") or headers.get("X-RateLimit-Reset")
         retry_after = headers.get("Retry-After") or headers.get("retry-after")
 
         if retry_after:
             try:
                 return int(retry_after.strip("s")) + 1  # Add 1 second padding
             except ValueError:
-                logger.error(f"Error parsing Retry-After header: {retry_after}")
+                logger.error(
+                    f"Error parsing Retry-After header: {retry_after}")
                 return None
 
         if retry_limit_reset_header is not None:
@@ -427,7 +468,9 @@ class RequestExecutor:
                 reset_seconds = float(retry_limit_reset_header)
                 return reset_seconds + 1  # Add 1 second padding
             except ValueError:
-                logger.error(f"Error parsing x-ratelimit-reset header: {retry_limit_reset_header}")
+                logger.error(
+                    f"Error parsing x-ratelimit-reset header: {retry_limit_reset_header}"
+                )
                 return None
 
         logger.error("Missing Retry-After and X-Rate-Limit-Reset headers.")
