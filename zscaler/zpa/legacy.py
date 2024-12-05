@@ -157,6 +157,9 @@ class LegacyZPAClientHelper():
             logger.error("Login failed due to an exception: %s", str(e))
             return None
 
+    def get_base_url(self, endpoint):
+        return self.baseurl
+
     def send(
         self,
         method,

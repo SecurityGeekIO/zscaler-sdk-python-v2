@@ -108,13 +108,6 @@ class HTTPClient:
                 # Parse the URL to extract the path
                 parsed_url = urlparse(request["url"])
                 path = parsed_url.path
-
-                # Remove the prefix if it starts with /zpa, /zia, or /zcc
-                for prefix in ["/zpa", "/zia", "/zcc"]:
-                    if path.startswith(prefix):
-                        path = path[len(prefix):]
-                        break
-
                 response, legacy_request = self.zpa_legacy_client.send(
                     method=request["method"],
                     path=path,  # Use the modified path

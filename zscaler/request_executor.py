@@ -128,11 +128,19 @@ class RequestExecutor:
         params: dict = None,
         use_raw_data_for_body: bool = False,
     ):
+        service_type = self.get_service_type(endpoint)
         body = body or {}
         headers = headers or {}
         params = params or {}
-
-        base_url = self.get_base_url(endpoint)
+        if self.use_legacy_client:
+            # Remove the prefix if it starts with /zpa, /zia, or /zcc
+            for prefix in ["/zpa", "/zia", "/zcc"]:
+                if endpoint.startswith(prefix):
+                    endpoint = endpoint[len(prefix):]
+                    break
+            base_url = self.zpa_legacy_client.get_base_url(endpoint)
+        else:
+            base_url = self.get_base_url(endpoint)
         final_url = f"{base_url}/{endpoint.lstrip('/')}"
 
         headers = self._prepare_headers(headers, endpoint)
@@ -149,6 +157,7 @@ class RequestExecutor:
             "params": params,
             "headers": headers,
             "uuid": uuid.uuid4(),
+            "service_type": service_type,
         }
         if use_raw_data_for_body:
             request["data"] = body
@@ -256,7 +265,7 @@ class RequestExecutor:
                 res_details=response,
                 response_body=response_body,
                 data_type=response_type,
-                service_type=self.get_service_type(request["url"]),
+                service_type=request.get("service_type", ""),
             ),
             None,
         )
