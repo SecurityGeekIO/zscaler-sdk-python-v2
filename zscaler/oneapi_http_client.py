@@ -95,7 +95,7 @@ class HTTPClient:
                 "verify": self._ssl_context,
             }
 
-            # Always use 'json' for JSON payloads
+            # Handle JSON or form payload
             if request.get("json"):
                 params["json"] = request["json"]
             elif request.get("data"):
@@ -104,28 +104,45 @@ class HTTPClient:
                 params["data"] = request["form"]
             if request["params"]:
                 params["params"] = request["params"]
+
+            # Use Legacy Client if enabled
             if self.use_legacy_client:
-                # Parse the URL to extract the path
                 parsed_url = urlparse(request["url"])
                 path = parsed_url.path
+
+                logger.debug(f"Sending request via legacy client. Path: {path}")
                 response, legacy_request = self.zpa_legacy_client.send(
                     method=request["method"],
-                    path=path,  # Use the modified path
+                    path=path,
                     params=request["params"],
-                    json=request.get("json", None)
-                    or request.get("data", None),
+                    json=request.get("json", None) or request.get("data", None),
                 )
-                params["url"] = legacy_request["url"]
-                params["params"] = legacy_request["params"]
-                params["headers"] = legacy_request["headers"]
+
+                logger.debug(
+                    f"Legacy Client Response: {response}, Legacy Request: {legacy_request}"
+                )
+
+                if not response:
+                    raise ValueError(
+                        f"Legacy client returned None for request {legacy_request}"
+                    )
+
+                params.update({
+                    "url": legacy_request["url"],
+                    "params": legacy_request["params"],
+                    "headers": legacy_request["headers"],
+                })
             else:
-                # Log whether a session is reused or not
+                # Use Standard Session
                 if self._session:
                     logger.debug("Request with re-usable session.")
                     response = self._session.request(**params)
                 else:
                     logger.debug("Request without re-usable session.")
                     response = requests.request(**params)
+
+            if not response or not hasattr(response, "status_code"):
+                raise ValueError(f"Request execution failed. Response is None.")
 
             dump_request(
                 logger,
@@ -137,11 +154,12 @@ class HTTPClient:
                 request["uuid"],
                 body=not ("/zscsb" in request["url"]),
             )
-            start_time = time.time(
-            )  # Capture the start time before sending the request
-            # response = self._session.request(**params) if self._session else requests.request(**params)
+
+            start_time = time.time()
+
             logger.info(
-                f"Received response with status code: {response.status_code}")
+                f"Received response with status code: {response.status_code}"
+            )
 
             dump_response(
                 logger,
@@ -156,6 +174,10 @@ class HTTPClient:
 
         except (requests.RequestException, requests.Timeout) as error:
             logger.error(f"Request to {request['url']} failed: {error}")
+            return (None, error)
+
+        except Exception as error:
+            logger.error(f"Unexpected error during request execution: {error}")
             return (None, error)
 
     @staticmethod

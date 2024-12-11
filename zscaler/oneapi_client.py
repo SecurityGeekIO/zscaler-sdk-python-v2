@@ -20,10 +20,21 @@ class Client:
     """A Zscaler client object"""
 
     def __init__(
-        self,
-        user_config: dict = {},
-        zpa_legacy_client: LegacyZPAClientHelper = None,
+        self, 
+        user_config: dict = {}, 
+        zpa_legacy_client: LegacyZPAClientHelper = None, 
+        use_legacy_client: bool = False
     ):
+        self.use_legacy_client = use_legacy_client
+        self.zpa_legacy_client = zpa_legacy_client
+        
+        # Legacy client initialization logic
+        if use_legacy_client and zpa_legacy_client:
+            self._config = {}
+            self._request_executor = zpa_legacy_client
+            self.logger = logging.getLogger(__name__)
+            self.logger.info("Legacy ZPA client initialized successfully.")
+            return
 
         # Assuming user_config is a dictionary or an object with a 'logging' attribute
         logging_config = (user_config.get("logging", {}) if isinstance(
@@ -140,7 +151,9 @@ class Client:
         return self._zia
 
     @property
-    def zpa(self) -> ZPAService:
+    def zpa(self):
+        if self.use_legacy_client:
+            return self.zpa_legacy_client
         if self._zpa is None:
             self._zpa = ZPAService(self._request_executor, self._config)
         return self._zpa
@@ -149,18 +162,18 @@ class Client:
         """
         Automatically create and set session within context manager.
         """
-        # self.logger.debug("Entering context manager, setting up session.")
-        # Create and set up a session using 'requests' library for sync.
-        self._session = requests.Session()
-        self._request_executor.set_session(self._session)
-        # self.logger.debug("Session setup and authentication complete.")
+        if not self.use_legacy_client:
+            # Create and set up a session using 'requests' library for sync.
+            self._session = requests.Session()
+            self._request_executor.set_session(self._session)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Automatically close session within context manager."""
         self.logger.debug("Exiting context manager, closing session.")
-        self._session.close()
-        self.logger.debug("Session closed.")
+        if hasattr(self, "_session"):
+            self._session.close()
+            self.logger.debug("Session closed.")
 
     """
     Getters

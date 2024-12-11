@@ -110,14 +110,27 @@ class RequestExecutor:
         return self.BASE_URL
 
     def get_service_type(self, url):
+        if not url:
+            raise ValueError("URL cannot be None or empty.")
+
+        if self.use_legacy_client:
+            url = self.remove_oneapi_endpoint_prefix(url)
+
         if "/zia" in url or "/zscsb" in url:
             return "zia"
         elif "/zcc" in url:
             return "zcc"
-        elif "/zpa" in url:
+        elif "/zpa" in url or "/mgmtconfig" in url:
             return "zpa"
         else:
             raise ValueError(f"Unsupported service: {url}")
+
+    def remove_oneapi_endpoint_prefix(self, endpoint: str) -> str:
+        prefixes = ["/zia", "/zpa", "/zcc/papi", "/zcc"]
+        for prefix in prefixes:
+            if endpoint.startswith(prefix):
+                return endpoint[len(prefix):]
+        return endpoint
 
     def create_request(
         self,
@@ -128,7 +141,12 @@ class RequestExecutor:
         params: dict = None,
         use_raw_data_for_body: bool = False,
     ):
-        service_type = self.get_service_type(endpoint)
+        # Service type determination
+        try:
+            service_type = self.get_service_type(endpoint)
+        except ValueError as e:
+            logger.error(f"Service detection failed: {e}")
+            raise
         body = body or {}
         headers = headers or {}
         params = params or {}
@@ -141,6 +159,7 @@ class RequestExecutor:
             base_url = self.zpa_legacy_client.get_base_url(endpoint)
         else:
             base_url = self.get_base_url(endpoint)
+            
         final_url = f"{base_url}/{endpoint.lstrip('/')}"
 
         headers = self._prepare_headers(headers, endpoint)
@@ -148,8 +167,13 @@ class RequestExecutor:
         # Extract and append query parameters from URL to request params
         final_url, params = self._extract_and_append_query_params(
             final_url, params)
+        
+        # Check and add sandbox token if needed
         if "/zscsb" in endpoint:
-            params["api_token"] = self._config["client"]["sandboxToken"]
+            sandbox_token = self._config["client"].get("sandboxToken")
+            if not sandbox_token:
+                raise ValueError("Missing required sandboxToken in config.")
+            params["api_token"] = sandbox_token
 
         request = {
             "method": method,
@@ -204,48 +228,38 @@ class RequestExecutor:
     def execute(self, request, response_type=None):
         """
         High-level request execution method.
-
         Args:
-            request (dict): Dictionary object containing request details.
-            response_type (type): The data type to return (e.g., RuleLabels).
-
+            request (dict): Request dictionary.
+            response_type (type): Expected data type.
         Returns:
-            ZscalerAPIResponse or error
+            Tuple (API response, Error)
         """
-        # Extract and append query parameters from URL to request params
-        request["url"], request[
-            "params"] = self._extract_and_append_query_params(
-                request["url"], request.get("params", {}))
-
-        # Fire the request
         try:
-            request, response, response_body, error = self.fire_request(
-                request)
+            request, response, response_body, error = self.fire_request(request)
         except Exception as ex:
             logger.error(f"Exception during HTTP request: {ex}")
-            # raise ex
             return None, ex
 
-        # Check for an error during execution
-        if error is not None:
+        if not response:
+            logger.error("Response is None after executing request.")
+            return None, ValueError("Response is None")
+
+        if error:
             logger.error(f"Error during request execution: {error}")
             return None, error
 
-        # Handle 204 No Content case globally
         if response.status_code == 204:
             logger.debug(f"Received 204 No Content from {request['url']}")
-            # Return None for the object, as there's no content to parse
             return None, None
 
-        # Check for any errors in the HTTP response
         try:
             response_data, error = self._http_client.check_response_for_error(
-                request["url"], response, response_body)
+                request["url"], response, response_body
+            )
         except Exception as ex:
             logger.error(f"Exception while checking response for errors: {ex}")
             return None, ex
 
-        # If there was an error in the response, return it
         if error:
             logger.error(f"Error in HTTP response: {error}")
             return None, error
@@ -253,11 +267,9 @@ class RequestExecutor:
         logger.debug(f"Successful response from {request['url']}")
         logger.debug(f"Response Data: {response_data}")
 
-        # Convert response body keys from camelCase to snake_case if response_data is a dict or list
         if isinstance(response_data, (dict, list)):
             response_data = convert_keys_to_snake_case(response_data)
 
-        # Return the ZscalerAPIResponse object (this will handle pagination)
         return (
             ZscalerAPIResponse(
                 request_executor=self,
@@ -269,6 +281,75 @@ class RequestExecutor:
             ),
             None,
         )
+
+    # def execute(self, request, response_type=None):
+    #     """
+    #     High-level request execution method.
+
+    #     Args:
+    #         request (dict): Dictionary object containing request details.
+    #         response_type (type): The data type to return (e.g., RuleLabels).
+
+    #     Returns:
+    #         ZscalerAPIResponse or error
+    #     """
+    #     # Extract and append query parameters from URL to request params
+    #     request["url"], request[
+    #         "params"] = self._extract_and_append_query_params(
+    #             request["url"], request.get("params", {}))
+
+    #     # Fire the request
+    #     try:
+    #         request, response, response_body, error = self.fire_request(
+    #             request)
+    #     except Exception as ex:
+    #         logger.error(f"Exception during HTTP request: {ex}")
+    #         # raise ex
+    #         return None, ex
+
+    #     # Check for an error during execution
+    #     if error is not None:
+    #         logger.error(f"Error during request execution: {error}")
+    #         return None, error
+
+    #     # Handle 204 No Content case globally
+    #     if response.status_code == 204:
+    #         logger.debug(f"Received 204 No Content from {request['url']}")
+    #         # Return None for the object, as there's no content to parse
+    #         return None, None
+
+    #     # Check for any errors in the HTTP response
+    #     try:
+    #         response_data, error = self._http_client.check_response_for_error(
+    #             request["url"], response, response_body)
+    #     except Exception as ex:
+    #         logger.error(f"Exception while checking response for errors: {ex}")
+    #         return None, ex
+
+    #     # If there was an error in the response, return it
+    #     if error:
+    #         logger.error(f"Error in HTTP response: {error}")
+    #         return None, error
+
+    #     logger.debug(f"Successful response from {request['url']}")
+    #     logger.debug(f"Response Data: {response_data}")
+
+    #     # Convert response body keys from camelCase to snake_case if response_data is a dict or list
+    #     if isinstance(response_data, (dict, list)):
+    #         response_data = convert_keys_to_snake_case(response_data)
+
+    #     # Return the ZscalerAPIResponse object (this will handle pagination)
+    #     return (
+    #         ZscalerAPIResponse(
+    #             request_executor=self,
+    #             req=request,
+    #             res_details=response,
+    #             response_body=response_body,
+    #             data_type=response_type,
+    #             service_type=request.get("service_type", ""),
+    #         ),
+    #         None,
+    #     )
 
     def _extract_and_append_query_params(self, url, params):
         """
@@ -331,12 +412,17 @@ class RequestExecutor:
             else:
                 logger.debug(f"No cache entry found for URL: {request['url']}")
 
-        # Send actual request
-        request, response, response_body, error = self.fire_request_helper(
-            request, 0, time.time())
+    # Send Actual Request
+        try:
+            request, response, response_body, error = self.fire_request_helper(
+                request, 0, time.time()
+            )
+        except Exception as e:
+            logger.error(f"Request execution failed: {e}")
+            return request, None, None, e
+
         if self._cache_enabled() and not is_sandbox_request:
-            if error is None and request["method"].upper(
-            ) == "GET" and 200 <= response.status_code < 300:
+            if not error and request["method"].upper() == "GET" and response and response.status_code < 300:
                 logger.info(f"Caching response for URL: {request['url']}")
                 self._cache.add(url_cache_key, (response, response_body))
 
@@ -354,6 +440,8 @@ class RequestExecutor:
         Returns:
             Tuple of request, response object, response body, and error.
         """
+        logger.debug(f"Starting fire_request_helper with request: {request}")
+        
         current_req_start_time = time.time()
         max_retries = self._max_retries
         req_timeout = self._request_timeout
@@ -363,12 +451,24 @@ class RequestExecutor:
             logger.error("Request Timeout exceeded.")
             return None, None, None, Exception("Request Timeout exceeded.")
 
-        response, error = self._http_client.send_request(request)
+        try:
+            logger.debug("Sending request through HTTP client.")
+            response, error = self._http_client.send_request(request)
+            logger.debug(f"HTTP request sent. Response: {response}, Error: {error}")
+        except Exception as e:
+            logger.error(f"Error sending request: {e}")
+            return request, None, None, e
 
         if error:
-            logger.error(f"Error sending request: {error}")
+            logger.error(f"HTTP Error sending request: {error}")
             return None, None, None, error
 
+        if not response:
+            error_message = "Received None as the response object."
+            logger.error(error_message)
+            return request, None, None, Exception(error_message)
+
+        response_body = response.text
         headers = response.headers
 
         if attempts < max_retries and self.is_retryable_status(
@@ -384,8 +484,10 @@ class RequestExecutor:
             attempts += 1
             return self.fire_request_helper(request, attempts,
                                             request_start_time)
-
-        return request, response, response.text, None
+            
+        logger.debug(f"Request successfully processed. Response: {response_body}")
+        return request, response, response_body, None
+        # return request, response, response.text, None
 
     def is_retryable_status(self, status):
         """
