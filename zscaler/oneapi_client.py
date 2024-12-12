@@ -11,8 +11,9 @@ from zscaler.cache.zscaler_cache import ZscalerCache
 from zscaler.oneapi_oauth_client import OAuth
 from zscaler.zcc.zcc_service import ZCCService
 from zscaler.zia.zia_service import ZIAService
-from zscaler.zpa.legacy import LegacyZPAClientHelper
 from zscaler.zpa.zpa_service import ZPAService
+from zscaler.zpa.legacy import LegacyZPAClientHelper
+from zscaler.zia.legacy import LegacyZIAClientHelper
 
 
 # Zscaler Client Connector APIs
@@ -22,11 +23,13 @@ class Client:
     def __init__(
         self, 
         user_config: dict = {}, 
-        zpa_legacy_client: LegacyZPAClientHelper = None, 
+        zpa_legacy_client: LegacyZPAClientHelper = None,
+        zia_legacy_client: LegacyZIAClientHelper = None, 
         use_legacy_client: bool = False
     ):
         self.use_legacy_client = use_legacy_client
         self.zpa_legacy_client = zpa_legacy_client
+        self.zia_legacy_client = zia_legacy_client
         
         # Legacy client initialization logic
         if use_legacy_client and zpa_legacy_client:
@@ -34,6 +37,14 @@ class Client:
             self._request_executor = zpa_legacy_client
             self.logger = logging.getLogger(__name__)
             self.logger.info("Legacy ZPA client initialized successfully.")
+            return
+
+        # Legacy client initialization logic for ZIA
+        if use_legacy_client and zia_legacy_client:
+            self._config = {}
+            self._request_executor = zia_legacy_client
+            self.logger = logging.getLogger(__name__)
+            self.logger.info("Legacy ZIA client initialized successfully.")
             return
 
         # Assuming user_config is a dictionary or an object with a 'logging' attribute
@@ -69,16 +80,22 @@ class Client:
         # Check inline configuration first, and if not provided, use environment variables
         self._client_id = self._config["client"].get(
             "clientId", os.getenv("ZSCALER_CLIENT_ID"))
+        
         self._client_secret = self._config["client"].get(
             "clientSecret", os.getenv("ZSCALER_CLIENT_SECRET"))
+        
         self._private_key = self._config["client"].get(
             "privateKey", os.getenv("ZSCALER_PRIVATE_KEY"))
+        
         self._vanity_domain = self._config["client"].get(
             "vanityDomain", os.getenv("ZSCALER_VANITY_DOMAIN"))
+        
         self._cloud = self._config["client"].get(
             "cloud", os.getenv("ZSCALER_CLOUD", "PRODUCTION"))
+        
         self._sandbox_token = self._config["client"].get(
             "sandboxToken", os.getenv("ZSCALER_SANDBOX_TOKEN"))
+        
         self._auth_token = None
 
         # Ensure required fields are set, either through inline config or environment variables
@@ -114,8 +131,10 @@ class Client:
         self._request_executor = user_config.get(
             "requestExecutor",
             RequestExecutor)(self._config, cache,
-                             user_config.get("httpClient", None),
-                             self.zpa_legacy_client)
+                            user_config.get("httpClient", None),
+                            self.zpa_legacy_client,
+                            self.zia_legacy_client
+        )
         # self.logger.debug("Request executor initialized.")
 
         # Lazy load ZIA and ZPA clients
@@ -144,10 +163,18 @@ class Client:
             self._zcc = ZCCService(self)
         return self._zcc
 
+    # @property
+    # def zia(self) -> ZIAService:
+    #     if self._zia is None:
+    #         self._zia = ZIAService(self)
+    #     return self._zia
+
     @property
-    def zia(self) -> ZIAService:
+    def zia(self):
+        if self.use_legacy_client:
+            return self.zia_legacy_client
         if self._zia is None:
-            self._zia = ZIAService(self)
+            self._zia = ZIAService(self._request_executor)
         return self._zia
 
     @property

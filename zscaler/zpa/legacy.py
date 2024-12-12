@@ -18,6 +18,7 @@ from zscaler.utils import (
 setup_logging(logger_name="zscaler-sdk-python")
 logger = logging.getLogger("zscaler-sdk-python")
 
+
 class LegacyZPAClientHelper():
     """A Controller to access Endpoints in the Zscaler Private Access (ZPA) API.
 
@@ -123,7 +124,6 @@ class LegacyZPAClientHelper():
                 "User-Agent": self.user_agent,
             }
 
-    # @retry_with_backoff(MAX_RETRIES)
     def login(self):
         params = {
             "client_id": self.client_id,

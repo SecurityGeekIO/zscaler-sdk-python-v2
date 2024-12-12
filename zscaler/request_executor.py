@@ -9,6 +9,7 @@ from zscaler.error_messages import ERROR_MESSAGE_429_MISSING_DATE_X_RESET
 from http import HTTPStatus
 from zscaler.helpers import convert_keys_to_snake_case, convert_keys_to_camel_case
 from zscaler.zpa.legacy import LegacyZPAClientHelper
+from zscaler.zia.legacy import LegacyZIAClientHelper
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,8 @@ class RequestExecutor:
                  config,
                  cache,
                  http_client=None,
-                 zpa_legacy_client: LegacyZPAClientHelper = None):
+                 zpa_legacy_client: LegacyZPAClientHelper = None,
+                 zia_legacy_client: LegacyZIAClientHelper = None):
         """
         Constructor for Request Executor object for Zscaler SDK Client.
 
@@ -34,7 +36,10 @@ class RequestExecutor:
             http_client (object, optional): Custom HTTP client for making requests.
         """
         self.zpa_legacy_client = zpa_legacy_client
-        self.use_legacy_client = zpa_legacy_client is not None
+        self.zia_legacy_client = zia_legacy_client
+
+        self.use_legacy_client = zpa_legacy_client is not None or zia_legacy_client is not None
+
         # Validate and set request timeout
         self._request_timeout = config["client"].get(
             "requestTimeout", 240)  # Default to 240 seconds
@@ -88,7 +93,10 @@ class RequestExecutor:
                 "headers": self._default_headers,
                 "proxy": self._config["client"].get("proxy"),
                 "sslContext": self._config["client"].get("sslContext"),
-            }, zpa_legacy_client)
+            },
+            zpa_legacy_client=self.zpa_legacy_client,
+            zia_legacy_client=self.zia_legacy_client,
+        )
 
         # Initialize custom headers as an empty dictionary
         self._custom_headers = {}
@@ -113,17 +121,24 @@ class RequestExecutor:
         if not url:
             raise ValueError("URL cannot be None or empty.")
 
-        if self.use_legacy_client:
-            url = self.remove_oneapi_endpoint_prefix(url)
-
         if "/zia" in url or "/zscsb" in url:
             return "zia"
         elif "/zcc" in url:
             return "zcc"
         elif "/zpa" in url or "/mgmtconfig" in url:
             return "zpa"
-        else:
-            raise ValueError(f"Unsupported service: {url}")
+
+        if self.use_legacy_client:
+            url = self.remove_oneapi_endpoint_prefix(url)
+            # Recheck for service type after removing the prefix
+            if "/zia" in url or "/zscsb" in url:
+                return "zia"
+            elif "/zcc" in url:
+                return "zcc"
+            elif "/zpa" in url or "/mgmtconfig" in url:
+                return "zpa"
+
+        raise ValueError(f"Unsupported service: {url}")
 
     def remove_oneapi_endpoint_prefix(self, endpoint: str) -> str:
         prefixes = ["/zia", "/zpa", "/zcc/papi", "/zcc"]
@@ -147,16 +162,27 @@ class RequestExecutor:
         except ValueError as e:
             logger.error(f"Service detection failed: {e}")
             raise
+
         body = body or {}
         headers = headers or {}
         params = params or {}
+
+        # if self.use_legacy_client:
+        #     # Remove the prefix if it starts with /zpa, /zia, or /zcc
+        #     for prefix in ["/zpa", "/zia", "/zcc"]:
+        #         if endpoint.startswith(prefix):
+        #             endpoint = endpoint[len(prefix):]
+        #             break
         if self.use_legacy_client:
-            # Remove the prefix if it starts with /zpa, /zia, or /zcc
-            for prefix in ["/zpa", "/zia", "/zcc"]:
-                if endpoint.startswith(prefix):
-                    endpoint = endpoint[len(prefix):]
-                    break
-            base_url = self.zpa_legacy_client.get_base_url(endpoint)
+            # Remove the prefix if it starts with /zpa, /zia, /zcc, or /api/v1
+            endpoint = self.remove_oneapi_endpoint_prefix(endpoint)
+
+            if service_type == "zpa":
+                base_url = self.zpa_legacy_client.get_base_url(endpoint)
+            elif service_type == "zia":
+                base_url = self.zia_legacy_client.get_base_url(endpoint)
+            else:
+                base_url = self.get_base_url(endpoint)
         else:
             base_url = self.get_base_url(endpoint)
             
@@ -281,75 +307,6 @@ class RequestExecutor:
             ),
             None,
         )
-
-    # def execute(self, request, response_type=None):
-    #     """
-    #     High-level request execution method.
-
-    #     Args:
-    #         request (dict): Dictionary object containing request details.
-    #         response_type (type): The data type to return (e.g., RuleLabels).
-
-    #     Returns:
-    #         ZscalerAPIResponse or error
-    #     """
-    #     # Extract and append query parameters from URL to request params
-    #     request["url"], request[
-    #         "params"] = self._extract_and_append_query_params(
-    #             request["url"], request.get("params", {}))
-
-    #     # Fire the request
-    #     try:
-    #         request, response, response_body, error = self.fire_request(
-    #             request)
-    #     except Exception as ex:
-    #         logger.error(f"Exception during HTTP request: {ex}")
-    #         # raise ex
-    #         return None, ex
-
-    #     # Check for an error during execution
-    #     if error is not None:
-    #         logger.error(f"Error during request execution: {error}")
-    #         return None, error
-
-    #     # Handle 204 No Content case globally
-    #     if response.status_code == 204:
-    #         logger.debug(f"Received 204 No Content from {request['url']}")
-    #         # Return None for the object, as there's no content to parse
-    #         return None, None
-
-    #     # Check for any errors in the HTTP response
-    #     try:
-    #         response_data, error = self._http_client.check_response_for_error(
-    #             request["url"], response, response_body)
-    #     except Exception as ex:
-    #         logger.error(f"Exception while checking response for errors: {ex}")
-    #         return None, ex
-
-    #     # If there was an error in the response, return it
-    #     if error:
-    #         logger.error(f"Error in HTTP response: {error}")
-    #         return None, error
-
-    #     logger.debug(f"Successful response from {request['url']}")
-    #     logger.debug(f"Response Data: {response_data}")
-
-    #     # Convert response body keys from camelCase to snake_case if response_data is a dict or list
-    #     if isinstance(response_data, (dict, list)):
-    #         response_data = convert_keys_to_snake_case(response_data)
-
-    #     # Return the ZscalerAPIResponse object (this will handle pagination)
-    #     return (
-    #         ZscalerAPIResponse(
-    #             request_executor=self,
-    #             req=request,
-    #             res_details=response,
-    #             response_body=response_body,
-    #             data_type=response_type,
-    #             service_type=request.get("service_type", ""),
-    #         ),
-    #         None,
-    #     )
 
     def _extract_and_append_query_params(self, url, params):
         """
