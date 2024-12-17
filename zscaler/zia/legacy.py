@@ -294,11 +294,127 @@ class LegacyZIAClientHelper():
     def set_session(self, session):
         """Dummy method for compatibility with the request executor."""
         self._session = session
-        
+
     @property
-    def labels(self):
+    def advanced_settings(self):
+        """
+        The interface object for the :ref:`ZIA Advanced Settings interface <zia-advanced_settings>`.
+
+        """
+        from zscaler.zia.advanced_settings import AdvancedSettingsAPI
+        return AdvancedSettingsAPI(self.request_executor)
+
+    @property
+    def audit_logs(self):
+        """
+        The interface object for the :ref:`ZIA Admin Audit Logs interface <zia-audit_logs>`.
+
+        """
+        from zscaler.zia.audit_logs import AuditLogsAPI
+        return AuditLogsAPI(self.request_executor)
+    
+    @property
+    def atp_policy(self):
+        """
+        The interface object for the :ref:`ZIA Advanced Settings interface <zia-advanced_settings>`.
+
+        """
+        from zscaler.zia.atp_policy import ATPPolicyAPI
+        return ATPPolicyAPI(self.request_executor)
+
+    @property
+    def cloud_firewall_dns(self):
+        """
+        The interface object for the :ref:`ZIA Firewall DNS Policies interface <zia-cloud_firewall_dns>`.
+
+        """
+        from zscaler.zia.cloud_firewall_dns import FirewallDNSRulesAPI
+        return FirewallDNSRulesAPI(self.request_executor)
+    
+    @property
+    def cloud_firewall_ips(self):
+        """
+        The interface object for the :ref:`ZIA Firewall IPS Policies interface <zia-cloud_firewall_ips>`.
+
+        """
+        from zscaler.zia.cloud_firewall_ips import FirewallIPSRulesAPI
+        return FirewallIPSRulesAPI(self.request_executor)
+
+    @property
+    def cloud_applications(self):
+        """
+        The interface object for the :ref:`ZIA Cloud App Control <zia-cloud_applications>`.
+
+        """
+        from zscaler.zia.cloud_applications import CloudApplicationsAPI
+        return CloudApplicationsAPI(self.request_executor)
+
+    @property
+    def end_user_notification(self):
+        """
+        The interface object for the :ref:`ZIA End user Notification interface <zia-end_user_notification>`.
+
+        """
+        from zscaler.zia.endusernotification import EndUserNotificationAPI
+        return EndUserNotificationAPI(self.request_executor)
+
+    @property
+    def firewall(self):
+        """
+        The interface object for the :ref:`ZIA Firewall Policies interface <zia-firewall>`.
+
+        """
+        from zscaler.zia.firewall import FirewallPolicyAPI
+        return FirewallPolicyAPI(self.request_executor)
+
+    @property
+    def file_type_control_rule(self):
+        """
+        The interface object for the :ref:`ZIA File Type Control Rule interface <zia-file_type_control_rule>`.
+
+        """
+        from zscaler.zia.file_type_control_rule import FileTypeControlRuleAPI
+        return FileTypeControlRuleAPI(self.request_executor)
+
+    @property
+    def malware_protection_policy(self):
+        """
+        The interface object for the :ref:`ZIA Malware Protection Policy interface <zia-malware_protection_policy>`.
+
+        """
+        from zscaler.zia.malware_protection_policy import MalwareProtectionPolicyAPI
+        return MalwareProtectionPolicyAPI(self.request_executor)
+
+    @property
+    def organization_information(self):
+        """
+        The interface object for the :ref:`ZIA Organization Information interface <zia-organization_information>`.
+
+        """
+        from zscaler.zia.organization_information import OrganizationInformationAPI
+        return OrganizationInformationAPI(self.request_executor)
+    
+    @property
+    def remote_assistance(self):
+        """
+        The interface object for the ZIA Remote Assistance interface.
+        """
+        from zscaler.zia.remoteassistance import RemoteAssistanceAPI
+        return RemoteAssistanceAPI(self.request_executor)
+                
+    @property
+    def rule_labels(self):
         """
         The interface object for the ZIA Rule Labels interface.
         """
         from zscaler.zia.rule_labels import RuleLabelsAPI
         return RuleLabelsAPI(self.request_executor)
+    
+    @property
+    def sandbox_rules(self):
+        """
+        The interface object for the :ref:`ZIA Sandbox Rules interface <zia-sandbox_rules>`.
+
+        """
+        from zscaler.zia.sandbox_rules import SandboxRulesAPI
+        return SandboxRulesAPI(self.request_executor)

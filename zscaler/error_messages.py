@@ -35,7 +35,7 @@ ERROR_MESSAGE_ZPA_MICROTENANT_ID = (
 )
 
 ERROR_MESSAGE_URL_NOT_HTTPS = "Your Zscaler URL must start with 'https'."
-ERROR_MESSAGE_429_MISSING_DATE_X_RESET = "429 response must have the 'X-Rate-Limit-Reset' and 'Date' headers"
+ERROR_MESSAGE_429_MISSING_DATE_X_RESET = "429 response must have the 'x-ratelimit-reset' and 'Date' headers"
 
 ERROR_MESSAGE_PROXY_MISSING_HOST = "Please add a host URL to your proxy configuration."
 

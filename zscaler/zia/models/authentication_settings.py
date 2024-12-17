@@ -18,32 +18,83 @@ from zscaler.oneapi_object import ZscalerObject
 
 class AuthenticationSettings(ZscalerObject):
     """
-    A class for Authentication Settings objects.
+    A class for AuthenticationSettings objects.
     """
 
     def __init__(self, config=None):
         """
-        Initialize the Authentication Settings model based on API response.
+        Initialize the AuthenticationSettings model based on API response.
 
         Args:
-            config (dict): A dictionary representing the Authentication Settings configuration.
+            config (dict): A dictionary representing the configuration.
         """
         super().__init__(config)
+
         if config:
-            # Safely extract 'urls' from the config, default to an empty list if not present or not valid
-            self.urls = config.get("urls", [])
-            if not isinstance(self.urls, list):
-                self.urls = []  # Fallback to empty list if 'urls' is not a list
+            self.org_auth_type = config["orgAuthType"] \
+                if "orgAuthType" in config else None
+            self.one_time_auth = config["oneTimeAuth"] \
+                if "oneTimeAuth" in config else None
+            self.saml_enabled = config["samlEnabled"] \
+                if "samlEnabled" in config else False
+            self.kerberos_enabled = config["kerberosEnabled"] \
+                if "kerberosEnabled" in config else False
+            self.kerberos_pwd = config["kerberosPwd"] \
+                if "kerberosPwd" in config else None
+            self.auth_frequency = config["authFrequency"] \
+                if "authFrequency" in config else None
+            self.auth_custom_frequency = config["authCustomFrequency"] \
+                if "authCustomFrequency" in config else None
+            self.password_strength = config["passwordStrength"] \
+                if "passwordStrength" in config else None
+            self.password_expiry = config["passwordExpiry"] \
+                if "passwordExpiry" in config else None
+            self.last_sync_start_time = config["lastSyncStartTime"] \
+                if "lastSyncStartTime" in config else None
+            self.last_sync_end_time = config["lastSyncEndTime"] \
+                if "lastSyncEndTime" in config else None
+            self.mobile_admin_saml_idp_enabled = config["mobileAdminSamlIdpEnabled"] \
+                if "mobileAdminSamlIdpEnabled" in config else False
+            self.auto_provision = config["autoProvision"] \
+                if "autoProvision" in config else False
+            self.directory_sync_migrate_to_scim_enabled = config["directorySyncMigrateToScimEnabled"] \
+                if "directorySyncMigrateToScimEnabled" in config else False
         else:
-            self.urls = []  # Fallback to empty list if config is None
+            self.org_auth_type = None
+            self.one_time_auth = None
+            self.saml_enabled = False
+            self.kerberos_enabled = False
+            self.kerberos_pwd = None
+            self.auth_frequency = None
+            self.auth_custom_frequency = None
+            self.password_strength = None
+            self.password_expiry = None
+            self.last_sync_start_time = None
+            self.last_sync_end_time = None
+            self.mobile_admin_saml_idp_enabled = False
+            self.auto_provision = False
+            self.directory_sync_migrate_to_scim_enabled = False
 
     def request_format(self):
         """
-        Return a dictionary formatted for the request body when submitting or modifying data.
+        Return the object as a dictionary in the format expected for API requests.
         """
         parent_req_format = super().request_format()
         current_obj_format = {
-            "urls": self.urls
+            "orgAuthType": self.org_auth_type,
+            "oneTimeAuth": self.one_time_auth,
+            "samlEnabled": self.saml_enabled,
+            "kerberosEnabled": self.kerberos_enabled,
+            "kerberosPwd": self.kerberos_pwd,
+            "authFrequency": self.auth_frequency,
+            "authCustomFrequency": self.auth_custom_frequency,
+            "passwordStrength": self.password_strength,
+            "passwordExpiry": self.password_expiry,
+            "lastSyncStartTime": self.last_sync_start_time,
+            "lastSyncEndTime": self.last_sync_end_time,
+            "mobileAdminSamlIdpEnabled": self.mobile_admin_saml_idp_enabled,
+            "autoProvision": self.auto_provision,
+            "directorySyncMigrateToScimEnabled": self.directory_sync_migrate_to_scim_enabled
         }
         parent_req_format.update(current_obj_format)
         return parent_req_format

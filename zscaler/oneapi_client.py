@@ -12,6 +12,7 @@ from zscaler.oneapi_oauth_client import OAuth
 from zscaler.zcc.zcc_service import ZCCService
 from zscaler.zia.zia_service import ZIAService
 from zscaler.zpa.zpa_service import ZPAService
+from zscaler.zcc.legacy import LegacyZCCClientHelper
 from zscaler.zpa.legacy import LegacyZPAClientHelper
 from zscaler.zia.legacy import LegacyZIAClientHelper
 
@@ -22,15 +23,25 @@ class Client:
 
     def __init__(
         self, 
-        user_config: dict = {}, 
+        user_config: dict = {},
+        zcc_legacy_client: LegacyZCCClientHelper = None,
         zpa_legacy_client: LegacyZPAClientHelper = None,
         zia_legacy_client: LegacyZIAClientHelper = None, 
         use_legacy_client: bool = False
     ):
         self.use_legacy_client = use_legacy_client
+        self.zcc_legacy_client = zcc_legacy_client
         self.zpa_legacy_client = zpa_legacy_client
         self.zia_legacy_client = zia_legacy_client
-        
+
+        # Legacy client initialization logic
+        if use_legacy_client and zcc_legacy_client:
+            self._config = {}
+            self._request_executor = zcc_legacy_client
+            self.logger = logging.getLogger(__name__)
+            self.logger.info("Legacy ZCC client initialized successfully.")
+            return
+                
         # Legacy client initialization logic
         if use_legacy_client and zpa_legacy_client:
             self._config = {}
@@ -50,7 +61,10 @@ class Client:
         # Assuming user_config is a dictionary or an object with a 'logging' attribute
         logging_config = (user_config.get("logging", {}) if isinstance(
             user_config, dict) else getattr(user_config, "logging", {}))
+        self.zcc_legacy_client = zcc_legacy_client
         self.zpa_legacy_client = zpa_legacy_client
+        self.zia_legacy_client = zia_legacy_client
+        
         # Extract enabled and verbose from the logging configuration
         enabled = logging_config.get("enabled", None)
         verbose = logging_config.get("verbose", None)
@@ -132,6 +146,7 @@ class Client:
             "requestExecutor",
             RequestExecutor)(self._config, cache,
                             user_config.get("httpClient", None),
+                            self.zcc_legacy_client,
                             self.zpa_legacy_client,
                             self.zia_legacy_client
         )
@@ -157,16 +172,26 @@ class Client:
             {"Authorization": f"Bearer {self._auth_token}"})
         self.logger.debug("Authorization header updated with access token.")
 
-    @property
-    def zcc(self) -> ZCCService:
-        if self._zcc is None:
-            self._zcc = ZCCService(self)
-        return self._zcc
-
     # @property
-    # def zia(self) -> ZIAService:
+    # def zcc(self) -> ZCCService:
+    #     if self._zcc is None:
+    #         self._zcc = ZCCService(self)
+    #     return self._zcc
+
+    @property
+    def zcc(self):
+        if self.use_legacy_client:
+            return self.zcc_legacy_client
+        if self._zcc is None:
+            self._zcc = ZCCService(self._request_executor)
+        return self._zcc
+    
+    # @property
+    # def zia(self):
+    #     if self.use_legacy_client:
+    #         return self.zia_legacy_client
     #     if self._zia is None:
-    #         self._zia = ZIAService(self)
+    #         self._zia = ZIAService(self._request_executor)
     #     return self._zia
 
     @property
@@ -174,6 +199,7 @@ class Client:
         if self.use_legacy_client:
             return self.zia_legacy_client
         if self._zia is None:
+            # Pass RequestExecutor directly
             self._zia = ZIAService(self._request_executor)
         return self._zia
 

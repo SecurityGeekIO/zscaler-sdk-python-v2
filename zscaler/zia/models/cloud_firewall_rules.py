@@ -190,7 +190,7 @@ class FirewallRule(ZscalerObject):
             self.nw_services = []
             self.nw_service_groups = []
             self.nw_application_groups = []
-            self.src_ip_groups = []  # Make sure src_ip_groups is initialized when config is None
+            self.src_ip_groups = []
             self.dest_ip_groups = []
             self.zpa_app_segments = []
             self.workload_groups = []
@@ -202,53 +202,53 @@ class FirewallRule(ZscalerObject):
             self.predefined = False
 
 
-def request_format(self):
-    """
-    Return the object as a dictionary in the format expected for API requests.
-    """
-    parent_req_format = super().request_format()
-    current_obj_format = {
-        "accessControl": self.access_control,
-        "enableFullLogging": self.enable_full_logging,
-        "id": self.id,
-        "name": self.name,
-        "order": self.order,
-        "rank": self.rank,
-        "action": self.action,
-        "capturePCAP": self.capture_pcap,
-        "state": self.state,
-        "description": self.description,
-        "lastModifiedTime": self.last_modified_time,
-        "lastModifiedBy": self.last_modified_by,
-        "destIpCategories": self.dest_ip_categories,
-        "destCountries": self.dest_countries,
-        "sourceCountries": self.source_countries,
-        "deviceTrustLevels": self.device_trust_levels,
-        "nwApplications": self.nw_applications,
-        "srcIps": self.src_ips,
-        "destAddresses": self.dest_addresses,
-        
-        # Applying fallback to all attributes with similar structure
-        "appServiceGroups": [asg.request_format() for asg in (self.app_service_groups or [])],
-        "locations": [loc.request_format() for loc in (self.locations or [])],
-        "locationGroups": [lg.request_format() for lg in (self.location_groups or [])],
-        "departments": [dept.request_format() for dept in (self.departments or [])],
-        "groups": [grp.request_format() for grp in (self.groups or [])],
-        "users": [user.request_format() for user in (self.users or [])],
-        "nwServices": [service.request_format() for service in (self.nw_services or [])],
-        "nwServiceGroups": [sg.request_format() for sg in (self.nw_service_groups or [])],
-        "nwApplicationGroups": [ag.request_format() for ag in (self.nw_application_groups or [])],
-        "srcIpGroups": [sig.request_format() for sig in (self.src_ip_groups or [])],
-        "destIpGroups": [dig.request_format() for dig in (self.dest_ip_groups or [])],
-        "srcIpv6Groups": [sig.request_format() for sig in (self.src_ipv6_groups or [])],
-        "destIpv6Groups": [dig.request_format() for dig in (self.dest_ipv6_groups or [])],
-        "zpaAppSegments": [zpa.request_format() for zpa in (self.zpa_app_segments or [])],
-        "workloadGroups": [wg.request_format() for wg in (self.workload_groups or [])],
-        "deviceGroups": [dg.request_format() for dg in (self.device_groups or [])],
-        "devices": [dg.request_format() for dg in (self.devices or [])],
-        "defaultRule": self.default_rule,
-        "excludeSrcCountries": self.exclude_src_countries,
-        "predefined": self.predefined
-    }
-    parent_req_format.update(current_obj_format)
-    return parent_req_format
+    def request_format(self):
+        """
+        Return the object as a dictionary in the format expected for API requests.
+        """
+        parent_req_format = super().request_format()
+        current_obj_format = {
+            "accessControl": self.access_control,
+            "enableFullLogging": self.enable_full_logging,
+            "id": self.id,
+            "name": self.name,
+            "order": self.order,
+            "rank": self.rank,
+            "action": self.action,
+            "capturePCAP": self.capture_pcap,
+            "state": self.state,
+            "description": self.description,
+            "lastModifiedTime": self.last_modified_time,
+            "lastModifiedBy": self.last_modified_by,
+            "destIpCategories": self.dest_ip_categories,
+            "destCountries": self.dest_countries,
+            "sourceCountries": self.source_countries,
+            "deviceTrustLevels": self.device_trust_levels,
+            "nwApplications": self.nw_applications,
+            "srcIps": self.src_ips,
+            "destAddresses": self.dest_addresses,
+            
+            # Applying fallback to all attributes with similar structure
+            "appServiceGroups": [asg.request_format() for asg in (self.app_service_groups or [])],
+            "locations": [loc.request_format() for loc in (self.locations or [])],
+            "locationGroups": [lg.request_format() for lg in (self.location_groups or [])],
+            "departments": [dept.request_format() for dept in (self.departments or [])],
+            "groups": [grp.request_format() for grp in (self.groups or [])],
+            "users": [user.request_format() for user in (self.users or [])],
+            "nwServices": [service.request_format() for service in (self.nw_services or [])],
+            "nwServiceGroups": [sg.request_format() for sg in (self.nw_service_groups or [])],
+            "nwApplicationGroups": [ag.request_format() for ag in (self.nw_application_groups or [])],
+            "srcIpGroups": [sig.request_format() for sig in (self.src_ip_groups or [])],
+            "destIpGroups": [dig.request_format() for dig in (self.dest_ip_groups or [])],
+            "srcIpv6Groups": [sig.request_format() for sig in (self.src_ipv6_groups or [])],
+            "destIpv6Groups": [dig.request_format() for dig in (self.dest_ipv6_groups or [])],
+            "zpaAppSegments": [zpa.request_format() for zpa in (self.zpa_app_segments or [])],
+            "workloadGroups": [wg.request_format() for wg in (self.workload_groups or [])],
+            "deviceGroups": [dg.request_format() for dg in (self.device_groups or [])],
+            "devices": [dg.request_format() for dg in (self.devices or [])],
+            "defaultRule": self.default_rule,
+            "excludeSrcCountries": self.exclude_src_countries,
+            "predefined": self.predefined
+        }
+        parent_req_format.update(current_obj_format)
+        return parent_req_format

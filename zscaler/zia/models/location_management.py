@@ -118,7 +118,7 @@ class LocationManagement(ZscalerObject):
             )
 
             self.vpn_credentials = ZscalerCollection.form_list(
-                config["vpnCredentials"] if "vpnCredentials" in config else [], vpn_credentials.VPNCredentials
+                config["vpnCredentials"] if "vpnCredentials" in config else [], vpn_credentials.TrafficVPNCredentials
             )
 
             self.ip_addresses = ZscalerCollection.form_list(

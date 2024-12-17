@@ -8,6 +8,8 @@ from zscaler.user_agent import UserAgent
 from zscaler.error_messages import ERROR_MESSAGE_429_MISSING_DATE_X_RESET
 from http import HTTPStatus
 from zscaler.helpers import convert_keys_to_snake_case, convert_keys_to_camel_case
+from zscaler.utils import convert_date_time_to_seconds
+from zscaler.zcc.legacy import LegacyZCCClientHelper
 from zscaler.zpa.legacy import LegacyZPAClientHelper
 from zscaler.zia.legacy import LegacyZIAClientHelper
 
@@ -25,6 +27,7 @@ class RequestExecutor:
                  config,
                  cache,
                  http_client=None,
+                 zcc_legacy_client: LegacyZCCClientHelper = None,
                  zpa_legacy_client: LegacyZPAClientHelper = None,
                  zia_legacy_client: LegacyZIAClientHelper = None):
         """
@@ -35,10 +38,11 @@ class RequestExecutor:
             cache (object): Cache object for storing request responses.
             http_client (object, optional): Custom HTTP client for making requests.
         """
+        self.zcc_legacy_client = zcc_legacy_client
         self.zpa_legacy_client = zpa_legacy_client
         self.zia_legacy_client = zia_legacy_client
 
-        self.use_legacy_client = zpa_legacy_client is not None or zia_legacy_client is not None
+        self.use_legacy_client = zpa_legacy_client is not None or zia_legacy_client is not None or zcc_legacy_client is not None
 
         # Validate and set request timeout
         self._request_timeout = config["client"].get(
@@ -94,6 +98,7 @@ class RequestExecutor:
                 "proxy": self._config["client"].get("proxy"),
                 "sslContext": self._config["client"].get("sslContext"),
             },
+            zcc_legacy_client=self.zcc_legacy_client,
             zpa_legacy_client=self.zpa_legacy_client,
             zia_legacy_client=self.zia_legacy_client,
         )
@@ -141,7 +146,7 @@ class RequestExecutor:
         raise ValueError(f"Unsupported service: {url}")
 
     def remove_oneapi_endpoint_prefix(self, endpoint: str) -> str:
-        prefixes = ["/zia", "/zpa", "/zcc/papi", "/zcc"]
+        prefixes = ["/zia", "/zpa", "/zcc"]
         for prefix in prefixes:
             if endpoint.startswith(prefix):
                 return endpoint[len(prefix):]
@@ -167,12 +172,6 @@ class RequestExecutor:
         headers = headers or {}
         params = params or {}
 
-        # if self.use_legacy_client:
-        #     # Remove the prefix if it starts with /zpa, /zia, or /zcc
-        #     for prefix in ["/zpa", "/zia", "/zcc"]:
-        #         if endpoint.startswith(prefix):
-        #             endpoint = endpoint[len(prefix):]
-        #             break
         if self.use_legacy_client:
             # Remove the prefix if it starts with /zpa, /zia, /zcc, or /api/v1
             endpoint = self.remove_oneapi_endpoint_prefix(endpoint)
@@ -181,6 +180,8 @@ class RequestExecutor:
                 base_url = self.zpa_legacy_client.get_base_url(endpoint)
             elif service_type == "zia":
                 base_url = self.zia_legacy_client.get_base_url(endpoint)
+            elif service_type == "zcc":
+                base_url = self.zcc_legacy_client.get_base_url(endpoint)
             else:
                 base_url = self.get_base_url(endpoint)
         else:
@@ -251,7 +252,7 @@ class RequestExecutor:
             return params["microtenantId"]
         return self.microtenant_id
 
-    def execute(self, request, response_type=None):
+    def execute(self, request, response_type=None, return_raw_response=False):
         """
         High-level request execution method.
         Args:
@@ -278,6 +279,10 @@ class RequestExecutor:
             logger.debug(f"Received 204 No Content from {request['url']}")
             return None, None
 
+        # If raw response is requested, return it for file download purposes
+        if return_raw_response:
+            return response, None
+    
         try:
             response_data, error = self._http_client.check_response_for_error(
                 request["url"], response, response_body
@@ -385,26 +390,75 @@ class RequestExecutor:
 
         return request, response, response_body, error
 
-    def fire_request_helper(self, request, attempts, request_start_time):
-        """
-        Helper method to perform HTTP call with retries if needed.
+    # def fire_request_helper(self, request, attempts, request_start_time):
+    #     """
+    #     Helper method to perform HTTP call with retries if needed.
 
-        Args:
-            request (dict): HTTP request representation.
-            attempts (int): Number of attempted HTTP calls so far.
-            request_start_time (float): Original start time of request.
+    #     Args:
+    #         request (dict): HTTP request representation.
+    #         attempts (int): Number of attempted HTTP calls so far.
+    #         request_start_time (float): Original start time of request.
 
-        Returns:
-            Tuple of request, response object, response body, and error.
-        """
-        logger.debug(f"Starting fire_request_helper with request: {request}")
+    #     Returns:
+    #         Tuple of request, response object, response body, and error.
+    #     """
+    #     logger.debug(f"Starting fire_request_helper with request: {request}")
         
+    #     current_req_start_time = time.time()
+    #     max_retries = self._max_retries
+    #     req_timeout = self._request_timeout
+
+    #     if req_timeout > 0 and (current_req_start_time -
+    #                             request_start_time) > req_timeout:
+    #         logger.error("Request Timeout exceeded.")
+    #         return None, None, None, Exception("Request Timeout exceeded.")
+
+    #     try:
+    #         logger.debug("Sending request through HTTP client.")
+    #         response, error = self._http_client.send_request(request)
+    #         logger.debug(f"HTTP request sent. Response: {response}, Error: {error}")
+    #     except Exception as e:
+    #         logger.error(f"Error sending request: {e}")
+    #         return request, None, None, e
+
+    #     if error:
+    #         logger.error(f"HTTP Error sending request: {error}")
+    #         return None, None, None, error
+
+    #     if not response:
+    #         error_message = "Received None as the response object."
+    #         logger.error(error_message)
+    #         return request, None, None, Exception(error_message)
+
+    #     response_body = response.text
+    #     headers = response.headers
+
+    #     if attempts < max_retries and self.is_retryable_status(
+    #             response.status_code):
+    #         backoff_seconds = self.get_retry_after(headers, logger)
+    #         if backoff_seconds is None:
+    #             return None, response, response.text, Exception(
+    #                 ERROR_MESSAGE_429_MISSING_DATE_X_RESET)
+    #         logger.info(
+    #             f"Hit rate limit. Retrying request in {backoff_seconds} seconds."
+    #         )
+    #         time.sleep(backoff_seconds)
+    #         attempts += 1
+    #         return self.fire_request_helper(request, attempts,
+    #                                         request_start_time)
+            
+    #     logger.debug(f"Request successfully processed. Response: {response_body}")
+    #     return request, response, response_body, None
+    #     # return request, response, response.text, None
+
+    def fire_request_helper(self, request, attempts, request_start_time):
+        logger.debug(f"Starting fire_request_helper with request: {request}")
+
         current_req_start_time = time.time()
         max_retries = self._max_retries
         req_timeout = self._request_timeout
 
-        if req_timeout > 0 and (current_req_start_time -
-                                request_start_time) > req_timeout:
+        if req_timeout > 0 and (current_req_start_time - request_start_time) > req_timeout:
             logger.error("Request Timeout exceeded.")
             return None, None, None, Exception("Request Timeout exceeded.")
 
@@ -428,23 +482,58 @@ class RequestExecutor:
         response_body = response.text
         headers = response.headers
 
-        if attempts < max_retries and self.is_retryable_status(
-                response.status_code):
-            backoff_seconds = self.get_retry_after(headers, logger)
-            if backoff_seconds is None:
-                return None, response, response.text, Exception(
-                    ERROR_MESSAGE_429_MISSING_DATE_X_RESET)
-            logger.info(
-                f"Hit rate limit. Retrying request in {backoff_seconds} seconds."
-            )
-            time.sleep(backoff_seconds)
-            attempts += 1
-            return self.fire_request_helper(request, attempts,
-                                            request_start_time)
-            
+        if attempts < max_retries and self.is_retryable_status(response.status_code):
+            # Extract headers
+            date_time = headers.get("Date", "")
+            if date_time:
+                date_time = convert_date_time_to_seconds(date_time)
+
+            # Extract Rate Limit Headers
+            retry_limit_reset_headers = list(map(float, headers.getall(
+                "X-Rate-Limit-Reset", [])))
+            retry_limit_reset_headers.extend(list(map(float, headers.getall(
+                "x-rate-limit-reset", []))))
+            retry_limit_reset = min(retry_limit_reset_headers) if retry_limit_reset_headers else None
+
+            retry_limit_limit_headers = list(map(float, headers.getall(
+                "X-Rate-Limit-Limit", [])))
+            retry_limit_limit_headers.extend(list(map(float, headers.getall(
+                "x-rate-limit-limit", []))))
+            retry_limit_limit = min(retry_limit_limit_headers) if retry_limit_limit_headers else None
+
+            retry_limit_remaining_headers = list(map(float, headers.getall(
+                "X-Rate-Limit-Remaining", [])))
+            retry_limit_remaining_headers.extend(list(map(float, headers.getall(
+                "x-rate-limit-remaining", []))))
+            retry_limit_remaining = min(retry_limit_remaining_headers) if retry_limit_remaining_headers else None
+
+            # Handle Retry-After first
+            retry_after = headers.get("Retry-After") or headers.get("retry-after")
+            if retry_after:
+                try:
+                    backoff_seconds = int(retry_after.strip("s")) + 1
+                except ValueError:
+                    logger.error(f"Error parsing Retry-After header: {retry_after}")
+                    backoff_seconds = None
+            else:
+                # Fallback to X-Rate-Limit-Reset
+                if not date_time or not retry_limit_reset:
+                    logger.error(ERROR_MESSAGE_429_MISSING_DATE_X_RESET)
+                    return None, response, response.text, Exception(ERROR_MESSAGE_429_MISSING_DATE_X_RESET)
+
+                if retry_limit_limit == 0 and retry_limit_remaining == 0:
+                    logger.warning("Concurrent limit rate exceeded")
+
+                backoff_seconds = self.calculate_backoff(retry_limit_reset, date_time)
+
+            if backoff_seconds:
+                logger.info(f"Hit rate limit. Retrying request in {backoff_seconds} seconds.")
+                self.pause_for_backoff(backoff_seconds)
+                attempts += 1
+                return self.fire_request_helper(request, attempts, request_start_time)
+
         logger.debug(f"Request successfully processed. Response: {response_body}")
         return request, response, response_body, None
-        # return request, response, response.text, None
 
     def is_retryable_status(self, status):
         """
@@ -518,28 +607,28 @@ class RequestExecutor:
         logger.debug("Getting custom headers.")
         return self._custom_headers
 
-    def get_retry_after(self, headers, logger):
-        retry_limit_reset_header = headers.get(
-            "x-ratelimit-reset") or headers.get("X-RateLimit-Reset")
-        retry_after = headers.get("Retry-After") or headers.get("retry-after")
+    # def get_retry_after(self, headers, logger):
+    #     retry_limit_reset_header = headers.get(
+    #         "x-ratelimit-reset") or headers.get("X-RateLimit-Reset")
+    #     retry_after = headers.get("Retry-After") or headers.get("retry-after")
 
-        if retry_after:
-            try:
-                return int(retry_after.strip("s")) + 1  # Add 1 second padding
-            except ValueError:
-                logger.error(
-                    f"Error parsing Retry-After header: {retry_after}")
-                return None
+    #     if retry_after:
+    #         try:
+    #             return int(retry_after.strip("s")) + 1  # Add 1 second padding
+    #         except ValueError:
+    #             logger.error(
+    #                 f"Error parsing Retry-After header: {retry_after}")
+    #             return None
 
-        if retry_limit_reset_header is not None:
-            try:
-                reset_seconds = float(retry_limit_reset_header)
-                return reset_seconds + 1  # Add 1 second padding
-            except ValueError:
-                logger.error(
-                    f"Error parsing x-ratelimit-reset header: {retry_limit_reset_header}"
-                )
-                return None
+    #     if retry_limit_reset_header is not None:
+    #         try:
+    #             reset_seconds = float(retry_limit_reset_header)
+    #             return reset_seconds + 1  # Add 1 second padding
+    #         except ValueError:
+    #             logger.error(
+    #                 f"Error parsing x-ratelimit-reset header: {retry_limit_reset_header}"
+    #             )
+    #             return None
 
-        logger.error("Missing Retry-After and X-Rate-Limit-Reset headers.")
-        return None
+    #     logger.error("Missing Retry-After and X-Rate-Limit-Reset headers.")
+    #     return None

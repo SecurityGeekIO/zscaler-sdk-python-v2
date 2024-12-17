@@ -14,9 +14,8 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
-from box import Box
-
 from zscaler.request_executor import RequestExecutor
+from zscaler.utils import format_url
 from zscaler.utils import (
     convert_keys,
     recursive_snake_to_camel,
@@ -126,11 +125,13 @@ class ForwardingControlAPI(APIClient):
 
         camel_payload = recursive_snake_to_camel(payload)
 
-        request, error = self._request_executor.create_request(http_method, api_url, camel_payload, {})
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, camel_payload, {})
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request, Box)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 
@@ -160,7 +161,7 @@ class ForwardingControlAPI(APIClient):
         if error:
             return error
 
-        response, error = self._request_executor.execute(request, Box)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
@@ -186,3 +187,45 @@ class ForwardingControlAPI(APIClient):
             return (response, error)
 
         return (response, None)
+
+    def get_proxy_gateways(self) -> tuple:
+        """
+        Retrieves a list of URLs bypassed in ATP security exceptions.
+
+        Returns:
+            tuple: A tuple containing:
+                - list[str]: List of bypassed URLs.
+                - Response: The raw HTTP response from the API.
+                - error: Error details if the request fails.
+
+        Examples:
+            >>> bypass_urls, response, err = client.zia.atp_policy.get_atp_security_exceptions()
+            >>> if not err:
+            ...     print("Bypassed URLs:", bypass_urls)
+        """
+
+        http_method = "get".upper()
+        api_url = format_url(
+            f"""
+            {self._zia_base_endpoint}
+            /proxyGateways
+        """
+        )
+
+        request, error = self._request_executor\
+            .create_request(http_method, api_url)
+        if error:
+            return (None, None, error)
+
+        response, error = self._request_executor\
+            .execute(request)
+        if error:
+            return (None, response, error)
+
+        try:
+            bypass_urls = response.get_body().get("bypassUrls", [])
+            if not isinstance(bypass_urls, list):
+                raise ValueError("Unexpected response format: bypassUrls should be a list.")
+            return (bypass_urls, response, None)
+        except Exception as ex:
+            return (None, response, ex)

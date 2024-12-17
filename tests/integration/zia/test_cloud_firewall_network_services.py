@@ -41,7 +41,7 @@ class TestCloudFirewallNetworkServices:
 
         try:
             # Adding network service
-            created_service = client.firewall.add_network_service(
+            created_service = client.zia.firewall.add_network_service(
                 name=service_name,
                 description=service_description,
                 ports=[
@@ -57,19 +57,19 @@ class TestCloudFirewallNetworkServices:
             service_id = created_service.id
 
             # # Attempt to retrieve the created network services by ID
-            service = client.firewall.get_network_service(service_id)
+            service = client.zia.firewall.get_network_service(service_id)
             print("Retrieved Service:", service)
             assert service.id == service_id, "Failed to retrieve the correct network services"
 
             # # Attempt to update the network services
             updated_name = "updated-" + generate_random_string()
-            client.firewall.update_network_service(service_id=service_id, name=updated_name)
-            updated_service = client.firewall.get_network_service(service_id)
+            client.zia.firewall.update_network_service(service_id=service_id, name=updated_name)
+            updated_service = client.zia.firewall.get_network_service(service_id)
             print("Updated Service:", updated_service)
             assert updated_service.name == updated_name, "Service name mismatch after update"
 
             # Attempt to list network services and check if the updated service is in the list
-            services = client.firewall.list_network_services()
+            services = client.zia.firewall.list_network_services()
             print("Listed Services:", services)
             assert any(svc.id == service_id for svc in services), "Updated network services not found in list"
 
@@ -80,7 +80,7 @@ class TestCloudFirewallNetworkServices:
             # Cleanup: Attempt to delete the network services
             if service_id:
                 try:
-                    status_code = client.firewall.delete_network_service(service_id)
+                    status_code = client.zia.firewall.delete_network_service(service_id)
                     print("Delete Status Code:", status_code)
                     assert status_code == 204, "Failed to delete network services"
                 except Exception as exc:

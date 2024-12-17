@@ -28,6 +28,7 @@ class DevicesAPI(APIClient):
         self._request_executor: RequestExecutor = request_executor
         self._zcc_base_endpoint = "/zcc/papi/public/v1"
 
+
     def download_devices(
         self,
         filename: str = None,
@@ -35,106 +36,67 @@ class DevicesAPI(APIClient):
         registration_types: list = None,
     ):
         """
-        Downloads the list of devices in the Client Connector Portal as a CSV file.
-
-        By default, this method will create a file named `zcc-devices-YYmmDD-HH_MM_SS.csv`. This can be overridden by
-        specifying the ``filename`` argument.
-
-        Notes:
-            This API endpoint is heavily rate-limited by Zscaler and as of NOV 2022 only 3 calls per-day are allowed.
-
-        Args:
-            filename (str):
-                The name of the file that you want to save to disk.
-            os_types (list):
-                A list of OS Types to filter the device list. Omitting this argument will result in all OS types being
-                matched.
-                Valid options are:
-
-                - ios
-                - android
-                - windows
-                - macos
-                - linux
-            registration_types (list):
-                A list of device registration states to filter the device list.
-                Valid options are:
-
-                - all (provides all states except for 'removed')
-                - registered
-                - removal_pending
-                - unregistered
-                - removed
-                - quarantined
-
-        Returns:
-            :obj:`str`: The local filename for the CSV file that was downloaded.
-
-        Examples:
-            Create a CSV with all OS types and all registration types:
-
-            >>> zcc.devices.download_devices(registration_types=["all", "removed"])
-
-            Create a CSV for Windows and macOS devices that are in the `registered` state:
-
-            >>> zcc.devices.download_devices(os_types=["windows", "macos"],
-            ...     registration_types=["registered"])
-
-            Create a CSV with filename `unregistered.csv` for devices in the unregistered state:
-
-            >>> zcc.devices.download_devices(filename="unregistered.csv",
-            ...     registration_types=["unregistered"])
-
+        Downloads the list of devices as a CSV file from the ZCC portal.
         """
-
         if not filename:
             filename = f"zcc-devices-{datetime.now().strftime('%Y%m%d-%H_%M_%S')}.csv"
 
         params = {}
 
-        # Simplify the os_type argument, raise an error if the user supplies the wrong one.
+        # Handle OS types
         if os_types:
-            for item in os_types:
-                os_type = zcc_param_map["os"].get(item, None)
-                if os_type:
-                    if "osTypes" not in params:
-                        params["osTypes"] = str(os_type)
-                    else:
-                        params["osTypes"] += "," + str(os_type)
-                else:
-                    raise ValueError("Invalid os_type specified. Check the pyZscaler documentation for valid os_type options.")
+            os_types_resolved = [
+                str(zcc_param_map["os"].get(item))
+                for item in os_types
+                if zcc_param_map["os"].get(item)
+            ]
+            if not os_types_resolved:
+                raise ValueError("Invalid os_type specified.")
+            params["osTypes"] = ",".join(os_types_resolved)
 
-        # Simplify the registration_type argument, raise an error if the user supplies the wrong one.
+        # Handle Registration types
         if registration_types:
-            for item in registration_types:
-                reg_type = zcc_param_map["reg_type"].get(item, None)
-                if reg_type:
-                    if "registrationTypes" not in params:
-                        params["registrationTypes"] = str(reg_type)
-                    else:
-                        params["registrationTypes"] += "," + str(reg_type)
-                else:
-                    raise ValueError(
-                        "Invalid registration_type specified. Check the pyZscaler documentation for valid "
-                        "registration_type options."
-                    )
+            reg_types_resolved = [
+                str(zcc_param_map["reg_type"].get(item))
+                for item in registration_types
+                if zcc_param_map["reg_type"].get(item)
+            ]
+            if not reg_types_resolved:
+                raise ValueError("Invalid registration_type specified.")
+            params["registrationTypes"] = ",".join(reg_types_resolved)
 
-        http_method = "get".upper()
-        api_url = format_url(
-            f"""
-            {self._zcc_base_endpoint}
-            /downloadDevices
-        """
+        # Correct the API URL
+        http_method = "GET"
+        api_url = format_url(f"{self._zcc_base_endpoint}/downloadDevices")
+
+        # Create the request properly
+        request, error = self._request_executor.create_request(
+            http_method, api_url, params=params
         )
-
-        request, error = self._request_executor.create_request(http_method, api_url, params=params)
         if error:
             raise Exception("Error creating request for downloading devices.")
 
+        # Execute request and download file
+        response, error = self._request_executor.execute(
+            request, return_raw_response=True
+        )
+        if error or response is None:
+            raise Exception("Error executing request for downloading devices.")
+
+        # Validate the response content
+        content_type = response.headers.get("Content-Type", "").lower()
+
+        # Check for valid CSV-like content
+        if (
+            not content_type.startswith("application/octet-stream")
+            and not response.text.startswith('"User","Device type"')
+        ):
+            raise Exception(
+                "Invalid response content type or unexpected response format."
+            )
+
+        # Save file to disk
         with open(filename, "wb") as f:
-            response, error = self._request_executor.execute(request)
-            if error:
-                raise Exception("Error executing request for downloading devices.")
             f.write(response.content)
 
         return filename

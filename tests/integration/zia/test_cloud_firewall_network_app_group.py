@@ -40,7 +40,7 @@ class TestCloudFirewallNetworkAppGroup:
         group_id = None
 
         try:
-            created_group = client.firewall.add_network_app_group(
+            created_group = client.zia.firewall.add_network_app_group(
                 name=group_name,
                 description=group_description,
                 network_applications=["APNS", "APPSTORE", "DICT"],
@@ -54,7 +54,7 @@ class TestCloudFirewallNetworkAppGroup:
             # Attempt to retrieve the created network application group by ID
             if group_id:
                 try:
-                    group = client.firewall.get_network_app_group(group_id)
+                    group = client.zia.firewall.get_network_app_group(group_id)
                     assert group.id == group_id, "Failed to retrieve the correct network application group"
                 except Exception as exc:
                     errors.append(f"Failed to retrieve network application group: {exc}")
@@ -63,15 +63,15 @@ class TestCloudFirewallNetworkAppGroup:
             if group_id:
                 try:
                     updated_name = "updated-" + generate_random_string()
-                    client.firewall.update_network_app_group(group_id=group_id, name=updated_name)
-                    updated_group = client.firewall.get_network_app_group(group_id)
+                    client.zia.firewall.update_network_app_group(group_id=group_id, name=updated_name)
+                    updated_group = client.zia.firewall.get_network_app_group(group_id)
                     assert updated_group.name == updated_name, "Group name mismatch after update"
                 except Exception as exc:
                     errors.append(f"Failed to update network application group: {exc}")
 
             # Attempt to list network application groups and check if the updated group is in the list
             try:
-                groups = client.firewall.list_network_app_groups()
+                groups = client.zia.firewall.list_network_app_groups()
                 assert any(group.id == group_id for group in groups), "Updated network application group not found in list"
             except Exception as exc:
                 errors.append(f"Failed to list network application groups: {exc}")
@@ -80,7 +80,7 @@ class TestCloudFirewallNetworkAppGroup:
             # Cleanup: Attempt to delete the network application group
             if group_id:
                 try:
-                    status_code = client.firewall.delete_network_app_group(group_id)
+                    status_code = client.zia.firewall.delete_network_app_group(group_id)
                     assert status_code == 204, "Failed to delete network application group"
                 except Exception as exc:
                     errors.append(f"Cleanup failed: {exc}")
