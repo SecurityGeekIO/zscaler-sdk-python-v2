@@ -296,13 +296,31 @@ class LegacyZIAClientHelper():
         self._session = session
 
     @property
-    def advanced_settings(self):
+    def activate(self):
         """
-        The interface object for the :ref:`ZIA Advanced Settings interface <zia-advanced_settings>`.
+        The interface object for the :ref:`ZIA Activation interface <zia-activate>`.
 
         """
-        from zscaler.zia.advanced_settings import AdvancedSettingsAPI
-        return AdvancedSettingsAPI(self.request_executor)
+        from zscaler.zia.activate import ActivationAPI
+        return ActivationAPI(self.request_executor)
+
+    @property
+    def admin_roles(self):
+        """
+        The interface object for the :ref:`ZIA Admin and Role Management interface <zia-admin_roles>`.
+
+        """
+        from zscaler.zia.admin_roles import AdminRolesAPI
+        return AdminRolesAPI(self.request_executor)
+
+    @property
+    def admin_users(self):
+        """
+        The interface object for the :ref:`ZIA Admin Users interface <zia-admin_users>`.
+
+        """
+        from zscaler.zia.admin_users import AdminUsersAPI
+        return AdminUsersAPI(self.request_executor)
 
     @property
     def audit_logs(self):
@@ -312,7 +330,25 @@ class LegacyZIAClientHelper():
         """
         from zscaler.zia.audit_logs import AuditLogsAPI
         return AuditLogsAPI(self.request_executor)
-    
+
+    @property
+    def apptotal(self):
+        """
+        The interface object for the :ref:`ZIA AppTotal interface <zia-apptotal>`.
+
+        """
+        from zscaler.zia.apptotal import AppTotalAPI
+        return AppTotalAPI(self.request_executor)
+
+    @property
+    def advanced_settings(self):
+        """
+        The interface object for the :ref:`ZIA Advanced Settings interface <zia-advanced_settings>`.
+
+        """
+        from zscaler.zia.advanced_settings import AdvancedSettingsAPI
+        return AdvancedSettingsAPI(self.request_executor)
+
     @property
     def atp_policy(self):
         """
@@ -321,6 +357,42 @@ class LegacyZIAClientHelper():
         """
         from zscaler.zia.atp_policy import ATPPolicyAPI
         return ATPPolicyAPI(self.request_executor)
+
+    @property
+    def authentication_settings(self):
+        """
+        The interface object for the :ref:`ZIA Authentication Security Settings interface <zia-authentication_settings>`.
+
+        """
+        from zscaler.zia.authentication_settings import AuthenticationSettingsAPI
+        return AuthenticationSettingsAPI(self.request_executor)
+
+    @property
+    def cloudappcontrol(self):
+        """
+        The interface object for the :ref:`ZIA Cloud App Control <zia-cloudappcontrol>`.
+
+        """
+        from zscaler.zia.cloudappcontrol import CloudAppControlAPI
+        return CloudAppControlAPI(self.request_executor)
+
+    @property
+    def cloud_applications(self):
+        """
+        The interface object for the :ref:`ZIA Cloud App Control <zia-cloud_applications>`.
+
+        """
+        from zscaler.zia.cloud_applications import CloudApplicationsAPI
+        return CloudApplicationsAPI(self.request_executor)
+
+    @property
+    def cloud_nss(self):
+        """
+        The interface object for the :ref:`ZIA Cloud NSS interface <zia-cloud_nss>`.
+
+        """
+        from zscaler.zia.cloud_nss import CloudNSSAPI
+        return CloudNSSAPI(self.request_executor)
 
     @property
     def cloud_firewall_dns(self):
@@ -341,13 +413,67 @@ class LegacyZIAClientHelper():
         return FirewallIPSRulesAPI(self.request_executor)
 
     @property
-    def cloud_applications(self):
+    def cloud_firewall_rules(self):
         """
-        The interface object for the :ref:`ZIA Cloud App Control <zia-cloud_applications>`.
+        The interface object for the :ref:`ZIA Firewall Policies interface <zia-firewall>`.
 
         """
-        from zscaler.zia.cloud_applications import CloudApplicationsAPI
-        return CloudApplicationsAPI(self.request_executor)
+        from zscaler.zia.cloud_firewall_rules import FirewallPolicyAPI
+        return FirewallPolicyAPI(self.request_executor)
+
+    @property
+    def dlp_dictionary(self):
+        """
+        The interface object for the :ref:`ZIA DLP Dictionaries interface <zia-dlp_dictionary>`.
+
+        """
+        from zscaler.zia.dlp_dictionary import DLPDictionaryAPI
+        return DLPDictionaryAPI(self.request_executor)
+
+    @property
+    def dlp_engine(self):
+        """
+        The interface object for the :ref:`ZIA DLP Engine interface <zia-dlp_engine>`.
+
+        """
+        from zscaler.zia.dlp_engine import DLPEngineAPI
+        return DLPEngineAPI(self.request_executor)
+
+    @property
+    def dlp_web_rules(self):
+        """
+        The interface object for the :ref:`ZIA DLP Web Rules interface <zia-dlp_web_rules>`.
+
+        """
+        from zscaler.zia.dlp_web_rules import DLPWebRuleAPI
+        return DLPWebRuleAPI(self.request_executor)
+
+    @property
+    def dlp_templates(self):
+        """
+        The interface object for the :ref:`ZIA DLP Templates interface <zia-dlp_templates>`.
+
+        """
+        from zscaler.zia.dlp_templates import DLPTemplates
+        return DLPTemplates(self.request_executor)
+
+    @property
+    def dlp_resources(self):
+        """
+        The interface object for the :ref:`ZIA DLP Resources interface <zia-dlp_resources>`.
+
+        """
+        from zscaler.zia.dlp_resources import DLPResourcesAPI
+        return DLPResourcesAPI(self.request_executor)
+
+    @property
+    def device_management(self):
+        """
+        The interface object for the :ref:`ZIA Device Management interface <zia-device_management>`.
+
+        """
+        from zscaler.zia.device_management import DeviceManagementAPI
+        return DeviceManagementAPI(self.request_executor)
 
     @property
     def end_user_notification(self):
@@ -359,15 +485,6 @@ class LegacyZIAClientHelper():
         return EndUserNotificationAPI(self.request_executor)
 
     @property
-    def firewall(self):
-        """
-        The interface object for the :ref:`ZIA Firewall Policies interface <zia-firewall>`.
-
-        """
-        from zscaler.zia.firewall import FirewallPolicyAPI
-        return FirewallPolicyAPI(self.request_executor)
-
-    @property
     def file_type_control_rule(self):
         """
         The interface object for the :ref:`ZIA File Type Control Rule interface <zia-file_type_control_rule>`.
@@ -376,6 +493,15 @@ class LegacyZIAClientHelper():
         from zscaler.zia.file_type_control_rule import FileTypeControlRuleAPI
         return FileTypeControlRuleAPI(self.request_executor)
 
+    @property
+    def locations(self):
+        """
+        The interface object for the :ref:`ZIA Locations interface <zia-locations>`.
+
+        """
+        from zscaler.zia.locations import LocationsAPI
+        return LocationsAPI(self.request_executor)
+    
     @property
     def malware_protection_policy(self):
         """
@@ -393,7 +519,16 @@ class LegacyZIAClientHelper():
         """
         from zscaler.zia.organization_information import OrganizationInformationAPI
         return OrganizationInformationAPI(self.request_executor)
-    
+
+    @property
+    def pac_files(self):
+        """
+        The interface object for the :ref:`ZIA Pac Files interface <zia-pac_files>`.
+
+        """
+        from zscaler.zia.pac_files import PacFilesAPI
+        return PacFilesAPI(self.request_executor)
+
     @property
     def remote_assistance(self):
         """
@@ -411,6 +546,15 @@ class LegacyZIAClientHelper():
         return RuleLabelsAPI(self.request_executor)
     
     @property
+    def sandbox(self):
+        """
+        The interface object for the :ref:`ZIA Cloud Sandbox interface <zia-sandbox>`.
+
+        """
+        from zscaler.zia.sandbox import CloudSandboxAPI
+        return CloudSandboxAPI(self.request_executor)
+
+    @property
     def sandbox_rules(self):
         """
         The interface object for the :ref:`ZIA Sandbox Rules interface <zia-sandbox_rules>`.
@@ -418,3 +562,85 @@ class LegacyZIAClientHelper():
         """
         from zscaler.zia.sandbox_rules import SandboxRulesAPI
         return SandboxRulesAPI(self.request_executor)
+
+    @property
+    def security_policy_settings(self):
+        """
+        The interface object for the :ref:`ZIA Security Policy Settings interface <zia-security_policy_settings>`.
+
+        """
+        from zscaler.zia.security_policy_settings import SecurityPolicyAPI
+        return SecurityPolicyAPI(self.request_executor)
+    
+    @property
+    def traffic_gre_tunnel(self):
+        """
+        The interface object for the :ref:`ZIA Traffic Forwarding interface <zia-traffic_gre_tunnel>`.
+
+        """
+        from zscaler.zia.traffic_gre_tunnels import TrafficForwardingGRETunnelAPI
+        return TrafficForwardingGRETunnelAPI(self.request_executor)
+
+    @property
+    def traffic_vpn_credentials(self):
+        """
+        The interface object for the :ref:`ZIA Traffic VPN Credential interface <zia-traffic_vpn_credentials>`.
+
+        """
+        from zscaler.zia.traffic_vpn_credentials import TrafficVPNCredentialAPI
+        return TrafficVPNCredentialAPI(self.request_executor)
+
+    @property
+    def traffic_static_ip(self):
+        """
+        The interface object for the :ref:`ZIA Traffic Static IP interface <zia-traffic_static_ip>`.
+
+        """
+        from zscaler.zia.traffic_static_ip import TrafficStaticIPAPI
+        return TrafficStaticIPAPI(self.request_executor)
+
+    @property
+    def url_categories(self):
+        """
+        The interface object for the :ref:`ZIA URL Categories interface <zia-url_categories>`.
+
+        """
+        from zscaler.zia.url_categories import URLCategoriesAPI
+        return URLCategoriesAPI(self.request_executor)
+
+    @property
+    def url_filtering(self):
+        """
+        The interface object for the :ref:`ZIA URL Filtering interface <zia-url_filtering>`.
+
+        """
+        from zscaler.zia.url_filtering import URLFilteringAPI
+        return URLFilteringAPI(self.request_executor)
+
+    @property
+    def user_management(self):
+        """
+        The interface object for the :ref:`ZIA User Management interface <zia-user_management>`.
+
+        """
+        from zscaler.zia.user_management import UserManagementAPI
+        return UserManagementAPI(self.request_executor)
+
+    @property
+    def zpa_gateway(self):
+        """
+        The interface object for the :ref:`ZPA Gateway <zia-zpa_gateway>`.
+
+        """
+        from zscaler.zia.zpa_gateway import ZPAGatewayAPI
+        return ZPAGatewayAPI(self.request_executor)
+
+    @property
+    def workload_groups(self):
+        """
+        The interface object for the :ref:`ZIA Workload Groups <zia-workload_groups>`.
+
+        """
+        from zscaler.zia.workload_groups import WorkloadGroupsAPI
+        return WorkloadGroupsAPI(self.request_executor)
+

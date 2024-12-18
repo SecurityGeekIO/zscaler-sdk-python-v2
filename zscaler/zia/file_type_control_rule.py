@@ -165,44 +165,36 @@ class FileTypeControlRuleAPI(APIClient):
 
         Keyword Args:
             description (str): Additional information about the rule.
-            order (str): The order of the rule, defaults to adding rule to bottom of list.
-            rank (str): The admin rank of the rule. Supported values 1-7
-            state (str): The rule state. Accepted values are 'ENABLED' or 'DISABLED'.
-            redirect_ip (str): The IP address to which the traffic will be redirected to when the DNAT rule is triggered.
-            enable_full_logging (bool): If True, enables full logging.
-            capture_pcap (bool): Indicates whether packet capture (PCAP) is enabled or not.
-            predefined (bool): Indicates that the rule is predefined by using a true value
-            default_rule (bool): Indicates whether the rule is the Default Cloud DNS Rule or not
-            action (str): Action that must take place if the traffic matches the rule criteria. 
-                Supported Values: ALLOW, BLOCK, REDIR_REQ, REDIR_RES, REDIR_ZPA, REDIR_REQ_DOH, REDIR_REQ_KEEP_SENDER
-                    REDIR_REQ_TCP, REDIR_REQ_UDP, BLOCK_WITH_RESPONSE
-            applications (list): DNS tunnels and network applications to which the rule applies
-            dest_ip_groups (list): The IDs for the destination IP groups that this rule applies to.
-            dest_ipv6_groups (list): The IDs for the destination IPV6 groups that this rule applies to.
-            dest_countries (list): Destination countries for the rule.
-            dest_addresses (list): Destination IPs for the rule. Accepts IP addresses or CIDR.
-            src_ips (list): Source IPs for the rule. Accepts IP addresses or CIDR.
-            source_countries (list): The countries of origin of traffic for which the rule is applicable.
-            src_ip_groups (list): The IDs for the source IP groups that this rule applies to.
-            src_ipv6_groups (list): The IDs for the source IPV6 groups that this rule applies to.
-            dest_ip_categories (list): IP address categories for the rule.
-            dest_countries (list): Destination countries for the rule.
-            groups (list): The IDs for the groups that this rule applies to.
-            users (list): The IDs for the users that this rule applies to.
-            res_categories (list): Source IPs for the rule. Accepts IP addresses or CIDR.
-            dns_rule_request_types (list): DNS request types to which the rule applies
-            protocols (list): The protocols to which the rules applies.
-            block_response_code (list): Specifies the DNS response code to be sent to the client when the action is configured to block and send response code
-            devices (list): IDs for devices managed by Zscaler Client Connector.
-            device_groups (list): IDs for device groups managed by Zscaler Client Connector.
-            labels (list): The IDs for the labels that this rule applies to.
-            locations (list): The IDs for the locations that this rule applies to.
-            location_groups (list): The IDs for the location groups that this rule applies to.
-            edns_ecs_object (list): IDs for EDNS ECS object which resolves DNS request
-            time_windows (list): IDs for time windows the rule applies to.
-            application_groups (list): IDs for DNS application groups to which the rule applies
-            dns_gateway (list): ID for DNS gateway used to redirect traffic, specified when the rule action is to redirect DNS request to an external DNS service
-            zpa_ip_group (list): The ZPA IP pool specified when the rule action is to resolve domain names of ZPA applications to an ephemeral IP address from a preconfigured IP pool
+            state (str): Rule state, either 'ENABLED' or 'DISABLED'.
+            order (int): Order of policy execution with respect to other file-type policies.
+            filtering_action (str): Action taken when traffic matches policy. Supported values: "BLOCK", "CAUTION", "ALLOW".
+            time_quota (int): Time quota in minutes after which the policy must be applied.
+            size_quota (int): Size quota in KB beyond which the policy must be applied.
+            access_control (str): Access privilege based on admin's state.
+            rank (int): Admin rank of the rule creator. Supported values: 1-7.
+            capture_pcap (bool): Indicates whether packet capture (PCAP) is enabled.
+            operation (str): File operation performed by the rule.
+            active_content (bool): Checks whether the file contains active content.
+            unscannable (bool): Indicates whether the file is unscannable.
+            cloud_applications (list[str]): List of cloud applications to which the rule must be applied.
+            file_types (list[str]): List of file types to which the rule must be applied.
+            min_size (int): Minimum file size in KB for evaluation.
+            max_size (int): Maximum file size in KB for evaluation.
+            protocols (list[str]): Protocols covered by the rule.
+            url_categories (list[str]): List of URL categories the rule must be applied to.
+            last_modified_time (int): Timestamp of the last modification.
+            last_modified_by (dict): Details of the user who last modified the rule.
+            locations (list[dict]): Name-ID pairs of locations for rule application.
+            location_groups (list[dict]): Name-ID pairs of location groups for rule application.
+            groups (list[dict]): Name-ID pairs of groups for rule application.
+            departments (list[dict]): Name-ID pairs of departments for rule application.
+            users (list[dict]): Name-ID pairs of users for rule application.
+            time_windows (list[dict]): Name-ID pairs of time intervals for rule enforcement.
+            labels (list[dict]): Labels associated with the rule for logical grouping.
+            device_groups (list[dict]): Device groups managed using Zscaler Client Connector.
+            devices (list[dict]): Devices managed using Zscaler Client Connector.
+            device_trust_levels (list[str]): Device trust levels based on posture configurations.
+            zpa_app_segments (list[dict]): ZPA Application Segments applicable to the rule.
 
         Returns:
             tuple: Updated firewall dns filtering rule resource record.
@@ -267,45 +259,37 @@ class FileTypeControlRuleAPI(APIClient):
         Keyword Args:
             name (str): Name of the rule, max 31 chars.
             description (str): Additional information about the rule.
-            order (str): The order of the rule, defaults to adding rule to bottom of list.
-            rank (str): The admin rank of the rule. Supported values 1-7
-            state (str): The rule state. Accepted values are 'ENABLED' or 'DISABLED'.
-            redirect_ip (str): The IP address to which the traffic will be redirected to when the DNAT rule is triggered.
-            enable_full_logging (bool): If True, enables full logging.
-            capture_pcap (bool): Indicates whether packet capture (PCAP) is enabled or not.
-            predefined (bool): Indicates that the rule is predefined by using a true value
-            default_rule (bool): Indicates whether the rule is the Default Cloud DNS Rule or not
-            action (str): Action that must take place if the traffic matches the rule criteria. 
-                Supported Values: ALLOW, BLOCK, REDIR_REQ, REDIR_RES, REDIR_ZPA, REDIR_REQ_DOH, REDIR_REQ_KEEP_SENDER
-                    REDIR_REQ_TCP, REDIR_REQ_UDP, BLOCK_WITH_RESPONSE
-            applications (list): DNS tunnels and network applications to which the rule applies
-            dest_ip_groups (list): The IDs for the destination IP groups that this rule applies to.
-            dest_ipv6_groups (list): The IDs for the destination IPV6 groups that this rule applies to.
-            dest_countries (list): Destination countries for the rule.
-            dest_addresses (list): Destination IPs for the rule. Accepts IP addresses or CIDR.
-            src_ips (list): Source IPs for the rule. Accepts IP addresses or CIDR.
-            source_countries (list): The countries of origin of traffic for which the rule is applicable.
-            src_ip_groups (list): The IDs for the source IP groups that this rule applies to.
-            src_ipv6_groups (list): The IDs for the source IPV6 groups that this rule applies to.
-            dest_ip_categories (list): IP address categories for the rule.
-            dest_countries (list): Destination countries for the rule.
-            groups (list): The IDs for the groups that this rule applies to.
-            users (list): The IDs for the users that this rule applies to.
-            res_categories (list): Source IPs for the rule. Accepts IP addresses or CIDR.
-            dns_rule_request_types (list): DNS request types to which the rule applies
-            protocols (list): The protocols to which the rules applies.
-            block_response_code (list): Specifies the DNS response code to be sent to the client when the action is configured to block and send response code
-            devices (list): IDs for devices managed by Zscaler Client Connector.
-            device_groups (list): IDs for device groups managed by Zscaler Client Connector.
-            labels (list): The IDs for the labels that this rule applies to.
-            locations (list): The IDs for the locations that this rule applies to.
-            location_groups (list): The IDs for the location groups that this rule applies to.
-            edns_ecs_object (list): IDs for EDNS ECS object which resolves DNS request
-            time_windows (list): IDs for time windows the rule applies to.
-            application_groups (list): IDs for DNS application groups to which the rule applies
-            dns_gateway (list): ID for DNS gateway used to redirect traffic, specified when the rule action is to redirect DNS request to an external DNS service
-            zpa_ip_group (list): The ZPA IP pool specified when the rule action is to resolve domain names of ZPA applications to an ephemeral IP address from a preconfigured IP pool
-
+            state (str): Rule state, either 'ENABLED' or 'DISABLED'.
+            order (int): Order of policy execution with respect to other file-type policies.
+            filtering_action (str): Action taken when traffic matches policy. Supported values: "BLOCK", "CAUTION", "ALLOW".
+            time_quota (int): Time quota in minutes after which the policy must be applied.
+            size_quota (int): Size quota in KB beyond which the policy must be applied.
+            access_control (str): Access privilege based on admin's state.
+            rank (int): Admin rank of the rule creator. Supported values: 1-7.
+            capture_pcap (bool): Indicates whether packet capture (PCAP) is enabled.
+            operation (str): File operation performed by the rule.
+            active_content (bool): Checks whether the file contains active content.
+            unscannable (bool): Indicates whether the file is unscannable.
+            cloud_applications (list[str]): List of cloud applications to which the rule must be applied.
+            file_types (list[str]): List of file types to which the rule must be applied.
+            min_size (int): Minimum file size in KB for evaluation.
+            max_size (int): Maximum file size in KB for evaluation.
+            protocols (list[str]): Protocols covered by the rule.
+            url_categories (list[str]): List of URL categories the rule must be applied to.
+            last_modified_time (int): Timestamp of the last modification.
+            last_modified_by (dict): Details of the user who last modified the rule.
+            locations (list[dict]): Name-ID pairs of locations for rule application.
+            location_groups (list[dict]): Name-ID pairs of location groups for rule application.
+            groups (list[dict]): Name-ID pairs of groups for rule application.
+            departments (list[dict]): Name-ID pairs of departments for rule application.
+            users (list[dict]): Name-ID pairs of users for rule application.
+            time_windows (list[dict]): Name-ID pairs of time intervals for rule enforcement.
+            labels (list[dict]): Labels associated with the rule for logical grouping.
+            device_groups (list[dict]): Device groups managed using Zscaler Client Connector.
+            devices (list[dict]): Devices managed using Zscaler Client Connector.
+            device_trust_levels (list[str]): Device trust levels based on posture configurations.
+            zpa_app_segments (list[dict]): ZPA Application Segments applicable to the rule.
+            
         Returns:
             tuple: Updated firewall dns filtering rule resource record.
 

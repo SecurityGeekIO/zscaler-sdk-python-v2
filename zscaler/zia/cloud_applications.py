@@ -36,13 +36,11 @@ class CloudApplicationsAPI(APIClient):
 
         Args:
             query_params {dict}: Map of query parameters for the request.
-                [query_params.include_auditor_role] {bool}: Include or exclude auditor user information in the list.
-                [query_params.include_partner_role] {bool}: Include or exclude admin user information in the list. Default is True.
-                [query_params.search] {str}: The search string used to partially match against an admin/auditor user's Login ID or Name.
+                [query_params.search] {str}: Filter application by name
                 [query_params.page] {int}: Specifies the page offset.
-                [query_params.pagesize] {int}: Specifies the page size. The default size is 100, but the maximum size is 1000.
-                [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
-                [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
+                [query_params.pagesize] {int}: Specifies the page size. The default size is 200, but the maximum size is 1000.
+                [query_params.app_class] {str}: Filter application by application category
+                [query_params.group_results] {bool}: Show count of applications grouped by application category
 
         Returns:
             tuple: A tuple containing (list of Cloud Application Policies instances, Response, error)
@@ -92,13 +90,11 @@ class CloudApplicationsAPI(APIClient):
         
         Args:
             query_params {dict}: Map of query parameters for the request.
-                [query_params.include_auditor_role] {bool}: Include or exclude auditor user information in the list.
-                [query_params.include_partner_role] {bool}: Include or exclude admin user information in the list. Default is True.
-                [query_params.search] {str}: The search string used to partially match against an admin/auditor user's Login ID or Name.
+                [query_params.search] {str}: Filter application by name
                 [query_params.page] {int}: Specifies the page offset.
-                [query_params.pagesize] {int}: Specifies the page size. The default size is 100, but the maximum size is 1000.
-                [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
-                [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
+                [query_params.pagesize] {int}: Specifies the page size. The default size is 200, but the maximum size is 1000.
+                [query_params.app_class] {str}: Filter application by application category
+                [query_params.group_results] {bool}: Show count of applications grouped by application category
 
         Returns:
             tuple: A tuple containing (list of Cloud Application SSL Policies instances, Response, error)

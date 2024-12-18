@@ -145,7 +145,7 @@ class RuleLabelsAPI(APIClient):
                 The label data to be sent in the request.
 
         Returns:
-            tuple: A tuple containing the newly added Rule Label (Box), response, and error.
+            tuple: A tuple containing the newly added Rule Label, response, and error.
         """
         http_method = "post".upper()
         api_url = format_url(

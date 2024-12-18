@@ -165,45 +165,41 @@ class FirewallDNSRulesAPI(APIClient):
 
         Keyword Args:
             description (str): Additional information about the rule.
-            order (str): The order of the rule, defaults to adding rule to bottom of list.
-            rank (str): The admin rank of the rule. Supported values 1-7
+            order (int): The order of the rule, defaults to adding the rule to the bottom of the list.
+            rank (int): The admin rank of the rule. Supported values are 1-7.
             state (str): The rule state. Accepted values are 'ENABLED' or 'DISABLED'.
-            redirect_ip (str): The IP address to which the traffic will be redirected to when the DNAT rule is triggered.
+            redirect_ip (str): The IP address to which the traffic is redirected when the DNAT rule is triggered.
             enable_full_logging (bool): If True, enables full logging.
             capture_pcap (bool): Indicates whether packet capture (PCAP) is enabled or not.
-            predefined (bool): Indicates that the rule is predefined by using a true value
-            default_rule (bool): Indicates whether the rule is the Default Cloud DNS Rule or not
-            action (str): Action that must take place if the traffic matches the rule criteria. 
-                Supported Values: ALLOW, BLOCK, REDIR_REQ, REDIR_RES, REDIR_ZPA, REDIR_REQ_DOH, REDIR_REQ_KEEP_SENDER
-                    REDIR_REQ_TCP, REDIR_REQ_UDP, BLOCK_WITH_RESPONSE
-            applications (list): DNS tunnels and network applications to which the rule applies
-            dest_ip_groups (list): The IDs for the destination IP groups that this rule applies to.
-            dest_ipv6_groups (list): The IDs for the destination IPV6 groups that this rule applies to.
-            dest_countries (list): Destination countries for the rule.
-            dest_addresses (list): Destination IPs for the rule. Accepts IP addresses or CIDR.
-            src_ips (list): Source IPs for the rule. Accepts IP addresses or CIDR.
-            source_countries (list): The countries of origin of traffic for which the rule is applicable.
-            src_ip_groups (list): The IDs for the source IP groups that this rule applies to.
-            src_ipv6_groups (list): The IDs for the source IPV6 groups that this rule applies to.
-            dest_ip_categories (list): IP address categories for the rule.
-            dest_countries (list): Destination countries for the rule.
-            groups (list): The IDs for the groups that this rule applies to.
-            users (list): The IDs for the users that this rule applies to.
-            res_categories (list): Source IPs for the rule. Accepts IP addresses or CIDR.
-            dns_rule_request_types (list): DNS request types to which the rule applies
-            protocols (list): The protocols to which the rules applies.
-            block_response_code (list): Specifies the DNS response code to be sent to the client when the action is configured to block and send response code
-            devices (list): IDs for devices managed by Zscaler Client Connector.
-            device_groups (list): IDs for device groups managed by Zscaler Client Connector.
-            labels (list): The IDs for the labels that this rule applies to.
-            locations (list): The IDs for the locations that this rule applies to.
-            location_groups (list): The IDs for the location groups that this rule applies to.
-            edns_ecs_object (list): IDs for EDNS ECS object which resolves DNS request
-            time_windows (list): IDs for time windows the rule applies to.
-            application_groups (list): IDs for DNS application groups to which the rule applies
-            dns_gateway (list): ID for DNS gateway used to redirect traffic, specified when the rule action is to redirect DNS request to an external DNS service
-            zpa_ip_group (list): The ZPA IP pool specified when the rule action is to resolve domain names of ZPA applications to an ephemeral IP address from a preconfigured IP pool
-
+            predefined (bool): Indicates if the rule is predefined.
+            default_rule (bool): Indicates if the rule is the default Cloud DNS rule.
+            action (str): Action when traffic matches the rule criteria.
+                Supported values: ALLOW, BLOCK, REDIR_REQ, REDIR_RES, REDIR_ZPA, REDIR_REQ_DOH, REDIR_REQ_KEEP_SENDER,
+                REDIR_REQ_TCP, REDIR_REQ_UDP, BLOCK_WITH_RESPONSE.
+            applications (list[str]): DNS tunnels and network applications to which the rule applies.
+            dest_ip_groups (list[str]): IDs for destination IP groups the rule applies to.
+            dest_ipv6_groups (list[str]): IDs for destination IPv6 groups the rule applies to.
+            dest_countries (list[str]): Destination countries for the rule.
+            dest_addresses (list[str]): Destination IPs. Accepts IPs or CIDR.
+            src_ips (list[str]): Source IPs. Accepts IPs or CIDR.
+            source_countries (list[str]): Source countries of origin for the rule.
+            src_ip_groups (list[str]): IDs for source IP groups the rule applies to.
+            src_ipv6_groups (list[str]): IDs for source IPv6 groups the rule applies to.
+            dest_ip_categories (list[str]): IP address categories for the rule.
+            res_categories (list[str]): Categories of IP addresses resolved by DNS.
+            dns_rule_request_types (list[str]): DNS request types the rule applies to.
+            protocols (list[str]): Protocols the rule applies to (e.g., TCP, UDP, DOHTTPS).
+            block_response_code (str): DNS response code sent when the rule action is BLOCK.
+            devices (list[str]): IDs for devices managed by Zscaler Client Connector.
+            device_groups (list[str]): IDs for device groups managed by Zscaler Client Connector.
+            labels (list[str]): IDs for labels associated with this rule.
+            locations (list[str]): IDs for locations the rule applies to.
+            location_groups (list[str]): IDs for location groups the rule applies to.
+            edns_ecs_object (str): ID for EDNS ECS object for DNS resolution.
+            time_windows (list[str]): IDs for time windows the rule applies to.
+            application_groups (list[str]): IDs for DNS application groups the rule applies to.
+            dns_gateway (str): DNS gateway for redirecting traffic when the action is set to redirect DNS requests.
+            zpa_ip_group (str): ZPA IP pool specified when resolving domain names of ZPA applications.
         Returns:
             tuple: Updated firewall dns filtering rule resource record.
 
@@ -267,44 +263,41 @@ class FirewallDNSRulesAPI(APIClient):
         Keyword Args:
             name (str): Name of the rule, max 31 chars.
             description (str): Additional information about the rule.
-            order (str): The order of the rule, defaults to adding rule to bottom of list.
-            rank (str): The admin rank of the rule. Supported values 1-7
+            order (int): The order of the rule, defaults to adding the rule to the bottom of the list.
+            rank (int): The admin rank of the rule. Supported values are 1-7.
             state (str): The rule state. Accepted values are 'ENABLED' or 'DISABLED'.
-            redirect_ip (str): The IP address to which the traffic will be redirected to when the DNAT rule is triggered.
+            redirect_ip (str): The IP address to which the traffic is redirected when the DNAT rule is triggered.
             enable_full_logging (bool): If True, enables full logging.
             capture_pcap (bool): Indicates whether packet capture (PCAP) is enabled or not.
-            predefined (bool): Indicates that the rule is predefined by using a true value
-            default_rule (bool): Indicates whether the rule is the Default Cloud DNS Rule or not
-            action (str): Action that must take place if the traffic matches the rule criteria. 
-                Supported Values: ALLOW, BLOCK, REDIR_REQ, REDIR_RES, REDIR_ZPA, REDIR_REQ_DOH, REDIR_REQ_KEEP_SENDER
-                    REDIR_REQ_TCP, REDIR_REQ_UDP, BLOCK_WITH_RESPONSE
-            applications (list): DNS tunnels and network applications to which the rule applies
-            dest_ip_groups (list): The IDs for the destination IP groups that this rule applies to.
-            dest_ipv6_groups (list): The IDs for the destination IPV6 groups that this rule applies to.
-            dest_countries (list): Destination countries for the rule.
-            dest_addresses (list): Destination IPs for the rule. Accepts IP addresses or CIDR.
-            src_ips (list): Source IPs for the rule. Accepts IP addresses or CIDR.
-            source_countries (list): The countries of origin of traffic for which the rule is applicable.
-            src_ip_groups (list): The IDs for the source IP groups that this rule applies to.
-            src_ipv6_groups (list): The IDs for the source IPV6 groups that this rule applies to.
-            dest_ip_categories (list): IP address categories for the rule.
-            dest_countries (list): Destination countries for the rule.
-            groups (list): The IDs for the groups that this rule applies to.
-            users (list): The IDs for the users that this rule applies to.
-            res_categories (list): Source IPs for the rule. Accepts IP addresses or CIDR.
-            dns_rule_request_types (list): DNS request types to which the rule applies
-            protocols (list): The protocols to which the rules applies.
-            block_response_code (list): Specifies the DNS response code to be sent to the client when the action is configured to block and send response code
-            devices (list): IDs for devices managed by Zscaler Client Connector.
-            device_groups (list): IDs for device groups managed by Zscaler Client Connector.
-            labels (list): The IDs for the labels that this rule applies to.
-            locations (list): The IDs for the locations that this rule applies to.
-            location_groups (list): The IDs for the location groups that this rule applies to.
-            edns_ecs_object (list): IDs for EDNS ECS object which resolves DNS request
-            time_windows (list): IDs for time windows the rule applies to.
-            application_groups (list): IDs for DNS application groups to which the rule applies
-            dns_gateway (list): ID for DNS gateway used to redirect traffic, specified when the rule action is to redirect DNS request to an external DNS service
-            zpa_ip_group (list): The ZPA IP pool specified when the rule action is to resolve domain names of ZPA applications to an ephemeral IP address from a preconfigured IP pool
+            predefined (bool): Indicates if the rule is predefined.
+            default_rule (bool): Indicates if the rule is the default Cloud DNS rule.
+            action (str): Action when traffic matches the rule criteria.
+                Supported values: ALLOW, BLOCK, REDIR_REQ, REDIR_RES, REDIR_ZPA, REDIR_REQ_DOH, REDIR_REQ_KEEP_SENDER,
+                REDIR_REQ_TCP, REDIR_REQ_UDP, BLOCK_WITH_RESPONSE.
+            applications (list[str]): DNS tunnels and network applications to which the rule applies.
+            dest_ip_groups (list[str]): IDs for destination IP groups the rule applies to.
+            dest_ipv6_groups (list[str]): IDs for destination IPv6 groups the rule applies to.
+            dest_countries (list[str]): Destination countries for the rule.
+            dest_addresses (list[str]): Destination IPs. Accepts IPs or CIDR.
+            src_ips (list[str]): Source IPs. Accepts IPs or CIDR.
+            source_countries (list[str]): Source countries of origin for the rule.
+            src_ip_groups (list[str]): IDs for source IP groups the rule applies to.
+            src_ipv6_groups (list[str]): IDs for source IPv6 groups the rule applies to.
+            dest_ip_categories (list[str]): IP address categories for the rule.
+            res_categories (list[str]): Categories of IP addresses resolved by DNS.
+            dns_rule_request_types (list[str]): DNS request types the rule applies to.
+            protocols (list[str]): Protocols the rule applies to (e.g., TCP, UDP, DOHTTPS).
+            block_response_code (str): DNS response code sent when the rule action is BLOCK.
+            devices (list[str]): IDs for devices managed by Zscaler Client Connector.
+            device_groups (list[str]): IDs for device groups managed by Zscaler Client Connector.
+            labels (list[str]): IDs for labels associated with this rule.
+            locations (list[str]): IDs for locations the rule applies to.
+            location_groups (list[str]): IDs for location groups the rule applies to.
+            edns_ecs_object (str): ID for EDNS ECS object for DNS resolution.
+            time_windows (list[str]): IDs for time windows the rule applies to.
+            application_groups (list[str]): IDs for DNS application groups the rule applies to.
+            dns_gateway (str): DNS gateway for redirecting traffic when the action is set to redirect DNS requests.
+            zpa_ip_group (str): ZPA IP pool specified when resolving domain names of ZPA applications.
 
         Returns:
             tuple: Updated firewall dns filtering rule resource record.
