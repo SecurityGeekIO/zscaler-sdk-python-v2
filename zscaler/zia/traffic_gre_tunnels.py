@@ -305,14 +305,65 @@ class TrafficForwardingGRETunnelAPI(APIClient):
 
         params = {}
 
-        request, error = self._request_executor.create_request(http_method, api_url, params=params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
         return (None, response, None)
+
+    def list_gre_ranges(self, query_params=None) -> tuple:
+        """
+        Returns a list of available GRE tunnel ranges.
+
+        Keyword Args:
+        Args:
+            query_params {dict}: Map of query parameters for the request.
+                [query_params.internal_ip_range] {int}: Page size for pagination.
+                [query_params.static_ip] {str}: Search string for filtering results.
+                [query_params.limit] {int}: Maximum number of items to fetch before stopping.
+
+        Returns:
+            :obj:`BoxList`: A list of available GRE tunnel ranges.
+
+        Examples:
+            >>> gre_tunnel_ranges = zia.traffic.list_gre_ranges()
+
+        """
+        http_method = "put".upper()
+        api_url = format_url(
+            f"""
+            {self._zia_base_endpoint}
+            /greTunnels/availableInternalIpRanges
+            """
+        )
+
+        query_params = query_params or {}
+
+        # Prepare request body and headers
+        body = {}
+        headers = {}
+        
+        request, error = self._request_executor\
+             .create_request(http_method, api_url, body, headers, params=query_params)
+        if error:
+            return (None, None, error)
+
+        response, error = self._request_executor\
+            .execute(request)
+        if error:
+            return (None, response, error)
+
+        try:
+            result = response.get_all_pages_results()
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
 
     def list_vips_recommended(self, source_ip: str, query_params=None) -> tuple:
         """

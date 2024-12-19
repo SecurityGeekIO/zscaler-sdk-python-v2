@@ -51,43 +51,43 @@ class CloudAppControlAPI(APIClient):
         super().__init__()
         self._request_executor: RequestExecutor = request_executor
 
-    def list_available_actions(self, rule_type: str) -> tuple:
+    def list_available_actions(self, rule_type: str, cloud_apps: list) -> tuple:
         """
         Retrieves a list of granular actions supported for a specific rule type.
 
         Args:
-            rule_type (str): The type of rule for which actions should be retrieved
-                             (e.g., "STREAMING_MEDIA").
+            rule_type (str): The type of rule for which actions should be retrieved.
+            cloud_apps (list): A list of cloud applications for filtering.
 
         Returns:
             tuple: A tuple containing:
-                   - result (list): A list of actions supported for the given rule type.
-                   - response (object): The full API response object.
-                   - error (object): Any error encountered during the request.
+                - result (list): A list of actions supported for the given rule type.
+                - response (object): The full API response object.
+                - error (object): Any error encountered during the request.
 
         Examples:
             Retrieve available actions for a specific rule type:
-
                 >>> actions, response, error = zia.cloudappcontrol.list_available_actions(
-                ...     'STREAMING_MEDIA'
+                ...     rule_type='STREAMING_MEDIA',
+                ...     cloud_apps=['DROPBOX']
                 ... )
                 >>> if actions:
                 ...     for action in actions:
                 ...         print(action)
-
         """
         http_method = "post".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zia_base_endpoint}
-            /webApplicationRules/{rule_type}/availableActions"
-        """)
+            /webApplicationRules/{rule_type}/availableActions
+            """
+        )
 
-        # Prepare request body and headers
-        body = {}
-        headers = {}
+        # Prepare request payload
+        body = {"cloudApps": cloud_apps}
 
-        # Prepare the request (GET request, no body needed)
-        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
+        # Create the request
+        request, error = self._request_executor.create_request(http_method, api_url, body, {})
 
         if error:
             return (None, None, error)
@@ -98,11 +98,11 @@ class CloudAppControlAPI(APIClient):
         if error:
             return (None, response, error)
 
-        # Parse the response into Application instances
         try:
-            result = []
-            for item in response.get_all_pages_results():
-                result.append(Application(self.form_response_body(item)))
+            # Since the API returns a list, no need for `.get()`
+            result = response.get_body()
+            if not isinstance(result, list):
+                raise ValueError("Unexpected response format: Expected a list.")
         except Exception as error:
             return (None, response, error)
 
@@ -117,7 +117,11 @@ class CloudAppControlAPI(APIClient):
         Returns a list of all Cloud App Control rules for the specified rule type.
 
         Args:
-            rule_type (str): The type of rules to retrieve (e.g., "STREAMING_MEDIA").
+        Args:
+            query_params {dict}: Map of query parameters for the request.
+                [query_params.pagesize] {int}: Page size for pagination.
+                [query_params.search] {str}: Search string for filtering results.
+                [query_params.rule_type] {str}: The type of rules to retrieve (e.g., "STREAMING_MEDIA").
 
         Returns:
             tuple: The list of Cloud App Control rules.
@@ -137,6 +141,8 @@ class CloudAppControlAPI(APIClient):
         """
         )
 
+        query_params = query_params or {}
+
         # Prepare request body and headers
         body = {}
         headers = {}
@@ -155,11 +161,11 @@ class CloudAppControlAPI(APIClient):
         if error:
             return (None, response, error)
 
-        # Parse the response into AppConnectorGroup instances
         try:
             result = []
             for item in response.get_all_pages_results():
-                result.append(CloudApplicationControl(self.form_response_body(item)))
+                result.append(CloudApplicationControl(self.form_response_body(item))
+            )
         except Exception as error:
             return (None, response, error)
 
@@ -722,7 +728,12 @@ class CloudAppControlAPI(APIClient):
         """
         http_method = "post".upper()
         params = {"name": name}
-        api_url = format_url(f"{self._zia_base_endpoint}/webApplicationRules/{rule_type}/duplicate/{rule_id}")
+        api_url = format_url(
+            f"""
+            {self._zia_base_endpoint}
+            /webApplicationRules/{rule_type}/duplicate/{rule_id}
+        """
+        )
 
         # Convert enabled to API format if present
         if "enabled" in kwargs:
@@ -748,17 +759,21 @@ class CloudAppControlAPI(APIClient):
         camel_payload = recursive_snake_to_camel(payload)
 
         # Use camel_payload in the API request
-        request, error = self._request_executor.create_request(http_method, api_url, camel_payload, {}, params=params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, camel_payload, {}, params=params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request, CloudApplicationControl)
+        response, error = self._request_executor\
+            .execute(request, CloudApplicationControl)
 
         if error:
             return (None, response, error)
 
         try:
-            result = CloudApplicationControl(self.form_response_body(response.get_body()))
+            result = CloudApplicationControl(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
 

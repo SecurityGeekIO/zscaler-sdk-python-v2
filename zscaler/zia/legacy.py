@@ -454,8 +454,8 @@ class LegacyZIAClientHelper():
         The interface object for the :ref:`ZIA DLP Templates interface <zia-dlp_templates>`.
 
         """
-        from zscaler.zia.dlp_templates import DLPTemplates
-        return DLPTemplates(self.request_executor)
+        from zscaler.zia.dlp_templates import DLPTemplatesAPI
+        return DLPTemplatesAPI(self.request_executor)
 
     @property
     def dlp_resources(self):

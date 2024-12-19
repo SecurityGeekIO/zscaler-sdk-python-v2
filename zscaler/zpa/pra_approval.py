@@ -60,18 +60,22 @@ class PRAApprovalAPI(APIClient):
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
             for item in response.get_all_pages_results():
-                result.append(PrivilegedRemoteAccessApproval(self.form_response_body(item)))
+                result.append(PrivilegedRemoteAccessApproval(
+                    self.form_response_body(item))
+                )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -101,16 +105,20 @@ class PRAApprovalAPI(APIClient):
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request, PrivilegedRemoteAccessApproval)
+        response, error = self._request_executor\
+            .execute(request, PrivilegedRemoteAccessApproval)
         if error:
             return (None, response, error)
 
         try:
-            result = PrivilegedRemoteAccessApproval(self.form_response_body(response.get_body()))
+            result = PrivilegedRemoteAccessApproval(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -173,17 +181,21 @@ class PRAApprovalAPI(APIClient):
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body=body, params=params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body=body, params=params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, PrivilegedRemoteAccessApproval)
+        response, error = self._request_executor\
+            .execute(request, PrivilegedRemoteAccessApproval)
         if error:
             return (None, response, error)
 
         try:
-            result = PrivilegedRemoteAccessApproval(self.form_response_body(response.get_body()))
+            result = PrivilegedRemoteAccessApproval(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -244,12 +256,14 @@ class PRAApprovalAPI(APIClient):
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body=body, params=params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body=body, params=params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, PrivilegedRemoteAccessApproval)
+        response, error = self._request_executor\
+            .execute(request, PrivilegedRemoteAccessApproval)
         if error:
             return (None, response, error)
 
@@ -258,7 +272,9 @@ class PRAApprovalAPI(APIClient):
             return (PrivilegedRemoteAccessApproval({"id": approval_id}), None, None)
 
         try:
-            result = PrivilegedRemoteAccessApproval(self.form_response_body(response.get_body()))
+            result = PrivilegedRemoteAccessApproval(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
 
@@ -285,11 +301,13 @@ class PRAApprovalAPI(APIClient):
 
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        request, error = self._request_executor.create_request(http_method, api_url, params=params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 
@@ -312,11 +330,13 @@ class PRAApprovalAPI(APIClient):
 
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        request, error = self._request_executor.create_request(http_method, api_url, params=params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
         return (None, response, None)

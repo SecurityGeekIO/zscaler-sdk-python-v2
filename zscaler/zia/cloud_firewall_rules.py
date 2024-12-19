@@ -25,7 +25,7 @@ from zscaler.zia.models.cloud_firewall_nw_applications import NetworkApplication
 from zscaler.zia.models.cloud_firewall_nw_service_groups import NetworkServiceGroups
 from zscaler.zia.models.cloud_firewall_nw_service import NetworkServices
 from zscaler.zia.models.cloud_firewall_time_windows import TimeWindows
-
+import logging
 
 class FirewallPolicyAPI(APIClient):
     # Firewall filter rule keys that only require an ID to be provided.
@@ -259,7 +259,7 @@ class FirewallPolicyAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
 
-    def update_rule(self, rule_id: int, rule) -> tuple:
+    def update_rule(self, rule_id: int, **kwargs) -> tuple:
         """
         Updates an existing firewall filter rule.
 
@@ -322,27 +322,31 @@ class FirewallPolicyAPI(APIClient):
         """
         )
 
-        if isinstance(rule, dict):
-            payload = rule
-        else:
-            payload = rule.as_dict()
+        body = kwargs
 
-        if "enabled" in payload:
-            payload["state"] = "ENABLED" if payload.pop("enabled") else "DISABLED"
+        # Convert 'enabled' to 'state' (ENABLED/DISABLED) if it's present in the payload
+        if "enabled" in body:
+            body["state"] = "ENABLED" if body.pop("enabled") else "DISABLED"
 
         # transform_common_id_fields(self.reformat_params, payload, payload)
 
-        request, error = self._request_executor.create_request(http_method, api_url, payload, {}, {})
-        if error:
-            return (None, None, error)
+        # Create the request
+        request, error = self._request_executor\
+            .create_request(
+            method=http_method,
+            endpoint=api_url,
+            body=body,
+        )
 
-        response, error = self._request_executor.execute(request, FirewallRule)
-
+        response, error = self._request_executor\
+            .execute(request, FirewallRule)
         if error:
             return (None, response, error)
 
         try:
-            result = FirewallRule(self.form_response_body(response.get_body()))
+            result = FirewallRule(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -371,14 +375,15 @@ class FirewallPolicyAPI(APIClient):
 
         params = {}
 
-        request, error = self._request_executor.create_request(http_method, api_url, params=params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
-
         return (None, response, None)
 
     def list_ip_destination_groups(self, exclude_type: str = None, query_params=None) -> tuple:
@@ -433,13 +438,15 @@ class FirewallPolicyAPI(APIClient):
         headers = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
 
         if error:
             return (None, response, error)
@@ -448,10 +455,11 @@ class FirewallPolicyAPI(APIClient):
         try:
             result = []
             for item in response.get_all_pages_results():
-                result.append(IPDestinationGroups(self.form_response_body(item)))
+                result.append(IPDestinationGroups(
+                    self.form_response_body(item))
+                )
         except Exception as error:
             return (None, response, error)
-
         return (result, response, None)
 
     def get_ip_destination_group(self, group_id: int) -> tuple:
@@ -479,23 +487,27 @@ class FirewallPolicyAPI(APIClient):
         body = {}
         headers = {}
 
-        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, headers)
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request, IPDestinationGroups)
+        response, error = self._request_executor\
+            .execute(request, IPDestinationGroups)
 
         if error:
             return (None, response, error)
 
         try:
-            result = IPDestinationGroups(self.form_response_body(response.get_body()))
+            result = IPDestinationGroups(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def add_ip_destination_group(self, group) -> tuple:
+    def add_ip_destination_group(self, **kwargs) -> tuple:
         """
         Adds a new IP Destination Group.
 
@@ -542,12 +554,10 @@ class FirewallPolicyAPI(APIClient):
         """
         )
 
-        if isinstance(group, dict):
-            body = group
-        else:
-            body = group.as_dict()
+        body = kwargs
 
-        request, error = self._request_executor.create_request(
+        request, error = self._request_executor\
+            .create_request(
             method=http_method,
             endpoint=api_url,
             body=body,
@@ -557,13 +567,16 @@ class FirewallPolicyAPI(APIClient):
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, IPDestinationGroups)
+        response, error = self._request_executor\
+            .execute(request, IPDestinationGroups)
 
         if error:
             return (None, response, error)
 
         try:
-            result = IPDestinationGroups(self.form_response_body(response.get_body()))
+            result = IPDestinationGroups(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -571,7 +584,7 @@ class FirewallPolicyAPI(APIClient):
     def update_ip_destination_group(
         self,
         group_id: str,
-        dest_group,
+        **kwargs
     ) -> tuple:
         """
         Updates the specified IP Destination Group.
@@ -611,25 +624,27 @@ class FirewallPolicyAPI(APIClient):
         """
         )
 
-        if isinstance(dest_group, dict):
-            body = dest_group
-        else:
-            body = dest_group.as_dict()
+        body = {}
 
-        params = {}
+        body.update(kwargs)
 
-        request, error = self._request_executor.create_request(http_method, api_url, body, params)
-
+        # Create the request
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, {}, {})
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request, IPDestinationGroups)
-
+        # Execute the request
+        response, error = self._request_executor\
+            .execute(request, IPDestinationGroups)
         if error:
             return (None, response, error)
 
+        # Parse the response into a RuleLabels instance
         try:
-            result = IPDestinationGroups(self.form_response_body(response.get_body()))
+            result = IPDestinationGroups(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -656,15 +671,16 @@ class FirewallPolicyAPI(APIClient):
         """
         )
         params = {}
-
-        request, error = self._request_executor.create_request(http_method, api_url, params=params)
+        
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=params)
         if error:
-            return (None, None, error)
+            return None, error
 
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
-
         return (None, response, None)
 
     def list_ip_source_groups(
@@ -711,13 +727,15 @@ class FirewallPolicyAPI(APIClient):
         headers = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
 
         if error:
             return (None, response, error)
@@ -728,7 +746,6 @@ class FirewallPolicyAPI(APIClient):
                 result.append(IPSourceGroup(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
-
         return (result, response, None)
 
     def get_ip_source_group(self, group_id: int) -> tuple:
@@ -753,23 +770,27 @@ class FirewallPolicyAPI(APIClient):
         body = {}
         headers = {}
 
-        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, headers)
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request, IPSourceGroup)
+        response, error = self._request_executor\
+            .execute(request, IPSourceGroup)
 
         if error:
             return (None, response, error)
 
         try:
-            result = IPSourceGroup(self.form_response_body(response.get_body()))
+            result = IPSourceGroup(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def add_ip_source_group(self, group) -> tuple:
+    def add_ip_source_group(self, **kwargs) -> tuple:
         """
         Adds a new IP Source Group.
 
@@ -797,12 +818,10 @@ class FirewallPolicyAPI(APIClient):
         """
         )
 
-        if isinstance(group, dict):
-            body = group
-        else:
-            body = group.as_dict()
+        body = kwargs
 
-        request, error = self._request_executor.create_request(
+        request, error = self._request_executor\
+            .create_request(
             method=http_method,
             endpoint=api_url,
             body=body,
@@ -812,18 +831,24 @@ class FirewallPolicyAPI(APIClient):
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, IPSourceGroup)
-
+        response, error = self._request_executor\
+            .execute(request, IPSourceGroup)
         if error:
             return (None, response, error)
 
         try:
-            result = IPSourceGroup(self.form_response_body(response.get_body()))
+            result = IPSourceGroup(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def update_ip_source_group(self, group_id: str, source_group) -> tuple:
+    def update_ip_source_group(
+        self,
+        group_id: str, 
+        **kwargs
+    ) -> tuple:
         """
         Update an IP Source Group.
 
@@ -861,24 +886,28 @@ class FirewallPolicyAPI(APIClient):
             /ipSourceGroups/{group_id}
         """
         )
+        body = kwargs
 
-        if isinstance(source_group, dict):
-            body = source_group
-        else:
-            body = source_group.as_dict()
-
-        request, error = self._request_executor.create_request(http_method, api_url, body)
+        request, error = self._request_executor\
+            .create_request(
+            method=http_method,
+            endpoint=api_url,
+            body=body,
+        )
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request, IPSourceGroup)
-
+        # Execute the request
+        response, error = self._request_executor\
+            .execute(request, IPSourceGroup)
         if error:
             return (None, response, error)
 
         try:
-            result = IPSourceGroup(self.form_response_body(response.get_body()))
+            result = IPSourceGroup(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -907,14 +936,15 @@ class FirewallPolicyAPI(APIClient):
 
         params = {}
 
-        request, error = self._request_executor.create_request(http_method, api_url, params=params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
-
         return (None, response, None)
 
     def list_network_app_groups(self, query_params=None) -> tuple:
@@ -951,13 +981,15 @@ class FirewallPolicyAPI(APIClient):
         headers = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
 
         if error:
             return (None, response, error)
@@ -1014,7 +1046,12 @@ class FirewallPolicyAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
 
-    def add_network_app_group(self, name: str, network_applications: list, **kwargs) -> tuple:
+    def add_network_app_group(
+        self,
+        name: str,
+        network_applications: list,
+        **kwargs
+    ) -> tuple:
         """
         Adds a new Network Application Group.
 
@@ -1051,11 +1088,13 @@ class FirewallPolicyAPI(APIClient):
         for key, value in kwargs.items():
             payload[snake_to_camel(key)] = value
 
-        request, error = self._request_executor.create_request(http_method, api_url, payload, {}, {})
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, payload, {}, {})
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
 
         if error:
             return (None, response, error)
@@ -1070,7 +1109,7 @@ class FirewallPolicyAPI(APIClient):
     def update_network_app_group(
         self,
         group_id: int,
-        network_app_group,
+        **kwargs
     ) -> tuple:
         """
         Update an Network Application Group.
@@ -1109,23 +1148,26 @@ class FirewallPolicyAPI(APIClient):
         """
         )
 
-        if isinstance(network_app_group, dict):
-            body = network_app_group
-        else:
-            body = network_app_group.as_dict()
+        body = {}
+
+        body.update(kwargs)
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body, {}, {})
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, {}, {})
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request, NetworkApplicationGroups)
+        response, error = self._request_executor\
+            .execute(request, NetworkApplicationGroups)
 
         if error:
             return (None, response, error)
 
         try:
-            result = NetworkApplicationGroups(self.form_response_body(response.get_body()))
+            result = NetworkApplicationGroups(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -1157,11 +1199,13 @@ class FirewallPolicyAPI(APIClient):
 
         params = {}
 
-        request, error = self._request_executor.create_request(http_method, api_url, params=params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
         return (None, response, None)
@@ -1208,12 +1252,14 @@ class FirewallPolicyAPI(APIClient):
         headers = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
 
         if error:
             return (None, response, error)
@@ -1221,7 +1267,9 @@ class FirewallPolicyAPI(APIClient):
         try:
             result = []
             for item in response.get_all_pages_results():
-                result.append(NetworkApplications(self.form_response_body(item)))
+                result.append(NetworkApplications(
+                    self.form_response_body(item))
+                )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -1248,17 +1296,21 @@ class FirewallPolicyAPI(APIClient):
         body = {}
         headers = {}
 
-        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, headers)
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request, NetworkApplications)
+        response, error = self._request_executor\
+            .execute(request, NetworkApplications)
         if error:
             return (None, response, error)
 
         try:
-            result = NetworkApplications(self.form_response_body(response.get_body()))
+            result = NetworkApplications(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -1300,12 +1352,14 @@ class FirewallPolicyAPI(APIClient):
         body = {}
         headers = {}
 
-        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request, NetworkServiceGroups)
+        response, error = self._request_executor\
+            .execute(request)
 
         if error:
             return (None, response, error)
@@ -1313,7 +1367,9 @@ class FirewallPolicyAPI(APIClient):
         try:
             result = []
             for item in response.get_all_pages_results():
-                result.append(NetworkServiceGroups(self.form_response_body(item)))
+                result.append(NetworkServiceGroups(
+                    self.form_response_body(item))
+                )
         except Exception as error:
             return (None, response, error)
 
@@ -1341,25 +1397,29 @@ class FirewallPolicyAPI(APIClient):
         body = {}
         headers = {}
 
-        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, headers)
 
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, NetworkServiceGroups)
+        response, error = self._request_executor\
+            .execute(request, NetworkServiceGroups)
 
         if error:
             return (None, response, error)
 
         try:
-            result = NetworkServiceGroups(self.form_response_body(response.get_body()))
+            result = NetworkServiceGroups(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
 
         return (result, response, None)
 
-    def add_network_svc_group(self, svc_group) -> tuple:
+    def add_network_svc_group(self, **kwargs) -> tuple:
         """
         Adds a new Network Service Group.
 
@@ -1387,13 +1447,10 @@ class FirewallPolicyAPI(APIClient):
         """
         )
 
-        # Ensure the label is in dictionary format
-        if isinstance(svc_group, dict):
-            body = svc_group
-        else:
-            body = svc_group.as_dict()
+        body = kwargs
 
-        request, error = self._request_executor.create_request(
+        request, error = self._request_executor\
+            .create_request(
             method=http_method,
             endpoint=api_url,
             body=body,
@@ -1403,13 +1460,16 @@ class FirewallPolicyAPI(APIClient):
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, NetworkServiceGroups)
+        response, error = self._request_executor\
+            .execute(request, NetworkServiceGroups)
 
         if error:
             return (None, response, error)
 
         try:
-            result = NetworkServiceGroups(self.form_response_body(response.get_body()))
+            result = NetworkServiceGroups(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -1417,7 +1477,7 @@ class FirewallPolicyAPI(APIClient):
     def update_network_svc_group(
         self,
         group_id: int,
-        svc_group,
+        **kwargs
     ) -> tuple:
         """
         Update a Network Service Group.
@@ -1450,24 +1510,25 @@ class FirewallPolicyAPI(APIClient):
         """
         )
 
-        if isinstance(svc_group, dict):
-            body = svc_group
-        else:
-            body = svc_group.as_dict()
+        body = kwargs
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body, {}, {})
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, {}, {})
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, NetworkServiceGroups)
+        response, error = self._request_executor\
+            .execute(request, NetworkServiceGroups)
         if error:
             return (None, response, error)
 
         # Parse the response into a RuleLabels instance
         try:
-            result = NetworkServiceGroups(self.form_response_body(response.get_body()))
+            result = NetworkServiceGroups(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -1496,11 +1557,13 @@ class FirewallPolicyAPI(APIClient):
 
         params = {}
 
-        request, error = self._request_executor.create_request(http_method, api_url, params=params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
         return (None, response, None)
@@ -1540,13 +1603,15 @@ class FirewallPolicyAPI(APIClient):
         headers = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
 
         if error:
             return (None, response, error)
@@ -1554,7 +1619,9 @@ class FirewallPolicyAPI(APIClient):
         try:
             result = []
             for item in response.get_all_pages_results():
-                result.append(NetworkServices(self.form_response_body(item)))
+                result.append(NetworkServices(
+                    self.form_response_body(item))
+                )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -1584,23 +1651,31 @@ class FirewallPolicyAPI(APIClient):
         body = {}
         headers = {}
 
-        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, headers)
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request, NetworkServices)
+        response, error = self._request_executor\
+            .execute(request, NetworkServices)
 
         if error:
             return (None, response, error)
 
         try:
-            result = NetworkServices(self.form_response_body(response.get_body()))
+            result = NetworkServices(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def add_network_service(self, network_service, ports: list = None) -> tuple:
+    def add_network_service(
+        self,
+        ports: list = None,
+        **kwargs
+    ) -> tuple:
         """
         Adds a new Network Service.
 
@@ -1655,10 +1730,7 @@ class FirewallPolicyAPI(APIClient):
         )
 
         # Set the payload based on the network_service argument
-        if isinstance(network_service, dict):
-            body = network_service
-        else:
-            body = network_service.as_dict()
+        body = kwargs
 
         # Add ports to the payload if provided
         if ports is not None:
@@ -1668,7 +1740,8 @@ class FirewallPolicyAPI(APIClient):
                     port_dict["end"] = int(items[3])
                 body.setdefault(f"{items[0]}{items[1].title()}Ports", []).append(port_dict)
 
-        request, error = self._request_executor.create_request(
+        request, error = self._request_executor\
+            .create_request(
             method=http_method,
             endpoint=api_url,
             body=body,
@@ -1678,13 +1751,16 @@ class FirewallPolicyAPI(APIClient):
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, NetworkServices)
+        response, error = self._request_executor\
+            .execute(request, NetworkServices)
 
         if error:
             return (None, response, error)
 
         try:
-            result = NetworkServices(self.form_response_body(response.get_body()))
+            result = NetworkServices(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -1692,8 +1768,8 @@ class FirewallPolicyAPI(APIClient):
     def update_network_service(
         self,
         service_id: str,
-        network_service,
         ports: list = None,
+        **kwargs
     ) -> tuple:
         """
         Updates the specified Network Service.
@@ -1744,11 +1820,9 @@ class FirewallPolicyAPI(APIClient):
         """
         )
 
-        # Set the payload based on the network_service argument
-        if isinstance(network_service, dict):
-            body = network_service
-        else:
-            body = network_service.as_dict()
+        body = {}
+
+        body.update(kwargs)
 
         # Add ports to the payload if provided
         if ports is not None:
@@ -1759,19 +1833,23 @@ class FirewallPolicyAPI(APIClient):
                 body.setdefault(f"{items[0]}{items[1].title()}Ports", []).append(port_dict)
 
         # Create and send the request
-        request, error = self._request_executor.create_request(http_method, api_url, body, {}, {})
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, {}, {})
 
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, NetworkServices)
+        response, error = self._request_executor\
+            .execute(request, NetworkServices)
 
         if error:
             return (None, response, error)
 
         try:
-            result = NetworkServices(self.form_response_body(response.get_body()))
+            result = NetworkServices(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -1800,11 +1878,13 @@ class FirewallPolicyAPI(APIClient):
 
         params = {}
 
-        request, error = self._request_executor.create_request(http_method, api_url, params=params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
         return (None, response, None)
@@ -1832,12 +1912,14 @@ class FirewallPolicyAPI(APIClient):
         headers = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, headers)
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
 
         if error:
             return (None, response, error)
@@ -1845,7 +1927,9 @@ class FirewallPolicyAPI(APIClient):
         try:
             result = []
             for item in response.get_body():
-                result.append(TimeWindows(self.form_response_body(item)))
+                result.append(TimeWindows(
+                    self.form_response_body(item))
+                )
         except Exception as error:
             return (None, response, error)
 
@@ -1874,13 +1958,15 @@ class FirewallPolicyAPI(APIClient):
         headers = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, headers)
 
         if error:
             return (None, None, error)
 
         # Execute the request, associating with the TimeWindowLite model
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
 
         if error:
             return (None, response, error)
@@ -1888,7 +1974,9 @@ class FirewallPolicyAPI(APIClient):
         try:
             result = []
             for item in response.get_all_pages_results():
-                result.append(TimeWindows(self.form_response_body(item)))
+                result.append(TimeWindows(
+                    self.form_response_body(item))
+                )
         except Exception as error:
             return (None, response, error)
 

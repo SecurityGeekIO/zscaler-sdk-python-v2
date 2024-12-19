@@ -285,3 +285,36 @@ class ZscalerAPIResponse:
             return []
 
         return self._list
+
+    def get_next(self):
+        """
+        Generator function for results pagination.
+
+        Yields:
+            (json, Exception): Next page of results, Error raised
+        """
+        while self._next:
+            # Retrieve next when next page exists
+
+            # Create and fire request
+            next_request, error = self._request_executor.create_request(
+                "GET", self._next, {}, self._headers)
+            if error:
+                # Return None if error and set next to none
+                self._next = None
+                yield (None, error, None)
+
+            req, res_details, resp_body, error = \
+                self._request_executor.fire_request(next_request)
+            if error:
+                # Return None if error and set next to none
+                self._next = None
+                yield (None, error, None)
+
+            if next_request:
+                # create new response and update generator values
+                next_response = ZscalerAPIResponse(
+                    self._request_executor, req, res_details, resp_body)
+                self._next = next_response._next
+                # yield next page
+                yield (next_response.get_body(), None, next_response)

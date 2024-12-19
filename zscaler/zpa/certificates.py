@@ -64,24 +64,24 @@ class CertificatesAPI(APIClient):
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        # Prepare request body and headers
-        body = {}
-        headers = {}
-
         # Prepare request
-        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
             for item in response.get_all_pages_results():
-                result.append(Certificate(self.form_response_body(item)))
+                result.append(Certificate(
+                    self.form_response_body(item))
+                )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -159,35 +159,32 @@ class CertificatesAPI(APIClient):
         """
         )
 
-        # Handle optional query parameters
         query_params = query_params or {}
         microtenant_id = query_params.get("microtenant_id", None)
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        # Prepare request body, headers, and form (if needed)
-        body = {}
-        headers = {}
-
-        # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
-
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, Certificate)
+        response, error = self._request_executor\
+            .execute(request, Certificate)
 
         if error:
             return (None, response, error)
 
         try:
-            result = Certificate(self.form_response_body(response.get_body()))
+            result = Certificate(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def add_certificate(self, certificate) -> tuple:
+    def add_certificate(self, **kwargs) -> tuple:
         """
         Adds a new certificate.
 
@@ -203,12 +200,8 @@ class CertificatesAPI(APIClient):
             /certificate
         """)
 
-        if isinstance(certificate, dict):
-            body = certificate
-        else:
-            body = certificate.as_dict()
+        body = kwargs
 
-        # Check if microtenant_id is set in the body, and use it to set query parameter
         microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
@@ -304,13 +297,14 @@ class CertificatesAPI(APIClient):
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, params=params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
-        # Execute the request
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
+
         if error:
             return (None, response, error)
-
-        return (None, response, None)
+        return (None, response, error)

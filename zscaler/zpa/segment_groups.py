@@ -303,7 +303,9 @@ class SegmentGroupsAPI(APIClient):
             /segmentGroup/{group_id}
         """)
 
-        body = kwargs
+        body = {}
+
+        body.update(kwargs)
 
         microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
