@@ -88,7 +88,7 @@ class DLPTemplatesAPI(APIClient):
         # Parse the response into AdminUser instances
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(DLPTemplates(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)

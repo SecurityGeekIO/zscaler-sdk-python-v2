@@ -85,7 +85,7 @@ class MicrotenantsAPI(APIClient):
         # Process response and create Microtenant instances
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(Microtenant(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
@@ -167,7 +167,7 @@ class MicrotenantsAPI(APIClient):
 
         return (microtenant_list, None)
 
-    def get_microtenant_search(self, microtenant, **kwargs) -> tuple:
+    def get_microtenant_search(self, **kwargs) -> tuple:
         """
         Add a new microtenant.
 
@@ -193,27 +193,26 @@ class MicrotenantsAPI(APIClient):
         """
         )
 
-        # Ensure provisioning is a dictionary
-        if isinstance(microtenant, dict):
-            body = microtenant
-        else:
-            body = microtenant.as_dict()
 
-        # Add any additional attributes from kwargs
-        body.update(kwargs)
+        # Construct the body from kwargs (as a dictionary)
+        body = kwargs
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body=body)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body=body)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, MicrotenantSearch)
+        response, error = self._request_executor\
+            .execute(request, MicrotenantSearch)
         if error:
             return (None, response, error)
 
         try:
-            result = MicrotenantSearch(self.form_response_body(response.get_body()))
+            result = MicrotenantSearch(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -253,35 +252,20 @@ class MicrotenantsAPI(APIClient):
         # Construct the body from kwargs (as a dictionary)
         body = kwargs
 
-        # Extract and set attributes from the body
-        name = body.pop("name", None)
-        criteria_attribute = body.pop("criteria_attribute", None)
-        criteria_attribute_values = body.pop("criteria_attribute_values", [])
-
-        # Add extracted values to the body
-        body.update(
-            {
-                "name": name,
-                "criteriaAttribute": criteria_attribute,
-                "criteriaAttributeValues": criteria_attribute_values,
-            }
-        )
-
-        # Add any additional attributes from kwargs
-        body.update(kwargs)
-
-        # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body=body)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body=body)
         if error:
             return (None, None, error)
 
-        # Execute the request
-        response, error = self._request_executor.execute(request, Microtenant)
+        response, error = self._request_executor\
+            .execute(request, Microtenant)
         if error:
             return (None, response, error)
 
         try:
-            result = Microtenant(self.form_response_body(response.get_body()))
+            result = Microtenant(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -330,16 +314,17 @@ class MicrotenantsAPI(APIClient):
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body, {}, params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, {}, params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, Microtenant)
+        response, error = self._request_executor\
+            .execute(request, Microtenant)
         if error:
             return (None, response, error)
 
-        # Handle case where no content is returned (204 No Content)
         # Handle case where no content is returned (204 No Content)
         if response is None:
             # Return a meaningful result to indicate success
@@ -347,7 +332,9 @@ class MicrotenantsAPI(APIClient):
 
         # Parse the response into an AppConnectorGroup instance
         try:
-            result = Microtenant(self.form_response_body(response.get_body()))
+            result = Microtenant(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)

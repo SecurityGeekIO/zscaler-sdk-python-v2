@@ -73,7 +73,7 @@ class CloudNSSAPI(APIClient):
             return (None, response, error)
 
         try:
-            result = response.get_all_pages_results()  # No need for extra processing
+            result = response.get_results()  # No need for extra processing
         except Exception as error:
             return (None, response, error)
 
@@ -571,7 +571,7 @@ class CloudNSSAPI(APIClient):
             return (None, response, error)
 
         try:
-            result = response.get_all_pages_results()  # No need for extra processing
+            result = response.get_results()  # No need for extra processing
         except Exception as error:
             return (None, response, error)
 

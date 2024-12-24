@@ -92,7 +92,7 @@ class TrafficForwardingGRETunnelAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(TrafficGRETunnel(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
@@ -359,7 +359,7 @@ class TrafficForwardingGRETunnelAPI(APIClient):
             return (None, response, error)
 
         try:
-            result = response.get_all_pages_results()
+            result = response.get_results()
         except Exception as error:
             return (None, response, error)
 
@@ -425,7 +425,7 @@ class TrafficForwardingGRETunnelAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(TrafficGRERecommendedVIP(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
@@ -530,7 +530,7 @@ class TrafficForwardingGRETunnelAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(item)  # Directly append the dictionary item as there is no model
 
         except Exception as error:
@@ -595,7 +595,7 @@ class TrafficForwardingGRETunnelAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(item)  # No model is used, directly handling the response as dictionaries
 
         except Exception as error:

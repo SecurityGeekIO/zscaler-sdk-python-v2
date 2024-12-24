@@ -82,11 +82,12 @@ class PolicySetControllerAPI(APIClient):
             conditions (list): List of condition dicts or tuples.
 
         Returns:
-            :obj:`dict`: The conditions template.
+            :obj:`list`: The conditions template.
 
         """
         template = []
         app_and_app_group_operands = []
+        scim_and_scim_group_operands = []
         object_types_to_operands = {
             "CONSOLE": [],
             "MACHINE_GRP": [],
@@ -126,6 +127,8 @@ class PolicySetControllerAPI(APIClient):
 
                 if object_type in ["APP", "APP_GROUP"]:
                     app_and_app_group_operands.append(operand)
+                elif object_type in ["SCIM","SCIM_GROUP"]:
+                    scim_and_scim_group_operands.append(operand)
                 elif object_type in object_types_to_operands:
                     object_types_to_operands[object_type].append(operand)
 
@@ -156,6 +159,11 @@ class PolicySetControllerAPI(APIClient):
         if app_and_app_group_operands:
             app_group_operator = operators_for_types.get("APP", "OR")
             template.append({"operator": app_group_operator, "operands": app_and_app_group_operands})
+
+        # Combine SCIM and SCIM_GROUP operands with their specific operator
+        if scim_and_scim_group_operands:
+            scim_group_operator = operators_for_types.get("SCIM_GROUP", "OR")
+            template.append({"operator": scim_group_operator, "operands": scim_and_scim_group_operands})
 
         # Combine other object types into their blocks with their respective operator
         for object_type, operands in object_types_to_operands.items():
@@ -268,12 +276,14 @@ class PolicySetControllerAPI(APIClient):
             query_params.pop("microtenantId", None)  # Ensure `microtenantId` isn't added if it's None
 
         # Prepare the request
-        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 
@@ -282,7 +292,6 @@ class PolicySetControllerAPI(APIClient):
             response_body = response.get_body()  # Get the raw response body
             if not response_body:
                 return (None, response, None)
-
             return (response_body, response, None)
 
         except Exception as error:
@@ -337,11 +346,13 @@ class PolicySetControllerAPI(APIClient):
             query_params["microtenantId"] = microtenant_id
 
         # Create and execute the request
-        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 
@@ -395,18 +406,20 @@ class PolicySetControllerAPI(APIClient):
             query_params["microtenantId"] = microtenant_id
 
         # Prepare request
-        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 
         try:
             # Directly return the results as a list of dictionaries
-            result = [self.form_response_body(item) for item in response.get_all_pages_results()]
+            result = [self.form_response_body(item) for item in response.get_results()]
         except Exception as error:
             return (None, response, error)
 

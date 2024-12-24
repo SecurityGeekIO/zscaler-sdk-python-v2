@@ -46,7 +46,7 @@ class TestPRAApproval:
         try:
             app_connector_group_name = "tests-" + generate_random_string()
             app_connector_group_description = "tests-" + generate_random_string()
-            created_app_connector_group = client.connectors.add_connector_group(
+            created_app_connector_group = client.zpa.app_connector_groups.add_connector_group(
                 name=app_connector_group_name,
                 description=app_connector_group_description,
                 enabled=True,
@@ -71,7 +71,7 @@ class TestPRAApproval:
         # Create a Segment Group
         try:
             segment_group_name = "tests-" + generate_random_string()
-            created_segment_group = client.segment_groups.add_group(
+            created_segment_group = client.zpa.segment_groups.add_group(
                 name=segment_group_name,
                 description="tests-" + generate_random_string(),
                 enabled=True,
@@ -84,7 +84,7 @@ class TestPRAApproval:
         try:
             server_group_name = "tests-" + generate_random_string()
             server_group_description = "tests-" + generate_random_string()
-            created_server_group = client.server_groups.add_group(
+            created_server_group = client.zpa.server_groups.add_group(
                 name=server_group_name,
                 description=server_group_description,
                 enabled=True,
@@ -99,7 +99,7 @@ class TestPRAApproval:
         try:
             app_segment_name = "tests-" + generate_random_string()
             app_segment_description = "tests-" + generate_random_string()
-            app_segment = client.app_segments.add_segment(
+            app_segment = client.zpa.app_segments.add_segment(
                 name=app_segment_name,
                 description=app_segment_description,
                 enabled=True,
@@ -108,13 +108,13 @@ class TestPRAApproval:
                 server_group_ids=[server_group_id],
                 tcp_port_ranges=["8000", "8000"],
             )
-            app_segment_id = app_segment["id"]
+            app_segment_id = app_segment.id
         except Exception as exc:
             errors.append(f"Creating Application Segment failed: {exc}")
 
         try:
             # Create a new privileged approval
-            created_approval = client.privileged_remote_access.add_approval(
+            created_approval = client.zpa.pra_approval.add_approval(
                 email_ids=["carol.kirk@bd-hashicorp.com"],
                 application_ids=[app_segment_id],  # Assuming a valid application ID
                 start_time=start_time,
@@ -137,7 +137,7 @@ class TestPRAApproval:
 
         try:
             # List all approvals using the search parameter and verify the created approval is in the list
-            approval_list = client.privileged_remote_access.list_approval(
+            approval_list = client.zpa.pra_approval.list_approval(
                 max_items=1,
                 search="carol.kirk@bd-hashicorp.com",
                 search_field="email_ids",
@@ -150,7 +150,7 @@ class TestPRAApproval:
 
         try:
             # Assuming get_approval method returns a Box object
-            retrieved_approval = client.privileged_remote_access.get_approval(approval_id)
+            retrieved_approval = client.zpa.pra_approval.get_approval(approval_id)
             assert retrieved_approval.id == approval_id, "Mismatch in retrieved approval ID"
 
             # Example assertions (modify based on actual returned attributes)
@@ -165,7 +165,7 @@ class TestPRAApproval:
             try:
                 # Attempt to delete resources created during the test
                 if approval_id:
-                    delete_status = client.privileged_remote_access.delete_approval(approval_id)
+                    delete_status = client.zpa.pra_approval.delete_approval(approval_id)
                     assert delete_status == 204, "Approval deletion failed"
             except Exception as exc:
                 cleanup_errors.append(f"Deleting Approval failed: {exc}")
@@ -173,28 +173,28 @@ class TestPRAApproval:
             try:
                 # Attempt to delete resources created during the test
                 if app_segment_id:
-                    delete_status = client.app_segments.delete_segment(app_segment_id)
+                    delete_status = client.zpa.app_segments.delete_segment(app_segment_id)
                     assert delete_status == 204, "Application Segment deletion failed"
             except Exception as exc:
                 cleanup_errors.append(f"Deleting Application Segment failed: {exc}")
 
             try:
                 if segment_group_id:
-                    delete_status = client.segment_groups.delete_group(segment_group_id)
+                    delete_status = client.zpa.segment_groups.delete_group(segment_group_id)
                     assert delete_status == 204, "Segment Group deletion failed"
             except Exception as exc:
                 cleanup_errors.append(f"Deleting Segment Group failed: {exc}")
 
             try:
                 if server_group_id:
-                    delete_status = client.server_groups.delete_group(server_group_id)
+                    delete_status = client.zpa.server_groups.delete_group(server_group_id)
                     assert delete_status == 204, "Server Group deletion failed"
             except Exception as exc:
                 cleanup_errors.append(f"Deleting Server Group failed: {exc}")
 
             try:
                 if app_connector_group_id:
-                    delete_status = client.connectors.delete_connector_group(app_connector_group_id)
+                    delete_status = client.zpa.app_connector_groups.delete_connector_group(app_connector_group_id)
                     assert delete_status == 204, "App Connector Group deletion failed"
             except Exception as exc:
                 cleanup_errors.append(f"Deleting App Connector Group failed: {exc}")

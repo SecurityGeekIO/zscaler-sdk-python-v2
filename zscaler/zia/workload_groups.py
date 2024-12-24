@@ -79,7 +79,7 @@ class WorkloadGroupsAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(WorkloadGroups(
                     self.form_response_body(item))
                 )

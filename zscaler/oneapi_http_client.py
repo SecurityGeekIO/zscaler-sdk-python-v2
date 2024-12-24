@@ -6,6 +6,7 @@ import time
 from zscaler.errors.http_error import HTTPError
 from zscaler.errors.zscaler_api_error import ZscalerAPIError
 from zscaler.exceptions import HTTPException, ZscalerAPIException
+from http import HTTPStatus
 from zscaler.logger import dump_request, dump_response
 from zscaler.zcc.legacy import LegacyZCCClientHelper
 from zscaler.zpa.legacy import LegacyZPAClientHelper
@@ -77,15 +78,6 @@ class HTTPClient:
             self._session.close()
 
     def send_request(self, request):
-        """
-        This method fires HTTP requests.
-
-        Arguments:
-            request {dict} -- This dictionary contains all information needed for the request.
-
-        Returns:
-            Tuple(requests.Response, str | Exception) -- A tuple containing the response object and the text or an error.
-        """
         try:
             logger.debug(f"Request: {request}")
 
@@ -100,14 +92,11 @@ class HTTPClient:
                 "url": request["url"],
                 "headers": request.get("headers", {}),
                 "timeout": self._timeout,
-                "proxies": {
-                    "http": self._proxy,
-                    "https": self._proxy
-                } if self._proxy else None,
+                "proxies": {"http": self._proxy, "https": self._proxy} if self._proxy else None,
                 "verify": self._ssl_context,
             }
 
-            # Handle JSON or form payload
+            # Handle payload
             if request.get("json"):
                 params["json"] = request["json"]
             elif request.get("data"):
@@ -121,23 +110,21 @@ class HTTPClient:
             if self.use_zpa_legacy_client:
                 parsed_url = urlparse(request["url"])
                 path = parsed_url.path
-
                 logger.debug(f"Sending request via ZPA legacy client. Path: {path}")
                 response, legacy_request = self.zpa_legacy_client.send(
                     method=request["method"],
                     path=path,
                     params=request["params"],
-                    json=request.get("json", None) or request.get("data", None),
+                    json=request.get("json") or request.get("data"),
                 )
 
-                logger.debug(
-                    f"ZPA Legacy Client Response: {response}, Legacy Request: {legacy_request}"
-                )
+                logger.debug(f"ZPA Legacy Client Response: {response}, Legacy Request: {legacy_request}")
 
-                if not response:
-                    raise ValueError(
-                        f"ZPA Legacy client returned None for request {legacy_request}"
-                    )
+                if response is None:
+                    # No response from legacy client: return (None, error)
+                    error_msg = f"ZPA Legacy client returned None for request {legacy_request}"
+                    logger.error(error_msg)
+                    return (None, ValueError(error_msg))
 
                 params.update({
                     "url": legacy_request["url"],
@@ -148,24 +135,21 @@ class HTTPClient:
             elif self.use_zcc_legacy_client:
                 parsed_url = urlparse(request["url"])
                 path = parsed_url.path
-
                 logger.debug(f"Sending request via ZCC legacy client. Path: {path}")
-                
-                response, legacy_request  = self.zcc_legacy_client.send(
+
+                response, legacy_request = self.zcc_legacy_client.send(
                     method=request["method"],
                     path=path,
                     params=request["params"],
-                    json=request.get("json", None) or request.get("data", None),
+                    json=request.get("json") or request.get("data"),
                 )
 
-                logger.debug(
-                    f"ZCC Legacy Client Response: {response}, Legacy Request: {legacy_request}"
-                )
+                logger.debug(f"ZCC Legacy Client Response: {response}, Legacy Request: {legacy_request}")
 
-                if not response:
-                    raise ValueError(
-                        f"ZCC Legacy client returned None for request {legacy_request}"
-                    )
+                if response is None:
+                    error_msg = f"ZCC Legacy client returned None for request {legacy_request}"
+                    logger.error(error_msg)
+                    return (None, ValueError(error_msg))
 
                 params.update({
                     "url": legacy_request["url"],
@@ -176,24 +160,21 @@ class HTTPClient:
             elif self.use_zia_legacy_client:
                 parsed_url = urlparse(request["url"])
                 path = parsed_url.path
-
                 logger.debug(f"Sending request via ZIA legacy client. Path: {path}")
-                
-                response, legacy_request  = self.zia_legacy_client.send(
+
+                response, legacy_request = self.zia_legacy_client.send(
                     method=request["method"],
                     path=path,
                     params=request["params"],
-                    json=request.get("json", None) or request.get("data", None),
+                    json=request.get("json") or request.get("data"),
                 )
 
-                logger.debug(
-                    f"ZIA Legacy Client Response: {response}, Legacy Request: {legacy_request}"
-                )
+                logger.debug(f"ZIA Legacy Client Response: {response}, Legacy Request: {legacy_request}")
 
-                if not response:
-                    raise ValueError(
-                        f"ZIA Legacy client returned None for request {legacy_request}"
-                    )
+                if response is None:
+                    error_msg = f"ZIA Legacy client returned None for request {legacy_request}"
+                    logger.error(error_msg)
+                    return (None, ValueError(error_msg))
 
                 params.update({
                     "url": legacy_request["url"],
@@ -209,8 +190,11 @@ class HTTPClient:
                     logger.debug("Request without re-usable session.")
                     response = requests.request(**params)
 
-            if not response or not hasattr(response, "status_code"):
-                raise ValueError(f"Request execution failed. Response is None.")
+            if response is None or not hasattr(response, "status_code"):
+                # If we truly got no response (should be rare unless network error)
+                error_msg = "Request execution failed. Response is None."
+                logger.error(error_msg)
+                return (None, ValueError(error_msg))
 
             dump_request(
                 logger,
@@ -225,9 +209,7 @@ class HTTPClient:
 
             start_time = time.time()
 
-            logger.info(
-                f"Received response with status code: {response.status_code}"
-            )
+            logger.info(f"Received response with status code: {response.status_code}")
 
             dump_response(
                 logger,
@@ -238,13 +220,16 @@ class HTTPClient:
                 request["uuid"],
                 start_time,
             )
+            # Return (response, None) regardless of status code (including 429)
             return (response, None)
 
         except (requests.RequestException, requests.Timeout) as error:
+            # Network-level errors
             logger.error(f"Request to {request['url']} failed: {error}")
             return (None, error)
 
         except Exception as error:
+            # Unexpected errors
             logger.error(f"Unexpected error during request execution: {error}")
             return (None, error)
 

@@ -68,7 +68,7 @@ class CBIZPAProfileAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(ZPACBIProfile(
                     self.form_response_body(item))
                 )
@@ -111,7 +111,7 @@ class CBIZPAProfileAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(ZPACBIProfile(
                     self.form_response_body(item))
                 )

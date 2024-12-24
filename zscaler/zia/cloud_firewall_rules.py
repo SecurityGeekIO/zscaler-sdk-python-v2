@@ -107,7 +107,7 @@ class FirewallPolicyAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(FirewallRule(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
@@ -454,7 +454,7 @@ class FirewallPolicyAPI(APIClient):
         # Parse the response into IPDestinationGroups instances
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(IPDestinationGroups(
                     self.form_response_body(item))
                 )
@@ -742,7 +742,7 @@ class FirewallPolicyAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(IPSourceGroup(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
@@ -996,7 +996,7 @@ class FirewallPolicyAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(NetworkApplicationGroups(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
@@ -1266,7 +1266,7 @@ class FirewallPolicyAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(NetworkApplications(
                     self.form_response_body(item))
                 )
@@ -1366,7 +1366,7 @@ class FirewallPolicyAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(NetworkServiceGroups(
                     self.form_response_body(item))
                 )
@@ -1618,7 +1618,7 @@ class FirewallPolicyAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(NetworkServices(
                     self.form_response_body(item))
                 )
@@ -1973,7 +1973,7 @@ class FirewallPolicyAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(TimeWindows(
                     self.form_response_body(item))
                 )

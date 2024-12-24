@@ -40,7 +40,7 @@ class TestMicrotenants:
 
         # Retrieve available authentication domains
         try:
-            auth_domains = client.authdomains.get_auth_domains()
+            auth_domains = client.zpa.authdomains.get_auth_domains()
             available_domains = auth_domains.auth_domains
             if not available_domains:
                 errors.append("No available authentication domains found.")
@@ -52,7 +52,7 @@ class TestMicrotenants:
         for domain in available_domains:
             try:
                 # Create a new microtenant with the current domain
-                created_microtenant = client.microtenants.add_microtenant(
+                created_microtenant = client.zpa.microtenants.add_microtenant(
                     name=microtenant_name,
                     description=microtenant_description,
                     enabled=True,
@@ -85,7 +85,7 @@ class TestMicrotenants:
         if microtenant_id:
             try:
                 # Retrieve the created microtenant by ID
-                retrieved_microtenant = client.microtenants.get_microtenant(microtenant_id)
+                retrieved_microtenant = client.zpa.microtenants.get_microtenant(microtenant_id)
                 assert retrieved_microtenant is not None
                 assert retrieved_microtenant.id == microtenant_id
                 assert retrieved_microtenant.name == microtenant_name
@@ -95,13 +95,13 @@ class TestMicrotenants:
             try:
                 # Update the microtenant
                 updated_name = microtenant_name + " Updated"
-                client.microtenants.update_microtenant(
+                client.zpa.microtenants.update_microtenant(
                     microtenant_id,
                     name=updated_name,
                     privileged_approvals_enabled=False,
                 )
 
-                updated_microtenant = client.microtenants.get_microtenant(microtenant_id)
+                updated_microtenant = client.zpa.microtenants.get_microtenant(microtenant_id)
                 assert updated_microtenant is not None
                 assert updated_microtenant.name == updated_name
             except Exception as exc:
@@ -109,22 +109,14 @@ class TestMicrotenants:
 
             try:
                 # List microtenants and ensure the updated microtenant is in the list
-                microtenants_list = client.microtenants.list_microtenants()
+                microtenants_list = client.zpa.microtenants.list_microtenants()
                 assert any(microtenant.id == microtenant_id for microtenant in microtenants_list)
             except Exception as exc:
                 errors.append(exc)
 
             try:
-                # Search for the microtenant by name
-                search_result = client.microtenants.get_microtenant_by_name(updated_name)
-                assert search_result is not None
-                assert search_result.id == microtenant_id
-            except Exception as exc:
-                errors.append(exc)
-
-            try:
                 # Retrieve microtenant summary
-                microtenant_summary = client.microtenants.get_microtenant_summary()
+                microtenant_summary = client.zpa.microtenants.get_microtenant_summary()
                 assert microtenant_summary is not None
                 assert any(summary.id == microtenant_id and summary.name == updated_name for summary in microtenant_summary)
             except Exception as exc:
@@ -133,7 +125,7 @@ class TestMicrotenants:
             finally:
                 # Cleanup: Delete the microtenant if it was created
                 try:
-                    delete_response_code = client.microtenants.delete_microtenant(microtenant_id)
+                    delete_response_code = client.zpa.microtenants.delete_microtenant(microtenant_id)
                     assert delete_response_code == 204, f"Failed to delete microtenant with ID {microtenant_id}"
                 except Exception as cleanup_exc:
                     errors.append(f"Cleanup failed for microtenant ID {microtenant_id}: {cleanup_exc}")

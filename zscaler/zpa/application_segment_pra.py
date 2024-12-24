@@ -70,18 +70,20 @@ class AppSegmentsPRAAPI(APIClient):
             query_params["microtenantId"] = microtenant_id
 
         # Prepare request
-        request, error = self._request_executor.create_request(http_method, api_url, body={}, headers={}, params=query_params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body={}, headers={}, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(ApplicationSegmentPRA(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
@@ -112,12 +114,14 @@ class AppSegmentsPRAAPI(APIClient):
             query_params["microtenantId"] = microtenant_id
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, ApplicationSegmentPRA)
+        response, error = self._request_executor\
+            .execute(request, ApplicationSegmentPRA)
         if error:
             return (None, response, error)
 
@@ -211,27 +215,38 @@ class AppSegmentsPRAAPI(APIClient):
         if common_apps_dto:
             body["commonAppsDto"] = common_apps_dto
 
-        if kwargs.get("tcp_port_ranges"):
-            body["tcpPortRange"] = [{"from": ports[0], "to": ports[1]} for ports in kwargs.pop("tcp_port_ranges")]
+        # Process TCP and UDP port attributes
+        if "tcp_port_ranges" in body:
+            # Use format 1 (tcpPortRanges)
+            body["tcpPortRanges"] = body.pop("tcp_port_ranges")
+        elif "tcp_port_range" in body:
+            # Use format 2 (tcpPortRange)
+            body["tcpPortRange"] = [{"from": pr["from"], "to": pr["to"]} for pr in body.pop("tcp_port_range")]
 
-        if kwargs.get("udp_port_ranges"):
-            body["udpPortRange"] = [{"from": ports[0], "to": ports[1]} for ports in kwargs.pop("udp_port_ranges")]
+        if "udp_port_ranges" in body:
+            # Use format 1 (udpPortRanges)
+            body["udpPortRanges"] = body.pop("udp_port_ranges")
+        elif "udp_port_range" in body:
+            # Use format 2 (udpPortRange)
+            body["udpPortRange"] = [{"from": pr["from"], "to": pr["to"]} for pr in body.pop("udp_port_range")]
 
         # Apply add_id_groups to reformat params based on self.reformat_params
         add_id_groups(self.reformat_params, kwargs, body)
 
-        # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body=body, params=params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body=body, params=params)
         if error:
             return (None, None, error)
 
-        # Execute the request
-        response, error = self._request_executor.execute(request, ApplicationSegmentPRA)
+        response, error = self._request_executor\
+            .execute(request, ApplicationSegmentPRA)
         if error:
             return (None, response, error)
 
         try:
-            result = ApplicationSegmentPRA(self.form_response_body(response.get_body()))
+            result = ApplicationSegmentPRA(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -273,32 +288,53 @@ class AppSegmentsPRAAPI(APIClient):
         if common_apps_dto:
             body["commonAppsDto"] = common_apps_dto
 
-        if kwargs.get("tcp_port_ranges"):
-            body["tcpPortRange"] = [{"from": ports[0], "to": ports[1]} for ports in kwargs.pop("tcp_port_ranges")]
+        # Process TCP and UDP port attributes
+        if "tcp_port_ranges" in body:
+            # Use format 1 (tcpPortRanges)
+            body["tcpPortRanges"] = body.pop("tcp_port_ranges")
+        elif "tcp_port_range" in body:
+            # Use format 2 (tcpPortRange)
+            body["tcpPortRange"] = [{"from": pr["from"], "to": pr["to"]} for pr in body.pop("tcp_port_range")]
 
-        if kwargs.get("udp_port_ranges"):
-            body["udpPortRange"] = [{"from": ports[0], "to": ports[1]} for ports in kwargs.pop("udp_port_ranges")]
+        if "udp_port_ranges" in body:
+            # Use format 1 (udpPortRanges)
+            body["udpPortRanges"] = body.pop("udp_port_ranges")
+        elif "udp_port_range" in body:
+            # Use format 2 (udpPortRange)
+            body["udpPortRange"] = [{"from": pr["from"], "to": pr["to"]} for pr in body.pop("udp_port_range")]
 
         # Apply add_id_groups to reformat params based on self.reformat_params
         add_id_groups(self.reformat_params, kwargs, body)
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body, {}, params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, {}, params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, ApplicationSegmentPRA)
+        response, error = self._request_executor\
+            .execute(request, ApplicationSegmentPRA)
         if error:
             return (None, response, error)
 
+        if response is None:
+            return (ApplicationSegmentPRA({"id": segment_id}), None, None)
+        
         try:
-            result = ApplicationSegmentPRA(self.form_response_body(response.get_body()))
+            result = ApplicationSegmentPRA(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def delete_segment_pra(self, segment_id: str, force_delete: bool = False, microtenant_id: str = None) -> tuple:
+    def delete_segment_pra(
+        self,
+        segment_id: str, 
+        force_delete: bool = False, 
+        microtenant_id: str = None
+    ) -> tuple:
         """
         Delete an PRA application segment.
 
@@ -337,12 +373,14 @@ class AppSegmentsPRAAPI(APIClient):
             params["forceDelete"] = "true"
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, params=params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 

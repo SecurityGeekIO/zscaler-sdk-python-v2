@@ -74,7 +74,7 @@ class AppServersAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(AppServers(
                     self.form_response_body(item))
                 )

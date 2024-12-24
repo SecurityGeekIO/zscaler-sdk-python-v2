@@ -81,7 +81,7 @@ class ServerGroupsAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(ServerGroup(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
@@ -226,12 +226,14 @@ class ServerGroupsAPI(APIClient):
         add_id_groups(self.reformat_params, kwargs, body)
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body, {}, params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, {}, params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, ServerGroup)
+        response, error = self._request_executor\
+            .execute(request, ServerGroup)
         if error:
             return (None, response, error)
 
@@ -242,7 +244,9 @@ class ServerGroupsAPI(APIClient):
 
         # Parse the response into a ServerGroup instance
         try:
-            result = ServerGroup(self.form_response_body(response.get_body()))
+            result = ServerGroup(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
 

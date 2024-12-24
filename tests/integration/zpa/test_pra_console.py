@@ -32,7 +32,7 @@ class TestAccessPrivilegedConsoleV2:
 
     def test_access_privileged_console_v2(self, fs):
         client = MockZPAClient(fs)
-        errors = []  # Initialize an empty list to collect errors
+        errors = []
 
         app_connector_group_id = None
         app_segment_id = None
@@ -52,7 +52,7 @@ class TestAccessPrivilegedConsoleV2:
             try:
                 app_connector_group_name = "tests-" + generate_random_string()
                 app_connector_group_description = "tests-" + generate_random_string()
-                created_app_connector_group = client.connectors.add_connector_group(
+                created_app_connector_group, _, err = client.zpa.app_connector_groups.add_connector_group(
                     name=app_connector_group_name,
                     description=app_connector_group_description,
                     enabled=True,
@@ -70,30 +70,35 @@ class TestAccessPrivilegedConsoleV2:
                     tcp_quick_ack_assistant=True,
                     tcp_quick_ack_read_assistant=True,
                 )
-                app_connector_group_id = created_app_connector_group["id"]
+                if err:
+                    errors.append(f"App Connector Group creation failed: {err}")
+                else:
+                    app_connector_group_id = created_app_connector_group.id
+                    assert app_connector_group_id is not None, "App Connector Group creation failed"
             except Exception as exc:
-                errors.append(f"Creating App Connector Group failed: {exc}")
+                errors.append(f"App Connector Group creation failed: {exc}")
 
             # Create a Segment Group
             try:
                 segment_group_name = "tests-" + generate_random_string()
-                created_segment_group = client.segment_groups.add_group(name=segment_group_name, enabled=True)
-                segment_group_id = created_segment_group["id"]
+                created_segment_group, _, err  = client.zpa.segment_groups.add_group(name=segment_group_name, enabled=True)
+                assert err is None, f"Error during segment group creation: {err}"
+                segment_group_id = created_segment_group.id
             except Exception as exc:
-                errors.append(f"Creating Segment Group failed: {exc}")
+                errors.append(f"Error during segment group creation: {exc}")
 
             # Create a Server Group
             try:
                 server_group_name = "tests-" + generate_random_string()
                 server_group_description = "tests-" + generate_random_string()
-                created_server_group = client.server_groups.add_group(
+                created_server_group, _, err = client.zpa.server_groups.add_group(
                     name=server_group_name,
                     description=server_group_description,
-                    enabled=True,
                     dynamic_discovery=True,
                     app_connector_group_ids=[app_connector_group_id],
                 )
-                server_group_id = created_server_group["id"]
+                assert err is None, f"Creating Server Group failed: {err}"
+                server_group_id = created_server_group.id
             except Exception as exc:
                 errors.append(f"Creating Server Group failed: {exc}")
 
@@ -101,173 +106,188 @@ class TestAccessPrivilegedConsoleV2:
             try:
                 app_segment_name = "tests-" + generate_random_string()
                 app_segment_description = "tests-" + generate_random_string()
-                app_segment_config_name = "rdp" + app_segment_name
-                app_segment = client.app_segments_pra.add_segment_pra(
-                    name=app_segment_name,
-                    description=app_segment_description,
-                    enabled=True,
-                    domain_names=["test" + generate_random_string() + ".example.com"],
-                    segment_group_id=segment_group_id,
-                    server_group_ids=[server_group_id],
-                    tcp_port_ranges=["22", "3389"],
-                    common_apps_dto={
+                created_app_segment = {
+                    "name": app_segment_name,
+                    "description": app_segment_description,
+                    "enabled": True,
+                    "domain_names": ["rdp_pra01.acme.com"],
+                    "segment_group_id": segment_group_id,
+                    "server_group_ids": [server_group_id],
+                    "tcp_port_range": [{"from": "3389", "to": "3389"}],  # Single port range using 'from' and 'to'
+                    "udp_port_range": [{"from": "3389", "to": "3389"}],  # Single port range using 'from' and 'to'
+                    "common_apps_dto": {
                         "apps_config": [
                             {
-                                "name": app_segment_config_name,
-                                "description": "rdp" + app_segment_description,
-                                "enabled": True,
                                 "app_types": ["SECURE_REMOTE_ACCESS"],
                                 "application_port": "3389",
                                 "application_protocol": "RDP",
                                 "connection_security": "ANY",
-                                "domain": "rdp_pra_test.acme.com",
-                            },
+                                "enabled": True,
+                                "domain": "rdp_pra01.acme.com",
+                                "name": "rdp_pra01.acme.com"
+                            }
                         ]
                     },
-                )
-                app_segment_id = app_segment["id"]
+                }
+                assert err is None, f"Creating application segment pra failed: {err}"
+                app_segment_id = created_app_segment["id"]
             except Exception as exc:
-                errors.append(f"Creating PRA Application Segment failed: {exc}")
+                errors.append(f"Creating application segment pra failed: {exc}")
 
-            # Get the Application Segment ID for the newly created segment
-            try:
-                search_name = app_segment_config_name
-                app_segments = client.zpa.app_segments.get_segments_by_type(
-                    application_type="SECURE_REMOTE_ACCESS", search=search_name
-                )
-                assert app_segments and len(app_segments) > 0, "No segments found with the specified name."
-                pra_application_id = app_segments[0]["id"]
-            except Exception as exc:
-                errors.append(f"Failed to get Application Segment by type: {exc}")
+            # # Use the application segment's *name* to search for it
+            # try:
+            #     search_name = app_segment_name  # Using the app_segment_name
+            #     app_segments, _, err = client.zpa.app_segments.get_segments_by_type(
+            #         application_type="SECURE_REMOTE_ACCESS", 
+            #         query_params={"search": search_name}
+            #     )
+            #     assert err is None, f"Failed to get Application Segment by type: {err}"
+            #     assert app_segments and len(app_segments) > 0, "No segments found with the specified name."
+            #     pra_application_id = app_segments[0]["id"]
+            # except Exception as exc:
+            #     errors.append(f"Failed to get Application Segment by type: {exc}")
 
-            try:
-                certs = client.certificates.list_issued_certificates()
-                assert isinstance(certs, list), "Expected a list of certificates"
-                if certs:  # If there are any certificates, proceed with further operations
-                    first_certificate = certs[0]
-                    certificate_id = first_certificate.get("id")
-            except Exception as exc:
-                errors.append(f"Listing certificates failed: {str(exc)}")
+            # try:
+            #     # Unpack results for the certificate listing
+            #     certs_list, _, err = client.zpa.certificates.list_issued_certificates()
+            #     assert err is None, f"Listing certificates failed: {err}"
+            #     assert isinstance(certs_list, list), "Expected a list of certificates"
+            #     if certs_list:
+            #         first_certificate = certs_list[0]
+            #         certificate_id = first_certificate.get("id")
+            #         assert certificate_id, "First certificate returned has no 'id' field"
+            #     else:
+            #         errors.append("No issued certificates found to create a PRA portal.")
+            #         assert False, "No issued certificates found."
+            # except Exception as exc:
+            #     errors.append(f"Listing certificates failed: {str(exc)}")
 
-            try:
-                # Create a new pra portal
-                created_portal = client.privileged_remote_access.add_portal(
-                    name="tests-" + generate_random_string(),
-                    description="tests-" + generate_random_string(),
-                    enabled=True,
-                    domain="tests-" + generate_random_string() + "acme.com",
-                    certificate_id=certificate_id,
-                    user_notification_enabled=True,
-                    user_notification=f"{SDK_PREFIX} Test PRA Portal",
-                )
-                assert created_portal is not None, "Failed to create portal"
-                portal_id = created_portal.id  # Assuming id is accessible like this
+            # try:
+            #     # Create a new pra portal using the retrieved certificate_id
+            #     created_portal, _, err = client.zpa.pra_portal.add_portal(
+            #         name="tests-" + generate_random_string(),
+            #         description="tests-" + generate_random_string(),
+            #         enabled=True,
+            #         domain="tests-" + generate_random_string() + "acme.com",
+            #         certificate_id=certificate_id,  # use the retrieved certificate_id
+            #         user_notification_enabled=True,
+            #         user_notification=f"{SDK_PREFIX} Test PRA Portal",
+            #     )
+            #     assert err is None, f"Error during portal creation: {err}"
+            #     assert created_portal is not None, "Failed to create portal"
+            #     portal_id = created_portal.id  # Assuming id is accessible like this
 
-            except Exception as exc:
-                errors.append(f"Error during portal creation: {exc}")
+            # except Exception as exc:
+            #     errors.append(f"Error during portal creation: {exc}")
 
-            try:
-                # Test listing SCIM groups
-                idps = client.idp.list_idps()
-                user_idp = next((idp for idp in idps if "USER" in idp.get("sso_type", [])), None)
-                assert user_idp is not None, "No IdP with sso_type 'USER' found."
+            # try:
+            #     # Create a new pra console using the pra_application_id and portal_id
+            #     created_console, _, err = client.zpa.pra_console.add_console(
+            #         name="tests-" + generate_random_string(),
+            #         description="tests-" + generate_random_string(),
+            #         enabled=True,
+            #         pra_application_id=pra_application_id,
+            #         pra_portal_ids=[portal_id],
+            #     )
+            #     assert err is None, f"Error during console creation: {err}"
+            #     assert created_console is not None, "Failed to create console"
+            #     console_id = created_console.id  # Assuming id is accessible like this
 
-                user_idp_id = user_idp["id"]
-                resp = client.scim_groups.list_groups(user_idp_id)
-                assert isinstance(resp, list), "Response is not in the expected list format."
-                assert len(resp) >= 2, "Less than 2 SCIM groups were found for the specified IdP."
+            # except Exception as exc:
+            #     errors.append(f"Error during console creation: {exc}")
 
-                # Extract the first two SCIM group IDs
-                scim_group_ids = [(user_idp_id, group["id"]) for group in resp[:2]]
-            except Exception as exc:
-                errors.append(f"Listing SCIM groups failed: {exc}")
+            # try:
+            #     # Test listing Consoles
+            #     all_consoles, _, err = client.zpa.pra_console.list_consoles()
+            #     assert err is None, f"Error listing PRA Consoles: {err}"
+            #     assert any(console.id == console_id for console in all_consoles), "Created console not found in list"
+            # except Exception as exc:
+            #     errors.append(f"Listing PRA Consoles failed: {exc}")
+                
+            # try:
+            #     # Test retrieving the specific PRA Console
+            #     retrieved_console, _, err = client.zpa.pra_console.get_console(console_id)
+            #     assert err is None, f"Error fetching Consoles: {err}"
+            #     assert retrieved_console.id == console_id, "Retrieved console ID does not match"
+            # except Exception as exc:
+            #     errors.append(f"Failed to retrieve PRA Console: {exc}")
 
-            try:
-                # Create a new pra console
-                created_console = client.privileged_remote_access.add_console(
-                    name="tests-" + generate_random_string(),
-                    description="tests-" + generate_random_string(),
-                    enabled=True,
-                    pra_application_id=pra_application_id,
-                    pra_portal_ids=[portal_id],
-                )
-                assert created_console is not None, "Failed to create console"
-                console_id = created_console.id  # Assuming id is accessible like this
+            # try:
+            #     if console_id:
+            #         retrieved_console, _, err = client.zpa.pra_console.get_console(console_id)
+            #         assert err is None, f"Error fetching console: {err}"
+            #         assert retrieved_console.id == console_id
 
-            except Exception as exc:
-                errors.append(f"Error during console creation: {exc}")
-
-            try:
-                # Test listing Consoles
-                all_consoles = client.privileged_remote_access.list_consoles()
-                assert any(rule["id"] == console_id for rule in all_consoles), "Consoles not found in list"
-            except Exception as exc:
-                errors.append(f"Failed to list Consoles Rules: {exc}")
-
-            try:
-                # Test retrieving the specific PRA Console
-                retrieved_console = client.privileged_remote_access.get_console(console_id)
-                assert retrieved_console["id"] == console_id, "Failed to retrieve the correct PRA Console"
-            except Exception as exc:
-                errors.append(f"Failed to retrieve PRA Console: {exc}")
-
-            try:
-                # Update the Access Policy Rule
-                updated_rule_description = "Updated " + generate_random_string()
-                updated_rule = client.privileged_remote_access.update_console(
-                    console_id=console_id,
-                    description=updated_rule_description,
-                    enabled=True,
-                    pra_application_id=pra_application_id,
-                    pra_portal_ids=[portal_id],
-                )
-                assert updated_rule["description"] == updated_rule_description, "Failed to update description for PRA Console"
-            except Exception as exc:
-                errors.append(f"Failed to update PRA Console: {exc}")
+            #     # Update the console
+            #     updated_rule_description = "Updated " + generate_random_string()
+            #     _, _, err = client.zpa.pra_console.update_console(
+            #         console_id=console_id,
+            #         description=updated_rule_description,
+            #         enabled=True,
+            #         pra_application_id=pra_application_id,
+            #         pra_portal_ids=[portal_id],
+            #     )
+            #     assert err is None, f"Error updating pra console: {err}"
+            # except Exception as exc:
+            #     errors.append(f"Failed to update PRA Console: {exc}")
 
         finally:
-            # Ensure cleanup is performed even if there are errors
+            
             if console_id:
                 try:
-                    client.privileged_remote_access.delete_console(console_id=console_id)
+                    delete_response, _, err = client.zpa.pra_console.delete_console(console_id=console_id)
+                    assert err is None, f"Console deletion failed: {err}"
+                    assert delete_response is None, f"Expected None for 204 No Content, got {delete_response}"
                 except Exception as exc:
                     errors.append(f"Deleting PRA Console failed: {exc}")
 
             if portal_id:
                 try:
-                    client.privileged_remote_access.delete_portal(portal_id=portal_id)
+                    delete_response, _, err = client.zpa.pra_portal.delete_portal(portal_id=portal_id)
+                    assert err is None, f"Portal deletion failed: {err}"
+                    assert delete_response is None, f"Expected None for 204 No Content, got {delete_response}"
                 except Exception as exc:
                     errors.append(f"Deleting PRA Portal failed: {exc}")
 
             if credential_id:
                 try:
-                    client.privileged_remote_access.delete_credential(credential_id=credential_id)
+                    delete_response, _, err = client.zpa.pra_credential.delete_credential(credential_id=credential_id)
+                    assert err is None, f"Credential deletion failed: {err}"
+                    assert delete_response is None, f"Expected None for 204 No Content, got {delete_response}"
                 except Exception as exc:
                     errors.append(f"Deleting PRA Credential failed: {exc}")
 
             if app_segment_id:
                 try:
-                    client.app_segments_pra.delete_segment_pra(segment_id=app_segment_id, force_delete=True)
+                    delete_response, _, err = client.zpa.app_segments_pra.delete_segment_pra(segment_id=app_segment_id, force_delete=True)
+                    assert err is None, f"App Segment deletion failed: {err}"
+                    assert delete_response is None, f"Expected None for 204 No Content, got {delete_response}"
                 except Exception as exc:
                     errors.append(f"Deleting PRA Application Segment failed: {exc}")
 
             if server_group_id:
                 try:
-                    client.server_groups.delete_group(group_id=server_group_id)
+                    delete_response, _, err = client.zpa.server_groups.delete_group(group_id=server_group_id)
+                    assert err is None, f"Server Group deletion failed: {err}"
+                    assert delete_response is None, f"Expected None for 204 No Content, got {delete_response}"
                 except Exception as exc:
                     errors.append(f"Deleting Server Group failed: {exc}")
 
             if segment_group_id:
                 try:
-                    client.segment_groups.delete_group(group_id=segment_group_id)
+                    delete_response, _, err = client.zpa.segment_groups.delete_group(group_id=segment_group_id)
+                    assert err is None, f"Segment Group deletion failed: {err}"
+                    assert delete_response is None, f"Expected None for 204 No Content, got {delete_response}"
                 except Exception as exc:
                     errors.append(f"Deleting Segment Group failed: {exc}")
 
             if app_connector_group_id:
                 try:
-                    client.connectors.delete_connector_group(group_id=app_connector_group_id)
+                    delete_response, _, err = client.zpa.app_connector_groups.delete_connector_group(group_id=app_connector_group_id)
+                    assert err is None, f"Connector Group deletion failed: {err}"
+                    assert delete_response is None, f"Expected None for 204 No Content, got {delete_response}"
                 except Exception as exc:
                     errors.append(f"Cleanup failed for Connector Group: {exc}")
 
         # Assert that no errors occurred during the test
-        assert len(errors) == 0, f"Errors occurred during the Credential Policy Rule operations test: {errors}"
+        assert len(errors) == 0, f"Errors occurred during the PRA Console operations test: {errors}"

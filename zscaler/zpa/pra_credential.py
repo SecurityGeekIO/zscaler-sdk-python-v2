@@ -70,7 +70,7 @@ class PRACredentialAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(PrivilegedRemoteAccessCredential(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
@@ -239,12 +239,14 @@ class PRACredentialAPI(APIClient):
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body, {}, params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, {}, params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, PrivilegedRemoteAccessCredential)
+        response, error = self._request_executor\
+            .execute(request, PrivilegedRemoteAccessCredential)
         if error:
             return (None, response, error)
 
@@ -255,7 +257,9 @@ class PRACredentialAPI(APIClient):
 
         # Parse the response into an AppConnectorGroup instance
         try:
-            result = PrivilegedRemoteAccessCredential(self.form_response_body(response.get_body()))
+            result = PrivilegedRemoteAccessCredential(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -290,7 +294,7 @@ class PRACredentialAPI(APIClient):
             return (None, response, error)
         return (None, response, None)
 
-    def credential_move(self, credential_id: str, move_data=None, **kwargs) -> tuple:
+    def credential_move(self, credential_id: str, **kwargs) -> tuple:
         """
         Moves privileged remote access credentials between parent tenant and microtenants.
 
@@ -303,51 +307,29 @@ class PRACredentialAPI(APIClient):
         Returns:
             dict: Empty dictionary if the move operation is successful.
         """
-        http_method = "post".upper()
+        http_method = "POST"
 
-        # Handle the microtenantId logic based on API definition
+        # Extract required parameters from kwargs
         microtenant_id = kwargs.pop("microtenant_id", None)
-        target_microtenant_id = None
-
-        # Ensure targetMicrotenantId is present
-        target_microtenant_id = move_data.get("targetMicrotenantId") or kwargs.get("target_microtenant_id")
+        target_microtenant_id = kwargs.get("target_microtenant_id")
         if target_microtenant_id is None:
             raise ValueError("target_microtenant_id must be provided.")
 
-        # Build the URL with both microtenantId and targetMicrotenantId as query parameters
         api_url = format_url(
             f"""
             {self._zpa_base_endpoint}
             /credential/{credential_id}/move?microtenantId={microtenant_id}&targetMicrotenantId={target_microtenant_id}
-        """
+            """
         )
 
-        # Ensure move_data is a dictionary or an object with an as_dict method
-        if isinstance(move_data, dict):
-            move_body = move_data
-        elif move_data:
-            move_body = move_data.as_dict()
-        else:
-            move_body = {}
-
-        # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body=move_body)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url)
         if error:
             return (None, None, error)
 
-        # Execute the request
-        response, error = self._request_executor.execute(request, PrivilegedRemoteAccessCredential)
+        response, error = self._request_executor\
+            .execute(request, str)
         if error:
             return (None, response, error)
 
-        # Handle the case where no response body is returned (204 No Content)
-        if response is None or response.get_body() is None:
-            return ({}, response, None)
-
-        # Parse the response if available
-        try:
-            result = PrivilegedRemoteAccessCredential(self.form_response_body(response.get_body()))
-        except Exception as error:
-            return (None, response, error)
-
-        return (result, response, None)
+        return (None, None, None)

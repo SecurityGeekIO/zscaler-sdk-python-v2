@@ -16,13 +16,13 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from zscaler.api_client import APIClient
 from zscaler.request_executor import RequestExecutor
-from zscaler.zpa.models.customer_version_profile import CustomerVersionProfile
 from zscaler.utils import format_url
+import logging
+logger = logging.getLogger(__name__)
 
-
-class CustomerVersionProfileAPI(APIClient):
+class ApplicationSegmentByTypeAPI(APIClient):
     """
-    A Client object for the Customer Version Profile resource.
+    A client object for the Application Segment By Type resource.
     """
 
     def __init__(self, request_executor, config):
@@ -31,59 +31,71 @@ class CustomerVersionProfileAPI(APIClient):
         customer_id = config["client"].get("customerId")
         self._zpa_base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
-    def list_version_profiles(self, query_params=None) -> tuple:
+    def get_segments_by_type(
+        self,
+        application_type: str,
+        expand_all: bool = False,
+        query_params=None, **kwargs
+    ) -> tuple:
         """
-        Returns a list of all visible version profiles.
+        Retrieve all configured application segments of a specified type, optionally expanding all related data.
 
         Args:
-            **kwargs: Optional keyword args.
+            application_type (str): Type of application segment to retrieve.
+            Must be one of "BROWSER_ACCESS", "INSPECT", "SECURE_REMOTE_ACCESS".
+            expand_all (bool, optional): Whether to expand all related data. Defaults to False.
 
-        Args:
+        Keyword Args:
             query_params {dict}: Map of query parameters for the request.
                 [query_params.pagesize] {int}: Page size for pagination.
                 [query_params.search] {str}: Search string for filtering results.
+                [query_params.expand_all] {bool}: Additional information related to the applications
                 [query_params.microtenant_id] {str}: ID of the microtenant, if applicable.
                 [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
                 [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
 
         Returns:
-            tuple: A tuple containing (list of Customer Profiles instances, Response, error)
+            tuple: List of application segments.
 
         Examples:
-            List all visibile version profiles:
-
-            >>> for profile in zpa.connectors.list_version_profiles():
-            ...    print(profile)
-
+            >>> app_type = 'BROWSER_ACCESS'
+            >>> expand_all = True
+            >>> search = "ba_server01"
+            >>> app_segments = zpa.app_segments.get_segments_by_type(app_type, expand_all, search=search)
         """
+        if not application_type:
+            raise ValueError("The 'application_type' parameter must be provided.")
+
         http_method = "get".upper()
         api_url = format_url(
             f"""
             {self._zpa_base_endpoint}
-            /visible/versionProfiles
+            /application/getAppsByType
         """
         )
 
         query_params = query_params or {}
+        query_params.update(kwargs)
+        query_params["applicationType"] = application_type
+        query_params["expandAll"] = str(expand_all).lower()
 
-        # Prepare request
+        microtenant_id = query_params.get("microtenant_id", None)
+        if microtenant_id:
+            query_params["microtenantId"] = microtenant_id
+
         request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+            .create_request(http_method, api_url, body={}, headers={}, params=query_params)
         if error:
             return (None, None, error)
 
-        # Execute the request
         response, error = self._request_executor\
             .execute(request)
         if error:
             return (None, response, error)
 
         try:
-            result = []
-            for item in response.get_results():
-                result.append(CustomerVersionProfile(
-                    self.form_response_body(item))
-                )
+            result = response.get_results()
         except Exception as error:
             return (None, response, error)
+
         return (result, response, None)

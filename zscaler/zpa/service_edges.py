@@ -79,7 +79,7 @@ class ServiceEdgeControllerAPI(APIClient):
         # Parse the response into AppConnectorGroup instances
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(ServiceEdge(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)

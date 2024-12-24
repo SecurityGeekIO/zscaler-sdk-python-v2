@@ -75,7 +75,7 @@ class TrustedNetworksAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(TrustedNetwork(
                     self.form_response_body(item))
                 )

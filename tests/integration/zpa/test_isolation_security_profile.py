@@ -41,7 +41,7 @@ class TestCBISecurityProfile:
         try:
             try:
                 # Obtain the cbi certificate
-                banners = client.isolation.list_banners()
+                banners = client.zpa.cbi_banner.list_cbi_banners()
                 assert banners, "Failed to retrieve CBI banners"
                 first_banner_id = banners[0]["id"]  # Assume banners returns a list of dictionaries with 'id' key
             except Exception as exc:
@@ -49,14 +49,14 @@ class TestCBISecurityProfile:
 
             try:
                 # Obtain the cbi certificate
-                certs = client.isolation.list_certificates()
+                certs = client.zpa.cbi_certificate.list_cbi_certificates()
                 assert certs, "Failed to retrieve CBI certificates"
                 first_cert_id = certs[0]["id"]  # Assume certs returns a list of dictionaries with 'id' key
             except Exception as exc:
                 errors.append(f"Retrieving CBI certificates failed: {exc}")
 
             try:
-                regions = client.isolation.list_regions()
+                regions = client.zpa.cbi_region.list_cbi_regions()
                 assert isinstance(regions, list) and len(regions) >= 2, "Expected at least two CBI regions"
                 tested_regions = [regions[0]["id"], regions[1]["id"]]  # Test the first two region IDs
             except AssertionError as exc:
@@ -66,7 +66,7 @@ class TestCBISecurityProfile:
 
             try:
                 # Create a new isolation profile
-                created_profile = client.isolation.add_cbi_profile(
+                created_profile = client.zpa.cbi_profile.add_cbi_profile(
                     name=profile_name,
                     description=profile_description,
                     region_ids=tested_regions,
@@ -103,12 +103,12 @@ class TestCBISecurityProfile:
                 if profile_id:
                     # Update the isolation profile
                     updated_name = profile_name + " Updated"
-                    client.isolation.update_cbi_profile(profile_id, name=updated_name)
-                    updated_profile = client.isolation.get_cbi_profile(profile_id)
+                    client.zpa.cbi_profile.update_cbi_profile(profile_id, name=updated_name)
+                    updated_profile = client.zpa.cbi_profile.get_cbi_profile(profile_id)
                     assert updated_profile["name"] == updated_name  # Verify update by checking the updated attribute
 
                     # List isolation profiles and ensure the updated profile is in the list
-                    profiles_list = client.isolation.list_cbi_profiles()
+                    profiles_list = client.zpa.cbi_profile.list_cbi_profiles()
                     assert any(profile["id"] == profile_id for profile in profiles_list)
 
             except Exception as exc:
@@ -119,7 +119,7 @@ class TestCBISecurityProfile:
             if profile_id:
                 try:
                     # Delete the isolation profile
-                    delete_response_code = client.isolation.delete_cbi_profile(profile_id)
+                    delete_response_code = client.zpa.cbi_profile.delete_cbi_profile(profile_id)
                     assert str(delete_response_code) == "200"  # Adjust to expect '200' as per API behavior
                 except Exception as exc:
                     errors.append(exc)

@@ -65,19 +65,23 @@ class AppSegmentsInspectionAPI(APIClient):
         query_params.update(kwargs)
 
         # Prepare request
-        request, error = self._request_executor.create_request(http_method, api_url, body={}, headers={}, params=query_params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body={}, headers={}, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_all_pages_results():
-                result.append(ApplicationSegmentInspection(self.form_response_body(item)))
+            for item in response.get_results():
+                result.append(ApplicationSegmentInspection(
+                    self.form_response_body(item))
+                )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -108,18 +112,22 @@ class AppSegmentsInspectionAPI(APIClient):
         query_params = query_params or {}
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, ApplicationSegmentInspection)
+        response, error = self._request_executor\
+            .execute(request, ApplicationSegmentInspection)
         if error:
             return (None, response, error)
 
         # Parse the response into an AppConnectorGroup instance
         try:
-            result = ApplicationSegmentInspection(self.form_response_body(response.get_body()))
+            result = ApplicationSegmentInspection(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -204,27 +212,40 @@ class AppSegmentsInspectionAPI(APIClient):
         if common_apps_dto:
             body["commonAppsDto"] = common_apps_dto
 
-        if kwargs.get("tcp_port_ranges"):
-            body["tcpPortRange"] = [{"from": ports[0], "to": ports[1]} for ports in kwargs.pop("tcp_port_ranges")]
+        # Process TCP and UDP port attributes
+        if "tcp_port_ranges" in body:
+            # Use format 1 (tcpPortRanges)
+            body["tcpPortRanges"] = body.pop("tcp_port_ranges")
+        elif "tcp_port_range" in body:
+            # Use format 2 (tcpPortRange)
+            body["tcpPortRange"] = [{"from": pr["from"], "to": pr["to"]} for pr in body.pop("tcp_port_range")]
 
-        if kwargs.get("udp_port_ranges"):
-            body["udpPortRange"] = [{"from": ports[0], "to": ports[1]} for ports in kwargs.pop("udp_port_ranges")]
+        if "udp_port_ranges" in body:
+            # Use format 1 (udpPortRanges)
+            body["udpPortRanges"] = body.pop("udp_port_ranges")
+        elif "udp_port_range" in body:
+            # Use format 2 (udpPortRange)
+            body["udpPortRange"] = [{"from": pr["from"], "to": pr["to"]} for pr in body.pop("udp_port_range")]
 
         # Apply add_id_groups to reformat params based on self.reformat_params
         add_id_groups(self.reformat_params, kwargs, body)
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body=body)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body=body)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, ApplicationSegmentInspection)
+        response, error = self._request_executor\
+            .execute(request, ApplicationSegmentInspection)
         if error:
             return (None, response, error)
 
         try:
-            result = ApplicationSegmentInspection(self.form_response_body(response.get_body()))
+            result = ApplicationSegmentInspection(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -308,27 +329,41 @@ class AppSegmentsInspectionAPI(APIClient):
         if common_apps_dto:
             body["commonAppsDto"] = common_apps_dto
 
-        if kwargs.get("tcp_port_ranges"):
-            body["tcpPortRange"] = [{"from": ports[0], "to": ports[1]} for ports in kwargs.pop("tcp_port_ranges")]
+        # Process TCP and UDP port attributes
+        if "tcp_port_ranges" in body:
+            # Use format 1 (tcpPortRanges)
+            body["tcpPortRanges"] = body.pop("tcp_port_ranges")
+        elif "tcp_port_range" in body:
+            # Use format 2 (tcpPortRange)
+            body["tcpPortRange"] = [{"from": pr["from"], "to": pr["to"]} for pr in body.pop("tcp_port_range")]
 
-        if kwargs.get("udp_port_ranges"):
-            body["udpPortRange"] = [{"from": ports[0], "to": ports[1]} for ports in kwargs.pop("udp_port_ranges")]
+        if "udp_port_ranges" in body:
+            # Use format 1 (udpPortRanges)
+            body["udpPortRanges"] = body.pop("udp_port_ranges")
+        elif "udp_port_range" in body:
+            # Use format 2 (udpPortRange)
+            body["udpPortRange"] = [{"from": pr["from"], "to": pr["to"]} for pr in body.pop("udp_port_range")]
 
         # Apply add_id_groups to reformat params based on self.reformat_params
         add_id_groups(self.reformat_params, kwargs, body)
 
-        # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body=body)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, {})
         if error:
             return (None, None, error)
 
-        # Execute the request
-        response, error = self._request_executor.execute(request, ApplicationSegmentInspection)
+        response, error = self._request_executor\
+            .execute(request, ApplicationSegmentInspection)
         if error:
             return (None, response, error)
 
+        if response is None:
+            return (ApplicationSegmentInspection({"id": segment_id}), None, None)
+
         try:
-            result = ApplicationSegmentInspection(self.form_response_body(response.get_body()))
+            result = ApplicationSegmentInspection(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)

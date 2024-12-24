@@ -99,10 +99,10 @@ class SCIMGroupsAPI(APIClient):
             .execute(request)
         if error:
             return (None, response, error)
-
+    
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(SCIMGroup(
                     self.form_response_body(item))
                 )

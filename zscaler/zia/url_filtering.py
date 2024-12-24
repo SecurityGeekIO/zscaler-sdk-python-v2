@@ -68,7 +68,7 @@ class URLFilteringAPI(APIClient):
         if error:
             return (None, None, error)
         try:
-            results = [URLFilteringRule(item) for item in response.get_all_pages_results()]
+            results = [URLFilteringRule(item) for item in response.get_results()]
         except Exception as error:
             return (None, response, error)
         return (results, response, None)

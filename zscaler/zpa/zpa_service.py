@@ -1,5 +1,6 @@
 from zscaler.request_executor import RequestExecutor
 from zscaler.zpa.authdomains import AuthDomainsAPI
+from zscaler.zpa.app_segment_by_type import ApplicationSegmentByTypeAPI
 from zscaler.zpa.application_segment import ApplicationSegmentAPI
 from zscaler.zpa.application_segment_inspection import AppSegmentsInspectionAPI
 from zscaler.zpa.application_segment_pra import AppSegmentsPRAAPI
@@ -55,6 +56,14 @@ class ZPAService:
         """
         return AuthDomainsAPI(self._request_executor, self._config)
 
+    @property
+    def app_segment_by_type(self):
+        """
+        The interface object for the :ref:`ZPA Application Segments interface <zpa-app_segment_by_type>`.
+
+        """
+        return ApplicationSegmentByTypeAPI(self._request_executor, self._config)
+    
     @property
     def app_segments(self):
         """

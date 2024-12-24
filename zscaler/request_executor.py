@@ -8,7 +8,6 @@ from zscaler.user_agent import UserAgent
 from zscaler.error_messages import ERROR_MESSAGE_429_MISSING_DATE_X_RESET
 from http import HTTPStatus
 from zscaler.helpers import convert_keys_to_snake_case, convert_keys_to_camel_case
-from zscaler.utils import convert_date_time_to_seconds
 from zscaler.zcc.legacy import LegacyZCCClientHelper
 from zscaler.zpa.legacy import LegacyZPAClientHelper
 from zscaler.zia.legacy import LegacyZIAClientHelper
@@ -390,93 +389,18 @@ class RequestExecutor:
 
         return request, response, response_body, error
 
-    # def fire_request_helper(self, request, attempts, request_start_time):
-    #     logger.debug(f"Starting fire_request_helper with request: {request}")
-
-    #     current_req_start_time = time.time()
-    #     max_retries = self._max_retries
-    #     req_timeout = self._request_timeout
-
-    #     if req_timeout > 0 and (current_req_start_time - request_start_time) > req_timeout:
-    #         logger.error("Request Timeout exceeded.")
-    #         return None, None, None, Exception("Request Timeout exceeded.")
-
-    #     try:
-    #         logger.debug("Sending request through HTTP client.")
-    #         response, error = self._http_client.send_request(request)
-    #         logger.debug(f"HTTP request sent. Response: {response}, Error: {error}")
-    #     except Exception as e:
-    #         logger.error(f"Error sending request: {e}")
-    #         return request, None, None, e
-
-    #     if error:
-    #         logger.error(f"HTTP Error sending request: {error}")
-    #         return None, None, None, error
-
-    #     if not response:
-    #         error_message = "Received None as the response object."
-    #         logger.error(error_message)
-    #         return request, None, None, Exception(error_message)
-
-    #     response_body = response.text
-    #     headers = response.headers
-
-    #     if attempts < max_retries and self.is_retryable_status(response.status_code):
-    #         # Extract headers
-    #         date_time = headers.get("Date", "")
-    #         if date_time:
-    #             date_time = convert_date_time_to_seconds(date_time)
-
-    #         # Extract Rate Limit Headers
-    #         retry_limit_reset_headers = list(map(float, headers.getall(
-    #             "X-Rate-Limit-Reset", [])))
-    #         retry_limit_reset_headers.extend(list(map(float, headers.getall(
-    #             "x-rate-limit-reset", []))))
-    #         retry_limit_reset = min(retry_limit_reset_headers) if retry_limit_reset_headers else None
-
-    #         retry_limit_limit_headers = list(map(float, headers.getall(
-    #             "X-Rate-Limit-Limit", [])))
-    #         retry_limit_limit_headers.extend(list(map(float, headers.getall(
-    #             "x-rate-limit-limit", []))))
-    #         retry_limit_limit = min(retry_limit_limit_headers) if retry_limit_limit_headers else None
-
-    #         retry_limit_remaining_headers = list(map(float, headers.getall(
-    #             "X-Rate-Limit-Remaining", [])))
-    #         retry_limit_remaining_headers.extend(list(map(float, headers.getall(
-    #             "x-rate-limit-remaining", []))))
-    #         retry_limit_remaining = min(retry_limit_remaining_headers) if retry_limit_remaining_headers else None
-
-    #         # Handle Retry-After first
-    #         retry_after = headers.get("Retry-After") or headers.get("retry-after")
-    #         if retry_after:
-    #             try:
-    #                 backoff_seconds = int(retry_after.strip("s")) + 1
-    #             except ValueError:
-    #                 logger.error(f"Error parsing Retry-After header: {retry_after}")
-    #                 backoff_seconds = None
-    #         else:
-    #             # Fallback to X-Rate-Limit-Reset
-    #             if not date_time or not retry_limit_reset:
-    #                 logger.error(ERROR_MESSAGE_429_MISSING_DATE_X_RESET)
-    #                 return None, response, response.text, Exception(ERROR_MESSAGE_429_MISSING_DATE_X_RESET)
-
-    #             if retry_limit_limit == 0 and retry_limit_remaining == 0:
-    #                 logger.warning("Concurrent limit rate exceeded")
-
-    #             backoff_seconds = self.calculate_backoff(retry_limit_reset, date_time)
-
-    #         if backoff_seconds:
-    #             logger.info(f"Hit rate limit. Retrying request in {backoff_seconds} seconds.")
-    #             self.pause_for_backoff(backoff_seconds)
-    #             attempts += 1
-    #             return self.fire_request_helper(request, attempts, request_start_time)
-
-    #     logger.debug(f"Request successfully processed. Response: {response_body}")
-    #     return request, response, response_body, None
-
     def fire_request_helper(self, request, attempts, request_start_time):
-        logger.debug(f"Starting fire_request_helper with request: {request}")
+        """
+        Helper method to perform HTTP call with retries if needed.
 
+        Args:
+            request (dict): HTTP request representation.
+            attempts (int): Number of attempted HTTP calls so far.
+            request_start_time (float): Original start time of request.
+
+        Returns:
+            Tuple of request, response object, response body, and error.
+        """
         current_req_start_time = time.time()
         max_retries = self._max_retries
         req_timeout = self._request_timeout
@@ -485,88 +409,24 @@ class RequestExecutor:
             logger.error("Request Timeout exceeded.")
             return None, None, None, Exception("Request Timeout exceeded.")
 
-        try:
-            logger.debug("Sending request through HTTP client.")
-            response, error = self._http_client.send_request(request)
-            logger.debug(f"HTTP request sent. Response: {response}, Error: {error}")
-        except Exception as e:
-            logger.error(f"Error sending request: {e}")
-            return request, None, None, e
+        response, error = self._http_client.send_request(request)
 
         if error:
-            logger.error(f"HTTP Error sending request: {error}")
+            logger.error(f"Error sending request: {error}")
             return None, None, None, error
 
-        if not response:
-            error_message = "Received None as the response object."
-            logger.error(error_message)
-            return request, None, None, Exception(error_message)
-
-        response_body = response.text
         headers = response.headers
 
         if attempts < max_retries and self.is_retryable_status(response.status_code):
-            # Extract headers
-            date_time = headers.get("Date", "")
-            if date_time:
-                date_time = convert_date_time_to_seconds(date_time)
+            backoff_seconds = self.get_retry_after(headers, logger)
+            if backoff_seconds is None:
+                return None, response, response.text, Exception(ERROR_MESSAGE_429_MISSING_DATE_X_RESET)
+            logger.info(f"Hit rate limit. Retrying request in {backoff_seconds} seconds.")
+            time.sleep(backoff_seconds)
+            attempts += 1
+            return self.fire_request_helper(request, attempts, request_start_time)
 
-            # Extract Rate Limit Headers
-            retry_limit_reset_headers = list(map(float, headers.getall(
-                "X-Rate-Limit-Reset", [])))
-            retry_limit_reset_headers.extend(list(map(float, headers.getall(
-                "x-rate-limit-reset", []))))
-            retry_limit_reset = min(retry_limit_reset_headers) if retry_limit_reset_headers else None
-
-            retry_limit_limit_headers = list(map(float, headers.getall(
-                "X-Rate-Limit-Limit", [])))
-            retry_limit_limit_headers.extend(list(map(float, headers.getall(
-                "x-rate-limit-limit", []))))
-            retry_limit_limit = min(retry_limit_limit_headers) if retry_limit_limit_headers else None
-
-            retry_limit_remaining_headers = list(map(float, headers.getall(
-                "X-Rate-Limit-Remaining", [])))
-            retry_limit_remaining_headers.extend(list(map(float, headers.getall(
-                "x-rate-limit-remaining", []))))
-            retry_limit_remaining = min(retry_limit_remaining_headers) if retry_limit_remaining_headers else None
-
-            # Handle Retry-After first
-            retry_after = headers.get("Retry-After") or headers.get("retry-after")
-            if retry_after:
-                try:
-                    backoff_seconds = int(retry_after.strip("s")) + 1
-                except ValueError:
-                    logger.error(f"Error parsing Retry-After header: {retry_after}")
-                    backoff_seconds = None
-            else:
-                # Fallback to X-Rate-Limit-Reset
-                if not date_time or not retry_limit_reset:
-                    logger.error(ERROR_MESSAGE_429_MISSING_DATE_X_RESET)
-                    return None, response, response.text, Exception(ERROR_MESSAGE_429_MISSING_DATE_X_RESET)
-
-                if retry_limit_limit == 0 and retry_limit_remaining == 0:
-                    logger.warning("Concurrent limit rate exceeded")
-
-                backoff_seconds = self.calculate_backoff(retry_limit_reset, date_time)
-
-            # Missing 429 Check Logic from Okta SDK
-            check_429 = self.is_too_many_requests(response.status_code, response_body)
-            if check_429:
-                logger.info(f"Hit rate limit. Retry request in {backoff_seconds} seconds.")
-                logger.debug(f"Value of retry_limit_reset: {retry_limit_reset}")
-                logger.debug(f"Value of date_time: {date_time}")
-                self.pause_for_backoff(backoff_seconds)
-
-                # Check if timeout exceeded after backoff
-                if (current_req_start_time + backoff_seconds) - request_start_time > req_timeout and req_timeout > 0:
-                    return None, response, response_body, response_body
-
-                # Setup retry
-                attempts += 1
-                return self.fire_request_helper(request, attempts, request_start_time)
-
-        logger.debug(f"Request successfully processed. Response: {response_body}")
-        return request, response, response_body, None
+        return request, response, response.text, None
     
     def is_retryable_status(self, status):
         """
@@ -640,28 +500,28 @@ class RequestExecutor:
         logger.debug("Getting custom headers.")
         return self._custom_headers
 
-    # def get_retry_after(self, headers, logger):
-    #     retry_limit_reset_header = headers.get(
-    #         "x-ratelimit-reset") or headers.get("X-RateLimit-Reset")
-    #     retry_after = headers.get("Retry-After") or headers.get("retry-after")
+    def get_retry_after(self, headers, logger):
+        retry_limit_reset_header = headers.get(
+            "x-ratelimit-reset") or headers.get("X-RateLimit-Reset")
+        retry_after = headers.get("Retry-After") or headers.get("retry-after")
 
-    #     if retry_after:
-    #         try:
-    #             return int(retry_after.strip("s")) + 1  # Add 1 second padding
-    #         except ValueError:
-    #             logger.error(
-    #                 f"Error parsing Retry-After header: {retry_after}")
-    #             return None
+        if retry_after:
+            try:
+                return int(retry_after.strip("s")) + 1  # Add 1 second padding
+            except ValueError:
+                logger.error(
+                    f"Error parsing Retry-After header: {retry_after}")
+                return None
 
-    #     if retry_limit_reset_header is not None:
-    #         try:
-    #             reset_seconds = float(retry_limit_reset_header)
-    #             return reset_seconds + 1  # Add 1 second padding
-    #         except ValueError:
-    #             logger.error(
-    #                 f"Error parsing x-ratelimit-reset header: {retry_limit_reset_header}"
-    #             )
-    #             return None
+        if retry_limit_reset_header is not None:
+            try:
+                reset_seconds = float(retry_limit_reset_header)
+                return reset_seconds + 1  # Add 1 second padding
+            except ValueError:
+                logger.error(
+                    f"Error parsing x-ratelimit-reset header: {retry_limit_reset_header}"
+                )
+                return None
 
-    #     logger.error("Missing Retry-After and X-Rate-Limit-Reset headers.")
-    #     return None
+        logger.error("Missing Retry-After and X-Rate-Limit-Reset headers.")
+        return None

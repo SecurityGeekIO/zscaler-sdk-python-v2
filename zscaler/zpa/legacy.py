@@ -222,6 +222,15 @@ class LegacyZPAClientHelper():
         return AppServersAPI(self.request_executor, self.config)
 
     @property
+    def app_segment_by_type(self):
+        """
+        The interface object for the :ref:`ZPA Application Segments interface <zpa-app_segment_by_type>`.
+
+        """
+        from zscaler.zpa.app_segment_by_type import ApplicationSegmentByTypeAPI
+        return ApplicationSegmentByTypeAPI(self.request_executor, self.config)
+
+    @property
     def app_segments(self):
         """
         The interface object for the :ref:`ZPA Application Segments interface <zpa-app_segments>`.

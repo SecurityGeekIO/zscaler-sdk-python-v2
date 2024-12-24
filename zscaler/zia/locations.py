@@ -109,7 +109,7 @@ class LocationsAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(LocationManagement(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
@@ -592,7 +592,7 @@ class LocationsAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(LocationManagement(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
@@ -671,7 +671,7 @@ class LocationsAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(LocationManagement(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
@@ -726,7 +726,7 @@ class LocationsAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(LocationGroup(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
@@ -777,7 +777,7 @@ class LocationsAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(LocationGroup(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
@@ -838,7 +838,7 @@ class LocationsAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(LocationGroup(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
@@ -1018,7 +1018,7 @@ class LocationsAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 # Directly append the dictionary response as we are moving to a dictionary-based approach
                 result.append(self.form_response_body(item))
         except Exception as error:

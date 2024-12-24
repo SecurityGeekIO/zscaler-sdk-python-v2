@@ -87,7 +87,7 @@ class DLPResourcesAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(DLPICAPServer(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
@@ -194,7 +194,7 @@ class DLPResourcesAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(DLPICAPServer(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
@@ -299,7 +299,7 @@ class DLPResourcesAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(DLPIDMProfile(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
@@ -397,7 +397,7 @@ class DLPResourcesAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(DLPEDMSchema(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
@@ -457,7 +457,7 @@ class DLPResourcesAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(DLPEDMSchema(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
