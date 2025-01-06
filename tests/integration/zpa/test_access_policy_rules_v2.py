@@ -38,18 +38,40 @@ class TestAccessPolicyRuleV2:
         scim_group_ids = []
 
         try:
-            # Test listing SCIM groups
-            idps = client.zpa.idp.list_idps()
+            # Test listing SCIM groups with pagination
+            idps, _, err = client.zpa.idp.list_idps()
+            if err or not isinstance(idps, list):
+                raise AssertionError(f"Failed to retrieve IdPs: {err or f'Expected idps to be a list, got {type(idps)}'}")
+
+            # Convert IDPs to dictionaries
+            idps = [idp.as_dict() for idp in idps]
+
+            # Find the IdP with ssoType = USER
             user_idp = next((idp for idp in idps if "USER" in idp.get("sso_type", [])), None)
-            assert user_idp is not None, "No IdP with sso_type 'USER' found."
+            if not user_idp:
+                raise AssertionError("No IdP with ssoType 'USER' found.")
 
-            user_idp_id = user_idp["id"]
-            resp = client.zpa.scim_groups.list_scim_groups(user_idp_id)
-            assert isinstance(resp, list), "Response is not in the expected list format."
-            assert len(resp) >= 2, "Less than 2 SCIM groups were found for the specified IdP."
+            # Export the ID of the matching IdP
+            user_idp_id = user_idp.get("id")
+            if not user_idp_id:
+                raise AssertionError("The matching IdP does not have an 'id' field.")
 
-            # Extract the first two SCIM group IDs
-            scim_group_ids = [(user_idp_id, group["id"]) for group in resp[:2]]
+            # List SCIM groups using the exported IdP ID
+            scim_groups, _, err = client.zpa.scim_groups.list_scim_groups(idp_id=user_idp_id)
+            if err or not scim_groups:
+                raise AssertionError(f"Failed to list SCIM groups: {err}")
+
+            # Convert SCIMGroup objects to dictionaries
+            scim_groups = [group.as_dict() for group in scim_groups]
+
+            # Retrieve the IDs for the first two SCIM groups
+            scim_group_ids = [(user_idp_id, group["id"]) for group in scim_groups[:2]]
+            if len(scim_group_ids) < 2:
+                raise AssertionError("Less than 2 SCIM groups were retrieved.")
+
+            print(f"Exported IdP ID: {user_idp_id}")
+            print(f"Retrieved SCIM Group IDs: {scim_group_ids}")
+
         except Exception as exc:
             errors.append(f"Listing SCIM groups failed: {exc}")
 
