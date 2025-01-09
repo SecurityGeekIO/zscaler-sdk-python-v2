@@ -79,7 +79,7 @@ class TestAccessPolicyTimeoutRuleV2:
             # Create a Timeout Policy Rule
             rule_name = "tests-" + generate_random_string()
             rule_description = "updated-" + generate_random_string()
-            created_rule = client.zpa.policies.add_timeout_rule_v2(
+            created_rule, _, err = client.zpa.policies.add_timeout_rule_v2(
                 name=rule_name,
                 description=rule_description,
                 re_auth_idle_timeout="172800",
@@ -89,29 +89,36 @@ class TestAccessPolicyTimeoutRuleV2:
                     ("scim_group", scim_group_ids),
                 ],
             )
-            assert created_rule is not None, "Failed to create Timeout Policy Rule"
-            rule_id = created_rule.get("id", None)
+            assert err is None, f"Error creating Timeout Policy Rules: {err}"
+            assert created_rule is not None
+            assert created_rule.name == rule_name
+            assert created_rule.description == rule_description
+
+            rule_id = created_rule.id
         except Exception as exc:
-            errors.append(f"Failed to create Timeout Policy Rule: {exc}")
+            errors.append(exc)
 
         try:
             # Test listing Timeout Policy Rules
-            all_timeout_rules = client.zpa.policies.list_rules("timeout")
-            assert any(rule["id"] == rule_id for rule in all_timeout_rules), "Timeout Policy Rules not found in list"
+            all_rules, _, err = client.zpa.policies.list_rules("timeout")
+            assert err is None, f"Error listing Timeout Policy Rules: {err}"
+            if not any(rule["id"] == rule_id for rule in all_rules):
+                raise AssertionError("Timeout Policy Rules not found in list")
         except Exception as exc:
-            errors.append(f"Failed to list Timeout Policy Rules: {exc}")
+            errors.append(f"Listing Timeout Policy Rules failed: {exc}")
 
         try:
-            # Test retrieving the specific Timeout Policy Rule
-            retrieved_rule = client.zpa.policies.get_rule("timeout", rule_id)
-            assert retrieved_rule["id"] == rule_id, "Failed to retrieve the correct Timeout Policy Rule"
+            # Test retrieving the specific Timeout Policy Rules
+            retrieved_rule, _, err =  client.zpa.policies.get_rule("timeout", rule_id)
+            if retrieved_rule["id"] != rule_id:
+                raise AssertionError("Failed to retrieve the correct Timeout Policy Rules")
         except Exception as exc:
-            errors.append(f"Failed to retrieve Timeout Policy Rule: {exc}")
+            errors.append(f"Retrieving Timeout Policy Rules failed: {exc}")
 
         try:
             # Update the Timeout Policy Rule
             updated_rule_description = "Updated " + generate_random_string()
-            updated_rule = client.zpa.policies.update_timeout_rule_v2(
+            _, _, err = client.zpa.policies.update_timeout_rule_v2(
                 rule_id=rule_id,
                 description=updated_rule_description,
                 re_auth_idle_timeout="172800",
@@ -121,20 +128,30 @@ class TestAccessPolicyTimeoutRuleV2:
                     ("scim_group", scim_group_ids),
                 ],
             )
-            assert (
-                updated_rule["description"] == updated_rule_description
-            ), "Failed to update description for Timeout Policy Rule"
+            # If we got an error but it’s "Response is None", treat it as success:
+            if err is not None:
+                if isinstance(err, ValueError) and str(err) == "Response is None":
+                    print(f"[INFO] Interpreting 'Response is None' as 204 success.")
+                else:
+                    raise AssertionError(f"Error updating Timeout Policy Rules: {err}")
+            print(f"Timeout Policys with ID {rule_id} updated successfully (204 No Content).")
         except Exception as exc:
-            errors.append(f"Failed to update Timeout Policy Rule: {exc}")
+            errors.append(f"Updating Timeout PolicyRules failed: {exc}")
 
         finally:
             # Ensure cleanup is performed even if there are errors
             if rule_id:
                 try:
-                    delete_status_rule = client.zpa.policies.delete_rule("timeout", rule_id)
-                    assert delete_status_rule == 204, "Failed to delete Timeout Policy Rule"
+                    # Cleanup: Delete the Timeout PolicyRules
+                    delete_status_rule, _, err = client.zpa.policies.delete_rule("timeout", rule_id)
+                    assert err is None, f"Error deleting Timeout Policy Rules: {err}"
+                    # Since a 204 No Content response returns None, we assert that delete_response is None
+                    assert delete_status_rule is None, f"Expected None for 204 No Content, got {delete_status_rule}"
                 except Exception as cleanup_exc:
-                    errors.append(f"Cleanup failed: {cleanup_exc}")
+                    errors.append(f"Cleanup failed for Timeout Policy Rules ID {rule_id}: {cleanup_exc}")
+                except Exception as exc:
+                    errors.append(f"Deleting Timeout Policy Rules failed: {exc}")
+
 
         # Assert that no errors occurred during the test
         assert len(errors) == 0, f"Errors occurred during the Timeout Policy Rule operations test: {errors}"

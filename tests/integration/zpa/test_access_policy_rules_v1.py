@@ -117,10 +117,10 @@ class TestAccessPolicyRule:
                 description=rule_description,
                 action="allow",
                 app_connector_group_ids=[connector_group_id],
-                # conditions=[
-                #     ("scim_group", scim_group_ids[0][0], scim_group_ids[0][1]),
-                #     ("scim_group", scim_group_ids[1][0], scim_group_ids[1][1]),
-                # ],
+                conditions=[
+                    ("scim_group", scim_group_ids[0][0], scim_group_ids[0][1]),
+                    ("scim_group", scim_group_ids[1][0], scim_group_ids[1][1]),
+                ],
             )
             assert err is None, f"Error creating access policy rule: {err}"
             assert created_rule is not None

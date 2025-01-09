@@ -119,19 +119,23 @@ class LSSConfigControllerAPI(APIClient):
         query_params = query_params or {}
 
         # Prepare request
-        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
             for item in response.get_results():
-                result.append(LSSConfig(self.form_response_body(item)))
+                result.append(LSSConfig(
+                    self.form_response_body(item))
+                )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -156,16 +160,20 @@ class LSSConfigControllerAPI(APIClient):
 
         query_params = query_params or {}
 
-        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request, LSSConfig)
+        response, error = self._request_executor\
+            .execute(request, LSSConfig)
         if error:
             return (None, response, error)
 
         try:
-            result = LSSConfig(self.form_response_body(response.get_body()))
+            result = LSSConfig(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -279,17 +287,21 @@ class LSSConfigControllerAPI(APIClient):
             payload[snake_to_camel(key)] = value
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body=payload)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body=payload)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, LSSConfig)
+        response, error = self._request_executor\
+            .execute(request, LSSConfig)
         if error:
             return (None, response, error)
 
         try:
-            result = LSSConfig(self.form_response_body(response.get_body()))
+            result = LSSConfig(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -401,12 +413,14 @@ class LSSConfigControllerAPI(APIClient):
             current_config[snake_to_camel(key)] = value
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body=current_config)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body=current_config)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, LSSConfig)
+        response, error = self._request_executor\
+            .execute(request, LSSConfig)
         if error:
             return (None, response, error)
 
@@ -417,7 +431,9 @@ class LSSConfigControllerAPI(APIClient):
 
         # Parse the response into an LSSConfig instance
         try:
-            result = LSSConfig(self.form_response_body(response.get_body()))
+            result = LSSConfig(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
 
@@ -442,12 +458,14 @@ class LSSConfigControllerAPI(APIClient):
         )
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 

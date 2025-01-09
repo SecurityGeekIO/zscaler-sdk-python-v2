@@ -61,24 +61,15 @@ class MicrotenantsAPI(APIClient):
         """
         )
 
-        # Set default pagination values
-        query_params = query_params or {}
-        query_params["page"] = query_params.get("page", 1)
-        query_params["pagesize"] = max(20, min(query_params.get("pagesize", 20), 500))
-        query_params["includeRoles"] = query_params.get("includeRoles", False)
-
-        # Handle microtenant_id if provided
-        microtenant_id = query_params.get("microtenant_id", None)
-        if microtenant_id:
-            query_params["microtenantId"] = microtenant_id
-
         # Prepare request
-        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 
@@ -86,10 +77,11 @@ class MicrotenantsAPI(APIClient):
         try:
             result = []
             for item in response.get_results():
-                result.append(Microtenant(self.form_response_body(item)))
+                result.append(Microtenant(
+                    self.form_response_body(item))
+                )
         except Exception as error:
             return (None, response, error)
-
         return (result, response, None)
 
     def get_microtenant(self, microtenant_id: str, query_params=None) -> tuple:

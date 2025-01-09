@@ -101,8 +101,6 @@ class TestAccessPolicyForwardingRuleV1:
         except Exception as exc:
             errors.append(f"Listing Trusted Network Profiles failed: {exc}")
 
-
-
         try:
             # Create a Forwarding Policy Rule
             rule_name = "tests-" + generate_random_string()

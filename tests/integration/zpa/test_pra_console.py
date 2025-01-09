@@ -41,12 +41,9 @@ class TestAccessPrivilegedConsoleV2:
         console_id = None
         portal_id = None
         credential_id = None
-        pra_application_id = None
 
         SDK_PREFIX = "zscaler_python_sdk"
 
-        # Generate a random password
-        password = generate_random_password()
         try:
             # Create an App Connector Group
             try:
@@ -104,132 +101,143 @@ class TestAccessPrivilegedConsoleV2:
 
             # Create an Application Segment
             try:
-                app_segment_name = "tests-" + generate_random_string()
-                app_segment_description = "tests-" + generate_random_string()
-                created_app_segment = {
-                    "name": app_segment_name,
-                    "description": app_segment_description,
-                    "enabled": True,
-                    "domain_names": ["rdp_pra01.acme.com"],
-                    "segment_group_id": segment_group_id,
-                    "server_group_ids": [server_group_id],
-                    "tcp_port_range": [{"from": "3389", "to": "3389"}],  # Single port range using 'from' and 'to'
-                    "udp_port_range": [{"from": "3389", "to": "3389"}],  # Single port range using 'from' and 'to'
-                    "common_apps_dto": {
+                app_segment_name = "rdp_pra01.acme.com"
+                app_segment_description = "rdp_pra01.acme.com"
+
+                app_segment, _, err = client.zpa.app_segments_pra.add_segment_pra(
+                    name=app_segment_name,
+                    description=app_segment_description,
+                    enabled=True,
+                    domain_names=["rdp_pra01.acme.com"],
+                    segment_group_id=segment_group_id,
+                    server_group_ids=[server_group_id],
+                    tcp_port_ranges=["3389", "3389"],
+                    common_apps_dto={
                         "apps_config": [
                             {
+                                "enabled": True,
                                 "app_types": ["SECURE_REMOTE_ACCESS"],
                                 "application_port": "3389",
                                 "application_protocol": "RDP",
                                 "connection_security": "ANY",
-                                "enabled": True,
                                 "domain": "rdp_pra01.acme.com",
-                                "name": "rdp_pra01.acme.com"
                             }
                         ]
                     },
-                }
-                assert err is None, f"Creating application segment pra failed: {err}"
-                app_segment_id = created_app_segment["id"]
+                )
+                assert err is None, f"Error creating application segment PRA: {err}"
+                assert app_segment is not None, "No application segment PRA data returned"
+                assert app_segment.name == app_segment_name
+                
+                app_segment_id = app_segment.id
             except Exception as exc:
-                errors.append(f"Creating application segment pra failed: {exc}")
+                errors.append(f"Creating PRA Application Segment failed: {exc}")
 
             # # Use the application segment's *name* to search for it
-            # try:
-            #     search_name = app_segment_name  # Using the app_segment_name
-            #     app_segments, _, err = client.zpa.app_segments.get_segments_by_type(
-            #         application_type="SECURE_REMOTE_ACCESS", 
-            #         query_params={"search": search_name}
-            #     )
-            #     assert err is None, f"Failed to get Application Segment by type: {err}"
-            #     assert app_segments and len(app_segments) > 0, "No segments found with the specified name."
-            #     pra_application_id = app_segments[0]["id"]
-            # except Exception as exc:
-            #     errors.append(f"Failed to get Application Segment by type: {exc}")
+            try:
+                search_name = "rdp_pra01.acme.com"
+                app_segments, _, err = client.zpa.app_segment_by_type.get_segments_by_type(
+                    application_type="SECURE_REMOTE_ACCESS",
+                    query_params={"search": search_name}
+                )
+                assert err is None, f"Failed to get Application Segment by type: {err}"
+                assert isinstance(app_segments, list), "Expected app_segments to be a list"
 
-            # try:
-            #     # Unpack results for the certificate listing
-            #     certs_list, _, err = client.zpa.certificates.list_issued_certificates()
-            #     assert err is None, f"Listing certificates failed: {err}"
-            #     assert isinstance(certs_list, list), "Expected a list of certificates"
-            #     if certs_list:
-            #         first_certificate = certs_list[0]
-            #         certificate_id = first_certificate.get("id")
-            #         assert certificate_id, "First certificate returned has no 'id' field"
-            #     else:
-            #         errors.append("No issued certificates found to create a PRA portal.")
-            #         assert False, "No issued certificates found."
-            # except Exception as exc:
-            #     errors.append(f"Listing certificates failed: {str(exc)}")
+                if not app_segments:
+                    raise AssertionError(f"No segments found with the specified name: {search_name}")
 
-            # try:
-            #     # Create a new pra portal using the retrieved certificate_id
-            #     created_portal, _, err = client.zpa.pra_portal.add_portal(
-            #         name="tests-" + generate_random_string(),
-            #         description="tests-" + generate_random_string(),
-            #         enabled=True,
-            #         domain="tests-" + generate_random_string() + "acme.com",
-            #         certificate_id=certificate_id,  # use the retrieved certificate_id
-            #         user_notification_enabled=True,
-            #         user_notification=f"{SDK_PREFIX} Test PRA Portal",
-            #     )
-            #     assert err is None, f"Error during portal creation: {err}"
-            #     assert created_portal is not None, "Failed to create portal"
-            #     portal_id = created_portal.id  # Assuming id is accessible like this
+                # Extract `id` and `appId` from the first segment
+                pra_app_id = app_segments[0]["id"]
+                # app_id = app_segments[0]["appId"]
 
-            # except Exception as exc:
-            #     errors.append(f"Error during portal creation: {exc}")
+            except Exception as exc:
+                errors.append(f"Failed to retrieve Application Segment by type: {exc}")
 
-            # try:
-            #     # Create a new pra console using the pra_application_id and portal_id
-            #     created_console, _, err = client.zpa.pra_console.add_console(
-            #         name="tests-" + generate_random_string(),
-            #         description="tests-" + generate_random_string(),
-            #         enabled=True,
-            #         pra_application_id=pra_application_id,
-            #         pra_portal_ids=[portal_id],
-            #     )
-            #     assert err is None, f"Error during console creation: {err}"
-            #     assert created_console is not None, "Failed to create console"
-            #     console_id = created_console.id  # Assuming id is accessible like this
+            try:
+                certs_list, _, err = client.zpa.certificates.list_issued_certificates()
+                assert err is None, f"Error listing certificates: {err}"
+                assert isinstance(certs_list, list), "Expected a list of certificates"
+                if certs_list:  # If there are any certificates, proceed with further operations
+                    first_certificate = certs_list[0]  # Fetch the first certificate in the list
+                    certificate_id = first_certificate.id  # Access the 'id' attribute directly
+                    assert certificate_id is not None, "Certificate ID should not be None"
+            except Exception as exc:
+                errors.append(f"Listing certificates failed: {str(exc)}")
 
-            # except Exception as exc:
-            #     errors.append(f"Error during console creation: {exc}")
+            try:
+                # Create a new pra portal using the retrieved certificate_id
+                created_portal, _, err = client.zpa.pra_portal.add_portal(
+                    name="tests-" + generate_random_string(),
+                    description="tests-" + generate_random_string(),
+                    enabled=True,
+                    domain="tests-" + generate_random_string() + "acme.com",
+                    certificate_id=certificate_id,  # use the retrieved certificate_id
+                    user_notification_enabled=True,
+                    user_notification=f"{SDK_PREFIX} Test PRA Portal",
+                )
+                assert err is None, f"Error during portal creation: {err}"
+                assert created_portal is not None, "Failed to create portal"
+                portal_id = created_portal.id  # Assuming id is accessible like this
 
-            # try:
-            #     # Test listing Consoles
-            #     all_consoles, _, err = client.zpa.pra_console.list_consoles()
-            #     assert err is None, f"Error listing PRA Consoles: {err}"
-            #     assert any(console.id == console_id for console in all_consoles), "Created console not found in list"
-            # except Exception as exc:
-            #     errors.append(f"Listing PRA Consoles failed: {exc}")
+            except Exception as exc:
+                errors.append(f"Error during portal creation: {exc}")
+
+            try:
+                # Create a new pra console using the pra_application_id and portal_id
+                created_console, _, err = client.zpa.pra_console.add_console(
+                    name="tests-" + generate_random_string(),
+                    description="tests-" + generate_random_string(),
+                    enabled=True,
+                    pra_application_id=pra_app_id,
+                    pra_portal_ids=[portal_id],
+                )
+                assert err is None, f"Error during console creation: {err}"
+                assert created_console is not None, "Failed to create console"
+                console_id = created_console.id  # Assuming id is accessible like this
+
+            except Exception as exc:
+                errors.append(f"Error during console creation: {exc}")
+
+            try:
+                # Test listing Consoles
+                all_consoles, _, err = client.zpa.pra_console.list_consoles()
+                assert err is None, f"Error listing PRA Consoles: {err}"
+                assert any(console.id == console_id for console in all_consoles), "Created console not found in list"
+            except Exception as exc:
+                errors.append(f"Listing PRA Consoles failed: {exc}")
                 
-            # try:
-            #     # Test retrieving the specific PRA Console
-            #     retrieved_console, _, err = client.zpa.pra_console.get_console(console_id)
-            #     assert err is None, f"Error fetching Consoles: {err}"
-            #     assert retrieved_console.id == console_id, "Retrieved console ID does not match"
-            # except Exception as exc:
-            #     errors.append(f"Failed to retrieve PRA Console: {exc}")
+            try:
+                # Test retrieving the specific PRA Console
+                retrieved_console, _, err = client.zpa.pra_console.get_console(console_id)
+                assert err is None, f"Error fetching Consoles: {err}"
+                assert retrieved_console.id == console_id, "Retrieved console ID does not match"
+            except Exception as exc:
+                errors.append(f"Failed to retrieve PRA Console: {exc}")
 
-            # try:
-            #     if console_id:
-            #         retrieved_console, _, err = client.zpa.pra_console.get_console(console_id)
-            #         assert err is None, f"Error fetching console: {err}"
-            #         assert retrieved_console.id == console_id
+            try:
+                if console_id:
+                    retrieved_console, _, err = client.zpa.pra_console.get_console(console_id)
+                    assert err is None, f"Error fetching console: {err}"
+                    assert retrieved_console.id == console_id
 
-            #     # Update the console
-            #     updated_rule_description = "Updated " + generate_random_string()
-            #     _, _, err = client.zpa.pra_console.update_console(
-            #         console_id=console_id,
-            #         description=updated_rule_description,
-            #         enabled=True,
-            #         pra_application_id=pra_application_id,
-            #         pra_portal_ids=[portal_id],
-            #     )
-            #     assert err is None, f"Error updating pra console: {err}"
-            # except Exception as exc:
-            #     errors.append(f"Failed to update PRA Console: {exc}")
+                # Update the console
+                updated_rule_description = "Updated " + generate_random_string()
+                _, _, err = client.zpa.pra_console.update_console(
+                    console_id=console_id,
+                    description=updated_rule_description,
+                    enabled=True,
+                    pra_application_id=pra_app_id,
+                    pra_portal_ids=[portal_id],
+                )
+                # If we got an error but it’s "Response is None", treat it as success:
+                if err is not None:
+                    if isinstance(err, ValueError) and str(err) == "Response is None":
+                        print(f"[INFO] Interpreting 'Response is None' as 204 success.")
+                    else:
+                        raise AssertionError(f"Error updating PRA Console: {err}")
+                print(f"PRA Console with ID {console_id} updated successfully (204 No Content).")
+            except Exception as exc:
+                errors.append(f"Updating PRA Console failed: {exc}")
 
         finally:
             

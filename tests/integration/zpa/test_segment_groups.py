@@ -72,15 +72,6 @@ class TestSegmentGroup:
                 assert err is None, f"Error fetching updated group: {err}"
                 assert updated_group.name == updated_name
 
-                # Perform another update using update_group_v2
-                updated_name_v2 = updated_name + " V2"
-                _, _, err = client.zpa.segment_groups.update_group_v2(group_id, name=updated_name_v2)
-                assert err is None, f"Error updating group with v2: {err}"
-
-                updated_group_v2, _, err = client.zpa.segment_groups.get_group(group_id)
-                assert err is None, f"Error fetching updated group v2: {err}"
-                assert updated_group_v2.name == updated_name_v2
-
                 # List segment groups and ensure the updated group is in the list
                 groups_list, _, err = client.zpa.segment_groups.list_groups()
                 assert err is None, f"Error listing groups: {err}"

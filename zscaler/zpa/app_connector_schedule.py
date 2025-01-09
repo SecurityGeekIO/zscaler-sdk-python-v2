@@ -62,25 +62,29 @@ class AppConnectorScheduleAPI(APIClient):
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         # Create the request with headers
-        request, error = self._request_executor.create_request(http_method, api_url, body=None, headers={}, params=params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body=None, headers={}, params=params)
 
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
 
         if error:
             return (None, response, error)
 
         try:
             # Expect a single object, not a list
-            result = AppConnectorSchedule(self.form_response_body(response.get_body()))
+            result = AppConnectorSchedule(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def add_connector_schedule(self, schedule) -> tuple:
+    def add_connector_schedule(self, **kwargs) -> tuple:
         """
         Configure an App Connector schedule frequency to delete inactive connectors based on the configured frequency.
 
@@ -102,7 +106,7 @@ class AppConnectorScheduleAPI(APIClient):
         """
         )
 
-        customer_id = schedule.get("customer_id") or os.getenv("ZPA_CUSTOMER_ID")
+        customer_id = kwargs.get("customer_id") or os.getenv("ZPA_CUSTOMER_ID")
         if not customer_id:
             return (
                 None,
@@ -112,8 +116,8 @@ class AppConnectorScheduleAPI(APIClient):
                 ),
             )
 
-        # Ensure schedule is a dictionary
-        body = schedule if isinstance(schedule, dict) else schedule.as_dict()
+        # Construct the body from kwargs (as a dictionary)
+        body = kwargs
 
         # Construct payload using snake_case to camelCase conversion
         payload = {
@@ -131,22 +135,26 @@ class AppConnectorScheduleAPI(APIClient):
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body=payload, params=params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body=payload, params=params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, AppConnectorSchedule)
+        response, error = self._request_executor\
+            .execute(request, AppConnectorSchedule)
         if error:
             return (None, response, error)
 
         try:
-            result = AppConnectorSchedule(self.form_response_body(response.get_body()))
+            result = AppConnectorSchedule(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def update_connector_schedule(self, scheduler_id: str, schedule) -> tuple:
+    def update_connector_schedule(self, scheduler_id: str, **kwargs) -> tuple:
         """
         Updates App Connector schedule frequency to delete inactive connectors based on the configured frequency.
 
@@ -169,7 +177,7 @@ class AppConnectorScheduleAPI(APIClient):
         """
         )
 
-        customer_id = schedule.get("customer_id") or os.getenv("ZPA_CUSTOMER_ID")
+        customer_id = kwargs.get("customer_id") or os.getenv("ZPA_CUSTOMER_ID")
         if not customer_id:
             return (
                 None,
@@ -179,8 +187,11 @@ class AppConnectorScheduleAPI(APIClient):
                 ),
             )
 
-        # Ensure schedule is a dictionary format
-        body = schedule if isinstance(schedule, dict) else schedule.as_dict()
+        # Start with an empty body or an existing resource's current data
+        body = {}
+
+        # Update the body with the fields passed in kwargs
+        body.update(kwargs)
 
         # Construct payload using snake_case to camelCase conversion
         payload = {
@@ -198,12 +209,14 @@ class AppConnectorScheduleAPI(APIClient):
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body, {}, params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, {}, params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, AppConnectorSchedule)
+        response, error = self._request_executor\
+            .execute(request, AppConnectorSchedule)
         if error:
             return (None, response, error)
 
@@ -214,7 +227,9 @@ class AppConnectorScheduleAPI(APIClient):
 
         # Parse the response into an AppConnectorGroup instance
         try:
-            result = AppConnectorSchedule(self.form_response_body(response.get_body()))
+            result = AppConnectorSchedule(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)

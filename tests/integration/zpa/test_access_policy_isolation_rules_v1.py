@@ -77,11 +77,26 @@ class TestAccessPolicyIsolationRuleV1:
             errors.append(f"Listing SCIM groups failed: {exc}")
 
         try:
-            # Test listing Isolation profiles
-            profiles = client.zpa.cbi_zpa_profile.list_isolation_profiles()
-            assert isinstance(profiles, list), "Response is not in the expected list format."
-            assert len(profiles) > 0, "No Isolation profiles were found."
-            profile_id = profiles[0]["id"]
+            # Retrieve a list of Isolation profiles model objects
+            profiles, _, err = client.zpa.cbi_zpa_profile.list_isolation_profiles()
+            if err:
+                raise AssertionError(f"Error listing Isolation profiles: {err}")
+
+            # Make sure we got back a list (not None or a single object)
+            if not isinstance(profiles, list):
+                raise AssertionError(f"Expected a list of Isolation profiles objects, got {type(profiles)}")
+
+            if not profiles:
+                raise AssertionError("No Isolation profiles found at all.")
+
+            # profiles[0] is a IsolationProfiles model, so use dot-notation:
+            profile_id = profiles[0].id 
+
+            # Optionally, if you want a dictionary:
+            #   profile_dict = profiles[0].as_dict()
+            #   profile_id = profile_dict["id"]
+
+            print(f"First Isolation profiles: {profile_id}")
 
         except Exception as exc:
             errors.append(f"Listing Isolation profiles failed: {exc}")
@@ -90,7 +105,7 @@ class TestAccessPolicyIsolationRuleV1:
             # Create an Isolation Policy Rule
             rule_name = "tests-" + generate_random_string()
             rule_description = "updated-" + generate_random_string()
-            created_rule = client.zpa.policies.add_isolation_rule(
+            created_rule, _, err = client.zpa.policies.add_isolation_rule(
                 name=rule_name,
                 description=rule_description,
                 action="isolate",
@@ -100,24 +115,31 @@ class TestAccessPolicyIsolationRuleV1:
                     ("scim_group", scim_group_ids[1][0], scim_group_ids[1][1]),
                 ],
             )
-            assert created_rule is not None, "Failed to create Isolation Policy Rule"
-            rule_id = created_rule.get("id", None)
+            assert err is None, f"Error creating isolation policy rule: {err}"
+            assert created_rule is not None
+            assert created_rule.name == rule_name
+            assert created_rule.description == rule_description
+
+            rule_id = created_rule.id
         except Exception as exc:
-            errors.append(f"Failed to create Isolation Policy Rule: {exc}")
+            errors.append(exc)
 
         try:
-            # Test listing Isolation Policy Rules
-            all_isolation_rules = client.zpa.policies.list_rules("isolation")
-            assert any(rule["id"] == rule_id for rule in all_isolation_rules), "Isolation Policy Rules not found in list"
+            # Test listing access policy rules
+            all_rules, _, err = client.zpa.policies.list_rules("isolation")
+            assert err is None, f"Error listing Isolation Policy rules: {err}"
+            if not any(rule["id"] == rule_id for rule in all_rules):
+                raise AssertionError("Isolation Policy rules not found in list")
         except Exception as exc:
-            errors.append(f"Failed to list Isolation Policy Rules: {exc}")
+            errors.append(f"Listing Isolation Policy Rules failed: {exc}")
 
         try:
             # Test retrieving the specific Isolation Policy Rule
-            retrieved_rule = client.zpa.policies.get_rule("isolation", rule_id)
-            assert retrieved_rule["id"] == rule_id, "Failed to retrieve the correct Isolation Policy Rule"
+            retrieved_rule, _, err =  client.zpa.policies.get_rule("isolation", rule_id)
+            if retrieved_rule["id"] != rule_id:
+                raise AssertionError("Failed to retrieve the correct Isolation Policy Rule")
         except Exception as exc:
-            errors.append(f"Failed to retrieve Isolation Policy Rule: {exc}")
+            errors.append(f"Retrieving Isolation Policy Rule failed: {exc}")
 
         try:
             # Update the Isolation Policy Rule
@@ -138,7 +160,7 @@ class TestAccessPolicyIsolationRuleV1:
                     print(f"[INFO] Interpreting 'Response is None' as 204 success.")
                 else:
                     raise AssertionError(f"Error updating Isolation Policy Rule: {err}")
-            print(f"Access Policy Rule with ID {rule_id} updated successfully (204 No Content).")
+            print(f"Isolation Policy Rule with ID {rule_id} updated successfully (204 No Content).")
         except Exception as exc:
             errors.append(f"Updating Isolation Policy Rule failed: {exc}")
 
@@ -146,10 +168,15 @@ class TestAccessPolicyIsolationRuleV1:
             # Ensure cleanup is performed even if there are errors
             if rule_id:
                 try:
-                    delete_status_rule = client.zpa.policies.delete_rule("isolation", rule_id)
-                    assert delete_status_rule == 204, "Failed to delete Isolation Policy Rule"
+                    # Cleanup: Delete the Access Policy Rule
+                    delete_status_rule, _, err = client.zpa.policies.delete_rule("isolation", rule_id)
+                    assert err is None, f"Error deleting isolation policy rule: {err}"
+                    # Since a 204 No Content response returns None, we assert that delete_response is None
+                    assert delete_status_rule is None, f"Expected None for 204 No Content, got {delete_status_rule}"
                 except Exception as cleanup_exc:
-                    errors.append(f"Cleanup failed: {cleanup_exc}")
+                    errors.append(f"Cleanup failed for isolation policy rule ID {rule_id}: {cleanup_exc}")
+                except Exception as exc:
+                    errors.append(f"Deleting isolation Policy Rule failed: {exc}")
 
         # Assert that no errors occurred during the test
         assert len(errors) == 0, f"Errors occurred during the Isolation Policy Rule operations test: {errors}"
