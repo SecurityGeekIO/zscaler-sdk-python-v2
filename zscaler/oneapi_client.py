@@ -253,3 +253,31 @@ class Client:
 
     def get_default_headers(self):
         return self._request_executor.get_default_headers()
+
+
+class LegacyZPAClient(Client):
+    def __init__(
+        self,
+        config: dict = {},
+    ):
+        client_id = config.get("clientId", os.getenv("ZPA_CLIENT_ID"))
+        client_secret = config.get("clientSecret", os.getenv("ZPA_CLIENT_SECRET"))
+        customer_id = config.get("customerId", os.getenv("ZPA_CUSTOMER_ID"))
+        cloud = config.get("cloud", os.getenv("ZSCALER_CLOUD", "PRODUCTION"))
+        microtenant_id = config.get("microtenantId", os.getenv("ZPA_MICROTENANT_ID"))
+        timeout = config.get("timeout", 240)
+        cache = config.get("cache", None)
+        fail_safe = config.get("failSafe", None)
+
+        # Initialize the LegacyZPAClientHelper with the extracted parameters
+        legacy_helper = LegacyZPAClientHelper(
+            client_id=client_id,
+            client_secret=client_secret,
+            customer_id=customer_id,
+            cloud=cloud,
+            microtenant_id=microtenant_id,
+            timeout=timeout,
+            cache=cache,
+            fail_safe=fail_safe,
+        )
+        super().__init__(config, zpa_legacy_client=legacy_helper)
