@@ -172,12 +172,6 @@ class Client:
             {"Authorization": f"Bearer {self._auth_token}"})
         self.logger.debug("Authorization header updated with access token.")
 
-    # @property
-    # def zcc(self) -> ZCCService:
-    #     if self._zcc is None:
-    #         self._zcc = ZCCService(self)
-    #     return self._zcc
-
     @property
     def zcc(self):
         if self.use_legacy_client:
@@ -185,14 +179,6 @@ class Client:
         if self._zcc is None:
             self._zcc = ZCCService(self._request_executor)
         return self._zcc
-    
-    # @property
-    # def zia(self):
-    #     if self.use_legacy_client:
-    #         return self.zia_legacy_client
-    #     if self._zia is None:
-    #         self._zia = ZIAService(self._request_executor)
-    #     return self._zia
 
     @property
     def zia(self):
@@ -281,3 +267,51 @@ class LegacyZPAClient(Client):
             fail_safe=fail_safe,
         )
         super().__init__(config, zpa_legacy_client=legacy_helper)
+
+class LegacyZIAClient(Client):
+    def __init__(
+        self,
+        config: dict = {},
+    ):
+        username = config.get("username", os.getenv("ZIA_USERNAME"))
+        password = config.get("password", os.getenv("ZIA_PASSWORD"))
+        api_key = config.get("api_key", os.getenv("ZIA_API_KEY"))
+        cloud = config.get("cloud", os.getenv("ZIA_CLOUD"))
+        timeout = config.get("timeout", 240)
+        cache = config.get("cache", None)
+        fail_safe = config.get("failSafe", None)
+
+        # Initialize the LegacyZIAClientHelper with the extracted parameters
+        legacy_helper = LegacyZIAClientHelper(
+            username=username,
+            password=password,
+            api_key=api_key,
+            cloud=cloud,
+            timeout=timeout,
+            cache=cache,
+            fail_safe=fail_safe,
+        )
+        super().__init__(config, zia_legacy_client=legacy_helper)
+        
+class LegacyZCCClient(Client):
+    def __init__(
+        self,
+        config: dict = {},
+    ):
+        apikey = config.get("apikey", os.getenv("ZCC_CLIENT_ID"))
+        secret_key = config.get("secret_key", os.getenv("ZCC_CLIENT_SECRET"))
+        cloud = config.get("cloud", os.getenv("ZCC_CLOUD"))
+        timeout = config.get("timeout", 240)
+        cache = config.get("cache", None)
+        fail_safe = config.get("failSafe", None)
+
+        # Initialize the LegacyZCCClientHelper with the extracted parameters
+        legacy_helper = LegacyZCCClientHelper(
+            apikey=apikey,
+            secret_key=secret_key,
+            cloud=cloud,
+            timeout=timeout,
+            cache=cache,
+            fail_safe=fail_safe,
+        )
+        super().__init__(config, zcc_legacy_client=legacy_helper)
