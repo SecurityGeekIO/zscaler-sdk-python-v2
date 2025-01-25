@@ -61,7 +61,7 @@ class AdminAndRoleManagementAPI:
             name (str): The name of the admin roles  to retrieve.
 
         Returns:
-            :obj:`Box`: The admin roles  if found, otherwise None.
+            :obj:`Tuple`: The admin roles  if found, otherwise None.
 
         Examples:
             >>> role = zcon.admin_and_role_management.get_roles_by_name('Super Admin')
@@ -203,7 +203,7 @@ class AdminAndRoleManagementAPI:
             - ``READ_WRITE``
 
         Returns:
-            :obj:`Box`: The updated role.
+            :obj:`Tuple`: The updated role.
 
         Examples:
             Update a role::
@@ -332,7 +332,7 @@ class AdminAndRoleManagementAPI:
             admin_id (str): The ID of the admin user to retrieve.
 
         Returns:
-            :obj:`Box`: The admin user details.
+            :obj:`Tuple`: The admin user details.
 
         Examples:
             Print the details of an admin user::

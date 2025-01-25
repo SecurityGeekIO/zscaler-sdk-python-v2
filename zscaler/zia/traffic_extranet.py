@@ -16,13 +16,12 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from zscaler.api_client import APIClient
 from zscaler.request_executor import RequestExecutor
-from zscaler.zia.models.rule_labels import RuleLabels
+from zscaler.zia.models.traffic_extranet import TrafficExtranet
 from zscaler.utils import format_url
 
-
-class RuleLabelsAPI(APIClient):
+class TrafficExtranetAPI(APIClient):
     """
-    A Client object for the Rule labels resource.
+    A Client object for the Extranet resource.
     """
 
     _zia_base_endpoint = "/zia/api/v1"
@@ -31,43 +30,45 @@ class RuleLabelsAPI(APIClient):
         super().__init__()
         self._request_executor: RequestExecutor = request_executor
 
-    def list_labels(self, query_params=None) -> tuple:
+    def list_extranets(self, query_params=None) -> tuple:
         """
-        Lists rule labels in your organization with pagination.
-        A subset of rule labels  can be returned that match a supported
+        Lists extranet in your organization with pagination.
+        A subset of extranet  can be returned that match a supported
         filter expression or query.
 
         Args:
             query_params {dict}: Map of query parameters for the request.
                 [query_params.page_size] {int}: Page size for pagination.
                 [query_params.search] {str}: Search string for filtering results.
+                [query_params.order_by] {str}: The field used to sort the list in a specific order
+                [query_params.order] {str}: The arrangement of the list in ascending or descending order i.e ASC
                 [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
                 [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
 
         Returns:
-            tuple: A tuple containing (list of Rule Labels instances, Response, error)
+            tuple: A tuple containing (list of Extranet instances, Response, error)
 
         Examples:
-            List Rule Labels using default settings:
+            List Extranets using default settings:
 
-            >>> for label in zia.labels.list_labels():
-            ...   print(label)
+            >>> for extranet in zia.traffic_extranet.list_extranets():
+            ...   print(extranet)
 
-            List labels, limiting to a maximum of 10 items:
+            List extranets, limiting to a maximum of 10 items:
 
-            >>> for label in zia.labels.list_labels(max_items=10):
-            ...    print(label)
+            >>> for extranet in zia.traffic_extranet.list_extranets(max_items=10):
+            ...    print(extranet)
 
-            List labels, returning 200 items per page for a maximum of 2 pages:
+            List extranets, returning 200 items per page for a maximum of 2 pages:
 
-            >>> for label in zia.labels.list_labels(page_size=200, max_pages=2):
-            ...    print(label)
+            >>> for extranet in zia.traffic_extranet.list_extranets(page_size=200, max_pages=2):
+            ...    print(extranet)
 
         """
         http_method = "get".upper()
         api_url = format_url(f"""
             {self._zia_base_endpoint}
-            /ruleLabels
+            /extranet
         """)
 
         query_params = query_params or {}
@@ -93,27 +94,27 @@ class RuleLabelsAPI(APIClient):
         try:
             result = []
             for item in response.get_results():
-                result.append(RuleLabels(
+                result.append(TrafficExtranet(
                     self.form_response_body(item))
                 )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def get_label(self, label_id: int) -> tuple:
+    def get_extranet(self, extranet_id: int) -> tuple:
         """
-        Fetches a specific rule labels by ID.
+        Fetches a specific extranet by ID.
 
         Args:
-            label_id (int): The unique identifier for the rule label.
+            extranet_id (int): The unique identifier for the extranet.
 
         Returns:
-            tuple: A tuple containing (Rule Label instance, Response, error).
+            tuple: A tuple containing (Extranet instance, Response, error).
         """
         http_method = "get".upper()
         api_url = format_url(f"""
             {self._zia_base_endpoint}
-            /ruleLabels/{label_id}
+            /extranet/{extranet_id}
         """)
 
         body = {}
@@ -126,40 +127,40 @@ class RuleLabelsAPI(APIClient):
             return (None, None, error)
 
         response, error = self._request_executor\
-            .execute(request, RuleLabels)
+            .execute(request, TrafficExtranet)
         if error:
             return (None, response, error)
 
         try:
-            result = RuleLabels(
+            result = TrafficExtranet(
                 self.form_response_body(response.get_body())
             )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
-
-    def add_label(self, **kwargs) -> tuple:
+    
+    def add_extranet(self, **kwargs) -> tuple:
         """
-        Creates a new ZIA Rule Label.
+        Adds a new extranet for the organization.
 
         Args:
-            label (dict or object):
-                The label data to be sent in the request.
+            name (str): The name of the extranet
+            description (str): The description of the extranet
+            description (str): The description of the extranet
 
         Returns:
-            tuple: A tuple containing the newly added Rule Label, response, and error.
+            tuple: A tuple containing the newly added Extranet, response, and error.
         """
         http_method = "post".upper()
         api_url = format_url(
             f"""
             {self._zia_base_endpoint}
-            /ruleLabels
+            /extranet
         """
         )
 
         body = kwargs
 
-        # Create the request with no empty param handling logic
         request, error = self._request_executor\
             .create_request(
             method=http_method,
@@ -172,32 +173,32 @@ class RuleLabelsAPI(APIClient):
 
         # Execute the request
         response, error = self._request_executor\
-            .execute(request, RuleLabels)
+            .execute(request, TrafficExtranet)
         if error:
             return (None, response, error)
 
         try:
-            result = RuleLabels(
+            result = TrafficExtranet(
                 self.form_response_body(response.get_body())
             )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def update_label(self, label_id: int, **kwargs) -> tuple:
+    def update_extranet(self, extranet_id: int, **kwargs) -> tuple:
         """
-        Updates information for the specified ZIA Rule Label.
+        Updates information for the specified ZIA Extranet.
 
         Args:
-            label_id (int): The unique ID for the Rule Label.
+            extranet_id (int): The unique ID for the Extranet.
 
         Returns:
-            tuple: A tuple containing the updated Rule Label, response, and error.
+            tuple: A tuple containing the updated Extranet, response, and error.
         """
         http_method = "put".upper()
         api_url = format_url(f"""
             {self._zia_base_endpoint}
-            /ruleLabels/{label_id}
+            /extranet/{extranet_id}
         """)
         body = {}
 
@@ -211,25 +212,24 @@ class RuleLabelsAPI(APIClient):
 
         # Execute the request
         response, error = self._request_executor\
-            .execute(request, RuleLabels)
+            .execute(request, TrafficExtranet)
         if error:
             return (None, response, error)
 
-        # Parse the response into a RuleLabels instance
         try:
-            result = RuleLabels(
+            result = TrafficExtranet(
                 self.form_response_body(response.get_body())
             )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def delete_label(self, label_id: int) -> tuple:
+    def delete_extranet(self, extranet_id: int) -> tuple:
         """
-        Deletes the specified Rule Label.
+        Deletes the specified Extranet.
 
         Args:
-            label_id (str): The unique identifier of the Rule Label.
+            extranet_id (str): The unique identifier of the Extranet.
 
         Returns:
             tuple: A tuple containing the response object and error (if any).
@@ -237,7 +237,7 @@ class RuleLabelsAPI(APIClient):
         http_method = "delete".upper()
         api_url = format_url(f"""
             {self._zia_base_endpoint}
-            /ruleLabels/{label_id}
+            /extranet/{extranet_id}
         """)
 
         params = {}

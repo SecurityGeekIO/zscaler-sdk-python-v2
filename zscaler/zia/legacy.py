@@ -483,7 +483,7 @@ class LegacyZIAClientHelper():
         """
         from zscaler.zia.endusernotification import EndUserNotificationAPI
         return EndUserNotificationAPI(self.request_executor)
-
+    
     @property
     def file_type_control_rule(self):
         """
@@ -572,6 +572,24 @@ class LegacyZIAClientHelper():
         from zscaler.zia.security_policy_settings import SecurityPolicyAPI
         return SecurityPolicyAPI(self.request_executor)
     
+    @property
+    def ssl_inspection_rules(self):
+        """
+        The interface object for the :ref:`ZIA SSL Inspection Rules interface <zia-security_policy_settings>`.
+
+        """
+        from zscaler.zia.ssl_inspection_rules import SSLInspectionAPI
+        return SSLInspectionAPI(self.request_executor)
+
+    @property
+    def traffic_extranet(self):
+        """
+        The interface object for the :ref:`ZIA Extranet interface <zia-traffic_extranet>`.
+
+        """
+        from zscaler.zia.traffic_extranet import TrafficExtranetAPI
+        return TrafficExtranetAPI(self.request_executor)
+
     @property
     def traffic_gre_tunnel(self):
         """

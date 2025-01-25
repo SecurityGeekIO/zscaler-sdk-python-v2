@@ -1561,7 +1561,7 @@ class PolicySetControllerAPI(APIClient):
                     ('trusted_network', 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxx', True)]
 
         Returns:
-            :obj:`Box`: The resource record of the newly created access policy rule.
+            :obj:`Tuple`: The resource record of the newly created access policy rule.
 
         """
         # Retrieve policy_set_id explicitly
@@ -2830,7 +2830,7 @@ class PolicySetControllerAPI(APIClient):
                 - share_session (bool): Indicates PRA Session Control/Monitoring capabilities to enable PRA Session Monitoring.
 
         Returns:
-            :obj:`Box`: The resource record of the newly created Capabilities rule.
+            :obj:`Tuple`: The resource record of the newly created Capabilities rule.
 
         Example:
             Add a new capability rule with various capabilities and conditions:
@@ -2993,7 +2993,7 @@ class PolicySetControllerAPI(APIClient):
                 - share_session (bool): Indicates PRA Session Control/Monitoring capabilities to enable PRA Session Monitoring.
 
         Returns:
-            :obj:`Box`: The updated policy-capability-rule resource record.
+            :obj:`Tuple`: The updated policy-capability-rule resource record.
 
         Examples:
             Updates the name and capabilities for an existing Capability Policy rule:
@@ -3153,7 +3153,7 @@ class PolicySetControllerAPI(APIClient):
                         `zpn_client_type_machine_tunnel`, `zpn_client_type_zapp`, `zpn_client_type_zapp_partner`
 
         Returns:
-            :obj:`Box`: The resource record of the newly created Redirection Policy rule.
+            :obj:`Tuple`: The resource record of the newly created Redirection Policy rule.
 
         Example:
             Add a new redirection rule with various conditions and service edge group IDs:
@@ -3294,7 +3294,7 @@ class PolicySetControllerAPI(APIClient):
                     ]),
 
         Returns:
-            :obj:`Box`: The updated policy-rule resource record.
+            :obj:`Tuple`: The updated policy-rule resource record.
 
         Examples:
             Updates the name only for an Access Policy rule:

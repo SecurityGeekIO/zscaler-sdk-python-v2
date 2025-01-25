@@ -162,7 +162,7 @@ class AdminUsersAPI(APIClient):
                 be provided if the admin user's scope is set to ``organization``.
 
         Returns:
-            :obj:`Box`: The newly created admin user resource record.
+            :obj:`Tuple`: The newly created admin user resource record.
 
         Examples:
 

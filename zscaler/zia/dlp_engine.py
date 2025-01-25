@@ -102,7 +102,7 @@ class DLPEngineAPI(APIClient):
             engine_id (str): The unique identifier for the DLP Engine.
 
         Returns:
-            :obj:`Box`: The DLP Engine resource record.
+            :obj:`Tuple`: The DLP Engine resource record.
 
         Examples:
             >>> engine = zia.dlp.get_dlp_engines('99999')

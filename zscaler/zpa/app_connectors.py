@@ -99,7 +99,7 @@ class AppConnectorControllerAPI(APIClient):
             connector_id (str): The unique id for the ZPA App Connector.
 
         Returns:
-            :obj:`Box`: The specified App Connector resource record.
+            :obj:`Tuple`: The specified App Connector resource record.
 
         Examples:
             >>> app_connector = zpa.connectors.get_connector('99999')
@@ -152,7 +152,7 @@ class AppConnectorControllerAPI(APIClient):
             **name (str): The name of the App Connector.
 
         Returns:
-            :obj:`Box`: The updated App Connector resource record.
+            :obj:`Tuple`: The updated App Connector resource record.
 
         Examples:
             Update an App Connector name and disable it.

@@ -138,7 +138,7 @@ class PacFilesAPI(APIClient):
                                     Accepts only the value 'pac_content'.
 
         Returns:
-            :obj:`Box`: The PAC file version resource record.
+            :obj:`Tuple`: The PAC file version resource record.
 
         Example:
             >>> pac_file_version = zia.get_pac_file_version('12345', '1', filter='pac_content')

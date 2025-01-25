@@ -154,7 +154,7 @@ class ZPAGatewayAPI(APIClient):
                 is configured
 
         Returns:
-            :obj:`Box`: The newly added ZPA Gateway resource record.
+            :obj:`Tuple`: The newly added ZPA Gateway resource record.
         """
         payload = {"name": name, "type": "ZPA"}
 
@@ -211,7 +211,7 @@ class ZPAGatewayAPI(APIClient):
                 is configured
 
         Returns:
-            :obj:`Box`: The updated ZPA Gateway resource record.
+            :obj:`Tuple`: The updated ZPA Gateway resource record.
         """
         payload = convert_keys(self.get_gateway(gateway_id))
 

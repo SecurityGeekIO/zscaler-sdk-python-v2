@@ -49,7 +49,7 @@ class CloudAppsAPI(APIClient):
         List all predefined and custom cloud applications by name and id.
 
         Returns:
-            :obj:`BoxList` of :obj:`Box`: A list of cloud applications.
+            :obj:`BoxList` of :obj:`Tuple`: A list of cloud applications.
 
         Examples:
             List all cloud applications::
@@ -97,7 +97,7 @@ class CloudAppsAPI(APIClient):
         List all custom tags by name and id.
 
         Returns:
-            :obj:`BoxList` of :obj:`Box`: A list of custom tags available to assign to cloud applications.
+            :obj:`BoxList` of :obj:`Tuple`: A list of custom tags available to assign to cloud applications.
 
         Examples:
             List all custom tags::

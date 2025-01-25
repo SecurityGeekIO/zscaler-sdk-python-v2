@@ -103,7 +103,7 @@ class DLPTemplatesAPI(APIClient):
             template_id (int): The unique identifer for the DLP notification template.
 
         Returns:
-            :obj:`Box`: The DLP template resource record.
+            :obj:`Tuple`: The DLP template resource record.
 
         Examples:
             >>> template = zia.dlp.get_dlp_templates('99999')
@@ -153,7 +153,7 @@ class DLPTemplatesAPI(APIClient):
             html_message (str): Template for the HTML message body displayed in the DLP notification email.
 
         Returns:
-            :obj:`Box`: The newly created DLP Notification Template resource record.
+            :obj:`Tuple`: The newly created DLP Notification Template resource record.
 
         Examples:
             Create a new DLP Notification Template:

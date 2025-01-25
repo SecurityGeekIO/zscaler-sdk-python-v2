@@ -127,7 +127,7 @@ class ProvisioningKeyAPI(APIClient):
             microtenant_id (str): The unique identifier for the microtenant.
 
         Returns:
-            :obj:`Box`: The requested provisioning key resource record.
+            :obj:`Tuple`: The requested provisioning key resource record.
 
         Examples:
             Get the specified App Connector key.
@@ -192,7 +192,7 @@ class ProvisioningKeyAPI(APIClient):
             **kwargs: Additional optional attributes.
 
         Returns:
-            :obj:`Box`: The newly created Provisioning Key resource record.
+            :obj:`Tuple`: The newly created Provisioning Key resource record.
         """
         if not key_type:
             raise ValueError("key_type must be provided.")
@@ -264,7 +264,7 @@ class ProvisioningKeyAPI(APIClient):
             microtenant_id (str, optional): The microtenant ID.
 
         Returns:
-            :obj:`Box`: The updated Provisioning Key resource record.
+            :obj:`Tuple`: The updated Provisioning Key resource record.
         """
         if not key_type:
             raise ValueError("key_type must be provided.")

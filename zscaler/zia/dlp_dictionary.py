@@ -98,7 +98,7 @@ class DLPDictionaryAPI(APIClient):
             dict_id (str): The unique id for the DLP Dictionary.
 
         Returns:
-            :obj:`Box`: The ZIA DLP Dictionary resource record.
+            :obj:`Tuple`: The ZIA DLP Dictionary resource record.
 
         Examples:
             >>> pprint(zia.dlp.get_dict('3'))
@@ -160,7 +160,7 @@ class DLPDictionaryAPI(APIClient):
                     ('unique', '[A-Z]{6}[A-Z0-9]{2,5}')
 
         Returns:
-            :obj:`Box`: The newly created DLP Dictionary resource record.
+            :obj:`Tuple`: The newly created DLP Dictionary resource record.
 
         Examples:
             Match text found that contains an IPv4 address using patterns:

@@ -15,21 +15,21 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.request_executor import RequestExecutor
-from zscaler.utils import format_url
+from zscaler.utils import format_url, transform_common_id_fields, reformat_params
 from zscaler.api_client import APIClient
 from zscaler.zia.models.cloudfirewalldnsrules import FirewallDNSRules
 
 
 class FirewallDNSRulesAPI(APIClient):
 
-    reformat_params = [
-        ("departments", "departments"),
-        ("groups", "groups"),
-        ("users", "users"),
-        ("labels", "labels"),
-        ("locations", "locations"),
-        ("location_groups", "locationGroups"),
-    ]
+    # reformat_params = [
+    #     ("departments", "departments"),
+    #     ("groups", "groups"),
+    #     ("users", "users"),
+    #     ("labels", "labels"),
+    #     ("locations", "locations"),
+    #     ("location_groups", "locationGroups"),
+    # ]
 
     _zia_base_endpoint = "/zia/api/v1"
 
@@ -224,8 +224,10 @@ class FirewallDNSRulesAPI(APIClient):
         body = kwargs
 
         # Convert 'enabled' to 'state' (ENABLED/DISABLED) if it's present in the payload
-        if "enabled" in body:
-            body["state"] = "ENABLED" if body.pop("enabled") else "DISABLED"
+        if "enabled" in kwargs:
+            kwargs["state"] = "ENABLED" if kwargs.pop("enabled") else "DISABLED"
+            
+        transform_common_id_fields(reformat_params, body, body)
 
         # Create the request
         request, error = self._request_executor\
@@ -323,8 +325,10 @@ class FirewallDNSRulesAPI(APIClient):
         body = kwargs
 
         # Convert 'enabled' to 'state' (ENABLED/DISABLED) if it's present in the payload
-        if "enabled" in body:
-            body["state"] = "ENABLED" if body.pop("enabled") else "DISABLED"
+        if "enabled" in kwargs:
+            kwargs["state"] = "ENABLED" if kwargs.pop("enabled") else "DISABLED"
+            
+        transform_common_id_fields(reformat_params, body, body)
 
         # Create the request
         request, error = self._request_executor\

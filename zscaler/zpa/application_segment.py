@@ -347,7 +347,7 @@ class ApplicationSegmentAPI(APIClient):
             ...
 
         Returns:
-            :obj:`Box`: The resource record for the moved application segment.
+            :obj:`Tuple`: The resource record for the moved application segment.
 
         Examples:
             Moving an application segment to another microtenant:
@@ -417,7 +417,7 @@ class ApplicationSegmentAPI(APIClient):
             ...
 
         Returns:
-            :obj:`Box`: An empty Box object if the operation is successful.
+            :obj:`Tuple`: An empty Box object if the operation is successful.
 
         Examples:
             Moving an application segment to another microtenant:

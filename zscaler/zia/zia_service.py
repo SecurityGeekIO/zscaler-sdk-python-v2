@@ -32,7 +32,9 @@ from zscaler.zia.remoteassistance import RemoteAssistanceAPI
 from zscaler.zia.rule_labels import RuleLabelsAPI
 from zscaler.zia.sandbox_rules import SandboxRulesAPI
 from zscaler.zia.security_policy_settings import SecurityPolicyAPI
+from zscaler.zia.ssl_inspection_rules import SSLInspectionAPI
 from zscaler.zia.intermediate_certificates import IntermediateCertsAPI
+from zscaler.zia.traffic_extranet import TrafficExtranetAPI
 from zscaler.zia.traffic_gre_tunnels import TrafficForwardingGRETunnelAPI
 from zscaler.zia.traffic_vpn_credentials import TrafficVPNCredentialAPI
 from zscaler.zia.traffic_static_ip import TrafficStaticIPAPI
@@ -321,6 +323,22 @@ class ZIAService:
 
         """
         return SecurityPolicyAPI(self._request_executor)
+
+    @property
+    def ssl_inspection_rules(self):
+        """
+        The interface object for the :ref:`ZIA SSL Inspection Rules interface <zia-ssl_inspection_rules>`.
+
+        """
+        return SSLInspectionAPI(self._request_executor)
+
+    @property
+    def traffic_extranet(self):
+        """
+        The interface object for the :ref:`ZIA Extranet interface <zia-traffic_extranet>`.
+
+        """
+        return TrafficExtranetAPI(self._request_executor)
 
     @property
     def traffic_gre_tunnel(self):

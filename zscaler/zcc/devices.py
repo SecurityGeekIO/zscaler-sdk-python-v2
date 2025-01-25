@@ -195,7 +195,7 @@ class DevicesAPI(APIClient):
                 The username of the user whose devices will be removed.
 
         Returns:
-            :obj:`Box`: Server response containing the total number of devices removed.
+            :obj:`Tuple`: Server response containing the total number of devices removed.
 
         Examples:
             Soft-remove devices using ZCC version 3.7.1.44 from the Client Connector Portal:

@@ -102,7 +102,7 @@ class AdminRolesAPI(APIClient):
             name (str): The name of the admin roles  to retrieve.
 
         Returns:
-            :obj:`Box`: The admin roles  if found, otherwise None.
+            :obj:`Tuple`: The admin roles  if found, otherwise None.
 
         Examples:
             >>> role = zia.admin_and_role_management.get_roles_by_name('Super Admin')
@@ -122,7 +122,7 @@ class AdminRolesAPI(APIClient):
             name (str): The ID of the admin roles  to retrieve.
 
         Returns:
-            :obj:`Box`: The admin roles  if found, otherwise None.
+            :obj:`Tuple`: The admin roles  if found, otherwise None.
 
         Examples:
             >>> role = zia.admin_and_role_management.get_roles_by_id('123456789')
