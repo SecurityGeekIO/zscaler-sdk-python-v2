@@ -303,7 +303,7 @@ class LegacyZCCClient(Client):
         cloud = config.get("cloud", os.getenv("ZCC_CLOUD"))
         timeout = config.get("timeout", 240)
         cache = config.get("cache", None)
-        fail_safe = config.get("failSafe", None)
+        # fail_safe = config.get("failSafe", None)
 
         # Initialize the LegacyZCCClientHelper with the extracted parameters
         legacy_helper = LegacyZCCClientHelper(
@@ -312,6 +312,6 @@ class LegacyZCCClient(Client):
             cloud=cloud,
             timeout=timeout,
             cache=cache,
-            fail_safe=fail_safe,
+            # fail_safe=fail_safe,
         )
         super().__init__(config, zcc_legacy_client=legacy_helper)
