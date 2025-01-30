@@ -14,6 +14,8 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
+from zscaler.zcc.admin_user import AdminUserAPI
+from zscaler.zcc.company import CompanyInfoAPI
 from zscaler.zcc.devices import DevicesAPI
 from zscaler.zcc.manage_pass import ManagePassAPI
 from zscaler.zcc.secrets import SecretsAPI
@@ -48,3 +50,19 @@ class ZCCService:
 
         """
         return ManagePassAPI(self._request_executor)
+
+    @property
+    def admin_user(self):
+        """
+        The interface object for the :ref:`ZCC admin user interface <zcc-admin_user>`.
+
+        """
+        return AdminUserAPI(self._request_executor)
+    
+    @property
+    def company(self):
+        """
+        The interface object for the :ref:`ZCC company info interface <zcc-company_info>`.
+
+        """
+        return CompanyInfoAPI(self._request_executor)

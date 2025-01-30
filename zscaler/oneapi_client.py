@@ -177,7 +177,7 @@ class Client:
         if self.use_legacy_client:
             return self.zcc_legacy_client
         if self._zcc is None:
-            self._zcc = ZCCService(self._request_executor)
+            self._zcc = ZCCService(self)
         return self._zcc
 
     @property
@@ -266,7 +266,10 @@ class LegacyZPAClient(Client):
             cache=cache,
             fail_safe=fail_safe,
         )
-        super().__init__(config, zpa_legacy_client=legacy_helper)
+        super().__init__(
+            config, 
+            zpa_legacy_client=legacy_helper
+        )
 
 class LegacyZIAClient(Client):
     def __init__(
@@ -298,20 +301,25 @@ class LegacyZCCClient(Client):
         self,
         config: dict = {},
     ):
-        apikey = config.get("apikey", os.getenv("ZCC_CLIENT_ID"))
+        api_key = config.get("api_key", os.getenv("ZCC_CLIENT_ID"))
         secret_key = config.get("secret_key", os.getenv("ZCC_CLIENT_SECRET"))
         cloud = config.get("cloud", os.getenv("ZCC_CLOUD"))
         timeout = config.get("timeout", 240)
-        cache = config.get("cache", None)
+        # cache = config.get("cache", None)
         # fail_safe = config.get("failSafe", None)
 
         # Initialize the LegacyZCCClientHelper with the extracted parameters
         legacy_helper = LegacyZCCClientHelper(
-            apikey=apikey,
+            api_key=api_key,
             secret_key=secret_key,
             cloud=cloud,
             timeout=timeout,
-            cache=cache,
+            # cache=cache,
             # fail_safe=fail_safe,
         )
-        super().__init__(config, zcc_legacy_client=legacy_helper)
+        super().__init__(
+            config, 
+            zcc_legacy_client=legacy_helper,
+            use_legacy_client=True
+            
+            )

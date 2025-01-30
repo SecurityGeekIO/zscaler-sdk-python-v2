@@ -58,10 +58,10 @@ class LegacyZCCClientHelper():
     RATE_LIMIT_RESET_TIME = timedelta(hours=1)
     DOWNLOAD_DEVICES_RESET_TIME = timedelta(days=1)
 
-    def __init__(self, apikey=None, secret_key=None, cloud=None, timeout=240, cache=None):
+    def __init__(self, api_key=None, secret_key=None, cloud=None, timeout=240, cache=None):
         from zscaler.request_executor import RequestExecutor
 
-        self._apikey = apikey or os.getenv("apikey", os.getenv(f"{self._env_base}_CLIENT_ID"))
+        self._api_key = api_key or os.getenv("api_key", os.getenv(f"{self._env_base}_CLIENT_ID"))
         self._secret_key = secret_key or os.getenv("secret_key", os.getenv(f"{self._env_base}_CLIENT_SECRET"))
         self._env_cloud = cloud or os.getenv(f"{self._env_base}_CLOUD", "zscaler")
         self.login_url = f"https://api-mobile.{self._env_cloud}.net/papi/auth/v1/login"
@@ -84,8 +84,8 @@ class LegacyZCCClientHelper():
         # Correct `config` initialization with required keys
         self.config = {
             "client": {
-                "apikey": self._apikey,
-                "secret_key": self._secret_key or "",
+                "apiKey": self._api_key,
+                "secretKey": self._secret_key or "",
                 "cloud": self._env_cloud,
                 "requestTimeout": self.timeout,
                 "rateLimit": {
@@ -139,7 +139,7 @@ class LegacyZCCClientHelper():
 
     # @retry_with_backoff(retries=5)
     def login(self):
-        data = {"apiKey": self._apikey, "secretKey": self._secret_key}
+        data = {"apiKey": self._api_key, "secretKey": self._secret_key}
         headers = {
             "Content-Type": "application/json",
             "Accept": "*/*",
@@ -262,3 +262,20 @@ class LegacyZCCClientHelper():
         from zscaler.zcc.devices import DevicesAPI
         return DevicesAPI(self.request_executor)
     
+    @property
+    def admin_user(self):
+        """
+        The interface object for the :ref:`ZCC admin user interface <zcc-admin_user>`.
+
+        """
+        from zscaler.zcc.admin_user import AdminUserAPI
+        return AdminUserAPI(self.request_executor)
+    
+    @property
+    def company(self):
+        """
+        The interface object for the :ref:`ZCC admin user interface <zcc-company_info>`.
+
+        """
+        from zscaler.zcc.company import CompanyInfoAPI
+        return CompanyInfoAPI(self.request_executor)

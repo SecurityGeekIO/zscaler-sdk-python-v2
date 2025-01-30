@@ -15,6 +15,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.oneapi_object import ZscalerObject
+from zscaler.oneapi_collection import ZscalerCollection
 
 
 class Device(ZscalerObject):
@@ -134,6 +135,51 @@ class Device(ZscalerObject):
             "user": self.user,
             "vpnState": self.vpn_state,
             "zappArch": self.zapp_arch,
+        }
+        parent_req_format.update(current_obj_format)
+        return parent_req_format
+
+class ForceRemoveDevices(ZscalerObject):
+    """
+    A class for ForceRemoveDevices objects.
+    """
+
+    def __init__(self, config=None):
+        """
+        Initialize the ForceRemoveDevices model based on API response.
+
+        Args:
+            config (dict): A dictionary representing the configuration.
+        """
+        super().__init__(config)
+
+        if config:
+            self.client_connector_version = ZscalerCollection.form_list(
+                config["clientConnectorVersion"] if "clientConnectorVersion" in config else [], str
+            )
+            self.os_type = config["osType"] \
+                if "osType" in config else None
+            self.udids = ZscalerCollection.form_list(
+                config["udids"] if "udids" in config else [], str
+            )
+            self.user_name = config["userName"] \
+                if "userName" in config else None
+        else:
+            self.client_connector_version = ZscalerCollection.form_list([], str)
+            self.os_type = None
+            self.udids = ZscalerCollection.form_list([], str)
+            self.user_name = None
+
+    def request_format(self):
+        """
+        Return the object as a dictionary in the format expected for API requests.
+        """
+        parent_req_format = super().request_format()
+        current_obj_format = {
+            "clientConnectorVersion": self.client_connector_version,
+            "osType": self.os_type,
+            "udids": self.udids,
+            "userName": self.user_name
         }
         parent_req_format.update(current_obj_format)
         return parent_req_format
