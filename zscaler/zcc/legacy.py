@@ -1,14 +1,12 @@
 import logging
 import os
 import urllib.parse
-import uuid
 import time
 import requests
 from datetime import datetime, timedelta
 
 from zscaler import __version__
 from zscaler.cache.no_op_cache import NoOpCache
-from zscaler.cache.zscaler_cache import ZscalerCache
 from zscaler.user_agent import UserAgent
 from zscaler.utils import (
     is_token_expired,
@@ -20,7 +18,7 @@ setup_logging(logger_name="zscaler-sdk-python")
 logger = logging.getLogger("zscaler-sdk-python")
 
 
-class LegacyZCCClientHelper():
+class LegacyZCCClientHelper:
     """
     A Controller to access Endpoints in the Zscaler Mobile Admin Portal API.
 
@@ -66,20 +64,10 @@ class LegacyZCCClientHelper():
         self._env_cloud = cloud or os.getenv(f"{self._env_base}_CLOUD", "zscaler")
         self.login_url = f"https://api-mobile.{self._env_cloud}.net/papi/auth/v1/login"
         self.url = f"https://api-mobile.{self._env_cloud}.net"
-        
+
         self.timeout = timeout
-        
-        # Correct cache initialization
-        cache_enabled = os.environ.get("ZSCALER_CLIENT_CACHE_ENABLED", "true").lower() == "true"
-        if cache is None:
-            if cache_enabled:
-                ttl = int(os.environ.get("ZSCALER_CLIENT_CACHE_DEFAULT_TTL", 3600))
-                tti = int(os.environ.get("ZSCALER_CLIENT_CACHE_DEFAULT_TTI", 1800))
-                self.cache = ZscalerCache(ttl=ttl, tti=tti)
-            else:
-                self.cache = NoOpCache()
-        else:
-            self.cache = cache
+
+        self.cache = NoOpCache()
 
         # Correct `config` initialization with required keys
         self.config = {
@@ -88,19 +76,15 @@ class LegacyZCCClientHelper():
                 "secretKey": self._secret_key or "",
                 "cloud": self._env_cloud,
                 "requestTimeout": self.timeout,
-                "rateLimit": {
-                    "maxRetries": 3
-                },
+                "rateLimit": {"maxRetries": 3},
                 "cache": {
-                    "enabled": cache_enabled,
+                    "enabled": False,
                 },
             }
         }
 
         # Correct initialization of the request executor
-        self.request_executor = RequestExecutor(
-            self.config, self.cache, zcc_legacy_client=self
-        )
+        self.request_executor = RequestExecutor(self.config, self.cache, zcc_legacy_client=self)
 
         self.user_agent = UserAgent().get_user_agent_string()
         self.auth_token = None
@@ -114,7 +98,6 @@ class LegacyZCCClientHelper():
         # Track specific download devices endpoint usage
         self.download_devices_count = 0
         self.download_devices_last_reset = datetime.utcnow()
-
 
     def __enter__(self):
         self.refreshToken()
@@ -187,7 +170,7 @@ class LegacyZCCClientHelper():
 
     def get_base_url(self, endpoint):
         return self.url
-    
+
     def send(self, method, path, json=None, params=None, stream=False):
         """
         Sends a request using the legacy client.
@@ -260,8 +243,9 @@ class LegacyZCCClientHelper():
 
         """
         from zscaler.zcc.devices import DevicesAPI
+
         return DevicesAPI(self.request_executor)
-    
+
     @property
     def admin_user(self):
         """
@@ -269,8 +253,9 @@ class LegacyZCCClientHelper():
 
         """
         from zscaler.zcc.admin_user import AdminUserAPI
+
         return AdminUserAPI(self.request_executor)
-    
+
     @property
     def company(self):
         """
@@ -278,4 +263,5 @@ class LegacyZCCClientHelper():
 
         """
         from zscaler.zcc.company import CompanyInfoAPI
+
         return CompanyInfoAPI(self.request_executor)
