@@ -39,7 +39,7 @@ class PacFilesAPI(APIClient):
 
         Args:
             query_params {dict}: Map of query parameters for the request.
-                [query_params.search] {str}: Search string for filtering results.
+                ``[query_params.search]`` {str}: Search string for filtering results.
 
         Returns:
             tuple: A tuple containing (list of Pac Files instances, Response, error)
@@ -193,7 +193,7 @@ class PacFilesAPI(APIClient):
             Additional optional parameters as key-value pairs.
 
         Returns:
-            Box: The newly added PAC file resource record.
+            Tuple: The newly added PAC file resource record.
 
         Example:
             >>> pac_file = zia.add_pac_file(
@@ -272,7 +272,7 @@ class PacFilesAPI(APIClient):
             Additional optional parameters as key-value pairs.
 
         Returns:
-            Box: The newly cloned PAC file resource record.
+            Tuple: The newly cloned PAC file resource record.
 
         Example:
             >>> pac_file = zia.clone_pac_file(

@@ -38,12 +38,10 @@ class TrafficExtranetAPI(APIClient):
 
         Args:
             query_params {dict}: Map of query parameters for the request.
-                [query_params.page_size] {int}: Page size for pagination.
-                [query_params.search] {str}: Search string for filtering results.
-                [query_params.order_by] {str}: The field used to sort the list in a specific order
-                [query_params.order] {str}: The arrangement of the list in ascending or descending order i.e ASC
-                [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
-                [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
+                ``[query_params.page_size]`` {int}: Page size for pagination.
+                ``[query_params.search]`` {str}: Search string for filtering results.
+                ``[query_params.order_by]`` {str}: The field used to sort the list in a specific order
+                ``[query_params.order]`` {str}: The arrangement of the list in ascending or descending order i.e ASC
 
         Returns:
             tuple: A tuple containing (list of Extranet instances, Response, error)

@@ -17,14 +17,14 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 from zscaler.oneapi_object import ZscalerObject
 
 
-class Proxygatways(ZscalerObject):
+class ProxyGatways(ZscalerObject):
     """
-    A class for Proxygatways objects.
+    A class for ProxyGatways objects.
     """
 
     def __init__(self, config=None):
         """
-        Initialize the Proxygatways model based on API response.
+        Initialize the ProxyGatways model based on API response.
 
         Args:
             config (dict): A dictionary representing the configuration.

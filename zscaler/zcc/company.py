@@ -50,7 +50,6 @@ class CompanyInfoAPI(APIClient):
         """
         )
 
-        # Prepare request body and headers
         body = {}
         headers = {}
 
@@ -58,16 +57,15 @@ class CompanyInfoAPI(APIClient):
             create_request(http_method, api_url, body, headers)
 
         if error:
-            return (None, None, error)
+            return None
 
         response, error = self._request_executor.execute(request)
         if error:
-            return (None, response, error)
+            return None
 
         try:
-            result = []
-            for item in response.get_results():
-                result.append((self.form_response_body(item)))
+            result = self.form_response_body(response.get_body())
         except Exception as error:
-            return (None, response, error)
-        return (result, response, None)
+            return None
+
+        return result

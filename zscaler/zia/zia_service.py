@@ -10,7 +10,7 @@ from zscaler.zia.authentication_settings import AuthenticationSettingsAPI
 from zscaler.zia.cloudappcontrol import CloudAppControlAPI
 from zscaler.zia.cloud_applications import CloudApplicationsAPI
 from zscaler.zia.cloud_nss import CloudNSSAPI
-from zscaler.zia.isolation_profile import CBIProfileAPI
+from zscaler.zia.cloud_browser_isolation import CBIProfileAPI
 from zscaler.zia.sandbox import CloudSandboxAPI
 from zscaler.zia.dlp_dictionary import DLPDictionaryAPI
 from zscaler.zia.dlp_engine import DLPEngineAPI
@@ -18,7 +18,7 @@ from zscaler.zia.dlp_web_rules import DLPWebRuleAPI
 from zscaler.zia.dlp_templates import DLPTemplates
 from zscaler.zia.dlp_resources import DLPResourcesAPI
 from zscaler.zia.device_management import DeviceManagementAPI
-from zscaler.zia.endusernotification import EndUserNotificationAPI
+from zscaler.zia.end_user_notification import EndUserNotificationAPI
 from zscaler.zia.file_type_control_rule import FileTypeControlRuleAPI
 from zscaler.zia.cloud_firewall_dns import FirewallDNSRulesAPI
 from zscaler.zia.cloud_firewall_ips import FirewallIPSRulesAPI
@@ -28,7 +28,8 @@ from zscaler.zia.malware_protection_policy import MalwareProtectionPolicyAPI
 from zscaler.zia.locations import LocationsAPI
 from zscaler.zia.organization_information import OrganizationInformationAPI
 from zscaler.zia.pac_files import PacFilesAPI
-from zscaler.zia.remoteassistance import RemoteAssistanceAPI
+from zscaler.zia.policy_export import PolicyExportAPI
+from zscaler.zia.remote_assistance import RemoteAssistanceAPI
 from zscaler.zia.rule_labels import RuleLabelsAPI
 from zscaler.zia.sandbox_rules import SandboxRulesAPI
 from zscaler.zia.security_policy_settings import SecurityPolicyAPI
@@ -229,9 +230,9 @@ class ZIAService:
         return FileTypeControlRuleAPI(self._request_executor)
 
     @property
-    def isolation_profile(self):
+    def cloud_browser_isolation(self):
         """
-        The interface object for the :ref:`ZIA Cloud Browser Isolation Profile <zia-isolation_profile>`.
+        The interface object for the :ref:`ZIA Cloud Browser Isolation Profile <zia-cloud_browser_isolation>`.
 
         """
         return CBIProfileAPI(self._request_executor)
@@ -283,6 +284,14 @@ class ZIAService:
 
         """
         return PacFilesAPI(self._request_executor)
+
+    @property
+    def policy_export(self):
+        """
+        The interface object for the :ref:`ZIA Policy Export interface <zia-policy_export>`.
+
+        """
+        return PolicyExportAPI(self._request_executor)
     
     @property
     def remote_assistance(self):

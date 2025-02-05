@@ -183,3 +183,70 @@ class ForceRemoveDevices(ZscalerObject):
         }
         parent_req_format.update(current_obj_format)
         return parent_req_format
+    
+class SetDeviceCleanupInfo(ZscalerObject):
+    """
+    A class for SetDeviceCleanupInfo objects.
+    """
+
+    def __init__(self, config=None):
+        """
+        Initialize the SetDeviceCleanupInfo model based on API response.
+
+        Args:
+            config (dict): A dictionary representing the configuration.
+        """
+        super().__init__(config)
+
+        if config:
+            self.active = config["active"] \
+                if "active" in config else None
+            self.auto_purge_days = config["autoPurgeDays"] \
+                if "autoPurgeDays" in config else None
+            self.auto_removal_days = config["autoRemovalDays"] \
+                if "autoRemovalDays" in config else None
+            self.company_id = config["companyId"] \
+                if "companyId" in config else None
+            self.created_by = config["createdBy"] \
+                if "createdBy" in config else None
+            self.device_exceed_limit = config["deviceExceedLimit"] \
+                if "deviceExceedLimit" in config else None
+            self.edited_by = config["editedBy"] \
+                if "editedBy" in config else None
+            self.force_remove_type = config["forceRemoveType"] \
+                if "forceRemoveType" in config else None
+            self.force_remove_type_string = config["forceRemoveTypeString"] \
+                if "forceRemoveTypeString" in config else None
+            self.id = config["id"] \
+                if "id" in config else None
+        else:
+            self.active = None
+            self.auto_purge_days = None
+            self.auto_removal_days = None
+            self.company_id = None
+            self.created_by = None
+            self.device_exceed_limit = None
+            self.edited_by = None
+            self.force_remove_type = None
+            self.force_remove_type_string = None
+            self.id = None
+
+    def request_format(self):
+        """
+        Return the object as a dictionary in the format expected for API requests.
+        """
+        parent_req_format = super().request_format()
+        current_obj_format = {
+            "active": self.active,
+            "autoPurgeDays": self.auto_purge_days,
+            "autoRemovalDays": self.auto_removal_days,
+            "companyId": self.company_id,
+            "createdBy": self.created_by,
+            "deviceExceedLimit": self.device_exceed_limit,
+            "editedBy": self.edited_by,
+            "forceRemoveType": self.force_remove_type,
+            "forceRemoveTypeString": self.force_remove_type_string,
+            "id": self.id
+        }
+        parent_req_format.update(current_obj_format)
+        return parent_req_format

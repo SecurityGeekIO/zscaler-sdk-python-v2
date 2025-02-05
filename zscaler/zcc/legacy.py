@@ -265,3 +265,66 @@ class LegacyZCCClientHelper:
         from zscaler.zcc.company import CompanyInfoAPI
 
         return CompanyInfoAPI(self.request_executor)
+    
+    @property
+    def entitlements(self):
+        """
+        The interface object for the :ref:`ZCC admin user interface <zcc-entitlements>`.
+
+        """
+        from zscaler.zcc.entitlements import EntitlementAPI
+        return EntitlementAPI(self.request_executor)
+
+    @property
+    def forwarding_profile(self):
+        """
+        The interface object for the :ref:`ZCC web forwarding profile interface <zcc-forwarding_profile>`.
+
+        """
+        from zscaler.zcc.forwarding_profile import ForwardingProfileAPI
+        return ForwardingProfileAPI(self.request_executor)
+
+    @property
+    def fail_open_policy(self):
+        """
+        The interface object for the :ref:`ZCC fail open policy interface <zcc-fail_open_policy>`.
+
+        """
+        from zscaler.zcc.fail_open_policy import FailOpenPolicyAPI
+        return FailOpenPolicyAPI(self.request_executor)
+    
+    @property
+    def web_policy(self):
+        """
+        The interface object for the :ref:`ZCC web policy interface <zcc-web_policy>`.
+
+        """
+        from zscaler.zcc.web_policy import WebPolicyAPI
+        return WebPolicyAPI(self.request_executor)
+
+    @property
+    def web_app_service(self):
+        """
+        The interface object for the :ref:`ZCC web app service interface <zcc-web_app_service>`.
+
+        """
+        from zscaler.zcc.web_app_service import WebAppServiceAPI
+        return WebAppServiceAPI(self.request_executor)
+    
+    @property
+    def web_privacy(self):
+        """
+        The interface object for the :ref:`ZCC web privacy interface <zcc-web_privacy>`.
+
+        """
+        from zscaler.zcc.web_privacy import WebPrivacyAPI
+        return WebPrivacyAPI(self.request_executor)
+    
+    @property
+    def trusted_networks(self):
+        """
+        The interface object for the :ref:`ZCC trusted networks interface <zcc-trusted_networks>`.
+
+        """
+        from zscaler.zcc.trusted_networks import TrustedNetworksAPI
+        return TrustedNetworksAPI(self.request_executor)

@@ -24,23 +24,6 @@ class DLPWebRuleAPI(APIClient):
     A Client object for the DLP Web Rule resource.
     """
 
-    # reformat_params = [
-    #     ("auditor", "auditor"),
-    #     ("dlp_engines", "dlpEngines"),
-    #     ("departments", "departments"),
-    #     ("excluded_departments", "excludedDepartments"),
-    #     ("excluded_groups", "excludedGroups"),
-    #     ("excluded_users", "excludedUsers"),
-    #     ("groups", "groups"),
-    #     ("labels", "labels"),
-    #     ("locations", "locations"),
-    #     ("location_groups", "locationGroups"),
-    #     ("notification_template", "notificationTemplate"),
-    #     ("time_windows", "timeWindows"),
-    #     ("users", "users"),
-    #     ("url_categories", "urlCategories"),
-    # ]
-
     _zia_base_endpoint = "/zia/api/v1"
 
     def __init__(self, request_executor):
@@ -58,10 +41,8 @@ class DLPWebRuleAPI(APIClient):
 
         Args:
             query_params {dict}: Map of query parameters for the request.
-                [query_params.pagesize] {int}: Page size for pagination.
-                [query_params.search] {str}: Search string for filtering results.
-                [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
-                [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
+                ``[query_params.page_size]`` {int}: Page size for pagination.
+                ``[query_params.search]`` {str}: Search string for filtering results.
 
         Returns:
             tuple: A tuple containing (list of DLP Web Rules instances, Response, error)

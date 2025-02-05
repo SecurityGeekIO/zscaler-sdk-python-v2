@@ -22,22 +22,6 @@ from zscaler.utils import transform_common_id_fields, format_url, reformat_param
 
 
 class CloudAppControlAPI(APIClient):
-    # Cloud App Control filter rule keys that only require an ID to be provided.
-    # reformat_params = [
-    #     ("cbi_profile", "cbiProfile"),
-    #     ("departments", "departments"),
-    #     ("devices", "devices"),
-    #     ("device_groups", "deviceGroups"),
-    #     ("groups", "groups"),
-    #     ("labels", "labels"),
-    #     ("locations", "locations"),
-    #     ("time_windows", "timeWindows"),
-    #     ("location_groups", "locationGroups"),
-    #     ("tenancy_profile_ids", "tenancyProfileIds"),
-    #     ("sharing_domain_profiles", "sharingDomainProfiles"),
-    #     ("form_sharing_domain_profiles", "formSharingDomainProfiles"),
-    #     ("users", "users"),
-    # ]
 
     _zia_base_endpoint = "/zia/api/v1"
 
@@ -50,8 +34,8 @@ class CloudAppControlAPI(APIClient):
         Retrieves a list of granular actions supported for a specific rule type.
 
         Args:
-            rule_type (str): The type of rule for which actions should be retrieved.
-            cloud_apps (list): A list of cloud applications for filtering.
+            **rule_type (str): The type of rule for which actions should be retrieved.
+            **cloud_apps (list): A list of cloud applications for filtering.
 
         Returns:
             tuple: A tuple containing:
@@ -113,11 +97,12 @@ class CloudAppControlAPI(APIClient):
         Returns a list of all Cloud App Control rules for the specified rule type.
 
         Args:
-        Args:
             query_params {dict}: Map of query parameters for the request.
-                [query_params.pagesize] {int}: Page size for pagination.
-                [query_params.search] {str}: Search string for filtering results.
-                [query_params.rule_type] {str}: The type of rules to retrieve (e.g., "STREAMING_MEDIA").
+                ``[query_params.page_size]`` {int}: Page size for pagination.
+                
+                ``[query_params.search]`` {str}: Search string for filtering results.
+
+                ``[query_params.rule_type]`` {str}: The type of rules to retrieve (e.g., "STREAMING_MEDIA").
 
         Returns:
             tuple: The list of Cloud App Control rules.

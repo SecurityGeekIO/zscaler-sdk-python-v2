@@ -34,9 +34,9 @@ class AdminUserAPI(APIClient):
 
         Args:
             query_params {dict}: Map of query parameters for the request.
-                [query_params.user_type] {str}: Filter based on type of user.
-                [query_params.page] {int}: Specifies the page offset.
-                [query_params.page_size] {int}: Specifies the page size.
+                ``[query_params.user_type]`` {str}: Filter based on type of user.
+                ``[query_params.page]`` {int}: Specifies the page offset.
+                ``[query_params.page_size]`` {int}: Specifies the page size.
                 
         Returns:
             :obj:`list`: A list containing Admin Users in the Client Connector Portal.
@@ -80,7 +80,7 @@ class AdminUserAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
 
-    def list_admin_user_sync_info(self) -> tuple:
+    def get_admin_user_sync_info(self) -> tuple:
         """
         Returns admin user sync information Client Connector Portal.
 
@@ -105,7 +105,6 @@ class AdminUserAPI(APIClient):
         """
         )
 
-        # Prepare request body and headers
         body = {}
         headers = {}
 
@@ -113,19 +112,18 @@ class AdminUserAPI(APIClient):
             create_request(http_method, api_url, body, headers)
 
         if error:
-            return (None, None, error)
+            return None
 
         response, error = self._request_executor.execute(request)
         if error:
-            return (None, response, error)
+            return None
 
         try:
-            result = []
-            for item in response.get_results():
-                result.append((self.form_response_body(item)))
+            result = self.form_response_body(response.get_body())
         except Exception as error:
-            return (None, response, error)
-        return (result, response, None)
+            return None
+
+        return result
 
     def list_admin_roles(self, query_params=None) -> tuple:
         """
@@ -133,8 +131,8 @@ class AdminUserAPI(APIClient):
 
         Args:
             query_params {dict}: Map of query parameters for the request.
-                [query_params.page] {int}: Specifies the page offset.
-                [query_params.page_size] {int}: Specifies the page size.
+                ``[query_params.page]`` {int}: Specifies the page offset.
+                ``[query_params.page_size]`` {int}: Specifies the page size.
 
         Returns:
             :obj:`list`: A list containing admin roles in the Client Connector Portal.
@@ -174,6 +172,100 @@ class AdminUserAPI(APIClient):
             result = []
             for item in response.get_results():
                 result.append(AdminRoles(self.form_response_body(item)))
+        except Exception as error:
+            return (None, response, error)
+        return (result, response, None)
+    
+    def sync_zia_zdx_admin_users(self) -> tuple:
+        """
+        Sync Admin Users Information for ZDX and ZIA Client Connector Portal.
+
+        Args:
+            N/A
+                
+        Returns:
+            :obj:`list`: Returns Sync Admin Users Information for ZDX and ZIA.
+
+        Examples:
+            Prints Sync Admin Users Information in the Client Connector Portal to the console:
+
+            >>> for sync in zcc.admin_user.sync_zia_zdx_admin_users():
+            ...    print(sync)
+
+        """
+        http_method = "post".upper()
+        api_url = format_url(
+            f"""
+            {self._zcc_base_endpoint}
+            /syncZiaZdxAdminUsers
+        """
+        )
+
+        # Prepare request body and headers
+        body = {}
+        headers = {}
+
+        request, error = self._request_executor.\
+            create_request(http_method, api_url, body, headers)
+
+        if error:
+            return (None, None, error)
+
+        response, error = self._request_executor.execute(request)
+        if error:
+            return (None, response, error)
+
+        try:
+            result = []
+            for item in response.get_results():
+                result.append((self.form_response_body(item)))
+        except Exception as error:
+            return (None, response, error)
+        return (result, response, None)
+
+    def sync_zpa_admin_users(self) -> tuple:
+        """
+        Sync Admin Users Information for ZPA Client Connector Portal.
+
+        Args:
+            N/A
+                
+        Returns:
+            :obj:`list`: Returns Sync Admin Users Information for ZPA.
+
+        Examples:
+            Prints Sync Admin Users Information in the Client Connector Portal to the console:
+
+            >>> for sync in zcc.admin_user.sync_zpa_admin_users():
+            ...    print(sync)
+
+        """
+        http_method = "post".upper()
+        api_url = format_url(
+            f"""
+            {self._zcc_base_endpoint}
+            /syncZpaAdminUsers
+        """
+        )
+
+        # Prepare request body and headers
+        body = {}
+        headers = {}
+
+        request, error = self._request_executor.\
+            create_request(http_method, api_url, body, headers)
+
+        if error:
+            return (None, None, error)
+
+        response, error = self._request_executor.execute(request)
+        if error:
+            return (None, response, error)
+
+        try:
+            result = []
+            for item in response.get_results():
+                result.append((self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)

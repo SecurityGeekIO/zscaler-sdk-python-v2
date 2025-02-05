@@ -19,7 +19,7 @@ from zscaler.request_executor import RequestExecutor
 from zscaler.zia.models.user_management import UserManagement
 from zscaler.zia.models.user_management import Department
 from zscaler.zia.models.user_management import Groups
-from zscaler.utils import format_url, snake_to_camel
+from zscaler.utils import format_url
 
 
 class UserManagementAPI(APIClient):
@@ -39,13 +39,11 @@ class UserManagementAPI(APIClient):
 
         Args:
             query_params {dict}: Map of query parameters for the request.
-                [query_params.dept] {str}: Filters by department name. This is a `starts with` match.
-                [query_params.group] {str}: Filters by group name. This is a `starts with` match.
-                [query_params.name] {str}: Filters by user name. This is a `starts with` match.
-                [query_params.page] {int}: Specifies the page offset.
-                [query_params.pagesize] {int}: Specifies the page size. The default size is 100, but the maximum size is 1000.
-                [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
-                [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
+                ``[query_params.dept]`` {str}: Filters by department name. This is a `starts with` match.
+                ``[query_params.group]`` {str}: Filters by group name. This is a `starts with` match.
+                ``[query_params.name]`` {str}: Filters by user name. This is a `starts with` match.
+                ``[query_params.page]`` {int}: Specifies the page offset.
+                ``[query_params.page_size]`` {int}: Specifies the page size. The default size is 100, but the maximum size is 1000.
 
         Returns:
             tuple: A tuple containing (list of UserManagement instances, Response, error)
@@ -162,12 +160,10 @@ class UserManagementAPI(APIClient):
 
         Args:
             query_params {dict}: Map of query parameters for the request.
-                [query_params.include_admin_users] {bool}: Whether to include the administrator users when retrieving the list Default is True.
-                [query_params.name] {str}: Filters by user name. This is a `starts with` match.
-                [query_params.page] {int}: Specifies the page offset.
-                [query_params.pagesize] {int}: Specifies the page size. The default size is 100, but the maximum size is 1000.
-                [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
-                [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
+                ``[query_params.include_admin_users]`` {bool}: Whether to include the administrator users when retrieving the list Default is True.
+                ``[query_params.name]`` {str}: Filters by user name. This is a `starts with` match.
+                ``[query_params.page]`` {int}: Specifies the page offset.
+                ``[query_params.page_size]`` {int}: Specifies the page size. The default size is 100, but the maximum size is 1000.
 
         Returns:
             tuple: A tuple containing (list of UserManagement instances, Response, error)
@@ -450,12 +446,10 @@ class UserManagementAPI(APIClient):
 
         Args:
             query_params {dict}: Map of query parameters for the request.
-                [query_params.limit_search] {bool}: Limits the search to match against the department name only.
-                [query_params.search] {str}: The search string used to partially match against an admin/auditor user's Login ID or Name.
-                [query_params.page] {int}: Specifies the page offset.
-                [query_params.pagesize] {int}: Specifies the page size. The default size is 100, but the maximum size is 1000.
-                [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
-                [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
+                ``[query_params.limit_search]`` {bool}: Limits the search to match against the department name only.
+                ``[query_params.search]`` {str}: The search string used to partially match against an admin/auditor user's Login ID or Name.
+                ``[query_params.page]`` {int}: Specifies the page offset.
+                ``[query_params.page_size]`` {int}: Specifies the page size. The default size is 100, but the maximum size is 1000.
 
         Returns:
             tuple: A tuple containing (list of AdminUser instances, Response, error)
@@ -563,11 +557,9 @@ class UserManagementAPI(APIClient):
 
         Args:
             query_params {dict}: Map of query parameters for the request.
-                [query_params.search] {str}: The search string used to partially match against an admin/auditor user's Login ID or Name.
-                [query_params.page] {int}: Specifies the page offset.
-                [query_params.pagesize] {int}: Specifies the page size. The default size is 100, but the maximum size is 1000.
-                [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
-                [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
+                ``[query_params.search]`` {str}: The search string used to partially match against an admin/auditor user's Login ID or Name.
+                ``[query_params.page]`` {int}: Specifies the page offset.
+                ``[query_params.page_size]`` {int}: Specifies the page size. The default size is 100, but the maximum size is 1000.
 
         Returns:
             tuple: A tuple containing (list of UserManagement instances, Response, error)
@@ -672,13 +664,11 @@ class UserManagementAPI(APIClient):
 
         Args:
             query_params {dict}: Map of query parameters for the request.
-                [query_params.dept] {str}: Filters by department name. This is a `starts with` match.
-                [query_params.group] {str}: Filters by group name. This is a `starts with` match.
-                [query_params.name] {str}: Filters by user name. This is a `starts with` match.
-                [query_params.page] {int}: Specifies the page offset.
-                [query_params.pagesize] {int}: Specifies the page size. The default size is 100, but the maximum size is 1000.
-                [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
-                [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
+                ``[query_params.dept]`` {str}: Filters by department name. This is a `starts with` match.
+                ``[query_params.group]`` {str}: Filters by group name. This is a `starts with` match.
+                ``[query_params.name]`` {str}: Filters by user name. This is a `starts with` match.
+                ``[query_params.page]`` {int}: Specifies the page offset.
+                ``[query_params.page_size]`` {int}: Specifies the page size. The default size is 100, but the maximum size is 1000.
 
         Returns:
             tuple: A tuple containing (list of UserManagement instances, Response, error)

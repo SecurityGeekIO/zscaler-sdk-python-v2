@@ -22,15 +22,6 @@ from zscaler.zia.models.sandboxrules import SandboxRules
 
 class SandboxRulesAPI(APIClient):
 
-    # reformat_params = [
-    #     ("departments", "departments"),
-    #     ("groups", "groups"),
-    #     ("users", "users"),
-    #     ("labels", "labels"),
-    #     ("locations", "locations"),
-    #     ("location_groups", "locationGroups"),
-    # ]
-
     _zia_base_endpoint = "/zia/api/v1"
 
     def __init__(self, request_executor):
@@ -48,10 +39,8 @@ class SandboxRulesAPI(APIClient):
 
         Args:
             query_params {dict}: Map of query parameters for the request.
-                [query_params.pagesize] {int}: Page size for pagination.
-                [query_params.search] {str}: Search string for filtering results.
-                [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
-                [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
+                ``[query_params.page_size]`` {int}: Page size for pagination.
+                ``[query_params.search]`` {str}: Search string for filtering results.
 
         Returns:
             tuple: A tuple containing (list of sandbox rules instances, Response, error).

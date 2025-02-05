@@ -374,7 +374,7 @@ class AdminAndRoleManagementAPI:
                 Admin user's "friendly" name, e.g., "FirstName LastName" (this field typically matches userName.)
 
         Returns:
-            Box: A Box object representing the newly created admin user.
+            Tuple: A Box object representing the newly created admin user.
 
         Examples:
             Create a new admin user with only the required parameters::
@@ -448,7 +448,7 @@ class AdminAndRoleManagementAPI:
                 Admin user's "friendly" name, e.g., "FirstName LastName" (this field typically matches userName.)
 
         Returns:
-            Box: A Box object representing the updated admin user.
+            Tuple: A Box object representing the updated admin user.
 
         Examples:
             Update an admin user::
