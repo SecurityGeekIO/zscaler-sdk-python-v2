@@ -418,13 +418,23 @@ class LegacyZIAClientHelper:
     @property
     def cloud_firewall_rules(self):
         """
-        The interface object for the :ref:`ZIA Firewall Policies interface <zia-firewall>`.
+        The interface object for the :ref:`ZIA Firewall Policies interface <zia-cloud_firewall_rules>`.
 
         """
         from zscaler.zia.cloud_firewall_rules import FirewallPolicyAPI
 
         return FirewallPolicyAPI(self.request_executor)
 
+    @property
+    def cloud_firewall(self):
+        """
+        The interface object for the :ref:`ZIA Cloud Firewall resources interface <zia-cloud_firewall>`.
+
+        """
+        from zscaler.zia.cloud_firewall import FirewallResourcesAPI
+
+        return FirewallResourcesAPI(self.request_executor)
+    
     @property
     def dlp_dictionary(self):
         """
