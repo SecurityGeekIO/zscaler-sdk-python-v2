@@ -37,15 +37,10 @@ class TrafficForwardingGRETunnelAPI(APIClient):
         Returns the list of all configured GRE tunnels.
 
         Keyword Args:
-            **max_items (int, optional):
-                The maximum number of items to request before stopping iteration.
-            **max_pages (int, optional):
-                The maximum number of pages to request before stopping iteration.
-            **page_size (int, optional):
-                Specifies the page size. The default size is 100, but the maximum size is 1000.
-
+                ``[query_params.page_size]`` {int, optional}: Specifies the page size. The default size is 100, but the maximum size is 1000.
+                
         Returns:
-            :obj:`BoxList`: A list of GRE tunnels configured in ZIA.
+            :obj:`Tuple`: A list of GRE tunnels configured in ZIA.
 
         Examples:
             List GRE tunnels with default settings:
@@ -79,21 +74,25 @@ class TrafficForwardingGRETunnelAPI(APIClient):
         headers = {}
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
+        request, error = self._request_executor.\
+            create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor.\
+            execute(request)
 
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_all_pages_results():
-                result.append(TrafficGRETunnel(self.form_response_body(item)))
+            for item in response.get_results():
+                result.append(TrafficGRETunnel(
+                    self.form_response_body(item))
+                )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -305,14 +304,63 @@ class TrafficForwardingGRETunnelAPI(APIClient):
 
         params = {}
 
-        request, error = self._request_executor.create_request(http_method, api_url, params=params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
         return (None, response, None)
+
+    def list_gre_ranges(self, query_params=None) -> tuple:
+        """
+        Returns a list of available GRE tunnel ranges.
+
+        Args:
+            query_params {dict}: Map of query parameters for the request.
+                ``[query_params.internal_ip_range]`` {int}: Internal IP range information.
+                ``[query_params.static_ip]`` {str}: Search string for filtering Static IP information.
+                ``[query_params.limit]`` {int}: The maximum number of GRE tunnel IP ranges that can be added.
+
+        Returns:
+            tuple: List of configured gre .
+
+        Examples:
+            >>> gre_tunnel_ranges = zia.traffic.list_gre_ranges()
+        """
+        http_method = "put".upper()
+        api_url = format_url(
+            f"""
+            {self._zia_base_endpoint}
+            /greTunnels/availableInternalIpRanges
+            """
+        )
+
+        query_params = query_params or {}
+
+        # Prepare request body and headers
+        body = {}
+        headers = {}
+        
+        request, error = self._request_executor\
+             .create_request(http_method, api_url, body, headers, params=query_params)
+        if error:
+            return (None, None, error)
+
+        response, error = self._request_executor\
+            .execute(request)
+        if error:
+            return (None, response, error)
+
+        try:
+            result = response.get_results()
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)
 
     def list_vips_recommended(self, source_ip: str, query_params=None) -> tuple:
         """
@@ -374,7 +422,7 @@ class TrafficForwardingGRETunnelAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(TrafficGRERecommendedVIP(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
@@ -425,16 +473,16 @@ class TrafficForwardingGRETunnelAPI(APIClient):
 
         Args:
             query_params {dict}: Map of query parameters for the request.
-                [query_params.sourceIp] {str}: The source IP address (required).
-                [query_params.page] {int}: Specifies the page offset.
-                [query_params.pagesize] {int}: Page size for pagination.
-                [query_params.routable_ip] {bool}: The routable IP address. Default: True.
-                [query_params.within_country_only] {bool}: Search within country only. Default: False.
-                [query_params.include_private_service_edge] {bool}: Include ZIA Private Service Edge VIPs. Default: True.
-                [query_params.include_current_vips] {bool}: Include currently assigned VIPs. Default: True.
-                [query_params.latitude] {str}: Latitude coordinate of GRE tunnel source.
-                [query_params.longitude] {str}: Longitude coordinate of GRE tunnel source.
-                [query_params.geo_override] {bool}: Override the geographic coordinates. Default: False.
+                ``[query_params.source_ip]`` {str}: The source IP address (required).
+                ``[query_params.page]`` {int}: Specifies the page offset.
+                ``[query_params.page_size]`` {int}: Page size for pagination.
+                ``[query_params.routable_ip]`` {bool}: The routable IP address. Default: True.
+                ``[query_params.within_country_only]`` {bool}: Search within country only. Default: False.
+                ``[query_params.include_private_service_edge]`` {bool}: Include ZIA Private Service Edge VIPs. Default: True.
+                ``[query_params.include_current_vips]`` {bool}: Include currently assigned VIPs. Default: True.
+                ``[query_params.latitude]`` {str}: Latitude coordinate of GRE tunnel source.
+                ``[query_params.longitude]`` {str}: Longitude coordinate of GRE tunnel source.
+                ``[query_params.geo_override]`` {bool}: Override the geographic coordinates. Default: False.
 
         Returns:
             tuple: A tuple containing (list of VIP groups by data center, Response, error)
@@ -479,7 +527,7 @@ class TrafficForwardingGRETunnelAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(item)  # Directly append the dictionary item as there is no model
 
         except Exception as error:
@@ -493,12 +541,12 @@ class TrafficForwardingGRETunnelAPI(APIClient):
 
         Args:
             query_params {dict}: Map of query parameters for the request.
-                [query_params.dc] {str}: Filter based on data center.
-                [query_params.include] {str}: Include all, private, or public VIPs in the list. Available choices are `all`, `private`, `public`. Defaults to `public`.
-                [query_params.max_items] {int}: Maximum number of items to request before stopping.
-                [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
-                [query_params.page_size] {int}: Specifies the page size. The default size is 100, but the maximum size is 1000.
-                [query_params.region] {str}: Filter based on region.
+                ``[query_params.dc]`` {str}: Filter based on data center.
+                ``[query_params.include]`` {str}: Include all, private, or public VIPs in the list. Available choices are `all`, `private`, `public`. Defaults to `public`.
+                ``[query_params.max_items]`` {int}: Maximum number of items to request before stopping.
+                ``[query_params.max_pages]`` {int}: Maximum number of pages to request before stopping.
+                ``[query_params.page_size]`` {int}: Specifies the page size. The default size is 100, but the maximum size is 1000.
+                ``[query_params.region]`` {str}: Filter based on region.
 
         Returns:
             tuple: A tuple containing (list of VIPs, Response, error)
@@ -544,7 +592,7 @@ class TrafficForwardingGRETunnelAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(item)  # No model is used, directly handling the response as dictionaries
 
         except Exception as error:

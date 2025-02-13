@@ -35,8 +35,16 @@ class ConfigSetter:
                 "defaultTtl": "",
                 "defaultTti": "",
             },
-            "logging": {"enabled": False, "verbose": False},
-            "proxy": {"port": "", "host": "", "username": "", "password": ""},
+            "logging": {
+                "enabled": False, 
+                "verbose": False
+            },
+            "proxy": {
+                "port": "",
+                "host": "",
+                "username": "",
+                "password": ""
+            },
             "rateLimit": {
                 "maxRetries": 2,
             },

@@ -15,8 +15,10 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.oneapi_object import ZscalerObject
+from zscaler.oneapi_collection import ZscalerCollection
 from zscaler.zpa.models import server_group\
     as server_group
+
 class ApplicationSegmentInspection(ZscalerObject):
     """
     A class representing the Application Segment in ZPA for PRA (Privileged Remote Access).
@@ -36,10 +38,12 @@ class ApplicationSegmentInspection(ZscalerObject):
                 if "segmentGroupId" in config else None
             self.segment_group_name = config["segmentGroupName"]\
                 if "segmentGroupName" in config else None
-            self.tcp_port_ranges = config["tcpPortRanges"]\
-                if "tcpPortRanges" in config else []
-            self.udp_port_ranges = config["udpPortRanges"]\
-                if "udpPortRanges" in config else []
+            self.tcp_port_ranges = ZscalerCollection.form_list(
+                config["tcpPortRanges"] if "tcpPortRanges" in config else [], str
+            )
+            self.udp_port_ranges = ZscalerCollection.form_list(
+                config["udpPortRanges"] if "udpPortRanges" in config else [], str
+            )
             self.enabled = config["enabled"] if "enabled" in config else True
             self.double_encrypt = config["doubleEncrypt"]\
                 if "doubleEncrypt" in config else False
@@ -98,7 +102,7 @@ class ApplicationSegmentInspection(ZscalerObject):
 
             # Handle Inspection (inspectionApps vs commonAppsDto) using defensive programming
             self.common_apps_dto = config["commonAppsDto"] if "commonAppsDto" in config else {}
-            self.pra_apps = config["inspectionApps"] if "inspectionApps" in config else []
+            self.inspection_apps = config["inspectionApps"] if "inspectionApps" in config else []
 
             # Handle tcpPortRange using conditionals for defensive programming
             self.tcp_port_range = []
@@ -123,7 +127,7 @@ class ApplicationSegmentInspection(ZscalerObject):
             self.name = None
             self.domain_names = []
             self.server_groups = []
-            self.pra_apps = []
+            self.inspection_apps = []
             self.common_apps_dto = {}
             self.tcp_port_ranges = []
             self.udp_port_ranges = []

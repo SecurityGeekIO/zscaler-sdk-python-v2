@@ -118,9 +118,9 @@ class TestPRAPortal:
                 assert updated_group.description == updated_description
 
                 # List app pra portal and ensure the updated group is in the list
-                groups_list, _, err = client.zpa.pra_portal.list_portals()
+                portal_list, _, err = client.zpa.pra_portal.list_portals()
                 assert err is None, f"Error listing pra portals: {err}"
-                assert any(group.id == portal_id for group in groups_list)
+                assert any(group.id == portal_id for group in portal_list)
         except Exception as exc:
             errors.append(exc)
 

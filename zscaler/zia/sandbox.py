@@ -15,10 +15,8 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 import mimetypes
-
+import time
 from zscaler.request_executor import RequestExecutor
-from zscaler.config.config_setter import ConfigSetter
-
 
 class CloudSandboxAPI:
     """
@@ -40,7 +38,7 @@ class CloudSandboxAPI:
             force (bool): Force ZIA to analyse the file even if it has been submitted previously.
 
         Returns:
-            :obj:`Box`: The Cloud Sandbox submission response information.
+            :obj:`Tuple`: The Cloud Sandbox submission response information.
 
         Examples:
             Submit a file in the current directory called malware.exe to the cloud sandbox, forcing analysis.
@@ -287,15 +285,17 @@ class CloudSandboxAPI:
 
         payload = {"fileHashesToBeBlocked": file_hashes_to_be_blocked}
 
-        request, error = self._request_executor.create_request(method=http_method, endpoint=api_url, body=payload)
+        request, error = self._request_executor\
+            .create_request(method=http_method, endpoint=api_url, body=payload)
 
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
 
         if error:
             return (None, response, error)
-
+        time.sleep(2)
         return self.get_behavioral_analysis()

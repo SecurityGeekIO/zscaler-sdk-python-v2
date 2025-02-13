@@ -91,16 +91,16 @@ class TestAppProtectionControls:
     def test_list_predef_controls(self, fs):
         client = MockZPAClient(fs)
         errors = []  # Initialize an empty list to collect errors
-        version = "OWASP_CRS/3.3.0"  # Example version for the test
+        # version = "OWASP_CRS/3.3.0"  # Example version for the test
 
         try:
             # Fetch predefined controls without search term
-            predef_controls = client.zpa.inspection.list_predef_controls(version=version)
+            predef_controls = client.zpa.inspection.list_predef_controls()
             assert len(predef_controls) > 0, "No predefined controls returned for version"
             print("Predefined Controls for Version:", predef_controls)
 
             # Fetch predefined controls with search term
-            predef_controls_with_search = client.zpa.inspection.list_predef_controls(version=version)
+            predef_controls_with_search = client.zpa.inspection.list_predef_controls()
             assert len(predef_controls_with_search) > 0, "No predefined controls returned for search"
             print("Predefined Controls for Search Term:", predef_controls_with_search)
 
@@ -110,26 +110,3 @@ class TestAppProtectionControls:
         # Assert that no errors occurred during the test
         assert not errors, f"Errors occurred: {errors}"
 
-    def test_get_predef_control_by_name(self, fs):
-        client = MockZPAClient(fs)
-        errors = []  # Initialize an empty list to collect errors
-        try:
-            control = client.zpa.inspection.get_predef_control_by_name(name="Failed to parse request body")
-            assert control is not None, "No predefined control found with the specified name"
-            print("Predefined Control:", control)
-        except Exception as exc:
-            errors.append(f"Failed to get predefined control by name: {exc}")
-
-        assert not errors, f"Errors occurred: {errors}"
-
-    def test_get_predef_control_group_by_name(self, fs):
-        client = MockZPAClient(fs)
-        errors = []  # Initialize an empty list to collect errors
-        try:
-            control_group = client.zpa.inspection.get_predef_control_group_by_name(group_name="Anomalies")
-            assert control_group is not None, "No predefined control group found with the specified name"
-            print("Predefined Control Group:", control_group)
-        except Exception as exc:
-            errors.append(f"Failed to get predefined control group by name: {exc}")
-
-        assert not errors, f"Errors occurred: {errors}"

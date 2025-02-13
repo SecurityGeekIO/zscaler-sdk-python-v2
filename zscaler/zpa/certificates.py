@@ -39,11 +39,10 @@ class CertificatesAPI(APIClient):
 
         Keyword Args:
             query_params {dict}: Map of query parameters for the request.
-                [query_params.pagesize] {int}: Page size for pagination.
-                [query_params.search] {str}: Search string for filtering results.
-                [query_params.microtenant_id] {str}: ID of the microtenant, if applicable.
-                [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
-                [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
+                ``[query_params.page]`` {str}: Specifies the page number.
+                ``[query_params.page_size]`` {str}: Specifies the page size. If not provided, the default page size is 20. The max page size is 500.
+                ``[query_params.search]`` {str}: Search string for filtering results.
+                ``[query_params.microtenant_id]`` {str}: The unique identifier of the microtenant of ZPA tenant.
 
         Returns:
             list: A list of `Certificate` instances.
@@ -64,24 +63,24 @@ class CertificatesAPI(APIClient):
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        # Prepare request body and headers
-        body = {}
-        headers = {}
-
         # Prepare request
-        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_all_pages_results():
-                result.append(Certificate(self.form_response_body(item)))
+            for item in response.get_results():
+                result.append(Certificate(
+                    self.form_response_body(item))
+                )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -92,11 +91,10 @@ class CertificatesAPI(APIClient):
 
         Args:
             query_params {dict}: Map of query parameters for the request.
-                [query_params.pagesize] {int}: Page size for pagination.
-                [query_params.search] {str}: Search string for filtering results.
-                [query_params.microtenant_id] {str}: ID of the microtenant, if applicable.
-                [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
-                [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
+                ``[query_params.page]`` {str}: Specifies the page number.
+                ``[query_params.page_size]`` {str}: Specifies the page size. If not provided, the default page size is 20. The max page size is 500.
+                ``[query_params.search]`` {str}: Search string for filtering results.
+                ``[query_params.microtenant_id]`` {str}: The unique identifier of the microtenant of ZPA tenant.
 
         Returns:
             list: A list of `IssuedCertificate` instances.
@@ -133,7 +131,7 @@ class CertificatesAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(Certificate(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
@@ -146,7 +144,7 @@ class CertificatesAPI(APIClient):
         Args:
             group_id (str): The unique identifier for the connector group.
             query_params (dict, optional): Map of query parameters for the request.
-                [query_params.microtenantId] {str}: The microtenant ID, if applicable.
+                ``[query_params.microtenantId]`` {str}: The microtenant ID, if applicable.
 
         Returns:
             tuple: A tuple containing (Certificate instance, Response, error).
@@ -159,35 +157,32 @@ class CertificatesAPI(APIClient):
         """
         )
 
-        # Handle optional query parameters
         query_params = query_params or {}
         microtenant_id = query_params.get("microtenant_id", None)
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        # Prepare request body, headers, and form (if needed)
-        body = {}
-        headers = {}
-
-        # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
-
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, Certificate)
+        response, error = self._request_executor\
+            .execute(request, Certificate)
 
         if error:
             return (None, response, error)
 
         try:
-            result = Certificate(self.form_response_body(response.get_body()))
+            result = Certificate(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def add_certificate(self, certificate) -> tuple:
+    def add_certificate(self, **kwargs) -> tuple:
         """
         Adds a new certificate.
 
@@ -203,12 +198,8 @@ class CertificatesAPI(APIClient):
             /certificate
         """)
 
-        if isinstance(certificate, dict):
-            body = certificate
-        else:
-            body = certificate.as_dict()
+        body = kwargs
 
-        # Check if microtenant_id is set in the body, and use it to set query parameter
         microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
@@ -304,13 +295,14 @@ class CertificatesAPI(APIClient):
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, params=params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
-        # Execute the request
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
+
         if error:
             return (None, response, error)
-
-        return (None, response, None)
+        return (None, response, error)

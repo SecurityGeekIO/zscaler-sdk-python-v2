@@ -44,11 +44,10 @@ class ApplicationSegmentAPI(APIClient):
 
         Args:
             query_params {dict}: Map of query parameters for the request.
-                [query_params.pagesize] {int}: Page size for pagination.
-                [query_params.search] {str}: Search string for filtering results.
-                [query_params.microtenant_id] {str}: ID of the microtenant, if applicable.
-                [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
-                [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
+                ``[query_params.page]`` {str}: Specifies the page number.
+                ``[query_params.page_size]`` {str}: Specifies the page size. If not provided, the default page size is 20. The max page size is 500.
+                ``[query_params.search]`` {str}: Search string for filtering results.
+                ``[query_params.microtenant_id]`` {str}: The unique identifier of the microtenant of ZPA tenant.
 
         Returns:
             tuple: A tuple containing (list of ApplicationSegment instances, Response, error)
@@ -78,7 +77,7 @@ class ApplicationSegmentAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(ApplicationSegment(
                     self.form_response_body(item))
                 )
@@ -164,16 +163,25 @@ class ApplicationSegmentAPI(APIClient):
         if "server_group_ids" in body:
             body["serverGroups"] = [{"id": group_id} for group_id in body.pop("server_group_ids")]
 
+        # Process TCP and UDP port attributes
+        if "tcp_port_ranges" in body:
+            # Use format 1 (tcpPortRanges)
+            body["tcpPortRanges"] = body.pop("tcp_port_ranges")
+        elif "tcp_port_range" in body:
+            # Use format 2 (tcpPortRange)
+            body["tcpPortRange"] = [{"from": pr["from"], "to": pr["to"]} for pr in body.pop("tcp_port_range")]
+
+        if "udp_port_ranges" in body:
+            # Use format 1 (udpPortRanges)
+            body["udpPortRanges"] = body.pop("udp_port_ranges")
+        elif "udp_port_range" in body:
+            # Use format 2 (udpPortRange)
+            body["udpPortRange"] = [{"from": pr["from"], "to": pr["to"]} for pr in body.pop("udp_port_range")]
+
         # Convert clientless_app_ids to clientlessApps if present
         if "clientless_app_ids" in body:
             body["clientlessApps"] = body.pop("clientless_app_ids")
-
-        if kwargs.get("tcp_port_ranges"):
-            body["tcpPortRange"] = [{"from": ports[0], "to": ports[1]} for ports in kwargs.pop("tcp_port_ranges")]
-
-        if kwargs.get("udp_port_ranges"):
-            body["udpPortRange"] = [{"from": ports[0], "to": ports[1]} for ports in kwargs.pop("udp_port_ranges")]
-
+            
         # Apply add_id_groups to reformat params based on self.reformat_params
         add_id_groups(self.reformat_params, kwargs, body)
 
@@ -196,6 +204,7 @@ class ApplicationSegmentAPI(APIClient):
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
+
 
     def update_segment(self, segment_id: str, **kwargs) -> tuple:
         """
@@ -236,12 +245,20 @@ class ApplicationSegmentAPI(APIClient):
             for clientless_app in body["clientlessApps"]:
                 clientless_app["appId"] = segment_id  # Set appId to the segment_id
 
-        # Handle port ranges if present in kwargs
-        if kwargs.get("tcp_port_ranges"):
-            body["tcpPortRange"] = [{"from": ports[0], "to": ports[1]} for ports in kwargs.pop("tcp_port_ranges")]
+        # Process TCP and UDP port attributes
+        if "tcp_port_ranges" in body:
+            # Use format 1 (tcpPortRanges)
+            body["tcpPortRanges"] = body.pop("tcp_port_ranges")
+        elif "tcp_port_range" in body:
+            # Use format 2 (tcpPortRange)
+            body["tcpPortRange"] = [{"from": pr["from"], "to": pr["to"]} for pr in body.pop("tcp_port_range")]
 
-        if kwargs.get("udp_port_ranges"):
-            body["udpPortRange"] = [{"from": ports[0], "to": ports[1]} for ports in kwargs.pop("udp_port_ranges")]
+        if "udp_port_ranges" in body:
+            # Use format 1 (udpPortRanges)
+            body["udpPortRanges"] = body.pop("udp_port_ranges")
+        elif "udp_port_range" in body:
+            # Use format 2 (udpPortRange)
+            body["udpPortRange"] = [{"from": pr["from"], "to": pr["to"]} for pr in body.pop("udp_port_range")]
 
         add_id_groups(self.reformat_params, kwargs, body)
 
@@ -264,7 +281,6 @@ class ApplicationSegmentAPI(APIClient):
             )
         except Exception as error:
             return (None, response, error)
-
         return (result, response, None)
 
     def delete_segment(
@@ -311,75 +327,6 @@ class ApplicationSegmentAPI(APIClient):
 
         return (None, response, None)
 
-    def get_segments_by_type(
-        self,
-        application_type: str,
-        expand_all: bool = False,
-        query_params=None, **kwargs
-    ) -> tuple:
-        """
-        Retrieve all configured application segments of a specified type, optionally expanding all related data.
-
-        Args:
-            application_type (str): Type of application segment to retrieve.
-            Must be one of "BROWSER_ACCESS", "INSPECT", "SECURE_REMOTE_ACCESS".
-            expand_all (bool, optional): Whether to expand all related data. Defaults to False.
-
-        Keyword Args:
-            query_params {dict}: Map of query parameters for the request.
-                [query_params.pagesize] {int}: Page size for pagination.
-                [query_params.search] {str}: Search string for filtering results.
-                [query_params.expand_all] {bool}: Additional information related to the applications
-                [query_params.microtenant_id] {str}: ID of the microtenant, if applicable.
-                [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
-                [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
-
-        Returns:
-            tuple: List of application segments.
-
-        Examples:
-            >>> app_type = 'BROWSER_ACCESS'
-            >>> expand_all = True
-            >>> search = "ba_server01"
-            >>> app_segments = zpa.app_segments.get_segments_by_type(app_type, expand_all, search=search)
-        """
-        if not application_type:
-            raise ValueError("The 'application_type' parameter must be provided.")
-
-        http_method = "GET"
-        api_url = format_url(
-            f"""
-            {self._zpa_base_endpoint}
-            /application/getAppsByType
-        """
-        )
-
-        query_params = query_params or {}
-        query_params.update(kwargs)
-        query_params["applicationType"] = application_type
-        query_params["expandAll"] = str(expand_all).lower()
-
-        microtenant_id = query_params.get("microtenant_id", None)
-        if microtenant_id:
-            query_params["microtenantId"] = microtenant_id
-
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body={}, headers={}, params=query_params)
-        if error:
-            return (None, None, error)
-
-        response, error = self._request_executor\
-            .execute(request)
-        if error:
-            return (None, response, error)
-
-        try:
-            result = response.get_all_pages_results()
-        except Exception as error:
-            return (None, response, error)
-
-        return (result, response, None)
-
     def app_segment_move(self, application_id: str, **kwargs) -> tuple:
         """
         Moves application segments from one microtenant to another
@@ -399,7 +346,7 @@ class ApplicationSegmentAPI(APIClient):
             ...
 
         Returns:
-            :obj:`Box`: The resource record for the moved application segment.
+            :obj:`Tuple`: The resource record for the moved application segment.
 
         Examples:
             Moving an application segment to another microtenant:
@@ -469,7 +416,7 @@ class ApplicationSegmentAPI(APIClient):
             ...
 
         Returns:
-            :obj:`Box`: An empty Box object if the operation is successful.
+            :obj:`Tuple`: An empty Box object if the operation is successful.
 
         Examples:
             Moving an application segment to another microtenant:

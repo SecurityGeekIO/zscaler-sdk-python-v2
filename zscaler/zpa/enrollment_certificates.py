@@ -40,10 +40,9 @@ class EnrollmentCertificateAPI(APIClient):
 
         Args:
             query_params {dict}: Map of query parameters for the request.
-                [query_params.pagesize] {int}: Page size for pagination.
-                [query_params.search] {str}: Search string for filtering results.
-                [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
-                [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
+                ``[query_params.page]`` {str}: Specifies the page number.
+                ``[query_params.page_size]`` {str}: Specifies the page size. If not provided, the default page size is 20. The max page size is 500.
+                ``[query_params.search]`` {str}: Search string for filtering results.
 
         Returns:
             tuple: A tuple containing (list of EnrollmentCertificate instances, Response, error)
@@ -76,8 +75,10 @@ class EnrollmentCertificateAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_all_pages_results():
-                result.append(EnrollmentCertificate(self.form_response_body(item)))
+            for item in response.get_results():
+                result.append(EnrollmentCertificate(
+                    self.form_response_body(item))
+                )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)

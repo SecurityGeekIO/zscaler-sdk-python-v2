@@ -1,7 +1,6 @@
 from zscaler.errors.error import Error
 
 
-# ZPA API Errors
 class ZscalerAPIError(Error):
     def __init__(self, url, response_details, response_body):
         self.status_code = response_details.status_code
@@ -28,11 +27,3 @@ class ZscalerAPIError(Error):
         self.headers = response_details.headers
         self.stack = ""
 
-
-# ZIA API Errors
-
-# ZCC API Errors
-
-# ZDX API Errors
-
-# ZCON API Errors

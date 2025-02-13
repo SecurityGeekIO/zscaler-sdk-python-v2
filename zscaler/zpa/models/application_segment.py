@@ -38,10 +38,12 @@ class ApplicationSegment(ZscalerObject):
                 if "enabled" in config else True
             self.passive_health_enabled = config["passiveHealthEnabled"]\
                 if "passiveHealthEnabled" in config else False
-            self.tcp_port_ranges = config["tcpPortRanges"]\
-                if "tcpPortRanges" in config else []
-            self.udp_port_ranges = config["udpPortRanges"]\
-                if "udpPortRanges" in config else []
+            self.tcp_port_ranges = ZscalerCollection.form_list(
+                config["tcpPortRanges"] if "tcpPortRanges" in config else [], str
+            )
+            self.udp_port_ranges = ZscalerCollection.form_list(
+                config["udpPortRanges"] if "udpPortRanges" in config else [], str
+            )
             self.double_encrypt = config["doubleEncrypt"]\
                 if "doubleEncrypt" in config else False
             self.config_space = config["configSpace"]\

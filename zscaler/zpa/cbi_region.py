@@ -50,17 +50,19 @@ class CBIRegionAPI(APIClient):
         """
         )
 
-        request, error = self._request_executor.create_request(http_method, api_url)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(CBIRegion(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)

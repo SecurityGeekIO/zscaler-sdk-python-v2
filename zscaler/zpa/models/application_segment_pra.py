@@ -38,10 +38,12 @@ class ApplicationSegmentPRA(ZscalerObject):
                 if "segmentGroupId" in config else None
             self.segment_group_name = config["segmentGroupName"]\
                 if "segmentGroupName" in config else None
-            self.tcp_port_ranges = config["tcpPortRanges"]\
-                if "tcpPortRanges" in config else []
-            self.udp_port_ranges = config["udpPortRanges"]\
-                if "udpPortRanges" in config else []
+            self.tcp_port_ranges = ZscalerCollection.form_list(
+                config["tcpPortRanges"] if "tcpPortRanges" in config else [], str
+            )
+            self.udp_port_ranges = ZscalerCollection.form_list(
+                config["udpPortRanges"] if "udpPortRanges" in config else [], str
+            )
             self.enabled = config["enabled"] if "enabled" in config else True
             self.double_encrypt = config["doubleEncrypt"]\
                 if "doubleEncrypt" in config else False
@@ -84,8 +86,8 @@ class ApplicationSegmentPRA(ZscalerObject):
                 if "weightedLoadBalancing" in config else False
             self.extranet_enabled = config["extranetEnabled"]\
                 if "extranetEnabled" in config else False
-            self.microtenant_name = config["microtenantName"]\
-                if "microtenantName" in config else "Default"
+            # self.microtenant_name = config["microtenantName"]\
+            #     if "microtenantName" in config else None
             self.microtenant_id = config["microtenantId"]\
                 if "microtenantId" in config else None
 
@@ -157,7 +159,7 @@ class ApplicationSegmentPRA(ZscalerObject):
             self.fqdn_dns_check = False
             self.weighted_load_balancing = False
             self.extranet_enabled = False
-            self.microtenant_name = "Default"
+            # self.microtenant_name = None
             self.microtenant_id = None
 
     def request_format(self):
@@ -195,7 +197,7 @@ class ApplicationSegmentPRA(ZscalerObject):
             "fqdnDnsCheck": self.fqdn_dns_check,
             "weightedLoadBalancing": self.weighted_load_balancing,
             "extranetEnabled": self.extranet_enabled,
-            "microtenantName": self.microtenant_name,
+            # "microtenantName": self.microtenant_name,
             "microtenantId": self.microtenant_id,
             "segmentGroupId": self.segment_group_id,
             "segmentGroupName": self.segment_group_name,

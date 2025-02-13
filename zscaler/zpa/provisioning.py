@@ -56,12 +56,12 @@ class ProvisioningKeyAPI(APIClient):
         Args:
             key_type (str): The type of provisioning key. Accepted values are:
                 ``connector`` and ``service_edge``.
-            query_params (dict, optional): Map of query parameters for the request.
-                [query_params.pagesize] {int}: Page size for pagination.
-                [query_params.search] {str}: Search string for filtering results.
-                [query_params.microtenant_id] {str}: ID of the microtenant, if applicable.
-                [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
-                [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
+
+            query_params {dict}: Map of query parameters for the request.
+                ``[query_params.page]`` {str}: Specifies the page number.
+                ``[query_params.page_size]`` {int}: Page size for pagination.
+                ``[query_params.search]`` {str}: Search string for filtering results.
+                ``[query_params.microtenant_id]`` {str}: ID of the microtenant, if applicable.
 
         Returns:
             tuple: A tuple containing (list of ProvisioningKey instances, Response, error)
@@ -91,19 +91,23 @@ class ProvisioningKeyAPI(APIClient):
             query_params["microtenantId"] = microtenant_id
 
         # Prepare request
-        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
-            for item in response.get_all_pages_results():
-                result.append(ProvisioningKey(self.form_response_body(item)))
+            for item in response.get_results():
+                result.append(ProvisioningKey(
+                    self.form_response_body(item))
+                )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -115,15 +119,13 @@ class ProvisioningKeyAPI(APIClient):
         Args:
             key_id (str): The unique id of the provisioning key.
             key_type (str): The type of provisioning key, accepted values are:
-
                 ``connector`` and ``service_edge``.
-            **kwargs: Optional keyword arguments.
 
-        Keyword Args:
-            microtenant_id (str): The unique identifier for the microtenant.
+            query_params (dict, optional): Map of query parameters for the request.
+                ``[query_params.microtenant_id]`` {str}: The microtenant ID, if applicable.
 
         Returns:
-            :obj:`Box`: The requested provisioning key resource record.
+            :obj:`Tuple`: The requested provisioning key resource record.
 
         Examples:
             Get the specified App Connector key.
@@ -155,166 +157,158 @@ class ProvisioningKeyAPI(APIClient):
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request, ProvisioningKey)
+        response, error = self._request_executor\
+            .execute(request, ProvisioningKey)
         if error:
             return (None, response, error)
 
         try:
-            result = ProvisioningKey(self.form_response_body(response.get_body()))
+            result = ProvisioningKey(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def add_provisioning_key(self, provisioning, **kwargs) -> tuple:
+    def add_provisioning_key(self, key_type: str, **kwargs) -> tuple:
         """
         Adds a new provisioning key to ZPA.
 
         Args:
             key_type (str): The type of provisioning key, accepted values are:
-
                 ``connector`` and ``service_edge``.
             name (str): The name of the provisioning key.
             max_usage (int): The maximum amount of times this key can be used.
-            enrollment_cert_id (str):
-                The unique id of the enrollment certificate that will be used for this provisioning key.
-            component_id (str):
-                The unique id of the component that this provisioning key will be linked to. For App Connectors, this
-                will be the App Connector Group Id. For Service Edges, this will be the Service Edge Group Id.
-            **kwargs: Optional keyword args.
+            enrollment_cert_id (str): The unique id of the enrollment certificate for this provisioning key.
+            component_id (str): The unique id of the component linked to this provisioning key.
+            microtenant_id (str, optional): The microtenant ID if applicable.
+            
+            **kwargs: Additional optional attributes.
 
         Returns:
-            :obj:`Box`: The newly created Provisioning Key resource record.
+            :obj:`Tuple`: The newly created Provisioning Key resource record.
         """
-        # Extract key_type from the provisioning dictionary
-        key_type = provisioning.pop("key_type", None)
-        if key_type is None:
+        if not key_type:
             raise ValueError("key_type must be provided.")
 
         http_method = "post".upper()
         api_url = format_url(
-            f"""
-            {self._zpa_base_endpoint}
+            f"""{
+            self._zpa_base_endpoint}
             /associationType/{simplify_key_type(key_type)}/provisioningKey
         """
         )
 
-        # Ensure provisioning is a dictionary
-        if isinstance(provisioning, dict):
-            body = provisioning
-        else:
-            body = provisioning.as_dict()
+        # Create a separate body dictionary from kwargs to avoid unintended modifications to kwargs
+        body = kwargs.copy()
 
-        # Extract microtenant_id from the body
-        microtenant_id = body.get("microtenant_id", None)
+        # Extract microtenant_id for query parameters if present
+        microtenant_id = body.get("microtenant_id")
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        # Extract and set attributes from the body
+        # Extract and set API-specific fields
         name = body.pop("name", None)
         max_usage = body.pop("max_usage", None)
         enrollment_cert_id = body.get("enrollment_cert_id")
         component_id = body.get("component_id")
 
-        # Add extracted values to the body
-        body.update(
-            {"name": name, "maxUsage": max_usage, "enrollmentCertId": enrollment_cert_id, "zcomponentId": component_id}
-        )
-
-        # Add any additional attributes from kwargs
-        body.update(kwargs)
+        # Update body with the API-required field names
+        body.update({
+            "name": name,
+            "maxUsage": max_usage,
+            "enrollmentCertId": enrollment_cert_id,
+            "zcomponentId": component_id
+        })
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body=body, params=params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body=body, params=params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, ProvisioningKey)
+        response, error = self._request_executor\
+            .execute(request, ProvisioningKey)
         if error:
             return (None, response, error)
 
         try:
-            result = ProvisioningKey(self.form_response_body(response.get_body()))
+            result = ProvisioningKey(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
+
         return (result, response, None)
 
-    def update_provisioning_key(self, key_id: str, provisioning, **kwargs) -> tuple:
+    def update_provisioning_key(self, key_id: str, key_type: str, **kwargs) -> tuple:
         """
         Updates the specified provisioning key.
 
         Args:
             key_id (str): The unique id of the Provisioning Key being updated.
             key_type (str): The type of provisioning key, accepted values are:
-
                 ``connector`` and ``service_edge``.
-            **kwargs: Optional keyword args.
+
+        Keyword Args:
+            name (str, optional): The new name for the provisioning key.
+            max_usage (int, optional): The new maximum usage count.
+            enrollment_cert_id (str, optional): The enrollment certificate ID to associate.
+            component_id (str, optional): The component ID to associate (mapped to zcomponentId).
+            microtenant_id (str, optional): The microtenant ID.
 
         Returns:
-            :obj:`Box`: The updated Provisioning Key resource record.
+            :obj:`Tuple`: The updated Provisioning Key resource record.
         """
-        # Extract key_type from the provisioning dictionary
-        key_type = provisioning.pop("key_type", None)
-        if key_type is None:
+        if not key_type:
             raise ValueError("key_type must be provided.")
 
-        http_method = "put".upper()
+        http_method = "PUT"
         api_url = format_url(
             f"""
             {self._zpa_base_endpoint}
             /associationType/{simplify_key_type(key_type)}/provisioningKey/{key_id}
-        """
+            """
         )
 
-        # Ensure provisioning is in dictionary format
-        if isinstance(provisioning, dict):
-            body = provisioning
-        else:
-            body = provisioning.as_dict()
-
-        # Extract microtenant_id from the body
-        microtenant_id = body.get("microtenant_id", None)
+        body = kwargs.copy()
+        microtenant_id = body.get("microtenant_id")
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        # Extract and set attributes from the body
-        name = body.pop("name", None)
-        max_usage = body.pop("max_usage", None)
-        enrollment_cert_id = body.get("enrollment_cert_id")
-        component_id = body.get("component_id")
-
-        # Add extracted values to the body
-        body.update(
-            {"name": name, "maxUsage": max_usage, "enrollmentCertId": enrollment_cert_id, "zcomponentId": component_id}
-        )
-
-        # Add any additional attributes from kwargs
-        body.update(kwargs)
-
-        # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body=body, params=params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, params, {})
         if error:
             return (None, None, error)
 
-        # Execute the request
-        response, error = self._request_executor.execute(request, ProvisioningKey)
+        response, error = self._request_executor\
+            .execute(request, ProvisioningKey)
         if error:
             return (None, response, error)
 
-        # Handle case where no content is returned (204 No Content)
+        # If PUT request returns 204 No Content, response will be None.
+        # Just like update_group, we return a minimal ProvisioningKey object.
         if response is None:
-            # Return a meaningful result to indicate success
             return (ProvisioningKey({"id": key_id}), None, None)
 
         try:
-            result = ProvisioningKey(self.form_response_body(response.get_body()))
+            result = ProvisioningKey(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
+
         return (result, response, None)
 
-    def delete_provisioning_key(self, key_id: str, key_type: str, microtenant_id: str = None) -> tuple:
+    def delete_provisioning_key(
+        self, key_id: str, 
+        key_type: str, 
+        microtenant_id: str = None
+    ) -> tuple:
         """
         Deletes the specified provisioning key from ZPA.
 
@@ -355,12 +349,14 @@ class ProvisioningKeyAPI(APIClient):
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, params=params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 

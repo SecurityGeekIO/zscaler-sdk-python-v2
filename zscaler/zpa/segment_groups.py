@@ -40,11 +40,10 @@ class SegmentGroupsAPI(APIClient):
 
         Args:
             query_params {dict}: Map of query parameters for the request.
-                [query_params.pagesize] {int}: Page size for pagination.
-                [query_params.search] {str}: Search string for filtering results.
-                [query_params.microtenant_id] {str}: ID of the microtenant, if applicable.
-                [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
-                [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
+                ``[query_params.page]`` {str}: Specifies the page number.
+                ``[query_params.page_size]`` {int}: Page size for pagination.
+                ``[query_params.search]`` {str}: Search string for filtering results.
+                ``[query_params.microtenant_id]`` {str}: ID of the microtenant, if applicable.
 
         Returns:
             tuple: A tuple containing (list of SegmentGroup instances, Response, error)
@@ -89,7 +88,7 @@ class SegmentGroupsAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(SegmentGroup(
                     self.form_response_body(item))
                 )
@@ -103,6 +102,8 @@ class SegmentGroupsAPI(APIClient):
 
         Args:
             group_id (str): The unique identifier of the segment group.
+            query_params (dict, optional): Map of query parameters for the request.
+                ``[query_params.microtenant_id]`` {str}: The microtenant ID, if applicable.
 
         Returns:
             SegmentGroup: The corresponding segment group object.
@@ -303,7 +304,9 @@ class SegmentGroupsAPI(APIClient):
             /segmentGroup/{group_id}
         """)
 
-        body = kwargs
+        body = {}
+
+        body.update(kwargs)
 
         microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}

@@ -82,11 +82,12 @@ class PolicySetControllerAPI(APIClient):
             conditions (list): List of condition dicts or tuples.
 
         Returns:
-            :obj:`dict`: The conditions template.
+            :obj:`list`: The conditions template.
 
         """
         template = []
         app_and_app_group_operands = []
+        scim_and_scim_group_operands = []
         object_types_to_operands = {
             "CONSOLE": [],
             "MACHINE_GRP": [],
@@ -102,6 +103,8 @@ class PolicySetControllerAPI(APIClient):
             "SCIM": [],
             "SCIM_GROUP": [],
             "COUNTRY_CODE": [],
+            "CHROME_ENTERPRISE": [],
+            "RISK_FACTOR_TYPE": [],
         }
 
         operators_for_types = {}  # Dictionary to store specific operators for each object type
@@ -126,6 +129,8 @@ class PolicySetControllerAPI(APIClient):
 
                 if object_type in ["APP", "APP_GROUP"]:
                     app_and_app_group_operands.append(operand)
+                elif object_type in ["SCIM","SCIM_GROUP"]:
+                    scim_and_scim_group_operands.append(operand)
                 elif object_type in object_types_to_operands:
                     object_types_to_operands[object_type].append(operand)
 
@@ -156,6 +161,11 @@ class PolicySetControllerAPI(APIClient):
         if app_and_app_group_operands:
             app_group_operator = operators_for_types.get("APP", "OR")
             template.append({"operator": app_group_operator, "operands": app_and_app_group_operands})
+
+        # Combine SCIM and SCIM_GROUP operands with their specific operator
+        if scim_and_scim_group_operands:
+            scim_group_operator = operators_for_types.get("SCIM_GROUP", "OR")
+            template.append({"operator": scim_group_operator, "operands": scim_and_scim_group_operands})
 
         # Combine other object types into their blocks with their respective operator
         for object_type, operands in object_types_to_operands.items():
@@ -268,12 +278,14 @@ class PolicySetControllerAPI(APIClient):
             query_params.pop("microtenantId", None)  # Ensure `microtenantId` isn't added if it's None
 
         # Prepare the request
-        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 
@@ -282,7 +294,6 @@ class PolicySetControllerAPI(APIClient):
             response_body = response.get_body()  # Get the raw response body
             if not response_body:
                 return (None, response, None)
-
             return (response_body, response, None)
 
         except Exception as error:
@@ -307,6 +318,8 @@ class PolicySetControllerAPI(APIClient):
                 |  ``timeout``
 
             rule_id (str): The unique identifier for the policy rule.
+            query_params (dict, optional): Map of query parameters for the request.
+                ``[query_params.microtenant_id]`` {str}: The microtenant ID, if applicable.
 
         Returns:
             PolicySetControllerV1: The resource record for the requested rule.
@@ -337,11 +350,13 @@ class PolicySetControllerAPI(APIClient):
             query_params["microtenantId"] = microtenant_id
 
         # Create and execute the request
-        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 
@@ -370,6 +385,13 @@ class PolicySetControllerAPI(APIClient):
                 |  ``capabilities`` - returns Capabilities Policy rules
                 |  ``siem`` - returns SIEM Policy rules
 
+        Keyword Args:
+            query_params {dict}: Map of query parameters for the request.
+                ``[query_params.page]`` {str}: Specifies the page number.
+                ``[query_params.page_size]`` {int}: Specifies the page size. If not provided, the default page size is 20. The max page size is 500.
+                ``[query_params.search]`` {str}: The search string used to support search by features and fields for the API.
+                ``[query_params.microtenant_id]`` {str}: ID of the microtenant, if applicable.
+
         Returns:
             list: A list of PolicySetControllerV1 objects.
 
@@ -395,18 +417,22 @@ class PolicySetControllerAPI(APIClient):
             query_params["microtenantId"] = microtenant_id
 
         # Prepare request
-        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
 
         try:
             # Directly return the results as a list of dictionaries
-            result = [self.form_response_body(item) for item in response.get_all_pages_results()]
+            result = [
+                self.form_response_body(item) for item in response.get_results()
+            ]
         except Exception as error:
             return (None, response, error)
 
@@ -510,16 +536,20 @@ class PolicySetControllerAPI(APIClient):
             payload[snake_to_camel(key)] = value
 
         # Create and execute the request
-        request, error = self._request_executor.create_request(http_method, api_url, body=payload, params=params)
+        request, error = self._request_executor.\
+            create_request(http_method, api_url, body=payload, params=params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request, PolicySetControllerV1)
+        response, error = self._request_executor.\
+            execute(request, PolicySetControllerV1)
         if error:
             return (None, response, error)
 
         try:
-            result = PolicySetControllerV1(self.form_response_body(response.get_body()))
+            result = PolicySetControllerV1(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
 
@@ -573,7 +603,7 @@ class PolicySetControllerAPI(APIClient):
         microtenant_id = kwargs.get("microtenantId")
         query_params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        # Retrieve the policy type for the specified rule ID
+        # 1. We still need to retrieve the policy set ID
         policy_type_response, _, err = self.get_policy("access", query_params=query_params)
         if err or not policy_type_response:
             return (None, None, f"Error retrieving policy for 'access': {err}")
@@ -582,26 +612,23 @@ class PolicySetControllerAPI(APIClient):
         if not policy_set_id:
             return (None, None, f"No policy ID found for 'access' policy type")
 
-        # Retrieve the current rule configuration
-        current_rule = self.get_rule("access", rule_id, query_params=query_params)
-        if not current_rule:
-            return (None, None, "Error retrieving current rule")
-
-        # Define API endpoint for the update request
+        # 2. Construct endpoint
         http_method = "put".upper()
         api_url = format_url(
-            f"""
-            {self._zpa_base_endpoint_v1}
-            /policySet/{policy_set_id}/rule/{rule_id}
-        """
+            f"{self._zpa_base_endpoint_v1}/policySet/{policy_set_id}/rule/{rule_id}"
         )
 
-        # Construct the payload based on current rule, with updates from kwargs and specified parameters
+        # 3. Construct payload from user-provided arguments only
+        #    (No internal call to get_rule -> No mismatch)
         payload = {
-            "name": name if name else current_rule.get("name"),
-            "action": action.upper() if action else current_rule.get("action"),
-            "appConnectorGroups": [{"id": group_id} for group_id in (app_connector_group_ids or [])],
-            "appServerGroups": [{"id": group_id} for group_id in (app_server_group_ids or [])],
+            "name": name,
+            "action": action.upper() if action else None,
+            "appConnectorGroups": [
+                {"id": group_id} for group_id in (app_connector_group_ids or [])
+            ],
+            "appServerGroups": [
+                {"id": group_id} for group_id in (app_server_group_ids or [])
+            ],
         }
 
         # Add remaining attributes from kwargs, transforming them to camel case
@@ -613,28 +640,34 @@ class PolicySetControllerAPI(APIClient):
         for key, value in kwargs.items():
             payload[snake_to_camel(key)] = value
 
-        # Ensure params only include one microtenantId instance
-        params = {"microtenantId": microtenant_id} if microtenant_id else {}
+        # Filter out None values if you prefer not to send them
+        payload = {k: v for k, v in payload.items() if v is not None}
 
-        # Create the request with the constructed payload and parameters
-        request, error = self._request_executor.create_request(http_method, api_url, body=payload, params=params)
+        # 4. Create request
+        params = {"microtenantId": microtenant_id} if microtenant_id else {}
+        request, error = self._request_executor.create_request(
+            http_method, api_url, body=payload, params=params
+        )
         if error:
             return (None, None, error)
 
-        # Execute the request
-        response, error = self._request_executor.execute(request, PolicySetControllerV1)
+        # 5. Execute request
+        response, error = self._request_executor\
+            .execute(request, PolicySetControllerV1)
         if error:
             return (None, response, error)
 
-        # Handle cases where no content is returned
+        # If 204 No Content => return an object with only the ID to indicate success
         if response is None:
             return (PolicySetControllerV1({"id": rule_id}), None, None)
 
-        # Parse the response into a PolicySetController instance
         try:
-            result = PolicySetControllerV1(self.form_response_body(response.get_body()))
+            result = PolicySetControllerV1(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
-            return (None, response, error)
+            return (None, None, error)
+
         return (result, response, None)
 
     @synchronized(global_rule_lock)
@@ -711,23 +744,32 @@ class PolicySetControllerAPI(APIClient):
             payload[snake_to_camel(key)] = value
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body=payload, params=params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body=payload, params=params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, PolicySetControllerV1)
+        response, error = self._request_executor\
+            .execute(request, PolicySetControllerV1)
         if error:
             return (None, response, error)
 
         try:
-            result = PolicySetControllerV1(self.form_response_body(response.get_body()))
+            result = PolicySetControllerV1(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
     @synchronized(global_rule_lock)
-    def update_timeout_rule(self, rule_id: str, name: str = None, **kwargs) -> tuple:
+    def update_timeout_rule(
+        self, 
+        rule_id: str, 
+        name: str = None, 
+        **kwargs
+    ) -> tuple:
         """
         Update an existing policy rule.
 
@@ -810,26 +852,25 @@ class PolicySetControllerAPI(APIClient):
         for key, value in kwargs.items():
             payload[snake_to_camel(key)] = value
 
-        # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body=payload, params=params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, {}, params)
         if error:
             return (None, None, error)
 
-        # Execute the request
-        response, error = self._request_executor.execute(request, PolicySetControllerV1)
+        response, error = self._request_executor\
+            .execute(request, PolicySetControllerV1)
         if error:
             return (None, response, error)
 
-        # Handle cases where no content is returned (204 No Content)
         if response is None:
             return (PolicySetControllerV1({"id": rule_id}), None, None)
 
-        # Parse the response into a PolicySetController instance
         try:
-            result = PolicySetControllerV1(self.form_response_body(response.get_body()))
+            result = PolicySetControllerV1(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
-
         return (result, response, None)
 
     @synchronized(global_rule_lock)
@@ -1172,7 +1213,12 @@ class PolicySetControllerAPI(APIClient):
 
     @synchronized(global_rule_lock)
     def update_isolation_rule(
-        self, rule_id: str, name: str, action: str, zpn_isolation_profile_id: str = None, **kwargs
+        self, 
+        rule_id: str, 
+        name: str = None, 
+        action: str = None, 
+        zpn_isolation_profile_id: str = None,
+        **kwargs
     ) -> tuple:
         """
         Update an existing client isolation policy rule.
@@ -1282,11 +1328,13 @@ class PolicySetControllerAPI(APIClient):
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         # Create and execute the request
-        request, error = self._request_executor.create_request(http_method, api_url, body=payload, params=params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body=payload, params=params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request, PolicySetControllerV1)
+        response, error = self._request_executor\
+            .execute(request, PolicySetControllerV1)
         if error:
             return (None, response, error)
 
@@ -1296,7 +1344,9 @@ class PolicySetControllerAPI(APIClient):
 
         # Parse the response and return
         try:
-            result = PolicySetControllerV1(self.form_response_body(response.get_body()))
+            result = PolicySetControllerV1(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
 
@@ -1526,7 +1576,7 @@ class PolicySetControllerAPI(APIClient):
                     ('trusted_network', 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxx', True)]
 
         Returns:
-            :obj:`Box`: The resource record of the newly created access policy rule.
+            :obj:`Tuple`: The resource record of the newly created access policy rule.
 
         """
         # Retrieve policy_set_id explicitly
@@ -1970,23 +2020,33 @@ class PolicySetControllerAPI(APIClient):
             payload[snake_to_camel(key)] = value
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body=payload, params=params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body=payload, params=params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, PolicySetControllerV2)
+        response, error = self._request_executor\
+            .execute(request, PolicySetControllerV2)
         if error:
             return (None, response, error)
 
         try:
-            result = PolicySetControllerV2(self.form_response_body(response.get_body()))
+            result = PolicySetControllerV2(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
     @synchronized(global_rule_lock)
-    def update_client_forwarding_rule_v2(self, rule_id: str, name: str = None, action: str = None, **kwargs) -> tuple:
+    def update_client_forwarding_rule_v2(
+        self, 
+        rule_id: str, 
+        name: str = None, 
+        action: str = None, 
+        **kwargs
+    ) -> tuple:
         """
         Update an existing client forwarding policy rule.
 
@@ -2214,7 +2274,12 @@ class PolicySetControllerAPI(APIClient):
 
     @synchronized(global_rule_lock)
     def update_isolation_rule_v2(
-        self, rule_id: str, name: str, action: str, zpn_isolation_profile_id: str = None, **kwargs
+        self, 
+        rule_id: str, 
+        name: str = None,
+        action: str = None,
+        zpn_isolation_profile_id: str = None, 
+        **kwargs
     ) -> tuple:
         """
         Update an existing client isolation policy rule.
@@ -2728,7 +2793,11 @@ class PolicySetControllerAPI(APIClient):
         return (result, response, None)
 
     @synchronized(global_rule_lock)
-    def add_capabilities_rule_v2(self, name: str, **kwargs) -> tuple:
+    def add_capabilities_rule_v2(
+        self, 
+        name: str,
+        **kwargs
+    ) -> tuple:
         """
         Add a new Capability Access rule.
 
@@ -2776,7 +2845,7 @@ class PolicySetControllerAPI(APIClient):
                 - share_session (bool): Indicates PRA Session Control/Monitoring capabilities to enable PRA Session Monitoring.
 
         Returns:
-            :obj:`Box`: The resource record of the newly created Capabilities rule.
+            :obj:`Tuple`: The resource record of the newly created Capabilities rule.
 
         Example:
             Add a new capability rule with various capabilities and conditions:
@@ -2870,23 +2939,31 @@ class PolicySetControllerAPI(APIClient):
             payload[snake_to_camel(key)] = value
 
         # Create the request
-        request, error = self._request_executor.create_request(http_method, api_url, body=payload, params=params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body=payload, params=params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request, PolicySetControllerV2)
+        response, error = self._request_executor\
+            .execute(request, PolicySetControllerV2)
         if error:
             return (None, response, error)
 
         try:
-            result = PolicySetControllerV2(self.form_response_body(response.get_body()))
+            result = PolicySetControllerV2(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
     @synchronized(global_rule_lock)
-    def update_capabilities_rule_v2(self, rule_id: str, name: str, **kwargs) -> tuple:
+    def update_capabilities_rule_v2(
+        self, rule_id: str, 
+        name: str = None,
+        **kwargs
+    ) -> tuple:
         """
         Update an existing capabilities policy rule.
 
@@ -2931,7 +3008,7 @@ class PolicySetControllerAPI(APIClient):
                 - share_session (bool): Indicates PRA Session Control/Monitoring capabilities to enable PRA Session Monitoring.
 
         Returns:
-            :obj:`Box`: The updated policy-capability-rule resource record.
+            :obj:`Tuple`: The updated policy-capability-rule resource record.
 
         Examples:
             Updates the name and capabilities for an existing Capability Policy rule:
@@ -3091,7 +3168,7 @@ class PolicySetControllerAPI(APIClient):
                         `zpn_client_type_machine_tunnel`, `zpn_client_type_zapp`, `zpn_client_type_zapp_partner`
 
         Returns:
-            :obj:`Box`: The resource record of the newly created Redirection Policy rule.
+            :obj:`Tuple`: The resource record of the newly created Redirection Policy rule.
 
         Example:
             Add a new redirection rule with various conditions and service edge group IDs:
@@ -3232,7 +3309,7 @@ class PolicySetControllerAPI(APIClient):
                     ]),
 
         Returns:
-            :obj:`Box`: The updated policy-rule resource record.
+            :obj:`Tuple`: The updated policy-rule resource record.
 
         Examples:
             Updates the name only for an Access Policy rule:
@@ -3399,27 +3476,43 @@ class PolicySetControllerAPI(APIClient):
         return (None, response, None)
 
     @synchronized(global_rule_lock)
-    def reorder_rule(self, policy_type: str, rule_id: str, rule_order: str, **kwargs) -> tuple:
+    def reorder_rule(
+        self, 
+        policy_type: str, 
+        rule_id: str, 
+        rule_order: str, 
+        **kwargs
+    ) -> tuple:
         """
         Change the order of an existing policy rule.
-        Args:
-            policy_type (str): The policy type. Accepted values are:
 
-                |  ``access``
-                |  ``timeout``
-                |  ``client_forwarding``
-                |  ``isolation``
-                |  ``inspection``
-                |  ``redirection``
-                |  ``credential``
-                |  ``capabilities``
-                |  ``siem``
-            rule_id (str): The unique ID of the rule that will be reordered.
-            rule_order (str): The new order for the rule.
-            **kwargs: Optional keyword arguments.
-                microtenant_id (str): The ID of the microtenant, if applicable.
+        Args:
+            policy_type (str):
+                The policy type. Accepted values:
+                
+                - ``access``
+                - ``timeout``
+                - ``client_forwarding``
+                - ``isolation``
+                - ``inspection``
+                - ``redirection``
+                - ``credential``
+                - ``capabilities``
+                - ``siem``
+
+            rule_id (str):
+                The unique ID of the rule that will be reordered.
+            rule_order (str):
+                The new order for the rule.
+
+            **kwargs:
+                Optional keyword arguments.
+                - **microtenant_id** (str):
+                The ID of the microtenant, if applicable.
+
         Returns:
-            tuple: (Updated rule, response, error)
+            tuple:
+                (Updated rule, response, error)
 
         Examples:
             Updates the order for an existing access policy rule:
@@ -3439,7 +3532,6 @@ class PolicySetControllerAPI(APIClient):
             ...     microtenant_id='1234567890'
             ... )
         """
-
         http_method = "put".upper()
         policy_set_id, response, error = self.get_policy(
             policy_type, query_params={"microtenantId": kwargs.get("microtenantId")}
@@ -3461,19 +3553,25 @@ class PolicySetControllerAPI(APIClient):
         microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        request, error = self._request_executor.create_request(http_method, api_url, {}, params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, {}, params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        # Execute the request
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
-
-        updated_rule, error = self.get_rule(policy_type, rule_id)
-        return (updated_rule, response, error)
+        return (None, response, None)
 
     @synchronized(global_rule_lock)
-    def bulk_reorder_rules(self, policy_type: str, rules_orders: list[str], **kwargs) -> tuple:
+    def bulk_reorder_rules(
+        self, 
+        policy_type: str, 
+        rules_orders: list[str],
+        **kwargs
+    ) -> tuple:
         """
         Bulk change the order of policy rules.
 
@@ -3551,12 +3649,14 @@ class PolicySetControllerAPI(APIClient):
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         # Call create_request without the need for custom headers
-        request, error = self._request_executor.create_request(http_method, api_url, body=rules_orders, params=params)
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body=rules_orders, params=params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor\
+            .execute(request)
         if error:
             return (None, response, error)
         return (None, response, None)

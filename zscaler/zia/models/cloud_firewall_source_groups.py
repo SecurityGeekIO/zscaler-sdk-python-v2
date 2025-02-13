@@ -31,10 +31,10 @@ class IPSourceGroup(ZscalerObject):
                 if "name" in config else None
             self.description = config["description"]\
                 if "description" in config else None
-            self.creator_context = config["creatorContext"]\
-                if "creatorContext" in config else None
+            # self.creator_context = config["creatorContext"]\
+            #     if "creatorContext" in config else None
             self.is_non_editable = config["isNonEditable"]\
-                if "isNonEditable" in config else None
+                if "isNonEditable" in config else False
                 
             self.ip_addresses = ZscalerCollection.form_list(
                 config["ipAddresses"] if "ipAddresses" in config else [],
@@ -44,8 +44,8 @@ class IPSourceGroup(ZscalerObject):
             self.id = None
             self.name = None
             self.description = None
-            self.creator_context = None
-            self.is_non_editable = None
+            # self.creator_context = None
+            self.is_non_editable = False
             self.ip_addresses = []
 
     def request_format(self):
@@ -57,7 +57,7 @@ class IPSourceGroup(ZscalerObject):
             "id": self.id,
             "name": self.name,
             "description": self.description,
-            "creatorContext": self.creator_context,
+            # "creatorContext": self.creator_context,
             "isNonEditable": self.is_non_editable,
             "ipAddresses": self.ip_addresses,
         }

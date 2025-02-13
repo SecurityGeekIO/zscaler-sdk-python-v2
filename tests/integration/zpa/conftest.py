@@ -15,7 +15,6 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 import os
-from functools import wraps
 
 from zscaler import ZscalerClient
 
@@ -41,6 +40,12 @@ class MockZPAClient(ZscalerClient):
         customerId = config.get("customerId", os.getenv("ZPA_CUSTOMER_ID"))
         vanityDomain = config.get("vanityDomain", os.getenv("ZSCALER_VANITY_DOMAIN"))
         cloud = config.get("cloud", os.getenv("ZSCALER_CLOUD", "PRODUCTION"))
+        
+        # Extract logging configuration or use defaults
+        logging_config = config.get("logging", {
+            "enabled": False, 
+            "verbose": False
+        })
 
         # Set up the client config dictionary
         client_config = {
@@ -49,6 +54,10 @@ class MockZPAClient(ZscalerClient):
             "customerId": customerId,
             "vanityDomain": vanityDomain,
             "cloud": cloud,
+            "logging": {
+                "enabled": logging_config.get("enabled", True), 
+                "verbose": logging_config.get("verbose", True)
+            },
         }
 
         # Check if we are running in a pytest mock environment
@@ -58,22 +67,3 @@ class MockZPAClient(ZscalerClient):
             fs.resume()
         else:
             super().__init__(client_config)
-
-
-
-def stub_sleep(func):
-    """Decorator to speed up time.sleep function used in any methods under test."""
-    import time
-    from time import sleep
-
-    def newsleep(seconds):
-        sleep_speed_factor = 10.0
-        sleep(seconds / sleep_speed_factor)
-
-    time.sleep = newsleep
-
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        return func(*args, **kwargs)
-
-    return wrapper

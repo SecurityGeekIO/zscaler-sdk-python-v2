@@ -42,7 +42,7 @@ class URLCategoriesAPI(APIClient):
                 The list of URLs to perform a category lookup on.
 
         Returns:
-            :obj:`BoxList`: A list of URL category reports.
+            :obj:`Tuple`: A list of URL category reports.
 
         Examples:
             >>> zia.url_categories.lookup(['example.com', 'test.com'])
@@ -149,7 +149,7 @@ class URLCategoriesAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(URLCategory(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)

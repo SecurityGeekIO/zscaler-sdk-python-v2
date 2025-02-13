@@ -87,79 +87,43 @@ class TestBACertificates:
 
             # # Create a new certificate
             try:
-                created_cert = client.zpa.certificates.add_certificate(name=cert_name, cert_blob=cert_blob.decode("utf-8"))
-                cert_id = created_cert.id if created_cert and "id" in created_cert else None
-                if not cert_id:
-                    errors.append("Failed to create certificate")
+                created_cert, _, err = client.zpa.certificates.add_certificate(
+                    name=cert_name, cert_blob=cert_blob.decode("utf-8")
+                )
+                assert err is None, f"Certificate creation error: {err}"
+                assert created_cert and created_cert.id, "Failed to create certificate: No ID returned"
+                cert_id = created_cert.id
             except Exception as exc:
                 errors.append(f"Certificate creation failed: {str(exc)}")
 
-            # # Retrieve the specific certificate
+            # Retrieve the specific certificate
             try:
                 retrieved_cert, _, err = client.zpa.certificates.get_certificate(cert_id)
-                assert err is None, f"Retrieved certificate ID does not match: {err}"
+                assert err is None, f"Certificate retrieval error: {err}"
+                assert retrieved_cert, "Failed to retrieve certificate: Response is None"
+                assert retrieved_cert.id == cert_id, "Retrieved certificate ID mismatch"
+                assert retrieved_cert.name == cert_name, "Certificate name mismatch"
             except Exception as exc:
                 errors.append(f"Retrieving certificate failed: {str(exc)}")
 
             # List all issued certificates and verify the created certificate is listed
             try:
                 cert_list, _, err = client.zpa.certificates.list_issued_certificates()
-                assert err is None, f"Certificate not found in issued list: {err}"
-                assert any(cert.id == cert_id for cert in cert_list)
+                assert err is None, f"Certificate listing error: {err}"
+                assert any(cert.id == cert_id for cert in cert_list), "Created certificate not found in the list"
             except Exception as exc:
                 errors.append(f"Listing issued certificates failed: {str(exc)}")
 
         finally:
-            # Attempt to delete the certificate if it was created
+            # Cleanup: Delete the segment group if it was created
             if cert_id:
                 try:
-                    delete_response = client.zpa.certificates.delete_certificate(cert_id)
-                    if delete_response != 204:
-                        errors.append(f"Failed to delete certificate, expected 204 status code, received {delete_response}")
-                except Exception as exc:
-                    errors.append(f"Certificate deletion failed: {str(exc)}")
+                    delete_response, _, err = client.zpa.certificates.delete_certificate(cert_id)
+                    assert err is None, f"Error deleting Certificate: {err}"
+                    # Since a 204 No Content response returns None, we assert that delete_response is None
+                    assert delete_response is None, f"Expected None for 204 No Content, got {delete_response}"
+                except Exception as cleanup_exc:
+                    errors.append(f"Cleanup failed for Certificate ID {cert_id}: {cleanup_exc}")
 
         # Assert that no errors occurred during the test
-        assert not errors, f"Errors occurred during the test: {errors}"
-
-
-# class TestBaListCertificate:
-#     """
-#     Integration Tests for the list certificates.
-#     """
-
-#     def test_ba_list_certificate(self, fs):
-#         client = MockZPAClient(fs)
-#         errors = []  # Initialize an empty list to collect errors
-#         certificate_id = None
-
-#         # List all certificates
-#         try:
-#             certs = client.zpa.certificates.list_issued_certificates()
-#             assert isinstance(certs, list), "Expected a list of certificates"
-#             if certs:  # If there are any certificates, proceed with further operations
-#                 first_certificate = certs[0]
-#                 certificate_id = first_certificate.get("id")
-#         except Exception as exc:
-#             errors.append(f"Listing certificates failed: {str(exc)}")
-
-#         if certificate_id:
-#             # Fetch the selected certificate by its ID
-#             try:
-#                 fetched_certificate = client.zpa.certificates.get_certificate(certificate_id)
-#                 assert fetched_certificate is not None, "Expected a valid certificate object"
-#                 assert fetched_certificate.get("id") == certificate_id, "Mismatch in certificate ID"
-#             except Exception as exc:
-#                 errors.append(f"Fetching certificate by ID failed: {str(exc)}")
-
-#             # Attempt to retrieve the certificate by name
-#             try:
-#                 certificate_name = first_certificate.get("name")
-#                 certificate_by_name = client.zpa.certificates.get_certificate_by_name(certificate_name)
-#                 assert certificate_by_name is not None, "Expected a valid certificate object when searching by name"
-#                 assert certificate_by_name.get("id") == certificate_id, "Mismatch in certificate ID when searching by name"
-#             except Exception as exc:
-#                 errors.append(f"Fetching certificate by name failed: {str(exc)}")
-
-#         # Assert that no errors occurred during the test
-#         assert len(errors) == 0, f"Errors occurred during certificate operations test: {errors}"
+        assert len(errors) == 0, f"Errors occurred during the Certificate lifecycle test: {errors}"

@@ -40,13 +40,11 @@ class IDPControllerAPI(APIClient):
 
         Args:
             query_params {dict}: Map of query parameters for the request.
-                [query_params.page] {int}: Specifies the page number.
-                [query_params.pagesize] {int}: Specifies the page size. If not provided, the default page size is 20. The max page size is 500.
-                [query_params.search] {str}: The search string used to support search by features and fields for the API.
-                [query_params.scim_enabled] {bool}: Returns all SCIM IdPs if set to true. Returns all non SCIM IdPs if set to false.
-                [query_params.user_attributes] {bool}: Returns user attributes.
-                [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
-                [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
+                ``[query_params.page]`` {int}: Specifies the page number.
+                ``[query_params.page_size]`` {int}: Specifies the page size. If not provided, the default page size is 20. The max page size is 500.
+                ``[query_params.search]`` {str}: The search string used to support search by features and fields for the API.
+                ``[query_params.scim_enabled]`` {bool}: Returns all SCIM IdPs if set to true. Returns all non SCIM IdPs if set to false.
+                ``[query_params.user_attributes]`` {bool}: Returns user attributes.
 
         Returns:
             tuple: A tuple containing (list of IDP instances, Response, error)
@@ -79,7 +77,7 @@ class IDPControllerAPI(APIClient):
 
         try:
             result = []
-            for item in response.get_all_pages_results():
+            for item in response.get_results():
                 result.append(IDP(
                     self.form_response_body(item))
                 )
