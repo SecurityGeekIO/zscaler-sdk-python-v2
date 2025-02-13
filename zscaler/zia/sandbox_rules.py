@@ -15,21 +15,12 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.request_executor import RequestExecutor
-from zscaler.utils import format_url
+from zscaler.utils import format_url, transform_common_id_fields, reformat_params
 from zscaler.api_client import APIClient
 from zscaler.zia.models.sandboxrules import SandboxRules
 
 
 class SandboxRulesAPI(APIClient):
-
-    reformat_params = [
-        ("departments", "departments"),
-        ("groups", "groups"),
-        ("users", "users"),
-        ("labels", "labels"),
-        ("locations", "locations"),
-        ("location_groups", "locationGroups"),
-    ]
 
     _zia_base_endpoint = "/zia/api/v1"
 
@@ -47,11 +38,9 @@ class SandboxRulesAPI(APIClient):
         filter expression or query.
 
         Args:
-            query_params {dict}: Map of query parameters for the request.
-                [query_params.pagesize] {int}: Page size for pagination.
-                [query_params.search] {str}: Search string for filtering results.
-                [query_params.max_items] {int}: Maximum number of items to fetch before stopping.
-                [query_params.max_pages] {int}: Maximum number of pages to request before stopping.
+            query_params {dict}: Map of query parameters for the request. 
+                       
+                ``[query_params.search]`` {str}: Search string for filtering results.
 
         Returns:
             tuple: A tuple containing (list of sandbox rules instances, Response, error).
@@ -73,32 +62,43 @@ class SandboxRulesAPI(APIClient):
 
         query_params = query_params or {}
 
-        # Prepare request body and headers
+        local_search = query_params.pop("search", None)
+
         body = {}
         headers = {}
 
-        # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, headers, params=query_params)
-
+        request, error = self._request_executor.create_request(
+            http_method,
+            api_url,
+            body,
+            headers,
+            params=query_params
+        )
         if error:
             return (None, None, error)
 
-        # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
-
+        response, error = self._request_executor.\
+            execute(request)
         if error:
             return (None, response, error)
 
         try:
-            result = []
+            results = []
             for item in response.get_results():
-                result.append(SandboxRules(self.form_response_body(item)))
-        except Exception as error:
-            return (None, response, error)
+                results.append(SandboxRules(
+                    self.form_response_body(item))
+                )
+        except Exception as exc:
+            return (None, response, exc)
 
-        return (result, response, None)
+        if local_search:
+            lower_search = local_search.lower()
+            results = [
+                r for r in results
+                if lower_search in (r.name.lower() if r.name else "")
+            ]
+
+        return (results, response, None)
 
     def get_rule(
         self,
@@ -181,7 +181,7 @@ class SandboxRulesAPI(APIClient):
             location_groups (list): The IDs for the location groups that this rule applies to.
             
         Returns:
-            :obj:`Box`: New sandbox rule resource record.
+            :obj:`Tuple`: New sandbox rule resource record.
 
         Example:
             Add a sandbox rule to block specific file types:
@@ -205,8 +205,12 @@ class SandboxRulesAPI(APIClient):
         body = kwargs
 
         # Convert 'enabled' to 'state' (ENABLED/DISABLED) if it's present in the payload
-        if "enabled" in body:
-            body["state"] = "ENABLED" if body.pop("enabled") else "DISABLED"
+        if "enabled" in kwargs:
+            kwargs["state"] = "ENABLED" if kwargs.pop("enabled") else "DISABLED"
+            
+        # Filter out the url_categories mapping so it doesn't get processed
+        local_reformat_params = [param for param in reformat_params if param[0] != "url_categories"]
+        transform_common_id_fields(local_reformat_params, body, body)
 
         # Create the request
         request, error = self._request_executor\
@@ -284,8 +288,12 @@ class SandboxRulesAPI(APIClient):
         body = kwargs
 
         # Convert 'enabled' to 'state' (ENABLED/DISABLED) if it's present in the payload
-        if "enabled" in body:
-            body["state"] = "ENABLED" if body.pop("enabled") else "DISABLED"
+        if "enabled" in kwargs:
+            kwargs["state"] = "ENABLED" if kwargs.pop("enabled") else "DISABLED"
+            
+        # Filter out the url_categories mapping so it doesn't get processed
+        local_reformat_params = [param for param in reformat_params if param[0] != "url_categories"]
+        transform_common_id_fields(local_reformat_params, body, body)
 
         # Create the request
         request, error = self._request_executor\

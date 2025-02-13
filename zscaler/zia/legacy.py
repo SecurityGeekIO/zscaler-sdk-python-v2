@@ -2,14 +2,11 @@ import datetime
 import logging
 import os
 import re
-import time
-import uuid
 from time import sleep
 
 import requests
-# from zscaler.errors.http_error import ZscalerAPIError
-# from zscaler.exceptions.exceptions import ZscalerAPIException
 from zscaler import __version__
+from zscaler.cache.cache import Cache
 from zscaler.cache.no_op_cache import NoOpCache
 from zscaler.cache.zscaler_cache import ZscalerCache
 from zscaler.logger import setup_logging
@@ -21,7 +18,8 @@ from zscaler.utils import obfuscate_api_key
 setup_logging(logger_name="zscaler-sdk-python")
 logger = logging.getLogger("zscaler-sdk-python")
 
-class LegacyZIAClientHelper():
+
+class LegacyZIAClientHelper:
     """
     A Controller to access Endpoints in the Zscaler Internet Access (ZIA) API.
 
@@ -61,6 +59,7 @@ class LegacyZIAClientHelper():
 
     def __init__(self, cloud, timeout=240, cache=None, fail_safe=False, **kw):
         from zscaler.request_executor import RequestExecutor
+
         self.api_key = kw.get("api_key", os.getenv(f"{self._env_base}_API_KEY"))
         self.username = kw.get("username", os.getenv(f"{self._env_base}_USERNAME"))
         self.password = kw.get("password", os.getenv(f"{self._env_base}_PASSWORD"))
@@ -77,9 +76,7 @@ class LegacyZIAClientHelper():
         else:
             # Use override URL if provided, else construct the URL
             self.url = (
-                kw.get("override_url")
-                or os.getenv(f"{self._env_base}_OVERRIDE_URL")
-                or f"https://zsapi.{self.env_cloud}.net"
+                kw.get("override_url") or os.getenv(f"{self._env_base}_OVERRIDE_URL") or f"https://zsapi.{self.env_cloud}.net"
             )
 
         self.conv_box = True
@@ -87,15 +84,14 @@ class LegacyZIAClientHelper():
         self.timeout = timeout
         self.fail_safe = fail_safe
         cache_enabled = os.environ.get("ZSCALER_CLIENT_CACHE_ENABLED", "false").lower() == "true"
-        if cache is None:
-            if cache_enabled:
-                ttl = int(os.environ.get("ZSCALER_CLIENT_CACHE_DEFAULT_TTL", 3600))
-                tti = int(os.environ.get("ZSCALER_CLIENT_CACHE_DEFAULT_TTI", 1800))
-                self.cache = ZscalerCache(ttl=ttl, tti=tti)
-            else:
-                self.cache = NoOpCache()
-        else:
+        self.cache = NoOpCache()
+        if cache is None and cache_enabled:
+            ttl = int(os.environ.get("ZSCALER_CLIENT_CACHE_DEFAULT_TTL", 3600))
+            tti = int(os.environ.get("ZSCALER_CLIENT_CACHE_DEFAULT_TTI", 1800))
+            self.cache = ZscalerCache(ttl=ttl, tti=tti)
+        elif isinstance(cache, Cache):
             self.cache = cache
+
         # Initialize user-agent
         ua = UserAgent()
         self.user_agent = ua.get_user_agent_string()
@@ -127,9 +123,7 @@ class LegacyZIAClientHelper():
                 "cache": {"enabled": True},
             }
         }
-        self.request_executor = RequestExecutor(
-            self.config, self.cache, zia_legacy_client=self
-        )
+        self.request_executor = RequestExecutor(self.config, self.cache, zia_legacy_client=self)
 
     def extractJSessionIDFromHeaders(self, header):
         session_id_str = header.get("Set-Cookie", "")
@@ -168,9 +162,7 @@ class LegacyZIAClientHelper():
         }
 
         url = f"{self.url}/api/v1/authenticatedSession"  # Correct path
-        resp = requests.post(
-            url, json=payload, headers=self.headers, timeout=self.timeout
-        )
+        resp = requests.post(url, json=payload, headers=self.headers, timeout=self.timeout)
 
         if resp.status_code != 200:
             logger.error(f"Authentication failed: {resp.status_code}, {resp.text}")
@@ -211,7 +203,7 @@ class LegacyZIAClientHelper():
                 return False
         except requests.RequestException as e:
             return False
-        
+
     def get_base_url(self, endpoint):
         return self.url
 
@@ -231,7 +223,7 @@ class LegacyZIAClientHelper():
             requests.Response: Response object from the request.
         """
         url = f"{self.url}/{path.lstrip('/')}"
-        
+
         # Prepare headers
         headers_with_user_agent = self.headers.copy()
         headers_with_user_agent.update(headers or {})
@@ -258,9 +250,7 @@ class LegacyZIAClientHelper():
 
                 if resp.status_code == 429:  # Handle rate-limiting
                     sleep_time = int(resp.headers.get("Retry-After", 2))
-                    logger.warning(
-                        f"Rate limit exceeded. Retrying in {sleep_time} seconds."
-                    )
+                    logger.warning(f"Rate limit exceeded. Retrying in {sleep_time} seconds.")
                     sleep(sleep_time)
                     attempts += 1
                     continue
@@ -302,6 +292,7 @@ class LegacyZIAClientHelper():
 
         """
         from zscaler.zia.activate import ActivationAPI
+
         return ActivationAPI(self.request_executor)
 
     @property
@@ -311,6 +302,7 @@ class LegacyZIAClientHelper():
 
         """
         from zscaler.zia.admin_roles import AdminRolesAPI
+
         return AdminRolesAPI(self.request_executor)
 
     @property
@@ -320,6 +312,7 @@ class LegacyZIAClientHelper():
 
         """
         from zscaler.zia.admin_users import AdminUsersAPI
+
         return AdminUsersAPI(self.request_executor)
 
     @property
@@ -329,6 +322,7 @@ class LegacyZIAClientHelper():
 
         """
         from zscaler.zia.audit_logs import AuditLogsAPI
+
         return AuditLogsAPI(self.request_executor)
 
     @property
@@ -338,6 +332,7 @@ class LegacyZIAClientHelper():
 
         """
         from zscaler.zia.apptotal import AppTotalAPI
+
         return AppTotalAPI(self.request_executor)
 
     @property
@@ -347,6 +342,7 @@ class LegacyZIAClientHelper():
 
         """
         from zscaler.zia.advanced_settings import AdvancedSettingsAPI
+
         return AdvancedSettingsAPI(self.request_executor)
 
     @property
@@ -356,6 +352,7 @@ class LegacyZIAClientHelper():
 
         """
         from zscaler.zia.atp_policy import ATPPolicyAPI
+
         return ATPPolicyAPI(self.request_executor)
 
     @property
@@ -365,6 +362,7 @@ class LegacyZIAClientHelper():
 
         """
         from zscaler.zia.authentication_settings import AuthenticationSettingsAPI
+
         return AuthenticationSettingsAPI(self.request_executor)
 
     @property
@@ -374,6 +372,7 @@ class LegacyZIAClientHelper():
 
         """
         from zscaler.zia.cloudappcontrol import CloudAppControlAPI
+
         return CloudAppControlAPI(self.request_executor)
 
     @property
@@ -383,6 +382,7 @@ class LegacyZIAClientHelper():
 
         """
         from zscaler.zia.cloud_applications import CloudApplicationsAPI
+
         return CloudApplicationsAPI(self.request_executor)
 
     @property
@@ -392,6 +392,7 @@ class LegacyZIAClientHelper():
 
         """
         from zscaler.zia.cloud_nss import CloudNSSAPI
+
         return CloudNSSAPI(self.request_executor)
 
     @property
@@ -401,8 +402,9 @@ class LegacyZIAClientHelper():
 
         """
         from zscaler.zia.cloud_firewall_dns import FirewallDNSRulesAPI
+
         return FirewallDNSRulesAPI(self.request_executor)
-    
+
     @property
     def cloud_firewall_ips(self):
         """
@@ -410,17 +412,29 @@ class LegacyZIAClientHelper():
 
         """
         from zscaler.zia.cloud_firewall_ips import FirewallIPSRulesAPI
+
         return FirewallIPSRulesAPI(self.request_executor)
 
     @property
     def cloud_firewall_rules(self):
         """
-        The interface object for the :ref:`ZIA Firewall Policies interface <zia-firewall>`.
+        The interface object for the :ref:`ZIA Firewall Policies interface <zia-cloud_firewall_rules>`.
 
         """
         from zscaler.zia.cloud_firewall_rules import FirewallPolicyAPI
+
         return FirewallPolicyAPI(self.request_executor)
 
+    @property
+    def cloud_firewall(self):
+        """
+        The interface object for the :ref:`ZIA Cloud Firewall resources interface <zia-cloud_firewall>`.
+
+        """
+        from zscaler.zia.cloud_firewall import FirewallResourcesAPI
+
+        return FirewallResourcesAPI(self.request_executor)
+    
     @property
     def dlp_dictionary(self):
         """
@@ -428,6 +442,7 @@ class LegacyZIAClientHelper():
 
         """
         from zscaler.zia.dlp_dictionary import DLPDictionaryAPI
+
         return DLPDictionaryAPI(self.request_executor)
 
     @property
@@ -437,6 +452,7 @@ class LegacyZIAClientHelper():
 
         """
         from zscaler.zia.dlp_engine import DLPEngineAPI
+
         return DLPEngineAPI(self.request_executor)
 
     @property
@@ -446,6 +462,7 @@ class LegacyZIAClientHelper():
 
         """
         from zscaler.zia.dlp_web_rules import DLPWebRuleAPI
+
         return DLPWebRuleAPI(self.request_executor)
 
     @property
@@ -455,6 +472,7 @@ class LegacyZIAClientHelper():
 
         """
         from zscaler.zia.dlp_templates import DLPTemplatesAPI
+
         return DLPTemplatesAPI(self.request_executor)
 
     @property
@@ -464,6 +482,7 @@ class LegacyZIAClientHelper():
 
         """
         from zscaler.zia.dlp_resources import DLPResourcesAPI
+
         return DLPResourcesAPI(self.request_executor)
 
     @property
@@ -473,6 +492,7 @@ class LegacyZIAClientHelper():
 
         """
         from zscaler.zia.device_management import DeviceManagementAPI
+
         return DeviceManagementAPI(self.request_executor)
 
     @property
@@ -481,7 +501,8 @@ class LegacyZIAClientHelper():
         The interface object for the :ref:`ZIA End user Notification interface <zia-end_user_notification>`.
 
         """
-        from zscaler.zia.endusernotification import EndUserNotificationAPI
+        from zscaler.zia.end_user_notification import EndUserNotificationAPI
+
         return EndUserNotificationAPI(self.request_executor)
 
     @property
@@ -491,6 +512,7 @@ class LegacyZIAClientHelper():
 
         """
         from zscaler.zia.file_type_control_rule import FileTypeControlRuleAPI
+
         return FileTypeControlRuleAPI(self.request_executor)
 
     @property
@@ -500,8 +522,9 @@ class LegacyZIAClientHelper():
 
         """
         from zscaler.zia.locations import LocationsAPI
+
         return LocationsAPI(self.request_executor)
-    
+
     @property
     def malware_protection_policy(self):
         """
@@ -509,6 +532,7 @@ class LegacyZIAClientHelper():
 
         """
         from zscaler.zia.malware_protection_policy import MalwareProtectionPolicyAPI
+
         return MalwareProtectionPolicyAPI(self.request_executor)
 
     @property
@@ -518,6 +542,7 @@ class LegacyZIAClientHelper():
 
         """
         from zscaler.zia.organization_information import OrganizationInformationAPI
+
         return OrganizationInformationAPI(self.request_executor)
 
     @property
@@ -527,24 +552,37 @@ class LegacyZIAClientHelper():
 
         """
         from zscaler.zia.pac_files import PacFilesAPI
+
         return PacFilesAPI(self.request_executor)
+
+    @property
+    def policy_export(self):
+        """
+        The interface object for the :ref:`ZIA Policy Export interface <zia-policy_export>`.
+
+        """
+        from zscaler.zia.policy_export import PolicyExportAPI
+
+        return PolicyExportAPI(self.request_executor)
 
     @property
     def remote_assistance(self):
         """
         The interface object for the ZIA Remote Assistance interface.
         """
-        from zscaler.zia.remoteassistance import RemoteAssistanceAPI
+        from zscaler.zia.remote_assistance import RemoteAssistanceAPI
+
         return RemoteAssistanceAPI(self.request_executor)
-                
+
     @property
     def rule_labels(self):
         """
         The interface object for the ZIA Rule Labels interface.
         """
         from zscaler.zia.rule_labels import RuleLabelsAPI
+
         return RuleLabelsAPI(self.request_executor)
-    
+
     @property
     def sandbox(self):
         """
@@ -552,6 +590,7 @@ class LegacyZIAClientHelper():
 
         """
         from zscaler.zia.sandbox import CloudSandboxAPI
+
         return CloudSandboxAPI(self.request_executor)
 
     @property
@@ -561,6 +600,7 @@ class LegacyZIAClientHelper():
 
         """
         from zscaler.zia.sandbox_rules import SandboxRulesAPI
+
         return SandboxRulesAPI(self.request_executor)
 
     @property
@@ -570,8 +610,29 @@ class LegacyZIAClientHelper():
 
         """
         from zscaler.zia.security_policy_settings import SecurityPolicyAPI
+
         return SecurityPolicyAPI(self.request_executor)
-    
+
+    @property
+    def ssl_inspection_rules(self):
+        """
+        The interface object for the :ref:`ZIA SSL Inspection Rules interface <zia-security_policy_settings>`.
+
+        """
+        from zscaler.zia.ssl_inspection_rules import SSLInspectionAPI
+
+        return SSLInspectionAPI(self.request_executor)
+
+    @property
+    def traffic_extranet(self):
+        """
+        The interface object for the :ref:`ZIA Extranet interface <zia-traffic_extranet>`.
+
+        """
+        from zscaler.zia.traffic_extranet import TrafficExtranetAPI
+
+        return TrafficExtranetAPI(self.request_executor)
+
     @property
     def traffic_gre_tunnel(self):
         """
@@ -579,6 +640,7 @@ class LegacyZIAClientHelper():
 
         """
         from zscaler.zia.traffic_gre_tunnels import TrafficForwardingGRETunnelAPI
+
         return TrafficForwardingGRETunnelAPI(self.request_executor)
 
     @property
@@ -588,6 +650,7 @@ class LegacyZIAClientHelper():
 
         """
         from zscaler.zia.traffic_vpn_credentials import TrafficVPNCredentialAPI
+
         return TrafficVPNCredentialAPI(self.request_executor)
 
     @property
@@ -597,6 +660,7 @@ class LegacyZIAClientHelper():
 
         """
         from zscaler.zia.traffic_static_ip import TrafficStaticIPAPI
+
         return TrafficStaticIPAPI(self.request_executor)
 
     @property
@@ -606,6 +670,7 @@ class LegacyZIAClientHelper():
 
         """
         from zscaler.zia.url_categories import URLCategoriesAPI
+
         return URLCategoriesAPI(self.request_executor)
 
     @property
@@ -615,6 +680,7 @@ class LegacyZIAClientHelper():
 
         """
         from zscaler.zia.url_filtering import URLFilteringAPI
+
         return URLFilteringAPI(self.request_executor)
 
     @property
@@ -624,6 +690,7 @@ class LegacyZIAClientHelper():
 
         """
         from zscaler.zia.user_management import UserManagementAPI
+
         return UserManagementAPI(self.request_executor)
 
     @property
@@ -633,6 +700,7 @@ class LegacyZIAClientHelper():
 
         """
         from zscaler.zia.zpa_gateway import ZPAGatewayAPI
+
         return ZPAGatewayAPI(self.request_executor)
 
     @property
@@ -642,5 +710,5 @@ class LegacyZIAClientHelper():
 
         """
         from zscaler.zia.workload_groups import WorkloadGroupsAPI
-        return WorkloadGroupsAPI(self.request_executor)
 
+        return WorkloadGroupsAPI(self.request_executor)

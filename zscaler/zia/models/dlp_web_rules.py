@@ -29,6 +29,7 @@ from zscaler.zia.models import urlcategory as urlcategory
 from zscaler.zia.models import rule_labels as labels
 from zscaler.zia.models import common as common_reference
 from zscaler.zia.models import workload_groups as workload_groups
+from zscaler.zia.models import common as common_reference
 
 
 class DLPWebRules(ZscalerObject):
@@ -66,13 +67,19 @@ class DLPWebRules(ZscalerObject):
             self.external_auditor_email = config["externalAuditorEmail"] if "externalAuditorEmail" in config else None
 
             # Handling lists of simple values
-            self.protocols = ZscalerCollection.form_list(config["protocols"] if "protocols" in config else [], str)
-            self.file_types = ZscalerCollection.form_list(config["fileTypes"] if "fileTypes" in config else [], str)
+            self.protocols = ZscalerCollection.form_list(
+                config["protocols"] if "protocols" in config else [], str)
+            
+            self.file_types = ZscalerCollection.form_list(
+                config["fileTypes"] if "fileTypes" in config else [], str)
+            
             self.cloud_applications = ZscalerCollection.form_list(
                 config["cloudApplications"] if "cloudApplications" in config else [], str
             )
-
-            # Handling nested objects with ZscalerCollection and defensive programming
+            self.url_categories = ZscalerCollection.form_list(
+                config["urlCategories"] if "urlCategories" in config else [], common_reference.ResourceReference
+            )
+            
             self.locations = ZscalerCollection.form_list(
                 config["locations"] if "locations" in config else [], location_management.LocationManagement
             )
@@ -100,9 +107,7 @@ class DLPWebRules(ZscalerObject):
             self.source_ip_groups = ZscalerCollection.form_list(
                 config["sourceIpGroups"] if "sourceIpGroups" in config else [], cloud_firewall_source_groups.IPSourceGroup
             )
-            self.url_categories = ZscalerCollection.form_list(
-                config["urlCategories"] if "urlCategories" in config else [], urlcategory.URLCategory
-            )
+
             self.zpa_app_segments = ZscalerCollection.form_list(
                 config["zpaAppSegments"] if "zpaAppSegments" in config else [], common_reference.ResourceReference
             )
