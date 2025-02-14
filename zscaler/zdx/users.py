@@ -1,6 +1,6 @@
 from box import BoxList
 from zscaler.utils import ZDXIterator, CommonFilters, zdx_params
-from zscaler.zdx.zdx_client import ZDXClientHelper
+from zscaler.zdx.legacy import ZDXClientHelper
 
 
 class UsersAPI:

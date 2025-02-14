@@ -2,7 +2,7 @@ from box import BoxList
 
 from zscaler.utils import ZDXIterator
 from zscaler.zdx.filters import GetSoftwareFilters
-from zscaler.zdx.zdx_client import ZDXClientHelper
+from zscaler.zdx.legacy import ZDXClientHelper
 from zscaler.utils import zdx_params
 
 

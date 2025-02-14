@@ -1,58 +1,85 @@
-from box import BoxList
-from zscaler.utils import zdx_params
-from zscaler.utils import ZDXIterator, CommonFilters
-from zscaler.zdx.zdx_client import ZDXClientHelper
+"""
+Copyright (c) 2023, Zscaler Inc.
 
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
 
-class AdminAPI:
-    def __init__(self, client: ZDXClientHelper):
-        self.rest = client
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+"""
 
-    @zdx_params
-    def list_departments(self, filters=None, **kwargs) -> BoxList:
+from zscaler.api_client import APIClient
+from zscaler.request_executor import RequestExecutor
+from zscaler.zdx.models.admin_departments import AdministrationDepartments
+from zscaler.utils import format_url
+
+class AdminAPI(APIClient):
+
+    def __init__(self, request_executor):
+        super().__init__()
+        self._request_executor: RequestExecutor = request_executor
+        self._zdx_base_endpoint = "/zdx/v1"
+        
+    def list_departments(self, query_params=None) -> tuple:
         """
-        Returns a list of departments that are configured within ZDX.
+        Returns the list of Admin Users enrolled in the Client Connector Portal.
 
-        Keyword Args:
-            since (int): The number of hours to look back for devices.
-            search (str): The search string to filter by name or department ID.
-
+        Args:
+            query_params {dict}: Map of query parameters for the request.
+                ``[query_params.from]`` {int}: The start time (in seconds) for the query. 
+                    The value is entered in Unix Epoch. 
+                    If not entered, returns the data for the last 2 hours.
+                    
+                ``[query_params.to]`` {int}: The end time (in seconds) for the query.
+                    The value is entered in Unix Epoch.
+                    If not entered, returns the data for the last 2 hours.
+                    
+                ``[query_params.Search]`` {str}: The search string used to support search by name or department ID.
+                
         Returns:
-            :obj:`BoxList`: The list of departments in ZDX.
+            :obj:`tuple`: A tuple containing configured departments.
 
         Examples:
-            List all departments in ZDX for the past 2 hours:
+            Prints all admins in the Client Connector Portal to the console:
 
-            >>> for department in zdx.admin.list_departments():
-            ...     print(department)
-
-        """
-        filters = CommonFilters(**kwargs).to_dict()
-        return ZDXIterator(self.rest, "administration/departments", filters)
-
-    @zdx_params
-    def list_locations(self, filters=None, **kwargs) -> BoxList:
-        """
-        Returns a list of locations that are configured within ZDX.
-
-        Keyword Args:
-            since (int): The number of hours to look back for devices.
-            search (str): The search string to filter by name or location ID.
-
-        Returns:
-            :obj:`BoxList`: The list of locations in ZDX.
-
-        Examples:
-            List all locations in ZDX for the past 2 hours:
-
-            >>> for location in zdx.admin.list_locations():
-            ...     print(location)
+            >>> for admin in zcc.admin_user.list_admin_users():
+            ...    print(admin)
 
         """
-        if filters is None:
-            filters = CommonFilters(**kwargs).to_dict()
-        else:
-            filters.update(kwargs)
+        http_method = "get".upper()
+        api_url = format_url(
+            f"""
+            {self._zdx_base_endpoint}
+            /administration/departments
+        """
+        )
 
-        iterator = ZDXIterator(self.rest, "administration/locations", filters)
-        return BoxList(iterator)
+        query_params = query_params or {}
+
+        # Prepare request body and headers
+        body = {}
+        headers = {}
+
+        request, error = self._request_executor.\
+            create_request(http_method, api_url, body, headers, params=query_params)
+
+        if error:
+            return (None, None, error)
+
+        response, error = self._request_executor.execute(request)
+        if error:
+            return (None, response, error)
+
+        try:
+            result = []
+            for item in response.get_results():
+                result.append(AdministrationDepartments(self.form_response_body(item)))
+        except Exception as error:
+            return (None, response, error)
+        return (result, response, None)

@@ -1,5 +1,5 @@
 from box import BoxList
-from zscaler.zdx.zdx_client import ZDXClientHelper
+from zscaler.zdx.legacy import ZDXClientHelper
 from zscaler.utils import zdx_params, ZDXIterator, CommonFilters
 
 
