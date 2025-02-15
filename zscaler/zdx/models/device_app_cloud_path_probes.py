@@ -15,16 +15,17 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.oneapi_object import ZscalerObject
+from zscaler.oneapi_collection import ZscalerCollection
 
 
-class AdministrationDepartments(ZscalerObject):
+class DeviceAppCloudPathProbes(ZscalerObject):
     """
-    A class for AdministrationDepartments objects.
+    A class for DeviceAppCloudPathProbes objects.
     """
 
     def __init__(self, config=None):
         """
-        Initialize the AdministrationDepartments model based on API response.
+        Initialize the DeviceAppCloudPathProbes model based on API response.
 
         Args:
             config (dict): A dictionary representing the configuration.
@@ -36,9 +37,16 @@ class AdministrationDepartments(ZscalerObject):
                 if "id" in config else None
             self.name = config["name"] \
                 if "name" in config else None
+            self.num_probes = config["num_probes"] \
+                if "num_probes" in config else None
+            self.avg_latencies = ZscalerCollection.form_list(
+                config["avg_latencies"] if "avg_latencies" in config else [], str
+            )
         else:
             self.id = None
             self.name = None
+            self.num_probes = None
+            self.avg_latencies = ZscalerCollection.form_list([], str)
 
     def request_format(self):
         """
@@ -47,7 +55,9 @@ class AdministrationDepartments(ZscalerObject):
         parent_req_format = super().request_format()
         current_obj_format = {
             "id": self.id,
-            "name": self.name
+            "name": self.name,
+            "num_probes": self.num_probes,
+            "avg_latencies": self.avg_latencies
         }
         parent_req_format.update(current_obj_format)
         return parent_req_format

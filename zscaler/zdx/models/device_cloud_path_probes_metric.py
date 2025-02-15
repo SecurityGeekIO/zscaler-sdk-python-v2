@@ -18,14 +18,14 @@ from zscaler.oneapi_object import ZscalerObject
 from zscaler.oneapi_collection import ZscalerCollection
 
 
-class OngoingAlerts(ZscalerObject):
+class DeviceCloudPathProbesMetric(ZscalerObject):
     """
-    A class for OngoingAlerts objects.
+    A class for DeviceCloudPathProbesMetric objects.
     """
 
     def __init__(self, config=None):
         """
-        Initialize the OngoingAlerts model based on API response.
+        Initialize the DeviceCloudPathProbesMetric model based on API response.
 
         Args:
             config (dict): A dictionary representing the configuration.
@@ -33,14 +33,17 @@ class OngoingAlerts(ZscalerObject):
         super().__init__(config)
 
         if config:
-            self.alerts = ZscalerCollection.form_list(
-                config["alerts"] if "alerts" in config else [], str
+            self.leg_src = config["leg_src"] \
+                if "leg_src" in config else None
+            self.leg_dst = config["leg_dst"] \
+                if "leg_dst" in config else None
+            self.stats = ZscalerCollection.form_list(
+                config["stats"] if "stats" in config else [], str
             )
-            self.next_offset = config["next_offset"] \
-                if "next_offset" in config else None
         else:
-            self.alerts = ZscalerCollection.form_list([], str)
-            self.next_offset = None
+            self.leg_src = None
+            self.leg_dst = None
+            self.stats = ZscalerCollection.form_list([], str)
 
     def request_format(self):
         """
@@ -48,8 +51,9 @@ class OngoingAlerts(ZscalerObject):
         """
         parent_req_format = super().request_format()
         current_obj_format = {
-            "alerts": self.alerts,
-            "next_offset": self.next_offset
+            "leg_src": self.leg_src,
+            "leg_dst": self.leg_dst,
+            "stats": self.stats
         }
         parent_req_format.update(current_obj_format)
         return parent_req_format

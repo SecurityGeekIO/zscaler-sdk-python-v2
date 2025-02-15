@@ -306,15 +306,23 @@ class LegacyZDXClientHelper:
         from zscaler.zdx.alerts import AlertsAPI
         return AlertsAPI(self.request_executor)
 
-    # @property
-    # def apps(self):
-    #     """The interface object for the :ref:`ZDX Apps interface <zdx-apps>`."""
-    #     return AppsAPI(self.client)
+    @property
+    def apps(self):
+        """
+        The interface object for the :ref:`ZDX Apps interface <zdx-apps>`.
+        
+        """
+        from zscaler.zdx.apps import AppsAPI
+        return AppsAPI(self.request_executor)
 
-    # @property
-    # def devices(self):
-    #     """The interface object for the :ref:`ZDX Devices interface <zdx-devices>`."""
-    #     return DevicesAPI(self.client)
+    @property
+    def devices(self):
+        """
+        The interface object for the :ref:`ZDX Devices interface <zdx-devices>`.
+        
+        """
+        from zscaler.zdx.devices import DevicesAPI
+        return DevicesAPI(self.request_executor)
 
     # @property
     # def inventory(self):

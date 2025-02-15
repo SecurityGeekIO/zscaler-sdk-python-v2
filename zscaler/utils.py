@@ -432,24 +432,51 @@ def zdx_params(func):
 
     @functools.wraps(func)
     def wrapper(self, *args, **kwargs):
-        since = kwargs.pop("since", None)
-        search = kwargs.pop("search", None)
-        location_id = kwargs.pop("location_id", None)
-        department_id = kwargs.pop("department_id", None)
-        geo_id = kwargs.pop("geo_id", None)
+        # Get the existing query_params dict (or create one)
+        query_params = kwargs.get("query_params", {})
 
-        if since:
-            current_time, past_time = calculate_epoch(since)
-            kwargs["to"] = current_time
-            kwargs["from"] = past_time
+        # First, process shorthand parameters passed directly as keyword args.
+        for key, target in [
+            ("since", ("from", "to")),
+            ("search", "q"),
+            ("location_id", "loc"),
+            ("department_id", "dept"),
+            ("geo_id", "geo")
+        ]:
+            if key in kwargs:
+                value = kwargs.pop(key)
+                if key == "since":
+                    current_time, past_time = calculate_epoch(value)
+                    if "to" not in query_params:
+                        query_params["to"] = current_time
+                    if "from" not in query_params:
+                        query_params["from"] = past_time
+                else:
+                    if target not in query_params:
+                        query_params[target] = value
 
-        kwargs["q"] = search or kwargs.get("q")
-        kwargs["loc"] = location_id or kwargs.get("loc")
-        kwargs["dept"] = department_id or kwargs.get("dept")
-        kwargs["geo"] = geo_id or kwargs.get("geo")
+        # Then, process shorthand parameters if provided within query_params itself.
+        if "since" in query_params:
+            value = query_params.pop("since")
+            current_time, past_time = calculate_epoch(value)
+            if "to" not in query_params:
+                query_params["to"] = current_time
+            if "from" not in query_params:
+                query_params["from"] = past_time
+
+        if "search" in query_params and "q" not in query_params:
+            query_params["q"] = query_params.pop("search")
+        if "location_id" in query_params and "loc" not in query_params:
+            query_params["loc"] = query_params.pop("location_id")
+        if "department_id" in query_params and "dept" not in query_params:
+            query_params["dept"] = query_params.pop("department_id")
+        if "geo_id" in query_params and "geo" not in query_params:
+            query_params["geo"] = query_params.pop("geo_id")
+
+        # Update kwargs with the modified query_params dictionary
+        kwargs["query_params"] = query_params
 
         return func(self, *args, **kwargs)
-
     return wrapper
 
 
@@ -559,60 +586,6 @@ class ZDXIterator:
 
         self.total += len(self.page)
         self.page_count = 0
-
-
-# class ZDXIterator:
-#     def __init__(self, client, endpoint, filters=None):
-#         self.client = client
-#         self.endpoint = endpoint
-#         self.filters = {k: v for k, v in (filters or {}).items() if v is not None}
-#         self.next_offset = None
-#         self.page = []
-#         self.page_count = 0
-#         self.total = 0
-#         self.logger = logging.getLogger("zscaler-sdk-python")
-#         self._get_page()
-
-#     def __iter__(self):
-#         return self
-
-#     def __next__(self):
-#         if self.page_count >= len(self.page):
-#             if self.next_offset is None:
-#                 raise StopIteration
-#             self._get_page()
-#             if not self.page:
-#                 raise StopIteration
-#         item = self.page[self.page_count]
-#         self.page_count += 1
-#         return item
-
-#     def _get_page(self):
-#         params = {**self.filters, "offset": self.next_offset} if self.next_offset else self.filters
-#         response = self.client.get(self.endpoint, params=params)
-
-#         self.logger.debug(f"API response: {response}")
-
-#         if response is None:
-#             self.logger.error(f"Invalid response: {response}")
-#             raise StopIteration
-
-#         if isinstance(response, list):
-#             self.page = response
-#             self.next_offset = None
-#         elif isinstance(response, dict):
-#             self.next_offset = response.get("next_offset")
-#             self.page = response.get("devices", []) or response.get("items", []) or response.get("probes", [])
-#         else:
-#             self.logger.error(f"Unexpected response type: {type(response)}")
-#             raise StopIteration
-
-#         if not self.page:
-#             self.next_offset = None
-
-#         self.total += len(self.page)
-#         self.page_count = 0
-
 
 def remove_cloud_suffix(str_name: str) -> str:
     """

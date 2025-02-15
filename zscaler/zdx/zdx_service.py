@@ -16,6 +16,8 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from zscaler.zdx.admin import AdminAPI
 from zscaler.zdx.alerts import AlertsAPI
+from zscaler.zdx.apps import AppsAPI
+from zscaler.zdx.devices import DevicesAPI
 
 class ZDXService:
     """ZCC Service client, exposing various ZDX APIs."""
@@ -38,3 +40,19 @@ class ZDXService:
         
         """
         return AlertsAPI(self._request_executor)
+    
+    @property
+    def apps(self):
+        """
+        The interface object for the :ref:`ZDX Apps interface <zdx-apps>`.
+        
+        """
+        return AppsAPI(self._request_executor)
+    
+    @property
+    def devices(self):
+        """
+        The interface object for the :ref:`ZDX Devices interface <zdx-devices>`.
+        
+        """
+        return DevicesAPI(self._request_executor)
