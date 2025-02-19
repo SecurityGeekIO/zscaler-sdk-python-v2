@@ -53,7 +53,6 @@ class Client:
             self.logger = logging.getLogger(__name__)
             self.logger.info("Legacy ZDX client initialized successfully.")
             return
-        
         # Legacy client initialization logic
         if use_legacy_client and zpa_legacy_client:
             self._config = {}

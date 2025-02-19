@@ -18,7 +18,10 @@ from zscaler.zdx.admin import AdminAPI
 from zscaler.zdx.alerts import AlertsAPI
 from zscaler.zdx.apps import AppsAPI
 from zscaler.zdx.devices import DevicesAPI
-
+from zscaler.zdx.inventory import InventoryAPI
+from zscaler.zdx.troubleshooting import TroubleshootingAPI
+from zscaler.zdx.users import UsersAPI
+        
 class ZDXService:
     """ZCC Service client, exposing various ZDX APIs."""
 
@@ -56,3 +59,27 @@ class ZDXService:
         
         """
         return DevicesAPI(self._request_executor)
+    
+    @property
+    def inventory(self):
+        """
+        The interface object for the :ref:`ZDX Inventory interface <zdx-inventory>`.
+        
+        """
+        return InventoryAPI(self._request_executor)
+
+    @property
+    def troubleshooting(self):
+        """
+        The interface object for the :ref:`ZDX Troubleshooting interface <zdx-troubleshooting>`.
+        
+        """
+        return TroubleshootingAPI(self._request_executor)
+
+    @property
+    def users(self):
+        """
+        The interface object for the :ref:`ZDX Users interface <zdx-users>`.
+        
+        """
+        return UsersAPI(self._request_executor)

@@ -6,13 +6,6 @@ import requests
 from hashlib import sha256
 from zscaler import __version__
 from zscaler.cache.no_op_cache import NoOpCache
-# from zscaler.zdx.admin import AdminAPI
-# from zscaler.zdx.alerts import AlertsAPI
-# from zscaler.zdx.apps import AppsAPI
-# from zscaler.zdx.devices import DevicesAPI
-# from zscaler.zdx.inventory import InventoryAPI
-# from zscaler.zdx.troubleshooting import TroubleshootingAPI
-# from zscaler.zdx.users import UsersAPI
 from zscaler.logger import setup_logging
 from zscaler.user_agent import UserAgent
 
@@ -324,17 +317,29 @@ class LegacyZDXClientHelper:
         from zscaler.zdx.devices import DevicesAPI
         return DevicesAPI(self.request_executor)
 
-    # @property
-    # def inventory(self):
-    #     """The interface object for the :ref:`ZDX Inventory interface <zdx-inventory>`."""
-    #     return InventoryAPI(self.client)
+    @property
+    def inventory(self):
+        """
+        The interface object for the :ref:`ZDX Inventory interface <zdx-inventory>`.
+        
+        """
+        from zscaler.zdx.inventory import InventoryAPI
+        return InventoryAPI(self.request_executor)
 
-    # @property
-    # def troubleshooting(self):
-    #     """The interface object for the :ref:`ZDX Troubleshooting interface <zdx-troubleshooting>`."""
-    #     return TroubleshootingAPI(self.client)
+    @property
+    def troubleshooting(self):
+        """
+        The interface object for the :ref:`ZDX Troubleshooting interface <zdx-troubleshooting>`.
+        
+        """
+        from zscaler.zdx.troubleshooting import TroubleshootingAPI
+        return TroubleshootingAPI(self.request_executor)
 
-    # @property
-    # def users(self):
-    #     """The interface object for the :ref:`ZDX Users interface <zdx-users>`."""
-    #     return UsersAPI(self.client)
+    @property
+    def users(self):
+        """
+        The interface object for the :ref:`ZDX Users interface <zdx-users>`.
+        
+        """
+        from zscaler.zdx.users import UsersAPI
+        return UsersAPI(self.request_executor)

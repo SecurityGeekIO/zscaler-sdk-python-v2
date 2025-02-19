@@ -40,19 +40,14 @@ class AlertsAPI(APIClient):
         Args:
             query_params {dict}: Map of query parameters for the request.
             
-                ``[query_params.from]`` {int}: The start time (in seconds) for the query. 
-                    The value is entered in Unix Epoch. 
+                ``[query_params.since]`` {int}: The number of hours to look back for devices.
                     If not entered, returns the data for the last 2 hours.
                     
-                ``[query_params.to]`` {int}: The end time (in seconds) for the query.
-                    The value is entered in Unix Epoch.
-                    If not entered, returns the data for the last 2 hours.
-                    
-                ``[query_params.dept]`` {str}: The department ID. You can add multiple department IDs.
+                ``[query_params.department_id]`` {list}: The unique ID for the department. You can add multiple department IDs.
 
-                ``[query_params.loc]`` {str}: The Zscaler location ID. You can add multiple location IDs.
+                ``[query_params.location_id]`` {list}: The unique ID for the location. You can add multiple location IDs.
 
-                ``[query_params.geo]`` {str}: The active geolocation ID. You can add multiple active geolocation IDs.
+                ``[query_params.geo_id]`` {list}: The unique ID for the geolocation. You can add multiple active geolocation IDs.
 
                 ``[query_params.offset]`` {str}: The next_offset value from the last request.
                     You must enter this value to get the next batch from the list.
@@ -67,13 +62,22 @@ class AlertsAPI(APIClient):
         Examples:
             List all ongoing alerts in ZDX for the past 2 hours:
 
-            >>> for alert in zdx.alerts.list_ongoing():
-            ...     print(alert)
+            >>> alert_list, _, err = client.zdx.alerts.list_ongoing()
+            ... if err:
+            ...      print(f"Error listing alerts: {err}")
+            ...      return
+            ...  for alert in alert_list:
+            ...      print(alert.as_dict())
 
-            List all ongoing alerts in ZDX for the past 24 hours:
+            List ongoing alerts in ZDX for the past 2 hours for specific location(s):
 
-            >>> for alert in zdx.alerts.list_ongoing(since=24):
-            ...     print(alert)
+            >>> alert_list, _, err = client.zdx.alerts.list_ongoing(
+            ... query_params={'since': 2, 'location_id': [58755]})
+            ... if err:
+            ...      print(f"Error listing alert: {err}")
+            ...      return
+            ...  for alert in alert_list:
+            ...      print(alert.as_dict())
         """
         http_method = "get".upper()
         api_url = format_url(
@@ -85,7 +89,6 @@ class AlertsAPI(APIClient):
 
         query_params = query_params or {}
 
-        # Prepare request body and headers
         body = {}
         headers = {}
 
@@ -100,13 +103,11 @@ class AlertsAPI(APIClient):
             return (None, response, error)
 
         try:
-            result = []
-            for item in response.get_results():
-                result.append(Alerts(
-                    self.form_response_body(item))
-                )
+            result = [Alerts(
+                self.form_response_body(response.get_body()))]  
         except Exception as error:
             return (None, response, error)
+
         return (result, response, None)
 
     @zdx_params
@@ -121,19 +122,14 @@ class AlertsAPI(APIClient):
         Args:
             query_params {dict}: Map of query parameters for the request.
             
-                ``[query_params.from]`` {int}: The start time (in seconds) for the query. 
-                    The value is entered in Unix Epoch. 
+                ``[query_params.since]`` {int}: The number of hours to look back for devices.
                     If not entered, returns the data for the last 2 hours.
                     
-                ``[query_params.to]`` {int}: The end time (in seconds) for the query.
-                    The value is entered in Unix Epoch.
-                    If not entered, returns the data for the last 2 hours.
-                    
-                ``[query_params.dept]`` {str}: The department ID. You can add multiple department IDs.
+                ``[query_params.department_id]`` {str}: The unique ID for the department. You can add multiple department IDs.
 
-                ``[query_params.loc]`` {str}: The Zscaler location ID. You can add multiple location IDs.
+                ``[query_params.location_id]`` {list}: The unique ID for the location. You can add multiple location IDs.
 
-                ``[query_params.geo]`` {str}: The active geolocation ID. You can add multiple active geolocation IDs.
+                ``[query_params.geo_id]`` {str}: The unique ID for the geolocation. You can add multiple active geolocation IDs.
 
                 ``[query_params.offset]`` {str}: The next_offset value from the last request.
                     You must enter this value to get the next batch from the list.
@@ -146,15 +142,24 @@ class AlertsAPI(APIClient):
             :obj:`Tuple`: The list of alert history rules.
 
         Examples:
-            List all ongoing alerts in ZDX for the past 2 hours:
+            List all alert history rules in ZDX for the past 2 hours:
 
-            >>> for alert in zdx.alerts.list_historical():
-            ...     print(alert)
+            >>> alert_list, _, err = client.zdx.alerts.list_historical()
+            ... if err:
+            ...     print(f"Error listing alert history rules: {err}")
+            ...     return
+            ... for alert in alert_list:
+            ...     print(alert.as_dict())
 
-            List all ongoing alerts in ZDX for the past 24 hours:
+            List alert history rules in ZDX for the past 24 hours.
+            Note: Cannot exceed the 14-day time range limit for alert rules.
 
-            >>> for alert in zdx.alerts.list_historical(since=24):
-            ...     print(alert)
+            >>> alert_list, _, err = client.zdx.alerts.list_historical(query_params={"since": 24})
+            ... if err:
+            ...     print(f"Error listing alert history rules: {err}")
+            ...     return
+            ... for alert in alert_list:
+            ...     print(alert.as_dict())
         """
         http_method = "get".upper()
         api_url = format_url(
@@ -166,7 +171,6 @@ class AlertsAPI(APIClient):
 
         query_params = query_params or {}
 
-        # Prepare request body and headers
         body = {}
         headers = {}
 
@@ -181,17 +185,14 @@ class AlertsAPI(APIClient):
             return (None, response, error)
 
         try:
-            result = []
-            for item in response.get_results():
-                result.append(Alerts(
-                    self.form_response_body(item))
-                )
+            result = [Alerts(
+                self.form_response_body(response.get_body()))]  
         except Exception as error:
             return (None, response, error)
+
         return (result, response, None)
 
-    @zdx_params
-    def get_alert(self, alert_id: str):
+    def get_alert(self, alert_id: str) -> tuple:
         """
         Returns details of a single alert including the impacted department, 
         Zscaler locations, geolocation, and alert trigger.
@@ -204,11 +205,11 @@ class AlertsAPI(APIClient):
 
         Examples:
             Get information for the device with an ID of 123456789.
-            >>> device = zdx.alerts.get_alert('123456789')
-
-            Get information for the device with an ID of 123456789 for the last 24 hours.
-            >>> device = zdx.alerts.get_alert('123456789', since=24)
-
+            >>> alert, _, error = client.zdx.alerts.get_alert("7473160764821179371")
+            ... if error:
+            ...     print(f"Error: {error}")
+            ... else:
+            ...     print(alert.as_dict())
         """
         http_method = "get".upper()
         api_url = format_url(
@@ -253,19 +254,14 @@ class AlertsAPI(APIClient):
         Keyword Args:
             query_params {dict}: Map of query parameters for the request.
             
-                ``[query_params.from]`` {int}: The start time (in seconds) for the query. 
-                    The value is entered in Unix Epoch. 
+                ``[query_params.since]`` {int}: The number of hours to look back for devices.
                     If not entered, returns the data for the last 2 hours.
                     
-                ``[query_params.to]`` {int}: The end time (in seconds) for the query.
-                    The value is entered in Unix Epoch.
-                    If not entered, returns the data for the last 2 hours.
-                    
-                ``[query_params.dept]`` {str}: The department ID. You can add multiple department IDs.
+                ``[query_params.department_id]`` {list}: The unique ID for the department. You can add multiple department IDs.
 
-                ``[query_params.loc]`` {str}: The Zscaler location ID. You can add multiple location IDs.
+                ``[query_params.location_id]`` {list}: The unique ID for the location. You can add multiple location IDs.
 
-                ``[query_params.geo]`` {str}: The active geolocation ID. You can add multiple active geolocation IDs.
+                ``[query_params.geo_id]`` {list}: The unique ID for the geolocation. You can add multiple active geolocation IDs.
 
                 ``[query_params.offset]`` {str}: The next_offset value from the last request.
                     You must enter this value to get the next batch from the list.
@@ -281,15 +277,17 @@ class AlertsAPI(APIClient):
             :obj:`Tuple`: The list of software in ZDX.
 
         Examples:
-            List of all affected devices associated with an alert rule for the past 2 hours:
-
-            >>> for alert in zdx.alerts.list_affected_devices():
-            ...     print(alert)
 
             List of all affected devices associated with an alert rule in ZDX for the past 24 hours:
 
-            >>> for alert in zdx.alerts.list_affected_devices(since=24):
-            ...     print(alert)
+            >>> devices, _, err = client.zdx.alerts.list_affected_devices(
+            ... '7473160764821179371', query_params={"since": 24}
+            ... )
+            ... if err:
+            ...    print(f"Error listing affected devices: {err}")
+            ...     return
+            ... for dev in devices:
+            ...     print(dev.as_dict())
         """
         http_method = "get".upper()
         api_url = format_url(
@@ -315,11 +313,10 @@ class AlertsAPI(APIClient):
             return (None, response, error)
 
         try:
-            result = []
-            for item in response.get_results():
-                result.append(AlertDetails(
-                    self.form_response_body(item))
-                )
+            result = [AlertDetails(
+                self.form_response_body(response.get_body()))]  
         except Exception as error:
             return (None, response, error)
+
         return (result, response, None)
+

@@ -17,14 +17,15 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 from zscaler.oneapi_object import ZscalerObject
 from zscaler.oneapi_collection import ZscalerCollection
 
-class DeviceAppWebProbes(ZscalerObject):
+
+class SoftwareInventory(ZscalerObject):
     """
-    A class for DeviceAppWebProbes objects.
+    A class for SoftwareInventory objects.
     """
 
     def __init__(self, config=None):
         """
-        Initialize the DeviceAppWebProbes model based on API response.
+        Initialize the SoftwareInventory model based on API response.
 
         Args:
             config (dict): A dictionary representing the configuration.
@@ -32,22 +33,14 @@ class DeviceAppWebProbes(ZscalerObject):
         super().__init__(config)
 
         if config:
-            self.id = config["id"] \
-                if "id" in config else None
-            self.name = config["name"] \
-                if "name" in config else None
-            self.num_probes = config["num_probes"] \
-                if "num_probes" in config else None
-            self.avg_score = config["avg_score"] \
-                if "avg_score" in config else None
-            self.avg_pft = config["avg_pft"] \
-                if "avg_pft" in config else None
+            self.software = ZscalerCollection.form_list(
+                config["software"] if "software" in config else [], str
+            )
+            self.next_offset = config["next_offset"] \
+                if "next_offset" in config else None
         else:
-            self.id = None
-            self.name = None
-            self.num_probes = None
-            self.avg_score = None
-            self.avg_pft = None
+            self.software = ZscalerCollection.form_list([], str)
+            self.next_offset = None
 
     def request_format(self):
         """
@@ -55,23 +48,20 @@ class DeviceAppWebProbes(ZscalerObject):
         """
         parent_req_format = super().request_format()
         current_obj_format = {
-            "id": self.id,
-            "name": self.name,
-            "num_probes": self.num_probes,
-            "avg_score": self.avg_score,
-            "avg_pft": self.avg_pft
+            "software": self.software,
+            "next_offset": self.next_offset
         }
         parent_req_format.update(current_obj_format)
         return parent_req_format
     
-class DeviceWebProbePageFetch(ZscalerObject):
+class DeviceSoftwareInventory(ZscalerObject):
     """
-    A class for DeviceWebProbePageFetch objects.
+    A class for DeviceSoftwareInventory objects.
     """
 
     def __init__(self, config=None):
         """
-        Initialize the DeviceWebProbePageFetch model based on API response.
+        Initialize the DeviceSoftwareInventory model based on API response.
 
         Args:
             config (dict): A dictionary representing the configuration.
@@ -79,17 +69,14 @@ class DeviceWebProbePageFetch(ZscalerObject):
         super().__init__(config)
 
         if config:
-            self.metric = config["metric"] \
-                if "metric" in config else None
-            self.unit = config["unit"] \
-                if "unit" in config else None
-            self.datapoints = ZscalerCollection.form_list(
-                config["datapoints"] if "datapoints" in config else [], str
+            self.software = ZscalerCollection.form_list(
+                config["software"] if "software" in config else [], str
             )
+            self.next_offset = config["next_offset"] \
+                if "next_offset" in config else None
         else:
-            self.metric = None
-            self.unit = None
-            self.datapoints = ZscalerCollection.form_list([], str)
+            self.software = ZscalerCollection.form_list([], str)
+            self.next_offset = None
 
     def request_format(self):
         """
@@ -97,9 +84,8 @@ class DeviceWebProbePageFetch(ZscalerObject):
         """
         parent_req_format = super().request_format()
         current_obj_format = {
-            "metric": self.metric,
-            "unit": self.unit,
-            "datapoints": self.datapoints
+            "software": self.software,
+            "next_offset": self.next_offset
         }
         parent_req_format.update(current_obj_format)
         return parent_req_format

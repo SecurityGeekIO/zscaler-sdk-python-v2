@@ -34,12 +34,7 @@ class AdminAPI(APIClient):
         Args:
             query_params {dict}: Map of query parameters for the request.
             
-                ``[query_params.from]`` {int}: The start time (in seconds) for the query. 
-                    The value is entered in Unix Epoch. 
-                    If not entered, returns the data for the last 2 hours.
-                    
-                ``[query_params.to]`` {int}: The end time (in seconds) for the query.
-                    The value is entered in Unix Epoch.
+                ``[query_params.since]`` {int}: The number of hours to look back for devices.
                     If not entered, returns the data for the last 2 hours.
                     
                 ``[query_params.search]`` {str}: The search string used to support search by name or department ID.
@@ -48,11 +43,25 @@ class AdminAPI(APIClient):
             :obj:`tuple`: A tuple containing configured departments.
 
         Examples:
-            Prints all admins in the Client Connector Portal to the console:
+            Prints all configured departments.
 
-            >>> for admin in zcc.admin_user.list_admin_users():
-            ...    print(admin)
+            >>> dept_list, _, err = client.zdx.admin.list_departments(ss)
+            ... if err:
+            ...     print(f"Error listing department: {err}")
+            ...     return
+            ... print(f"Total department found: {len(dept_list)}")
+            ...  for dept in dept_list:
+            ...     print(dept.as_dict())
+            
+            Search specific configured department.
 
+            >>> dept_list, _, err = client.zdx.admin.list_departments(query_params={"search": 'Finance'})
+            ... if err:
+            ...     print(f"Error listing department: {err}")
+            ...     return
+            ... print(f"Total department found: {len(dept_list)}")
+            ...  for dept in dept_list:
+            ...     print(dept.as_dict())
         """
         http_method = "get".upper()
         api_url = format_url(
@@ -94,25 +103,35 @@ class AdminAPI(APIClient):
 
         Args:
             query_params {dict}: Map of query parameters for the request.
-                ``[query_params.from]`` {int}: The start time (in seconds) for the query. 
-                    The value is entered in Unix Epoch. 
+
+                ``[query_params.since]`` {int}: The number of hours to look back for devices.
                     If not entered, returns the data for the last 2 hours.
                     
-                ``[query_params.to]`` {int}: The end time (in seconds) for the query.
-                    The value is entered in Unix Epoch.
-                    If not entered, returns the data for the last 2 hours.
-                    
-                ``[query_params.q]`` {str}: The search string used to support search by name or location ID.
+                ``[query_params.search]`` {str}: The search string used to support search by name or location ID.
                 
         Returns:
             :obj:`tuple`: A tuple containing configured locations.
 
         Examples:
-            Prints all admins in the Client Connector Portal to the console:
+            Prints all configured Zscaler locations.
 
-            >>> for admin in zcc.admin_user.list_admin_users():
-            ...    print(admin)
+            >>> locations_list, _, err = client.zdx.admin.list_locations()
+            ... if err:
+            ...     print(f"Error listing department: {err}")
+            ...     return
+            ... print(f"Total location found: {len(locations_list)}")
+            ...  for location in locations_list:
+            ...     print(location.as_dict())
+            
+            Search specific configured Zscaler locations.
 
+            >>> locations_list, _, err = client.zdx.admin.list_locations(query_params={"search": 'San Jose'})
+            ... if err:
+            ...     print(f"Error listing department: {err}")
+            ...     return
+            ... print(f"Total location found: {len(locations_list)}")
+            ...  for location in locations_list:
+            ...     print(location.as_dict())
         """
         http_method = "get".upper()
         api_url = format_url(

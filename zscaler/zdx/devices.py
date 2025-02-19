@@ -19,12 +19,17 @@ from zscaler.api_client import APIClient
 from zscaler.request_executor import RequestExecutor
 from zscaler.zdx.models.call_quality_metrics import CallQualityMetrics
 from zscaler.zdx.models.devices import Devices
-from zscaler.zdx.models.device_model_info import DeviceModelInfo
-from zscaler.zdx.models.device_app_score_trend import DeviceAppScoreTrend
-from zscaler.zdx.models.device_apps_webprobes import DeviceWebProbePageFetch
-from zscaler.zdx.models.device_app_cloud_path_probes import DeviceAppCloudPathProbes
-from zscaler.zdx.models.device_cloud_path_probes_metric import DeviceCloudPathProbesMetric
-from zscaler.zdx.models.device_cloud_path_probes_hopdata import DeviceCloudPathProbesHopData
+from zscaler.zdx.models.devices import DeviceModelInfo
+from zscaler.zdx.models.devices import DeviceAppScoreTrend
+from zscaler.zdx.models.devices import DeviceWebProbePageFetch
+from zscaler.zdx.models.devices import DeviceAppCloudPathProbes
+from zscaler.zdx.models.devices import DeviceCloudPathProbesMetric
+from zscaler.zdx.models.devices import DeviceCloudPathProbesHopData
+from zscaler.zdx.models.devices import DeviceActiveGeo
+from zscaler.zdx.models.devices import DeviceAppWebProbes
+from zscaler.zdx.models.devices import DeviceActiveApplications
+from zscaler.zdx.models.devices import DeviceHealthMetrics
+from zscaler.zdx.models.devices import DeviceEvents
 from zscaler.utils import format_url, zdx_params
 
 class DevicesAPI(APIClient):
@@ -48,11 +53,11 @@ class DevicesAPI(APIClient):
             
                 ``[query_params.since]`` {int}: The number of hours to look back for devices.
                     
-                ``[query_params.location_id]`` {int}: The unique ID for the location.
+                ``[query_params.location_id]`` {list}: The unique ID for the location.
 
-                ``[query_params.department_id]`` {str}: The unique ID for the department.
+                ``[query_params.department_id]`` {list}: The unique ID for the department.
 
-                ``[query_params.geo_id]`` {str}: The unique ID for the geolocation.
+                ``[query_params.geo_id]`` {list}: The unique ID for the geolocation.
                 
                 ``[query_params.user_ids]`` {list}: List of user IDs.                             
 
@@ -62,17 +67,31 @@ class DevicesAPI(APIClient):
 
                 ``[query_params.private_ipv4]`` {str}: Private IPv4 address of the device.
 
+                ``[query_params.offset]`` {str}: The next_offset value from the last request.
+                    You must enter this value to get the next batch from the list.
+                    When the next_offset value becomes null, the list is complete.
+
         Returns:
             :obj:`Tuple`: The list of devices in ZDX.
 
         Examples:
-            List all devices in ZDX for the past 2 hours:
+            List all devices in ZDX for the past 2 hours for the associated email addresses:
 
-            >>> for device in zdx.devices.list_devices():
+            >>> device_list, _, err = client.zdx.devices.list_devices(query_params={"emails": ['jdoe@acme.com']})
+            ... if err:
+            ...     print(f"Error listing devices: {err}")
+            ...     return
+            ... for dev in device_list:
+            ...     print(dev.as_dict())
 
             List all devices in ZDX for the past 24 hours:
 
-            >>> for device in zdx.devices.list_devices(since=24):
+            >>> device_list, _, err = client.zdx.devices.list_devices(query_params={'since': 24})
+            ... if err:
+            ...     print(f"Error listing devices: {err}")
+            ...     return
+            ... for dev in device_list:
+            ...     print(dev.as_dict())
 
         """
         http_method = "get".upper()
@@ -99,13 +118,11 @@ class DevicesAPI(APIClient):
             return (None, response, error)
 
         try:
-            result = []
-            for item in response.get_results():
-                result.append(Devices(
-                    self.form_response_body(item))
-                )
+            result = [Devices(
+                self.form_response_body(response.get_body()))]  
         except Exception as error:
             return (None, response, error)
+
         return (result, response, None)
 
     @zdx_params
@@ -129,12 +146,23 @@ class DevicesAPI(APIClient):
             :obj:`Tuple`: The ZDX device resource record.
 
         Examples:
-            Get information for the device with an ID of 123456789.
-            >>> device = zdx.devices.get_device('123456789')
+            Get information for the device with an ID of 132559212.
+
+            >>> device, _, err = client.zdx.devices.get_device('132559212')
+            ... if err:
+            ...     print(f"Error listing device details: {err}")
+            ...     return
+            ... for dev in device:
+            ...     print(dev.as_dict())
 
             Get information for the device with an ID of 123456789 for the last 24 hours.
-            >>> device = zdx.devices.get_device('123456789', since=24)
 
+            >>> device, _, err = client.zdx.devices.get_device('132559212', query_params={'since': 24})
+            ... if err:
+            ...     print(f"Error listing device details: {err}")
+            ...     return
+            ... for dev in device:
+            ...     print(dev.as_dict())
         """
         http_method = "get".upper()
         api_url = format_url(f"""
@@ -154,16 +182,16 @@ class DevicesAPI(APIClient):
             return (None, None, error)
 
         response, error = self._request_executor\
-            .execute(request, DeviceModelInfo)
+            .execute(request)
         if error:
             return (None, response, error)
 
         try:
-            result = DeviceModelInfo(
-                self.form_response_body(response.get_body())
-            )
+            result = [DeviceModelInfo(
+                self.form_response_body(response.get_body()))]  
         except Exception as error:
             return (None, response, error)
+
         return (result, response, None)
 
     @zdx_params
@@ -189,14 +217,23 @@ class DevicesAPI(APIClient):
         Examples:
             Print a list of active applications for a device.
 
-            >>> for app in zdx.devices.get_device_apps('123456789'):
+            >>> device_app_list, _, err = client.zdx.devices.get_device_apps(
+            ... '132559212', query_params={"since": 2})
+            ... if err:
+            ...     print(f"Error listing device app: {err}")
+            ...     return
+            ... for app in device_app_list:
             ...     print(app)
 
             Print a list of active applications for a device for the last 24 hours.
 
-            >>> for app in zdx.devices.get_device_apps('123456789', since=24):
+            >>> device_app_list, _, err = client.zdx.devices.get_device_apps(
+            ... '132559212', query_params={"since": 24})
+            ... if err:
+            ...     print(f"Error listing device app: {err}")
+            ...     return
+            ... for app in device_app_list:
             ...     print(app)
-
         """
         http_method = "get".upper()
         api_url = format_url(
@@ -222,17 +259,19 @@ class DevicesAPI(APIClient):
             return (None, response, error)
 
         try:
-            result = []
-            for item in response.get_results():
-                result.append(self.form_response_body(item))
+            result = [DeviceActiveApplications(
+                self.form_response_body(response.get_body()))]  
         except Exception as error:
             return (None, response, error)
-        return (result, response, None)
 
+        return (result, response, None)
+    
+    @zdx_params
     def get_device_app(
         self,
         device_id: str,
-        app_id: str
+        app_id: str,
+        query_params=None,
     ) -> tuple:
         """
         Returns a single application for a device.
@@ -241,15 +280,23 @@ class DevicesAPI(APIClient):
             device_id (str): The unique ID for the device.
             app_id (str): The unique ID for the application.
 
+        Keyword Args:
+            query_params {dict}: Map of query parameters for the request.
+            
+                ``[query_params.since]`` {int}: The number of hours to look back for devices.
+
         Returns:
             :obj:`Tuple`: The application resource record.
 
         Examples:
             Print a single application for a device.
 
-            >>> app = zdx.devices.get_device_app('123456789', '987654321')
-            ... print(app)
-
+            >>> application, _, err = client.zdx.devices.get_device_app(device_id='1', app_id='3')
+            ... if err:
+            ...     print(f"Error listing application: {err}")
+            ...     return
+            ... for app in application:
+            ...     print(app.as_dict())
         """
         http_method = "get".upper()
         api_url = format_url(f"""
@@ -257,26 +304,29 @@ class DevicesAPI(APIClient):
             /devices/{device_id}/apps/{app_id}
         """)
 
+        query_params = query_params or {}
+
         body = {}
         headers = {}
 
         request, error = self._request_executor\
-            .create_request(http_method, api_url, body, headers)
+            .create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)
 
         response, error = self._request_executor\
-            .execute(request, DeviceAppScoreTrend)
+            .execute(request)
+
         if error:
             return (None, response, error)
 
         try:
-            result = DeviceAppScoreTrend(
-                self.form_response_body(response.get_body())
-            )
+            result = [DeviceAppScoreTrend(
+                self.form_response_body(response.get_body()))]  
         except Exception as error:
             return (None, response, error)
+
         return (result, response, None)
 
     @zdx_params
@@ -304,9 +354,22 @@ class DevicesAPI(APIClient):
         Examples:
             Print a list of web probes for an application.
 
-            >>> for probe in zdx.devices.get_web_probes('123456789', '987654321'):
+            >>> device_probe_list, _, err = client.zdx.devices.get_web_probes('132559212', '1')
+            ... if err:
+            ...     print(f"Error listing device web probes: {err}")
+            ...     return
+            ... for probe in device_probe_list:
             ...     print(probe)
+            
+            Print a list of web probes for an application for the past 2 hours.
 
+            >>> device_probe_list, _, err = client.zdx.devices.get_web_probes(
+            ... '132559212', '1', query_params={'since':2})
+            ... if err:
+            ...     print(f"Error listing device web probes: {err}")
+            ...     return
+            ... for probe in device_probe_list:
+            ...     print(probe)
         """
         http_method = "get".upper()
         api_url = format_url(f"""
@@ -316,18 +379,15 @@ class DevicesAPI(APIClient):
 
         query_params = query_params or {}
 
-        # Prepare request body and headers
         body = {}
         headers = {}
 
-        # Create the request
         request, error = self._request_executor\
             .create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)
 
-        # Execute the request
         response, error = self._request_executor\
             .execute(request)
 
@@ -335,13 +395,13 @@ class DevicesAPI(APIClient):
             return (None, response, error)
 
         try:
-            result = []
-            for item in response.get_results():
-                result.append(self.form_response_body(item))
+            result = [DeviceAppWebProbes(
+                self.form_response_body(response.get_body()))]  
         except Exception as error:
             return (None, response, error)
-        return (result, response, None)
 
+        return (result, response, None)
+    
     @zdx_params
     def get_web_probe(
         self, device_id: str,
@@ -368,9 +428,22 @@ class DevicesAPI(APIClient):
         Examples:
             Print a single web probe for an application.
 
-            >>> probe = zdx.devices.get_web_probe('123456789', '987654321', '123987456')
-            ... print(probe)
+            >>> device_probe, _, err = client.zdx.devices.get_web_probe('132559212', '1', '33111')
+            ... if err:
+            ...     print(f"Error listing probe: {err}")
+            ...     return
+            ... for probe in device_probe:
+            ...     print(probe)
+            
+            Print a single web probe for an application foir the past 2 hours.
 
+            >>> device_probe, _, err = client.zdx.devices.get_web_probe(
+            ... '132559212', '1', '33111', query_params={'since':2})
+            ... if err:
+            ...     print(f"Error listing probe: {err}")
+            ...     return
+            ... for probe in device_probe:
+            ...     print(probe)
         """
         http_method = "get".upper()
         api_url = format_url(f"""
@@ -390,18 +463,16 @@ class DevicesAPI(APIClient):
             return (None, None, error)
 
         response, error = self._request_executor\
-            .execute(request, DeviceWebProbePageFetch)
+            .execute(request)
         if error:
             return (None, response, error)
 
         try:
-            result = []
-            for item in response.get_results():
-                result.append(DeviceWebProbePageFetch(
-                    self.form_response_body(item))
-                )
+            result = [DeviceWebProbePageFetch(
+                self.form_response_body(response.get_body()))]  
         except Exception as error:
             return (None, response, error)
+
         return (result, response, None)
 
     @zdx_params
@@ -419,7 +490,9 @@ class DevicesAPI(APIClient):
             app_id (str): The unique ID for the application.
 
         Keyword Args:
-            since (int): The number of hours to look back for devices.
+            query_params {dict}: Map of query parameters for the request.
+
+                ``[query_params.since]`` {list}: The unique ID for the department. 
 
         Returns:
             :obj:`Tuple`: The list of cloudpath probes for the application.
@@ -427,9 +500,12 @@ class DevicesAPI(APIClient):
         Examples:
             Print a list of cloudpath probes for an application.
 
-            >>> for probe in zdx.devices.list_cloudpath_probes('123456789', '987654321'):
+            >>> device_probe_list, _, err = client.zdx.devices.list_cloudpath_probes('132559212', '1')
+            ... if err:
+            ...     print(f"Error listing probe: {err}")
+            ...     return
+            ... for probe in device_probe_list:
             ...     print(probe)
-
         """
         http_method = "get".upper()
         api_url = format_url(f"""
@@ -439,18 +515,15 @@ class DevicesAPI(APIClient):
 
         query_params = query_params or {}
 
-        # Prepare request body and headers
         body = {}
         headers = {}
 
-        # Create the request
         request, error = self._request_executor\
             .create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)
 
-        # Execute the request
         response, error = self._request_executor\
             .execute(request)
 
@@ -458,13 +531,11 @@ class DevicesAPI(APIClient):
             return (None, response, error)
 
         try:
-            result = []
-            for item in response.get_results():
-                result.append(DeviceAppCloudPathProbes(
-                    self.form_response_body(item))
-                )
+            result = [DeviceAppCloudPathProbes(
+                self.form_response_body(response.get_body()))]  
         except Exception as error:
             return (None, response, error)
+
         return (result, response, None)
     
     @zdx_params
@@ -483,7 +554,9 @@ class DevicesAPI(APIClient):
             probe_id (str): The unique ID for the cloudpath probe.
 
         Keyword Args:
-            since (int): The number of hours to look back for devices.
+            query_params {dict}: Map of query parameters for the request.
+            
+                ``[query_params.since]`` {int}: The number of hours to look back for devices.
 
         Returns:
             :obj:`Tuple`: The cloudpath probe resource record.
@@ -491,9 +564,12 @@ class DevicesAPI(APIClient):
         Examples:
             Print a single cloudpath probe for an application.
 
-            >>> probe = zdx.devices.get_cloudpath_probe('123456789', '987654321', '123987456')
-            ... print(probe)
-
+            >>> device_probe, _, err = client.zdx.devices.get_cloudpath_probe('132559212', '1', '33112')
+            ... if err:
+            ...     print(f"Error listing device probe: {err}")
+            ...     return
+            ... for probe in device_probe:
+            ...     print(probe)
         """
         http_method = "get".upper()
         api_url = format_url(f"""
@@ -513,18 +589,16 @@ class DevicesAPI(APIClient):
             return (None, None, error)
 
         response, error = self._request_executor\
-            .execute(request, DeviceCloudPathProbesMetric)
+            .execute(request)
         if error:
             return (None, response, error)
 
         try:
-            result = []
-            for item in response.get_results():
-                result.append(DeviceCloudPathProbesMetric(
-                    self.form_response_body(item))
-                )
+            result = [DeviceCloudPathProbesMetric(
+                self.form_response_body(response.get_body()))]  
         except Exception as error:
             return (None, response, error)
+
         return (result, response, None)
 
     @zdx_params
@@ -544,17 +618,23 @@ class DevicesAPI(APIClient):
             probe_id (str): The unique ID for the cloudpath probe.
 
         Keyword Args:
-            since (int): The number of hours to look back for devices.
+            query_params {dict}: Map of query parameters for the request.
+            
+                ``[query_params.since]`` {int}: The number of hours to look back for devices.
 
         Returns:
             :obj:`Tuple`: The cloudpath resource record.
 
         Examples:
-            Print a single cloudpath for an application.
+            Print a single cloudpath for an application for the past 2 hours
 
-            >>> cloudpath = zdx.devices.get_cloudpath('123456789', '987654321', '123987456')
-            ... print(cloudpath)
-
+            >>> device_probe, _, err = client.zdx.devices.get_cloudpath(
+            ... '132559212', '1', '33112', query_params={"since": 2})
+            ... if err:
+            ...     print(f"Error listing device probe: {err}")
+            ...     return
+            ... for probe in device_probe:
+            ...     print(probe)
         """
         http_method = "get".upper()
         api_url = format_url(f"""
@@ -580,13 +660,11 @@ class DevicesAPI(APIClient):
             return (None, response, error)
 
         try:
-            result = []
-            for item in response.get_results():
-                result.append(DeviceCloudPathProbesHopData(
-                    self.form_response_body(item))
-                )
+            result = [DeviceCloudPathProbesHopData(
+                self.form_response_body(response.get_body()))]  
         except Exception as error:
             return (None, response, error)
+
         return (result, response, None)
 
     @zdx_params
@@ -604,7 +682,9 @@ class DevicesAPI(APIClient):
             app_id (str): The unique ID for the application.
 
         Keyword Args:
-            since (int): The number of hours to look back for devices.
+            query_params {dict}: Map of query parameters for the request.
+            
+                ``[query_params.since]`` {int}: The number of hours to look back for devices.
 
         Returns:
             :obj:`Tuple`: The call quality metrics resource record.
@@ -640,197 +720,194 @@ class DevicesAPI(APIClient):
             return (None, response, error)
 
         try:
-            result = []
-            for item in response.get_results():
-                result.append(CallQualityMetrics(
-                    self.form_response_body(item))
-                )
+            result = [CallQualityMetrics(
+                self.form_response_body(response.get_body()))]  
         except Exception as error:
             return (None, response, error)
+
         return (result, response, None)
 
-    # @zdx_params
-    # def get_health_metrics(self, device_id: str, **kwargs):
-    #     """
-    #     Returns health metrics trend for a specific device.
+    @zdx_params
+    def get_health_metrics(
+        self,
+        device_id: str, 
+        query_params=None
+    ) -> tuple:
+        """
+        Returns health metrics trend for a specific device.
 
-    #     Args:
-    #         device_id (str): The unique ID for the device.
+        Args:
+            device_id (str): The unique ID for the device.
 
-    #     Keyword Args:
-    #         since (int): The number of hours to look back for devices.
+        Keyword Args:
+            query_params {dict}: Map of query parameters for the request.
+            
+                ``[query_params.since]`` {int}: The number of hours to look back for devices.
 
-    #     Returns:
-    #         :obj:`Tuple`: The health metrics resource record.
+        Returns:
+            :obj:`Tuple`: The health metrics resource record.
 
-    #     Examples:
-    #         Print health metrics for an application.
+        Examples:
+            Print health metrics for an application.
 
-    #         >>> metrics = zdx.devices.get_health_metrics('123456789')
-    #         ... print(metrics)
+            >>> metric_list, _, err = client.zdx.devices.get_health_metrics('132559212', query_params={"since": 2})
+            ... if err:
+            ...     print(f"Error listing health metrics: {err}")
+            ...     return
+            ... for metric in metric_list:
+            ...     print(metric)
+        """
+        http_method = "get".upper()
+        api_url = format_url(f"""
+            {self._zdx_base_endpoint}
+            /devices/{device_id}/health-metrics
+        """)
 
-    #     """
-    #     return self.rest.get(f"devices/{device_id}/health-metrics", params=kwargs)
+        query_params = query_params or {}
+        
+        body = {}
+        headers = {}
 
-    # def get_events(self, device_id: str):
-    #     """
-    #     Returns a list of all events for a specific device.
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, headers, params=query_params)
 
-    #     Args:
-    #         device_id (str): The unique ID for the device.
+        if error:
+            return (None, None, error)
 
-    #     Returns:
-    #         :obj:`Tuple`: The list of events for the device.
+        response, error = self._request_executor\
+            .execute(request)
+        if error:
+            return (None, response, error)
 
-    #     Examples:
-    #         Print a list of events for a device.
+        try:
+            result = [DeviceHealthMetrics(
+                self.form_response_body(response.get_body()))]  
+        except Exception as error:
+            return (None, response, error)
 
-    #         >>> for event in zdx.devices.get_events('123456789'):
-    #         ...     print(event)
+        return (result, response, None)
 
-    #     """
-    #     return self.rest.get(f"devices/{device_id}/events")
+    @zdx_params
+    def get_events(
+        self,
+        device_id: str, 
+        query_params=None
+    ) -> tuple:
+        """
+        Returns a list of all events for a specific device.
 
-    # def get_deeptrace_webprobe_metrics(self, device_id: str, trace_id: str):
-    #     """
-    #     Returns web probe metrics for a specific deeptrace.
+        Args:
+            device_id (str): The unique ID for the device.
 
-    #     Args:
-    #         device_id (str): The unique ID for the device.
-    #         trace_id (str): The unique ID for the deeptrace.
+        Keyword Args:
+            query_params {dict}: Map of query parameters for the request.
+            
+                ``[query_params.since]`` {int}: The number of hours to look back for devices.
+                
+        Returns:
+            :obj:`Tuple`: The list of events for the device.
 
-    #     Returns:
-    #         :obj:`Tuple`: The deeptrace web probe metrics.
+        Examples:
+            Print a list of events for a device.
 
-    #     Examples:
-    #         Print web probe metrics for a deeptrace.
+            >>> device_event_list, _, err = client.zdx.devices.get_events('132559212', query_params={"since": 2})
+            ... if err:
+            ...     print(f"Error listing events: {err}")
+            ...     return
+            ... for event in device_event_list:
+            ...     print(event)
+        """
+        http_method = "get".upper()
+        api_url = format_url(f"""
+            {self._zdx_base_endpoint}
+            /devices/{device_id}/events
+        """)
 
-    #         >>> metrics = zdx.devices.get_deeptrace_webprobe_metrics('123456789', '987654321')
-    #         ... print(metrics)
+        query_params = query_params or {}
+        
+        body = {}
+        headers = {}
 
-    #     """
-    #     return self.rest.get(f"devices/{device_id}/deeptraces/{trace_id}/webprobe-metrics")
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, headers, params=query_params)
 
-    # def get_deeptrace_cloudpath_metrics(self, device_id: str, trace_id: str):
-    #     """
-    #     Returns cloudpath metrics for a specific deeptrace.
+        if error:
+            return (None, None, error)
 
-    #     Args:
-    #         device_id (str): The unique ID for the device.
-    #         trace_id (str): The unique ID for the deeptrace.
+        response, error = self._request_executor\
+            .execute(request)
+        if error:
+            return (None, response, error)
 
-    #     Returns:
-    #         :obj:`Tuple`: The deeptrace cloudpath metrics.
+        try:
+            result = [DeviceEvents(
+                self.form_response_body(response.get_body()))]  
+        except Exception as error:
+            return (None, response, error)
 
-    #     Examples:
-    #         Print cloudpath metrics for a deeptrace.
+        return (result, response, None)
 
-    #         >>> metrics = zdx.devices.get_deeptrace_cloudpath_metrics('123456789', '987654321')
-    #         ... print(metrics)
+    @zdx_params
+    def list_geolocations(
+        self,
+        query_params=None
+    ) -> tuple:
+        """
+        Returns a list of all active geolocations configured within the ZDX tenant.
 
-    #     """
-    #     return self.rest.get(f"devices/{device_id}/deeptraces/{trace_id}/cloudpath-metrics")
+        Keyword Args:
+            query_params {dict}: Map of query parameters for the request.
+            
+                ``[query_params.since]`` {int}: The number of hours to look back for devices.
 
-    # def get_deeptrace_cloudpath(self, device_id: str, trace_id: str):
-    #     """
-    #     Returns cloudpath for a specific deeptrace.
+                ``[query_params.location_id]`` {str}: The unique ID for the location.
 
-    #     Args:
-    #         device_id (str): The unique ID for the device.
-    #         trace_id (str): The unique ID for the deeptrace.
+                ``[query_params.parent_geo_id]`` {str}: The unique ID for the parent geolocation.
 
-    #     Returns:
-    #         :obj:`Tuple`: The deeptrace cloudpath.
+                ``[query_params.q]`` {str}: The search string to filter by name.
 
-    #     Examples:
-    #         Print cloudpath for a deeptrace.
+        Returns:
+            :obj:`Tuple`: The list of geolocations in ZDX.
 
-    #         >>> metrics = zdx.devices.get_deeptrace_cloudpath('123456789', '987654321')
-    #         ... print(metrics)
+        Examples:
+            List all geolocations in ZDX for the past 2 hours:
 
-    #     """
-    #     return self.rest.get(f"devices/{device_id}/deeptraces/{trace_id}/cloudpath")
+            >>> location_list, _, err = client.zdx.devices.list_geolocations(query_params={"parent_geo_id": '0.0.ca'})
+            ... if err:
+            ...     print(f"Error listing geolocations: {err}")
+            ...     return
+            ... for location in location_list:
+            ...     print(location)
+        """
+        http_method = "get".upper()
+        api_url = format_url(
+            f"""
+            {self._zdx_base_endpoint}
+            /active_geo
+        """
+        )
 
-    # def get_deeptrace_health_metrics(self, device_id: str, trace_id: str):
-    #     """
-    #     Returns health metrics for a specific deeptrace.
+        query_params = query_params or {}
 
-    #     Args:
-    #         device_id (str): The unique ID for the device.
-    #         trace_id (str): The unique ID for the deeptrace.
+        body = {}
+        headers = {}
 
-    #     Returns:
-    #         :obj:`Tuple`: The deeptrace health metrics.
+        request, error = self._request_executor.\
+            create_request(http_method, api_url, body, headers, params=query_params)
 
-    #     Examples:
-    #         Print health metrics for a deeptrace.
+        if error:
+            return (None, None, error)
 
-    #         >>> metrics = zdx.devices.get_deeptrace_health_metrics('123456789', '987654321')
-    #         ... print(metrics)
+        response, error = self._request_executor\
+            .execute(request)
+        if error:
+            return (None, response, error)
 
-    #     """
-    #     return self.rest.get(f"devices/{device_id}/deeptraces/{trace_id}/health-metrics")
+        try:
+            result = [DeviceActiveGeo(
+                self.form_response_body(response.get_body()))]  
+        except Exception as error:
+            return (None, response, error)
 
-    # def get_deeptrace_events(self, device_id: str, trace_id: str):
-    #     """
-    #     Returns events for a specific deeptrace.
-
-    #     Args:
-    #         device_id (str): The unique ID for the device.
-    #         trace_id (str): The unique ID for the deeptrace.
-
-    #     Returns:
-    #         :obj:`Tuple`: The deeptrace events.
-
-    #     Examples:
-    #         Print events for a deeptrace.
-
-    #         >>> events = zdx.devices.get_deeptrace_events('123456789', '987654321')
-    #         ... print(events)
-
-    #     """
-    #     return self.rest.get(f"devices/{device_id}/deeptraces/{trace_id}/events")
-
-    # def get_deeptrace_top_processes(self, device_id: str, trace_id: str):
-    #     """
-    #     Returns top processes for a specific deeptrace.
-
-    #     Args:
-    #         device_id (str): The unique ID for the device.
-    #         trace_id (str): The unique ID for the deeptrace.
-
-    #     Returns:
-    #         :obj:`Tuple`: The deeptrace top processes.
-
-    #     Examples:
-    #         Print top processes for a deeptrace.
-
-    #         >>> top_processes = zdx.devices.get_deeptrace_top_processes('123456789', '987654321')
-    #         ... print(top_processes)
-
-    #     """
-    #     return self.rest.get(f"devices/{device_id}/deeptraces/{trace_id}/top-processes")
-
-    # @zdx_params
-    # def list_geolocations(self, **kwargs) -> BoxList:
-    #     """
-    #     Returns a list of all active geolocations configured within the ZDX tenant.
-
-    #     Keyword Args:
-    #         since (int): The number of hours to look back for devices.
-    #         location_id (str): The unique ID for the location.
-    #         parent_geo_id (str): The unique ID for the parent geolocation.
-    #         search (str): The search string to filter by name.
-
-    #     Returns:
-    #         :obj:`Tuple`: The list of geolocations in ZDX.
-
-    #     Examples:
-    #         List all geolocations in ZDX for the past 2 hours:
-
-    #         >>> for geolocation in zdx.admin.list_geolocations():
-    #         ...     print(geolocation)
-
-    #     """
-    #     filters = GeoLocationFilter(**kwargs).to_dict()
-    #     return BoxList(ZDXIterator(self.rest, "active_geo", filters=filters))
+        return (result, response, None)
+    

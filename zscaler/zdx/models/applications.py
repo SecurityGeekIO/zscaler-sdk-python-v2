@@ -15,7 +15,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.oneapi_object import ZscalerObject
-
+from zscaler.oneapi_collection import ZscalerCollection
 
 class ActiveApplications(ZscalerObject):
     """
@@ -103,6 +103,82 @@ class ApplicationScore(ZscalerObject):
             "score": self.score,
             "most_impacted_geo": self.most_impacted_geo,
             "stats": self.stats
+        }
+        parent_req_format.update(current_obj_format)
+        return parent_req_format
+    
+class ApplicationScoreTrend(ZscalerObject):
+    """
+    A class for ApplicationScoreTrend objects.
+    """
+
+    def __init__(self, config=None):
+        """
+        Initialize the ApplicationScoreTrend model based on API response.
+
+        Args:
+            config (dict): A dictionary representing the configuration.
+        """
+        super().__init__(config)
+
+        if config:
+            self.metric = config["metric"] \
+                if "metric" in config else None
+            self.datapoints = ZscalerCollection.form_list(
+                config["datapoints"] if "datapoints" in config else [], str
+            )
+        else:
+            self.metric = None
+            self.datapoints = ZscalerCollection.form_list([], str)
+
+    def request_format(self):
+        """
+        Return the object as a dictionary in the format expected for API requests.
+        """
+        parent_req_format = super().request_format()
+        current_obj_format = {
+            "metric": self.metric,
+            "datapoints": self.datapoints
+        }
+        parent_req_format.update(current_obj_format)
+        return parent_req_format
+    
+class ApplicationMetrics(ZscalerObject):
+    """
+    A class for ApplicationMetrics objects.
+    """
+
+    def __init__(self, config=None):
+        """
+        Initialize the ApplicationMetrics model based on API response.
+
+        Args:
+            config (dict): A dictionary representing the configuration.
+        """
+        super().__init__(config)
+
+        if config:
+            self.metric = config["metric"] \
+                if "metric" in config else None
+            self.unit = config["unit"] \
+                if "unit" in config else None
+            self.datapoints = ZscalerCollection.form_list(
+                config["datapoints"] if "datapoints" in config else [], str
+            )
+        else:
+            self.metric = None
+            self.unit = None
+            self.datapoints = ZscalerCollection.form_list([], str)
+
+    def request_format(self):
+        """
+        Return the object as a dictionary in the format expected for API requests.
+        """
+        parent_req_format = super().request_format()
+        current_obj_format = {
+            "metric": self.metric,
+            "unit": self.unit,
+            "datapoints": self.datapoints
         }
         parent_req_format.update(current_obj_format)
         return parent_req_format
