@@ -119,6 +119,7 @@ class Locations(ZscalerObject):
             self.id = None
             self.name = None
             self.num_devices = None
+
     def request_format(self):
         """
         Return the object as a dictionary in the format expected for API requests.
@@ -151,6 +152,7 @@ class Common(ZscalerObject):
         else:
             self.id = None
             self.name = None
+
     def request_format(self):
         """
         Return the object as a dictionary in the format expected for API requests.

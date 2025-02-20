@@ -76,6 +76,33 @@ class LegacyZDXClientHelper:
 
         self.session = self._build_session()
 
+    def _get_with_rate_limiting(self, session, url):
+        """
+        Helper method to perform a GET request with rate limiting retry logic.
+        """
+        max_retries = self.config["client"]["rateLimit"].get("maxRetries", 3)
+        for attempt in range(max_retries):
+            response = session.get(url, timeout=self.timeout)
+            if response.status_code == 429:
+                rate_limit_reset = response.headers.get("RateLimit-Reset")
+                try:
+                    delay = int(rate_limit_reset) + 1 if rate_limit_reset else 1
+                except Exception:
+                    delay = 1
+                logger.info(
+                    f"Rate limit hit on GET {url}. Retrying in {delay} seconds (attempt {attempt + 1}/{max_retries})."
+                )
+                time.sleep(delay)
+                continue
+            try:
+                response.raise_for_status()
+            except Exception as e:
+                logger.error("GET request failed: %s", e)
+                raise Exception(f"Failed GET request for {url}: {e}")
+            return response
+
+        raise Exception(f"Failed GET request for {url} after {max_retries} attempts due to rate limiting.")
+    
     def _build_session(self):
         """Creates a ZDX API session using the requests library and performs token validation and JWKS retrieval."""
         session = requests.Session()
@@ -83,21 +110,17 @@ class LegacyZDXClientHelper:
             "User-Agent": self.user_agent,
             "Content-Type": "application/json"
         })
-        
-        # Obtain the token (using our create_token method)
-        token_data = self.create_token()  # returns dict containing "token"
+
+        token_data = self.create_token()
         token = token_data.get("token")
         if not token:
             raise Exception("Token creation failed: no token returned.")
-        
-        # Update session headers with the Bearer token
+
         session.headers.update({"Authorization": f"Bearer {token}"})
-        
-        # --- Validate the token ---
+
         validate_url = f"{self.url}/v1/oauth/validate"
         try:
-            validate_response = session.get(validate_url, timeout=self.timeout)
-            validate_response.raise_for_status()
+            validate_response = self._get_with_rate_limiting(session, validate_url)
             validate_data = validate_response.json()
             logger.debug(f"Token validation response: {validate_data}")
             if not validate_data.get("valid", False):
@@ -107,32 +130,27 @@ class LegacyZDXClientHelper:
         except Exception as e:
             logger.error("Token validation failed: %s", e)
             raise Exception(f"Token validation failed: {e}")
-        
-        # --- Retrieve the JWKS ---
+
         jwks_url = f"{self.url}/v1/oauth/jwks"
         try:
-            jwks_response = session.get(jwks_url, timeout=self.timeout)
-            jwks_response.raise_for_status()
+            jwks_response = self._get_with_rate_limiting(session, jwks_url)
             jwks_data = jwks_response.json()
             logger.debug(f"JWKS response: {json.dumps(jwks_data, indent=2)}")
-            # Optionally: Store or process jwks_data as needed.
         except Exception as e:
             logger.error("Failed to retrieve JWKS: %s", e)
             raise Exception(f"Failed to retrieve JWKS: {e}")
-        
+
         return session
 
     def create_token(self):
         """
         Creates a ZDX authentication token.
-
         Returns:
             dict: The authentication token response.
-
         Raises:
             Exception: If token retrieval fails.
         """
-        max_retries = 3
+        max_retries = self.config["client"]["rateLimit"].get("maxRetries", 3)
         for attempt in range(max_retries):
             epoch_time = int(time.time())
             api_secret_format = f"{self._client_secret}:{epoch_time}"
@@ -159,7 +177,6 @@ class LegacyZDXClientHelper:
             if response.status_code == 429:
                 rate_limit_reset = response.headers.get("RateLimit-Reset")
                 try:
-                    # Convert the header to an integer and add a 1-second padding
                     delay = int(rate_limit_reset) + 1 if rate_limit_reset else 1
                 except Exception:
                     delay = 1
@@ -180,8 +197,10 @@ class LegacyZDXClientHelper:
             if not token:
                 raise Exception("No token found in the authentication response.")
 
+            # Save the token and update default headers for subsequent requests
             self.auth_token = token
             self.request_executor._default_headers["Authorization"] = f"Bearer {token}"
+
             return token_data
 
         raise Exception(f"Failed to retrieve token after {max_retries} attempts due to rate limiting.")

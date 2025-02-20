@@ -17,7 +17,8 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from zscaler.api_client import APIClient
 from zscaler.request_executor import RequestExecutor
-from zscaler.zdx.models.software_inventory import SoftwareInventory
+# from zscaler.zdx.models.software_inventory import SoftwareInventory
+from zscaler.zdx.models.software_inventory import SoftwareList
 from zscaler.zdx.models.software_inventory import DeviceSoftwareInventory
 from zscaler.utils import format_url, zdx_params
 
@@ -95,8 +96,12 @@ class InventoryAPI(APIClient):
             return (None, response, error)
 
         try:
-            result = [SoftwareInventory(
-                self.form_response_body(response.get_body()))]  
+            # Convert the response body into a dictionary
+            data = self.form_response_body(response.get_body())
+            # Extract the list of software items (each as a dict)
+            software_items = data.get("software", [])
+            # Instantiate a SoftwareList object for each item using the defensive model
+            result = [SoftwareList(item) for item in software_items]
         except Exception as error:
             return (None, response, error)
 

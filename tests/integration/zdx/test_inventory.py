@@ -15,7 +15,6 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 import pytest
-import time
 from pprint import pprint
 from tests.integration.zdx.conftest import MockZDXClient
 
@@ -35,17 +34,7 @@ class TestInventory:
         errors = []
 
         try:
-            # time.sleep(5)  # Sleep for 5 seconds before making the request
-            # now = int(time.time())
-            # from_time = now - 2 * 60 * 60  # 2 hours ago
-            # to_time = now
-
-            # kwargs = {
-            #     "from_time": from_time,
-            #     "to": to_time,
-            # }
-
-            software_iterator = client.inventory.list_softwares()
+            software_iterator = client.zdx.inventory.list_softwares()
             softwares = list(software_iterator)
 
             if not softwares:
@@ -64,36 +53,35 @@ class TestInventory:
         errors = []
 
         try:
-            # time.sleep(5)  # Sleep for 5 seconds before making the request
-            # now = int(time.time())
-            # from_time = now - 2 * 60 * 60  # 2 hours ago
-            # to_time = now
-
-            # kwargs = {
-            #     "from_time": from_time,
-            #     "to": to_time,
-            # }
-
             # List software to get a software key
-            software_iterator = client.inventory.list_softwares()
-            softwares = list(software_iterator)
+            software_list, _, error = client.zdx.inventory.list_softwares()
+            if error:
+                errors.append(f"Error listing software list: {error}")
+                return
 
-            if not softwares:
+            if not software_list or not isinstance(software_list, list):
                 print("No software found within the specified time range.")
+                return
+
+            # Retrieve the first software object and extract its software_key attribute
+            first_soft = software_list[0]
+            software_key = getattr(first_soft, "software_key", None)
+
+            if not software_key:
+                raise ValueError(f"Software key not found in response: {first_soft.as_dict()}")
+
+            print(f"Using Software Key: {software_key}")
+
+            # List software keys using the retrieved software key
+            software_keys_iterator = client.zdx.inventory.list_software_keys(software_key=software_key)
+            software_keys = list(software_keys_iterator)
+
+            if not software_keys:
+                print("No software keys found within the specified time range.")
             else:
-                software_key = softwares[0].software_key
-                print(f"Using software key {software_key} for list_software_keys test")
-
-                # List software keys using the retrieved software key
-                software_keys_iterator = client.inventory.list_software_keys(software_key=software_key)
-                software_keys = list(software_keys_iterator)
-
-                if not software_keys:
-                    print("No software keys found within the specified time range.")
-                else:
-                    print(f"Retrieved {len(software_keys)} software keys")
-                    for software_key in software_keys:
-                        pprint(software_key)
+                print(f"Retrieved {len(software_keys)} software keys")
+                for key in software_keys:
+                    pprint(key)
         except Exception as e:
             errors.append(f"Exception occurred: {e}")
 
