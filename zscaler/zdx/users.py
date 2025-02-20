@@ -104,15 +104,15 @@ class UsersAPI(APIClient):
             return (None, response, error)
 
         try:
-            result = []
-            for item in response.get_results():
-                result.append(Users(
-                    self.form_response_body(item))
-                )
+            parsed_response = self.form_response_body(response.get_body())
+            users_list = parsed_response.get("users", [])
+            result = [UserDetails(user) for user in users_list]
+
         except Exception as error:
             return (None, response, error)
+
         return (result, response, None)
-    
+
     @zdx_params
     def get_user(
         self,

@@ -121,7 +121,7 @@ class LegacyZDXClientHelper:
             raise Exception(f"Failed to retrieve JWKS: {e}")
         
         return session
-    
+
     def create_token(self):
         """
         Creates a ZDX authentication token.
@@ -132,30 +132,20 @@ class LegacyZDXClientHelper:
         Raises:
             Exception: If token retrieval fails.
         """
-        epoch_time = int(time.time())
-        api_secret_format = f"{self._client_secret}:{epoch_time}"
-        api_secret_hash = sha256(api_secret_format.encode("utf-8")).hexdigest()
+        max_retries = 3
+        for attempt in range(max_retries):
+            epoch_time = int(time.time())
+            api_secret_format = f"{self._client_secret}:{epoch_time}"
+            api_secret_hash = sha256(api_secret_format.encode("utf-8")).hexdigest()
 
-        payload = {
-            "key_id": self._client_id,
-            "key_secret": api_secret_hash,
-            "timestamp": epoch_time,
-        }
+            payload = {
+                "key_id": self._client_id,
+                "key_secret": api_secret_hash,
+                "timestamp": epoch_time,
+            }
 
-        # Mask sensitive values for logging
-        masked_client_id = f"****{self._client_id[-3:]}" if self._client_id else None
-        masked_key_secret = "****"
-
-        logger.debug(
-            "Token request payload: {'key_id': '%s', 'key_secret': '%s', 'timestamp': %d}",
-            masked_client_id, masked_key_secret, epoch_time
-        )
-        
-        # Build the full token URL (note: same as the old client)
-        token_url = f"{self.url}/v1/oauth/token"
-        logger.debug(f"Token request URL: {token_url}")
-
-        try:
+            token_url = f"{self.url}/v1/oauth/token"
+            logger.debug(f"Token request URL: {token_url}")
             response = requests.post(
                 token_url,
                 json=payload,
@@ -165,25 +155,36 @@ class LegacyZDXClientHelper:
                 },
                 timeout=self.timeout
             )
-            logger.debug(f"Token request response status: {response.status_code}")
-            logger.debug(f"Token request response content: {response.text}")
 
-            response.raise_for_status()  # Raise exception for non-2xx responses
+            if response.status_code == 429:
+                rate_limit_reset = response.headers.get("RateLimit-Reset")
+                try:
+                    # Convert the header to an integer and add a 1-second padding
+                    delay = int(rate_limit_reset) + 1 if rate_limit_reset else 1
+                except Exception:
+                    delay = 1
+                logger.info(
+                    f"Rate limit hit on token request. Retrying in {delay} seconds (attempt {attempt + 1}/{max_retries})."
+                )
+                time.sleep(delay)
+                continue
+
+            try:
+                response.raise_for_status()  # Raise exception for non-2xx responses
+            except Exception as e:
+                logger.error("Failed to retrieve token: %s", e)
+                raise Exception(f"Failed to retrieve token: {e}")
 
             token_data = response.json()
             token = token_data.get("token")
             if not token:
                 raise Exception("No token found in the authentication response.")
 
-            # Save the token and update default headers for subsequent requests
             self.auth_token = token
             self.request_executor._default_headers["Authorization"] = f"Bearer {token}"
-
             return token_data
-        except Exception as e:
-            logger.error("Failed to retrieve token: %s", e)
-            raise Exception(f"Failed to retrieve token: {e}")
 
+        raise Exception(f"Failed to retrieve token after {max_retries} attempts due to rate limiting.")
 
     def validate_token(self):
         """

@@ -31,7 +31,7 @@ class ApplicationUsers(ZscalerObject):
             config (dict): A dictionary representing the configuration.
         """
         super().__init__(config)
-
+        
         if config:
             self.users = ZscalerCollection.form_list(
                 config["users"] if "users" in config else [], str

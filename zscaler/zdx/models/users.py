@@ -31,16 +31,25 @@ class Users(ZscalerObject):
             config (dict): A dictionary representing the configuration.
         """
         super().__init__(config)
-
+        print(f"DEBUG: Raw config received in Users: {config}")  # Debugging input
+        
         if config:
             self.users = ZscalerCollection.form_list(
-                config["users"] if "users" in config else [], str
+                config.get("users", []), UserDetails
             )
-            self.next_offset = config["next_offset"] \
-                if "next_offset" in config else None
+            self.next_offset = config.get("next_offset")
+
         else:
-            self.users = ZscalerCollection.form_list([], str)
+            self.users = []
             self.next_offset = None
+
+        print(f"DEBUG: Parsed Users object - {len(self.users)} users found")
+
+    def as_list(self):
+        """
+        Return the list of user objects.
+        """
+        return self.users  # ✅ This ensures `list_users` returns a list, not an object.
 
     def request_format(self):
         """
@@ -48,45 +57,36 @@ class Users(ZscalerObject):
         """
         parent_req_format = super().request_format()
         current_obj_format = {
-            "users": self.users,
+            "users": [user.as_dict() for user in self.users],
             "next_offset": self.next_offset
         }
         parent_req_format.update(current_obj_format)
         return parent_req_format
-    
+
 class UserDetails(ZscalerObject):
     """
-    A class for UserDetails objects.
+    A class for Users objects.
     """
 
     def __init__(self, config=None):
         """
-        Initialize the UserDetails model based on API response.
+        Initialize the Users model based on API response.
 
         Args:
-            config (dict): A dictionary representing the configuration.
+            config (dict): A dictionary representing the Department configuration.
         """
         super().__init__(config)
-
         if config:
-            self.id = config["id"] \
-                if "id" in config else None
-            self.name = config["name"] \
-                if "name" in config else None
-            self.email = config["email"] \
-                if "email" in config else None
-            self.score = config["score"] \
-                if "score" in config else None
-            self.devices = ZscalerCollection.form_list(
-                config["devices"] if "devices" in config else [], str
-            )
+            self.id = config["id"] if "id" in config else None
+            self.name = config["name"] if "name" in config else None
+            self.email = config["email"] if "email" in config else None
+            self.score = config["score"] if "score" in config else None
         else:
             self.id = None
             self.name = None
             self.email = None
             self.score = None
-            self.devices = ZscalerCollection.form_list([], str)
-
+            
     def request_format(self):
         """
         Return the object as a dictionary in the format expected for API requests.
@@ -97,7 +97,6 @@ class UserDetails(ZscalerObject):
             "name": self.name,
             "email": self.email,
             "score": self.score,
-            "devices": self.devices
         }
         parent_req_format.update(current_obj_format)
         return parent_req_format

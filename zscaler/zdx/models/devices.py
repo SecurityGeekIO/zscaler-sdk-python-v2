@@ -16,7 +16,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from zscaler.oneapi_object import ZscalerObject
 from zscaler.oneapi_collection import ZscalerCollection
-
+from zscaler.zdx.models import common as common_reference
 
 class Devices(ZscalerObject):
     """
@@ -31,10 +31,11 @@ class Devices(ZscalerObject):
             config (dict): A dictionary representing the configuration.
         """
         super().__init__(config)
+        print(f"DEBUG: Raw config received in devices: {config}")  # Debugging input
 
         if config:
-            self.devices = ZscalerCollection.form_list(
-                config["devices"] if "devices" in config else [], str
+            self.users = ZscalerCollection.form_list(
+                config.get("devices", []), common_reference.Common
             )
             self.next_offset = config["next_offset"] \
                 if "next_offset" in config else None
@@ -42,13 +43,15 @@ class Devices(ZscalerObject):
             self.devices = ZscalerCollection.form_list([], str)
             self.next_offset = None
 
+        print(f"DEBUG: Parsed Devices object - {len(self.devices)} devices found")
+        
     def request_format(self):
         """
         Return the object as a dictionary in the format expected for API requests.
         """
         parent_req_format = super().request_format()
         current_obj_format = {
-            "devices": self.devices,
+            "devices": [device.as_dict() for device in self.devices],
             "next_offset": self.next_offset
         }
         parent_req_format.update(current_obj_format)

@@ -18,7 +18,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 from zscaler.api_client import APIClient
 from zscaler.request_executor import RequestExecutor
 from zscaler.zdx.models.alerts import Alerts
-from zscaler.zdx.models.alert_details import AlertDetails
+from zscaler.zdx.models.alerts import AlertDetails
 from zscaler.utils import format_url, zdx_params
 
 class AlertsAPI(APIClient):
@@ -102,12 +102,71 @@ class AlertsAPI(APIClient):
         if error:
             return (None, response, error)
 
+        # try:
+        #     parsed_response = self.form_response_body(response.get_body())
+        #     alerts_list = parsed_response.get("alerts", [])
+        #     result = [Alerts(alert) for alert in alerts_list]
+        # except Exception as error:
+        #     return (None, response, error)
+        # return (result, response, None)
+
         try:
-            result = [Alerts(
-                self.form_response_body(response.get_body()))]  
+            result = []
+            for item in response.get_results():
+                result.append(Alerts(
+                    self.form_response_body(item))
+                )
         except Exception as error:
             return (None, response, error)
+        return (result, response, None)
+    
+    def get_alert(self, alert_id: str) -> tuple:
+        """
+        Returns details of a single alert including the impacted department, 
+        Zscaler locations, geolocation, and alert trigger.
 
+        Args:
+            alert_id (str): The unique ID for the alert.
+
+        Returns:
+            :obj:`Tuple`: The ZDX alert detail resource record.
+
+        Examples:
+            Get information for the device with an ID of 123456789.
+            >>> alert, _, error = client.zdx.alerts.get_alert("7473160764821179371")
+            ... if error:
+            ...     print(f"Error: {error}")
+            ... else:
+            ...     print(alert.as_dict())
+        """
+        http_method = "get".upper()
+        api_url = format_url(
+            f"""
+            {self._zdx_base_endpoint}
+            /alerts/{alert_id}
+        """
+        )
+
+        body = {}
+        headers = {}
+
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, headers)
+
+        if error:
+            return (None, None, error)
+
+        response, error = self._request_executor\
+            .execute(request, AlertDetails)
+        if error:
+            return (None, response, error)
+
+        try:
+            result = AlertDetails(
+                self.form_response_body(response.get_body())
+            )
+        except Exception as error:
+            return (None, response, error)
         return (result, response, None)
 
     @zdx_params
@@ -190,55 +249,6 @@ class AlertsAPI(APIClient):
         except Exception as error:
             return (None, response, error)
 
-        return (result, response, None)
-
-    def get_alert(self, alert_id: str) -> tuple:
-        """
-        Returns details of a single alert including the impacted department, 
-        Zscaler locations, geolocation, and alert trigger.
-
-        Args:
-            alert_id (str): The unique ID for the alert.
-
-        Returns:
-            :obj:`Tuple`: The ZDX alert detail resource record.
-
-        Examples:
-            Get information for the device with an ID of 123456789.
-            >>> alert, _, error = client.zdx.alerts.get_alert("7473160764821179371")
-            ... if error:
-            ...     print(f"Error: {error}")
-            ... else:
-            ...     print(alert.as_dict())
-        """
-        http_method = "get".upper()
-        api_url = format_url(
-            f"""
-            {self._zdx_base_endpoint}
-            /alerts/{alert_id}
-        """
-        )
-
-        body = {}
-        headers = {}
-
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, headers)
-
-        if error:
-            return (None, None, error)
-
-        response, error = self._request_executor\
-            .execute(request, AlertDetails)
-        if error:
-            return (None, response, error)
-
-        try:
-            result = AlertDetails(
-                self.form_response_body(response.get_body())
-            )
-        except Exception as error:
-            return (None, response, error)
         return (result, response, None)
 
     @zdx_params

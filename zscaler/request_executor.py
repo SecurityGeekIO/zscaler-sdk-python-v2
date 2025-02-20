@@ -556,7 +556,7 @@ class RequestExecutor:
 
     def get_retry_after(self, headers, logger):
         retry_limit_reset_header = headers.get(
-            "x-ratelimit-reset") or headers.get("X-RateLimit-Reset")
+            "x-ratelimit-reset") or headers.get("X-RateLimit-Reset") or headers.get("RateLimit-Reset")
         retry_after = headers.get("Retry-After") or headers.get("retry-after")
 
         if retry_after:

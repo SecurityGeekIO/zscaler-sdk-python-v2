@@ -20,7 +20,7 @@ from zscaler.zdx.models.applications import ActiveApplications
 from zscaler.zdx.models.applications import ApplicationScore
 from zscaler.zdx.models.applications import ApplicationScoreTrend
 from zscaler.zdx.models.applications import ApplicationMetrics
-from zscaler.zdx.models.application_users import ApplicationUsers
+from zscaler.zdx.models.users import UserDetails
 from zscaler.zdx.models.application_users import  ApplicationUserDetails
 from zscaler.utils import format_url, zdx_params
 
@@ -95,12 +95,22 @@ class AppsAPI(APIClient):
             return (None, response, error)
 
         try:
-            result = [ActiveApplications(
-                self.form_response_body(response.get_body()))]  
+            result = []
+            for item in response.get_results():
+                result.append(ActiveApplications(
+                    self.form_response_body(item))
+                )
         except Exception as error:
             return (None, response, error)
-
         return (result, response, None)
+    
+        # try:
+        #     result = [ActiveApplications(
+        #         self.form_response_body(response.get_body()))]  
+        # except Exception as error:
+        #     return (None, response, error)
+
+        # return (result, response, None)
 
     @zdx_params
     def get_app(
@@ -405,14 +415,23 @@ class AppsAPI(APIClient):
         if error:
             return (None, response, error)
 
+        # try:
+        #     result = [ApplicationUsers(
+        #         self.form_response_body(response.get_body()))]  
+        # except Exception as error:
+        #     return (None, response, error)
+
+        # return (result, response, None)
         try:
-            result = [ApplicationUsers(
-                self.form_response_body(response.get_body()))]  
+            parsed_response = self.form_response_body(response.get_body())
+            users_list = parsed_response.get("users", [])
+            result = [UserDetails(user) for user in users_list]
+
         except Exception as error:
             return (None, response, error)
 
         return (result, response, None)
-
+    
     @zdx_params
     def get_app_user(
         self,
