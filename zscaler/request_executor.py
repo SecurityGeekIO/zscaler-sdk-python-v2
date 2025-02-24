@@ -9,6 +9,7 @@ from zscaler.error_messages import ERROR_MESSAGE_429_MISSING_DATE_X_RESET
 from http import HTTPStatus
 from zscaler.helpers import convert_keys_to_snake_case, convert_keys_to_camel_case
 from zscaler.zcc.legacy import LegacyZCCClientHelper
+from zscaler.zcon.legacy import LegacyZCONClientHelper
 from zscaler.zdx.legacy import LegacyZDXClientHelper
 from zscaler.zpa.legacy import LegacyZPAClientHelper
 from zscaler.zia.legacy import LegacyZIAClientHelper
@@ -28,6 +29,7 @@ class RequestExecutor:
                  cache,
                  http_client=None,
                  zcc_legacy_client: LegacyZCCClientHelper = None,
+                 zcon_legacy_client: LegacyZCONClientHelper = None,
                  zdx_legacy_client: LegacyZDXClientHelper = None,
                  zpa_legacy_client: LegacyZPAClientHelper = None,
                  zia_legacy_client: LegacyZIAClientHelper = None):
@@ -40,6 +42,7 @@ class RequestExecutor:
             http_client (object, optional): Custom HTTP client for making requests.
         """
         self.zcc_legacy_client = zcc_legacy_client
+        self.zcon_legacy_client = zcon_legacy_client
         self.zdx_legacy_client = zdx_legacy_client
         self.zpa_legacy_client = zpa_legacy_client
         self.zia_legacy_client = zia_legacy_client
@@ -48,6 +51,7 @@ class RequestExecutor:
             zpa_legacy_client is not None or
             zia_legacy_client is not None or
             zcc_legacy_client is not None or
+            zcon_legacy_client is not None or
             zdx_legacy_client is not None
             )
 
@@ -106,6 +110,7 @@ class RequestExecutor:
                 "sslContext": self._config["client"].get("sslContext"),
             },
             zcc_legacy_client=self.zcc_legacy_client,
+            zcon_legacy_client=self.zcon_legacy_client,
             zdx_legacy_client=self.zdx_legacy_client,
             zpa_legacy_client=self.zpa_legacy_client,
             zia_legacy_client=self.zia_legacy_client,
@@ -136,6 +141,8 @@ class RequestExecutor:
     
         if "/zia" in url or "/zscsb" in url:
             return "zia"
+        elif "/zcon" in url:
+            return "zcon"
         elif "/zcc" in url:
             return "zcc"
         elif "/zdx" in url:
@@ -148,6 +155,8 @@ class RequestExecutor:
             # Recheck for service type after removing the prefix
             if "/zia" in url or "/zscsb" in url:
                 return "zia"
+            elif "/zcon" in url:
+                return "zcon"
             elif "/zcc" in url:
                 return "zcc"
             elif "/zdx" in url:
@@ -158,7 +167,7 @@ class RequestExecutor:
         raise ValueError(f"Unsupported service: {url}")
 
     def remove_oneapi_endpoint_prefix(self, endpoint: str) -> str:
-        prefixes = ["/zia", "/zpa", "/zcc", "/zdx"]
+        prefixes = ["/zia", "/zpa", "/zcc", "/zcon", "/zdx"]
         for prefix in prefixes:
             if endpoint.startswith(prefix):
                 return endpoint[len(prefix):]
@@ -192,6 +201,8 @@ class RequestExecutor:
                 base_url = self.zpa_legacy_client.get_base_url(endpoint)
             elif service_type == "zia":
                 base_url = self.zia_legacy_client.get_base_url(endpoint)
+            elif service_type == "zcon":
+                base_url = self.zcon_legacy_client.get_base_url(endpoint)
             elif service_type == "zcc":
                 base_url = self.zcc_legacy_client.get_base_url(endpoint)
             elif service_type == "zdx":
