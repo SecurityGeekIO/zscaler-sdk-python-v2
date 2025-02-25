@@ -9,6 +9,7 @@ from zscaler.exceptions import HTTPException, ZscalerAPIException
 from http import HTTPStatus
 from zscaler.logger import dump_request, dump_response
 from zscaler.zcc.legacy import LegacyZCCClientHelper
+from zscaler.zcon.legacy import LegacyZCONClientHelper
 from zscaler.zdx.legacy import LegacyZDXClientHelper
 from zscaler.zpa.legacy import LegacyZPAClientHelper
 from zscaler.zia.legacy import LegacyZIAClientHelper
@@ -28,6 +29,7 @@ class HTTPClient:
     def __init__(self,
                  http_config={},
                  zcc_legacy_client: LegacyZCCClientHelper = None,
+                 zcon_legacy_client: LegacyZCONClientHelper = None,
                  zdx_legacy_client: LegacyZDXClientHelper = None,
                  zpa_legacy_client: LegacyZPAClientHelper = None,
                  zia_legacy_client: LegacyZIAClientHelper = None):
@@ -35,12 +37,14 @@ class HTTPClient:
         # Get headers from Request Executor
         self._default_headers = http_config.get("headers", {})
         self.zcc_legacy_client = zcc_legacy_client
+        self.zcon_legacy_client = zcon_legacy_client
         self.zdx_legacy_client = zdx_legacy_client
         self.zpa_legacy_client = zpa_legacy_client
         self.zia_legacy_client = zia_legacy_client
 
         # Determine if legacy clients are enabled
         self.use_zcc_legacy_client = zcc_legacy_client is not None
+        self.use_zcon_legacy_client = zcon_legacy_client is not None
         self.use_zdx_legacy_client = zdx_legacy_client is not None
         self.use_zpa_legacy_client = zpa_legacy_client is not None
         self.use_zia_legacy_client = zia_legacy_client is not None
@@ -188,7 +192,6 @@ class HTTPClient:
                     "headers": legacy_req_info["headers"],
                 })
 
-
             elif self.use_zia_legacy_client:
                 parsed_url = urlparse(request["url"])
                 path = parsed_url.path
@@ -213,6 +216,32 @@ class HTTPClient:
                     "params": legacy_request["params"],
                     "headers": legacy_request["headers"],
                 })
+                
+            elif self.use_zcon_legacy_client:
+                parsed_url = urlparse(request["url"])
+                path = parsed_url.path
+                logger.debug(f"Sending request via ZCON legacy client. Path: {path}")
+
+                response, legacy_request = self.zcon_legacy_client.send(
+                    method=request["method"],
+                    path=path,
+                    params=request["params"],
+                    json=request.get("json") or request.get("data"),
+                )
+
+                logger.debug(f"ZCON Legacy Client Response: {response}, Legacy Request: {legacy_request}")
+
+                if response is None:
+                    error_msg = f"ZCON Legacy client returned None for request {legacy_request}"
+                    logger.error(error_msg)
+                    return (None, ValueError(error_msg))
+
+                params.update({
+                    "url": legacy_request["url"],
+                    "params": legacy_request["params"],
+                    "headers": legacy_request["headers"],
+                })
+
             else:
                 # Use Standard Session
                 if self._session:
