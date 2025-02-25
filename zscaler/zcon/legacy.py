@@ -23,7 +23,6 @@ from time import sleep
 import requests
 from zscaler import __version__
 from zscaler.cache.no_op_cache import NoOpCache
-from zscaler.cache.zscaler_cache import ZscalerCache
 from zscaler.logger import setup_logging
 from zscaler.ratelimiter.ratelimiter import RateLimiter
 from zscaler.user_agent import UserAgent
@@ -70,17 +69,7 @@ class LegacyZCONClientHelper:
         self.conv_box = True
         self.timeout = timeout
         self.fail_safe = fail_safe
-        cache_enabled = os.environ.get("ZSCALER_CLIENT_CACHE_ENABLED", "true").lower() == "true"
-        if cache is None:
-            if cache_enabled:
-                ttl = int(os.environ.get("ZSCALER_CLIENT_CACHE_DEFAULT_TTL", 3600))
-                tti = int(os.environ.get("ZSCALER_CLIENT_CACHE_DEFAULT_TTI", 1800))
-                self.cache = ZscalerCache(ttl=ttl, tti=tti)
-            else:
-                self.cache = NoOpCache()
-        else:
-            self.cache = cache
-        # Initialize user-agent
+
         ua = UserAgent()
         self.user_agent = ua.get_user_agent_string()
         # Initialize rate limiter
@@ -102,13 +91,16 @@ class LegacyZCONClientHelper:
         self.session_id = None
         self.authenticate()
 
-        # Create request executor
+        self.cache = NoOpCache()
+
         self.config = {
             "client": {
                 "cloud": self.env_cloud,
                 "requestTimeout": self.timeout,
                 "rateLimit": {"maxRetries": 3},
-                "cache": {"enabled": True},
+                "cache": {
+                    "enabled": False,
+                },
             }
         }
         self.request_executor = RequestExecutor(self.config, self.cache, zcon_legacy_client=self)

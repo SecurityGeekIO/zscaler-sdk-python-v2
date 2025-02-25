@@ -1,4 +1,3 @@
-# flake8: noqa
 """
 Copyright (c) 2023, Zscaler Inc.
 
@@ -42,8 +41,6 @@ class LocationTemplate(ZscalerObject):
                 if "desc" in config else None
             self.editable = config["editable"] \
                 if "editable" in config else False
-            self.last_mod_uid = config["lastModUid"] \
-                if "lastModUid" in config else None
             self.last_mod_time = config["lastModTime"] \
                 if "lastModTime" in config else None
                 
