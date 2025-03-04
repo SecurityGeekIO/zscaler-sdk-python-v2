@@ -242,19 +242,10 @@ class LegacyZWAClientHelper:
             raise ValueError(f"Request execution failed: {error}")
 
     @property
-    def incidents(self):
+    def dlp_incidents(self):
         """
-        The interface object for the :ref:`ZWA Incidents interface <zwa-incidents>`.
+        The interface object for the :ref:`ZWA DLP Incidents interface <zwa-dlp_incidents>`.
         
         """
-        from zscaler.zwa.incidents import IncidentsAPI
-        return IncidentsAPI(self.request_executor)
-    
-    @property
-    def change_history(self):
-        """
-        The interface object for the :ref:`ZWA Incidents interface <zwa-change_history>`.
-        
-        """
-        from zscaler.zwa.change_history import IncidentChangeHistoryAPI
-        return IncidentChangeHistoryAPI(self.request_executor)
+        from zscaler.zwa.dlp_incidents import DLPIncidentsAPI
+        return DLPIncidentsAPI(self.request_executor)

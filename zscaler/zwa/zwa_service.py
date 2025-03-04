@@ -14,27 +14,19 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
-from zscaler.zwa.incidents import IncidentsAPI
-from zscaler.zwa.change_history import IncidentChangeHistoryAPI
-
+from zscaler.zwa.dlp_incidents import DLPIncidentsAPI
+        
 class ZWAService:
     """ZWA Service client, exposing various ZWA APIs."""
 
     def __init__(self, client):
         self._request_executor = client._request_executor
-        
+
     @property
-    def incidents(self):
+    def dlp_incidents(self):
         """
-        The interface object for the :ref:`ZWA Incidents interface <zwa-incidents>`.
+        The interface object for the :ref:`ZWA DLP Incidents interface <zwa-dlp_incidents>`.
         
         """
-        return IncidentsAPI(self._request_executor)
+        return DLPIncidentsAPI(self._request_executor)
     
-    @property
-    def change_history(self):
-        """
-        The interface object for the :ref:`ZWA Incidents interface <zwa-change_history>`.
-        
-        """
-        return IncidentChangeHistoryAPI(self._request_executor)
