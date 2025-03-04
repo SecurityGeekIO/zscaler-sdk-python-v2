@@ -499,7 +499,7 @@ class LastNotifiedUser(ZscalerObject):
         super().__init__(config)
 
         if config:
-            self.email = config["role"]\
+            self.role = config["role"]\
                 if "role" in config else None
             self.email = config["email"]\
                 if "email" in config else None
@@ -592,18 +592,18 @@ class IncidentGroups(ZscalerObject):
                 if "status" in config else None
             self.incident_group_type = config["incidentGroupType"]\
                 if "incidentGroupType" in config else None
-            self.is_dlp_incident_group_already_mapped = config["isDLPIncidentGroupAlreadyMapped"]\
-                if "isDLPIncidentGroupAlreadyMapped" in config else False
-            self.is_dlp_admin_config_already_mapped = config["isDLPAdminConfigAlreadyMapped"]\
-                if "isDLPAdminConfigAlreadyMapped" in config else False
+            # self.is_dlp_incident_group_already_mapped = config["isDLPIncidentGroupAlreadyMapped"]\
+            #     if "isDLPIncidentGroupAlreadyMapped" in config else False
+            # self.is_dlp_admin_config_already_mapped = config["isDLPAdminConfigAlreadyMapped"]\
+            #     if "isDLPAdminConfigAlreadyMapped" in config else False
         else:
             self.id = None
             self.name = None
             self.description = None
             self.status = None
             self.incident_group_type = None
-            self.is_dlp_incident_group_already_mapped = None
-            self.is_dlp_admin_config_already_mapped = None
+            # self.is_dlp_incident_group_already_mapped = None
+            # self.is_dlp_admin_config_already_mapped = None
 
     def request_format(self):
         """
@@ -616,8 +616,8 @@ class IncidentGroups(ZscalerObject):
             "description": self.description,
             "status": self.status,
             "incidentGroupType": self.incident_group_type,
-            "isDLPIncidentGroupAlreadyMapped": self.is_dlp_incident_group_already_mapped,
-            "isDLPAdminConfigAlreadyMapped": self.is_dlp_admin_config_already_mapped,
+            # "isDLPIncidentGroupAlreadyMapped": self.is_dlp_incident_group_already_mapped,
+            # "isDLPAdminConfigAlreadyMapped": self.is_dlp_admin_config_already_mapped,
         }
         parent_req_format.update(current_obj_format)
         return parent_req_format

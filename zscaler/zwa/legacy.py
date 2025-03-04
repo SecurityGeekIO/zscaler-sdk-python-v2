@@ -242,6 +242,15 @@ class LegacyZWAClientHelper:
             raise ValueError(f"Request execution failed: {error}")
 
     @property
+    def audit_logs(self):
+        """
+        The interface object for the :ref:`ZWA Audit Logs interface <zwa-audit_logs>`.
+        
+        """
+        from zscaler.zwa.audit_logs import AuditLogsAPI
+        return AuditLogsAPI(self.request_executor)
+
+    @property
     def dlp_incidents(self):
         """
         The interface object for the :ref:`ZWA DLP Incidents interface <zwa-dlp_incidents>`.

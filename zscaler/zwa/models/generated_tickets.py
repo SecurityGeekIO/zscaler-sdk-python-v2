@@ -18,6 +18,7 @@ from zscaler.oneapi_object import ZscalerObject
 from zscaler.oneapi_collection import ZscalerCollection
 from zscaler.zwa.models import common as common
 
+
 class GeneratedTickets(ZscalerObject):
     """
     A class for GeneratedTickets objects.

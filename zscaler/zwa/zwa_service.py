@@ -15,12 +15,21 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.zwa.dlp_incidents import DLPIncidentsAPI
-        
+from zscaler.zwa.audit_logs import AuditLogsAPI
+
 class ZWAService:
     """ZWA Service client, exposing various ZWA APIs."""
 
     def __init__(self, client):
         self._request_executor = client._request_executor
+
+    @property
+    def audit_logs(self):
+        """
+        The interface object for the :ref:`ZWA Audit Logs interface <zwa-audit_logs>`.
+        
+        """
+        return AuditLogsAPI(self._request_executor)
 
     @property
     def dlp_incidents(self):
