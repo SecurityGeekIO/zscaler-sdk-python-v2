@@ -30,8 +30,6 @@ help:
 	@echo "$(COLOR_OK)  clean-pyc                     Remove Python file artifacts$(COLOR_NONE)"
 	@echo "$(COLOR_OK)  clean-test                    Remove test and coverage artifacts$(COLOR_NONE)"
 	@echo "$(COLOR_WARNING)development$(COLOR_NONE)"
-	@echo "$(COLOR_OK)  check-format                  Check code format/style with black$(COLOR_NONE)"
-	@echo "$(COLOR_OK)  format                        Reformat code with black$(COLOR_NONE)"
 	@echo "$(COLOR_OK)  lint                          Check style with flake8 for all packages$(COLOR_NONE)"
 	@echo "$(COLOR_OK)  lint:zcc                      Check style with flake8 for zcc packages$(COLOR_NONE)"
 	@echo "$(COLOR_OK)  lint:zcon                     Check style with flake8 for zcon packages$(COLOR_NONE)"
@@ -104,12 +102,6 @@ lint\:zpa:
 lint\:zia:
 	flake8 zscaler/zia --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 	flake8 zscaler/zia --count --select=E9,F63,F7,F82 --show-source --statistics
-
-format:
-	black .
-
-check-format:
-	black --check --diff .
 
 test\:integration\:zcc:
 	@echo "$(COLOR_ZSCALER)Running zcc integration tests...$(COLOR_NONE)"
