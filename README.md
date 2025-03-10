@@ -14,8 +14,6 @@
 
 # Official Zscaler Python SDK Overview
 
-The Zscaler SDK for Python includes functionality to accelerate development with [Python](https://www.python.org/) several Zscaler services such as:
-
 * [Release status](#release-status)
 * [Need help?](#need-help)
 * [Getting Started](#getting-started)
@@ -28,15 +26,22 @@ The Zscaler SDK for Python includes functionality to accelerate development with
 * [Pagination](#pagination)
 * [Contributing](#contributing)
 
-This repository contains the ZIA/ZPA/ZDX/ZCC/ZCON/ZWA Python SDK resources. This SDK can be
-used in your server-side code to interact with the Zscaler platform
+The Zscaler SDK for Python includes functionality to accelerate development via [Python](https://www.python.org/). This SDK can be
+used in your server-side code to interact with the Zscaler API platform across multiple products such as:
+
+* [ZPA API](https://help.zscaler.com/zpa/zpa-api/api-developer-reference-guide)
+* [ZIA API](https://help.zscaler.com/zia/getting-started-zia-api)
+* [ZDX API](https://help.zscaler.com/zdx/understanding-zdx-api)
+* [ZCC API](https://help.zscaler.com/client-connector/getting-started-client-connector-api)
+* [ZCON API](https://help.zscaler.com/cloud-branch-connector/getting-started-cloud-branch-connector-api)
+* [ZWA API](https://help.zscaler.com/workflow-automation/getting-started-workflow-automation-api)
 
 This SDK is designed to support the new Zscaler API framework [OneAPI](https://help.zscaler.com/oneapi/understanding-oneapi)
 via a single OAuth2 HTTP client. The SDK is also backwards compatible with the previous
 Zscaler API framework, and each package is supported by an individual and robust HTTP client
 designed to handle failures on different levels by performing intelligent retries.
 
-## Release status
+## Release Status
 
 This library uses semantic versioning and updates are posted in ([release notes](/docs/guides/release-notes.md)) |
 
@@ -103,9 +108,7 @@ Once you initialize a specific service client, you can call methods to make requ
 
 The latest versions => 0.20.0 of this SDK provides dual API client capability and can be used to interact both with new Zscaler [OneAPI](https://help.zscaler.com/oneapi/understanding-oneapi) framework and the legacy API platform.
 
-Versions of this SDK <= v2.x only support the legacy API platform. If your Zscaler tenant has not been migrated to the new Zscaler [Zidentity platform](https://help.zscaler.com/zidentity/what-zidentity).
-
-If your organization is not ready to move into the Zidentity platform, this SDK package provides indiviual legacy based clients for each specific products.
+If your Zscaler tenant has not been migrated to the new Zscaler [Zidentity platform](https://help.zscaler.com/zidentity/what-zidentity), you must use the respective Legacy API client described in the following section: [Zscaler Legacy API Framework](#zscaler-legacy-api-framework)
 
    :warning: **Caution**: Zscaler does not recommend hard-coding credentials into arguments, as they can be exposed in plain text in version control systems. Use environment variables instead.
 
@@ -352,18 +355,9 @@ export ZSCALER_SDK_LOG=true
 export ZSCALER_SDK_VERBOSE=true
 ```
 
-This SDK utilizes the standard Python library `logging`. By default, log level INFO is set. You can set another log level via config:
-
-```py
-from zscaler import ZscalerClient
-import logging
-
-config = {"logging": {"enabled": True, "logLevel": logging.DEBUG}}
-client = ZscalerClient(config)
-```
+This SDK utilizes the standard Python library `logging`. By default, log level INFO is set. You can set another log level by setting the argument `verbose` to `True`.
 
 **NOTE**: DO NOT SET DEBUG LEVEL IN PRODUCTION!
-
 
 ```py
 from zscaler import ZscalerClient
@@ -387,7 +381,7 @@ if __name__ == "__main__":
     main()
 ```
 
-You should now see logs in your console. Notice that API Credentials i.e `clientId` and `clientSecret` are **NOT** logged to the console; however, Bearer tokens are still visible. We still advise to use caution and never use `DEBUG` or `verbose` level logging in production.
+You should now see logs in your console. Notice that API Credentials i.e `clientId` and `clientSecret` are **NOT** logged to the console; however, Bearer tokens are still visible. We still advise to use caution and never use `verbose` level logging in production.
 
 What it being logged? `requests`, `responses`, `http errors`, `caching responses`.
 
@@ -425,6 +419,8 @@ zscaler:
       verbose: true
 ```
 
+> **NOTE**: THIS IS NOT A PRODUCTION KEY AND IS DISPLAYED FOR EXAMPLE PURPOSES ONLY
+
 When you use OAuth 2.0 the full YAML configuration looks like:
 
 ```yaml
@@ -451,25 +447,22 @@ zscaler:
 
 Each one of the configuration values above can be turned into an environment variable name with the `_` (underscore) character and UPPERCASE characters. The following are accepted:
 
-- `ZSCALER_CLIENT_AUTHORIZATIONMODE`
-- `ZSCALER_CLIENT_ORGURL`
-- `ZSCALER_CLIENT_ID`
-- `ZSCALER_CLIENT_SECRET`
-- `ZSCALER_CLIENT_PRIVATEKEY`
-- `ZSCALER_CUSTOMER_ID`
-- `ZSCALER_VANITY_DOMAIN`
-- `ZSCALER_CLIENT_USERAGENT`
-- `ZSCALER_CLIENT_CONNECTIONTIMEOUT`
-- `ZSCALER_CLIENT_REQUESTTIMEOUT`
-- `ZSCALER_CLIENT_CACHE_ENABLED`
-- `ZSCALER_CLIENT_CACHE_DEFAULTTTI`
-- `ZSCALER_CLIENT_CACHE_DEFAULTTTL`
-- `ZSCALER_CLIENT_PROXY_PORT`
-- `ZSCALER_CLIENT_PROXY_HOST`
-- `ZSCALER_CLIENT_PROXY_USERNAME`
-- `ZSCALER_CLIENT_PROXY_PASSWORD`
-- `ZSCALER_CLIENT_RATELIMIT_MAXRETRIES`
-- `ZSCALER_TESTING_TESTINGDISABLEHTTPSCHECK`
+| Argument     | Description | Environment variable |
+|--------------|-------------|-------------------|
+| `clientId`       | _(String)_ Zscaler API Client ID, used with `clientSecret` or `PrivateKey` OAuth auth mode.| `ZSCALER_CLIENT_ID` |
+| `clientSecret`       | _(String)_ A string that contains the password for the API admin.| `ZSCALER_CLIENT_SECRET` |
+| `privateKey`       | _(String)_ A string Private key value.| `ZSCALER_CLIENT_PRIVATEKEY` |
+| `vanityDomain`       | _(String)_ Refers to the domain name used by your organization `https://<vanity_domain>.zslogin.net/oauth2/v1/token` | `ZSCALER_VANITY_DOMAIN` |
+| `cloud`       | _(String)_ The host and basePath for the cloud services API is `$api.<cloud_name>.zsapi.net`.| `ZSCALER_CLOUD` |
+| `userAgent`       | _(String)_ Append additional information to the HTTP User-Agent | `ZSCALER_CLIENT_USERAGENT` |
+| `cache.enabled`       | _(String)_ Use request memory cache | `ZSCALER_CLIENT_CACHE_ENABLED` |
+| `cache.defaultTti`       | _(String)_ Cache clean up interval in seconds | `ZSCALER_CLIENT_CACHE_DEFAULTTTI` |
+| `cache.defaultTtl`       | _(String)_ Cache time to live in seconds | `ZSCALER_CLIENT_CACHE_DEFAULTTTL` |
+| `proxyPort`       | _(String)_ HTTP proxy port | `ZSCALER_CLIENT_PROXY_PORT` |
+| `proxyHost`       | _(String)_ HTTP proxy host  | `ZSCALER_CLIENT_PROXY_HOST` |
+| `proxyUsername`       | _(String)_ HTTP proxy username  | `ZSCALER_CLIENT_PROXY_USERNAME` |
+| `proxyPassword`       | _(String)_ HTTP proxy password  | `ZSCALER_CLIENT_PROXY_PASSWORD` |
+| `disableHttpsCheck`       | _(String)_ Disable SSL checks  | `ZSCALER_TESTING_TESTINGDISABLEHTTPSCHECK` |
 
 ## Zscaler Legacy API Framework
 
