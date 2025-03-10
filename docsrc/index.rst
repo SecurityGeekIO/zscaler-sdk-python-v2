@@ -173,7 +173,7 @@ are organized under [the zscaler/zpa resource
 logic applies to all other services.
 
 **NOTE:** Zscaler APIs DO NOT support Asynchronous I/O calls, which made
-its debut in Python 3.5 and is powered by the ``asyncio`` library which
+its debut in Python 3.5 and is powered by the ``asyncio`` library and
 provides avenues to produce concurrent code.
 
 Authentication
