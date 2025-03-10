@@ -91,9 +91,9 @@ class ZCONService:
         return LocationTemplateAPI(self._request_executor)
 
     @property
-    def provisioning_api_key(self):
+    def api_keys(self):
         """
-        The interface object for the :ref:`ZCON Provisioning API Key interface <zcon-provisioning_api_key>`.
+        The interface object for the :ref:`ZCON Provisioning API Key interface <zcon-api_keys>`.
 
         """
 
