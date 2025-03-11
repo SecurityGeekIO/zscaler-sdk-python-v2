@@ -1,4 +1,4 @@
-furo==2023.5.20
+furo==2024.8.6
 pre-commit==3.8.0
 pytest==8.3.3
 requests==2.32.3
