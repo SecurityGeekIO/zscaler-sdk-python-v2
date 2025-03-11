@@ -29,9 +29,9 @@ author = "Zscaler Technology Alliances"
 html_title = ""
 
 # The short X.Y version
-version = "0.20.0"
+version = "1.0.0"
 # The full version, including alpha/beta/rc tags
-release = "0.20.0"
+release = "1.0.0"
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory is
