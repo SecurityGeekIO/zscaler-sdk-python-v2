@@ -5,5 +5,5 @@ requests==2.32.3
 responses==0.25.3
 sphinx==7.3.5
 toml==0.10.2
-urllib3<2
+urllib3<3
 pytz
