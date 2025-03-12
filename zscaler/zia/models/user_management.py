@@ -96,13 +96,22 @@ class Department(ZscalerObject):
         """
         super().__init__(config)
         if config:
-            self.id = config["id"] if "id" in config else None
-            self.name = config["name"] if "name" in config else None
-            self.comments = config["comments"] if "comments" in config else None
+            self.id = config["id"] \
+                if "id" in config else None
+            self.name = config["name"] \
+                if "name" in config else None
+            self.comments = config["comments"] \
+                if "comments" in config else None
+            self.idp_id = config["idpId"] \
+                if "idpId" in config else None
+            self.deleted = config["deleted"] \
+                if "deleted" in config else None
         else:
             self.id = None
             self.name = None
             self.comments = None
+            self.idp_id = None
+            self.deleted = None
 
     def request_format(self):
         """
@@ -113,6 +122,8 @@ class Department(ZscalerObject):
             "id": self.id,
             "name": self.name,
             "comments": self.comments,
+            "idpId": self.idp_id,
+            "deleted": self.deleted,
         }
         parent_req_format.update(current_obj_format)
         return parent_req_format
@@ -131,11 +142,26 @@ class Groups(ZscalerObject):
         """
         super().__init__(config)
         if config:
-            self.id = config["id"] if "id" in config else None
-            self.name = config["name"] if "name" in config else None
+            self.id = config["id"] \
+                if "id" in config else None
+                
+            self.name = config["name"] \
+                if "name" in config else None
+                
+            self.comments = config["comments"] \
+                if "comments" in config else None
+                
+            self.idp_id = config["idpId"] \
+                if "idpId" in config else None
+
+            self.is_system_defined = config["isSystemDefined"] \
+                if "isSystemDefined" in config else None
         else:
             self.id = None
             self.name = None
+            self.comments = None
+            self.idp_id = None
+            self.is_system_defined = None
 
     def request_format(self):
         """
@@ -145,6 +171,9 @@ class Groups(ZscalerObject):
         current_obj_format = {
             "id": self.id,
             "name": self.name,
+            "comments": self.comments,
+            "idpId": self.idp_id,
+            "isSystemDefined": self.is_system_defined,
         }
         parent_req_format.update(current_obj_format)
         return parent_req_format
