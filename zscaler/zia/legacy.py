@@ -208,7 +208,7 @@ class LegacyZIAClientHelper:
 
         headers = self.headers.copy()
         headers.update({"Cookie": f"JSESSIONID={self.session_id}"})
-
+        headers.update(self.request_executor.get_custom_headers())
         try:
             response = requests.delete(logout_url, headers=headers, timeout=self.timeout)
             if response.status_code == 204:
@@ -450,7 +450,7 @@ class LegacyZIAClientHelper:
         from zscaler.zia.cloud_firewall import FirewallResourcesAPI
 
         return FirewallResourcesAPI(self.request_executor)
-    
+
     @property
     def dlp_dictionary(self):
         """
@@ -728,3 +728,19 @@ class LegacyZIAClientHelper:
         from zscaler.zia.workload_groups import WorkloadGroupsAPI
 
         return WorkloadGroupsAPI(self.request_executor)
+
+    """
+    Misc
+    """
+
+    def set_custom_headers(self, headers):
+        self.request_executor.set_custom_headers(headers)
+
+    def clear_custom_headers(self):
+        self.request_executor.clear_custom_headers()
+
+    def get_custom_headers(self):
+        return self.request_executor.get_custom_headers()
+
+    def get_default_headers(self):
+        return self.request_executor.get_default_headers()
