@@ -31,24 +31,43 @@ class UserManagement(ZscalerObject):
         """
         super().__init__(config)
         if config:
-            self.id = config["id"] if "id" in config else None
-            self.name = config["name"] if "name" in config else None
-            self.email = config["email"] if "email" in config else None
-            self.comments = config["comments"] if "comments" in config else None
-            self.temp_auth_email = config["tempAuthEmail"] if "tempAuthEmail" in config else None
-            self.password = config["password"] if "password" in config else None
-            self.admin_user = config["adminUser"] if "adminUser" in config else False
-            self.type = config["type"] if "type" in config else None
+            self.id = config["id"] \
+                if "id" in config else None
+                
+            self.name = config["name"] \
+                if "name" in config else None
+                
+            self.email = config["email"] \
+                if "email" in config else None
+
+            self.comments = config["comments"] \
+                if "comments" in config else None
+
+            self.temp_auth_email = config["tempAuthEmail"] \
+                if "tempAuthEmail" in config else None
+
+            self.password = config["password"] \
+                if "password" in config else None
+
+            self.admin_user = config["adminUser"] \
+                if "adminUser" in config else False
+
+            self.type = config["type"]if "type" in config else None
             
             self.groups = ZscalerCollection.form_list(
                 config["groups"] if "groups" in config else [], Groups
             )
 
-            # SINGLE department object
             if "department" in config:
-                self.department = Department(config["department"])
+                if isinstance(config["department"], Department):
+                    self.department = config["department"]
+                elif config["department"] is not None:
+                    self.department = Department(config["department"])
+                else:
+                    self.department = None
             else:
                 self.department = None
+
         else:
             self.id = None
             self.name = None
