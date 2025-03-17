@@ -73,7 +73,7 @@ class LegacyZIAClientHelper:
     url = "https://zsapi.zscaler.net"
     env_cloud = "zscaler"
 
-    def __init__(self, cloud, timeout=240, cache=None, fail_safe=False, **kw):
+    def __init__(self, cloud, timeout=240, cache=None, fail_safe=False, request_executor_impl=None, **kw):
         from zscaler.request_executor import RequestExecutor
 
         self.api_key = kw.get("api_key", os.getenv(f"{self._env_base}_API_KEY"))
@@ -139,7 +139,7 @@ class LegacyZIAClientHelper:
                 "cache": {"enabled": True},
             }
         }
-        self.request_executor = RequestExecutor(self.config, self.cache, zia_legacy_client=self)
+        self.request_executor = (request_executor_impl or RequestExecutor)(self.config, self.cache, zia_legacy_client=self)
 
     def extractJSessionIDFromHeaders(self, header):
         session_id_str = header.get("Set-Cookie", "")
