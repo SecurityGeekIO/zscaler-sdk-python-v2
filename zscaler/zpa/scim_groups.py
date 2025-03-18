@@ -38,37 +38,33 @@ class SCIMGroupsAPI(APIClient):
         Args:
             idp_id (str):
                 The unique id of the IdP.
-            sort_by (str):
-                The field name to sort by, supported values: id, name, creationTime or modifiedTime (default to name)
-            sort_order (str):
-                The sort order, values: ASC or DSC (default DSC)
 
         Keyword Args:
-            **end_time (str):
-                The end of a time range for requesting last updated data (modified_time) for the SCIM group.
-                This requires setting the ``start_time`` parameter as well.
-            **idp_group_id (str):
-                The unique id of the IdP group.
-            **max_items (int):
-                The maximum number of items to request before stopping iteration.
-            **max_pages (int):
-                The maximum number of pages to request before stopping iteration.
-            **pagesize (int):
-                Specifies the page size. The default size is 20, but the maximum size is 500.
-            **scim_user_id (str):
-                The unique id for the SCIM user.
-            **search (str, optional):
-                The search string used to match against features and fields.
-            **sort_order (str):
-                Sort the last updated time (modified_time) by ascending ``ASC`` or descending ``DSC`` order. Defaults to
-                ``DSC``.
-            **start_time (str):
-                The start of a time range for requesting last updated data (modified_time) for the SCIM group.
-                This requires setting the ``end_time`` parameter as well.
-            **keep_empty_params (bool): Whether to include empty parameters in the query string.
-
+            query_params {dict}: Map of query parameters for the request.
+ 
+                ``[query_params.page]`` (str): Specifies the page number. Default value : 1
+                ``[query_params.page_size]`` (str): Specifies the page size. The default size is 20, but the maximum size is 500.
+                ``[query_params.end_time]`` (str):
+                    The end of a time range for requesting last updated data (modified_time) for the SCIM group.
+                    This requires setting the ``start_time`` parameter as well.
+                ``[query_params.start_time]`` (str):
+                    The start of a time range for requesting last updated data (modified_time) for the SCIM group.
+                    This requires setting the ``end_time`` parameter as well.
+                ``[query_params.idp_group_id]`` (str): The unique id of the IdP group.
+                ``[query_params.scim_user_id]`` (str): The unique id for the SCIM user.
+                ``[query_params.scim_user_name]`` (str): Name of the SCIM user.
+                ``[query_params.search]`` (str): The search string used to match against features and fields.
+                ``[query_params.sort_order]`` (str):
+                    Sort the last updated time (modified_time) by ascending ``ASC`` or descending ``DSC`` order. Defaults to
+                    ``DSC``.
+                ``[query_params.sort_by]`` (str):
+                    Specifies the field name to sort the results. Supported Sort fields are (id, name, creation_time, modified_time).
+                    If not provided, results are sorted by modified_time
+                ``[query_params.all_entries]`` (bool): Return all SCIM groups including the deleted ones if set to true
+                    Default value : false
+                    
         Returns:
-            list: A list of SCIMGroup instances.
+            list: A list of SCIM Group instances.
 
         Examples:
             >>> for scim_group in zpa.scim_groups.list_scim_groups("999999"):
@@ -84,17 +80,14 @@ class SCIMGroupsAPI(APIClient):
 
         query_params = query_params or {}
 
-        # Prepare request body and headers
         body = {}
         headers = {}
 
-        # Prepare request
         request, error = self._request_executor\
             .create_request(http_method, api_url, body, headers, params=query_params)
         if error:
             return (None, None, error)
 
-        # Execute the request
         response, error = self._request_executor\
             .execute(request)
         if error:
@@ -116,8 +109,11 @@ class SCIMGroupsAPI(APIClient):
 
         Args:
             group_id (str): The unique identifier for the SCIM group.
-            query_params (dict, optional): Map of query parameters for the request.
-                ``[query_params.allEntries]`` {bool}: Return all SCIM groups including the deleted ones if set to true.
+
+        Keyword Args:
+            query_params {dict}: Map of query parameters for the request.
+                ``[query_params.all_entries]`` (bool): Return all SCIM groups including the deleted ones if set to true
+                    Default value : false
 
         Returns:
             SCIMGroup: The SCIMGroup resource object.
@@ -135,16 +131,20 @@ class SCIMGroupsAPI(APIClient):
 
         query_params = query_params or {}
 
-        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.\
+            create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request, SCIMGroup)
+        response, error = self._request_executor.\
+            execute(request, SCIMGroup)
         if error:
             return (None, response, error)
 
         try:
-            result = SCIMGroup(self.form_response_body(response.get_body()))
+            result = SCIMGroup(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
