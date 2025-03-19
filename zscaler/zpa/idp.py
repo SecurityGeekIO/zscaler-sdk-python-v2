@@ -16,7 +16,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from zscaler.api_client import APIClient
 from zscaler.request_executor import RequestExecutor
-from zscaler.zpa.models.idp import IDP
+from zscaler.zpa.models.idp import IDPController
 from zscaler.utils import format_url
 
 
@@ -59,17 +59,14 @@ class IDPControllerAPI(APIClient):
 
         query_params = query_params or {}
 
-        # Prepare request body and headers
         body = {}
         headers = {}
 
-        # Prepare request
         request, error = self._request_executor\
             .create_request(http_method, api_url, body, headers, params=query_params)
         if error:
             return (None, None, error)
 
-        # Execute the request
         response, error = self._request_executor\
             .execute(request)
         if error:
@@ -78,7 +75,7 @@ class IDPControllerAPI(APIClient):
         try:
             result = []
             for item in response.get_results():
-                result.append(IDP(
+                result.append(IDPController(
                     self.form_response_body(item))
                 )
         except Exception as error:
@@ -103,26 +100,23 @@ class IDPControllerAPI(APIClient):
         """
         )
 
-        # Prepare request body, headers, and form (if needed)
         body = {}
         headers = {}
 
-        # Create the request
         request, error = self._request_executor\
             .create_request(http_method, api_url, body, headers)
 
         if error:
             return (None, None, error)
 
-        # Execute the request
         response, error = self._request_executor\
-            .execute(request, IDP)
+            .execute(request, IDPController)
 
         if error:
             return (None, response, error)
 
         try:
-            result = IDP(
+            result = IDPController(
                 self.form_response_body(response.get_body())
             )
         except Exception as error:
