@@ -54,7 +54,7 @@ from zscaler.zia.security_policy_settings import SecurityPolicyAPI
 from zscaler.zia.ssl_inspection_rules import SSLInspectionAPI
 from zscaler.zia.intermediate_certificates import IntermediateCertsAPI
 from zscaler.zia.traffic_extranet import TrafficExtranetAPI
-from zscaler.zia.gre_tunnels import TrafficForwardingGRETunnelAPI
+from zscaler.zia.gre_tunnel import TrafficForwardingGRETunnelAPI
 from zscaler.zia.traffic_vpn_credentials import TrafficVPNCredentialAPI
 from zscaler.zia.traffic_static_ip import TrafficStaticIPAPI
 from zscaler.zia.url_categories import URLCategoriesAPI
@@ -385,9 +385,9 @@ class ZIAService:
         return TrafficExtranetAPI(self._request_executor)
 
     @property
-    def traffic_gre_tunnel(self):
+    def gre_tunnel(self):
         """
-        The interface object for the :ref:`ZIA Traffic Forwarding interface <zia-traffic_gre_tunnel>`.
+        The interface object for the :ref:`ZIA Traffic GRE Tunnel interface <zia-gre_tunnel>`.
 
         """
         return TrafficForwardingGRETunnelAPI(self._request_executor)

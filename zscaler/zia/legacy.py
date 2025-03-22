@@ -672,10 +672,10 @@ class LegacyZIAClientHelper:
     @property
     def gre_tunnel(self):
         """
-        The interface object for the :ref:`ZIA Traffic Forwarding interface <zia-gre_tunnel>`.
+        The interface object for the :ref:`ZIA Traffic GRE Tunnel interface <zia-gre_tunnel>`.
 
         """
-        from zscaler.zia.gre_tunnels import TrafficForwardingGRETunnelAPI
+        from zscaler.zia.gre_tunnel import TrafficForwardingGRETunnelAPI
 
         return TrafficForwardingGRETunnelAPI(self.request_executor)
 

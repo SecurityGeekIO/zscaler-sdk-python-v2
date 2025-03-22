@@ -405,27 +405,34 @@ class TrafficForwardingGRETunnelAPI(APIClient):
         Returns a list of recommended virtual IP addresses (VIPs) based on parameters.
 
         Args:
-            query_params {dict}: Map of query parameters for the request.
-                ``[query_params.routable_ip]`` {bool}:  The routable IP address. Default: True.
-                ``[query_params.within_country_only]`` {bool}: Search within country only. Default: False.
-                ``[query_params.include_private_service_edge]`` {bool}: The maximum number of GRE tunnel IP ranges that can be added.
-                ``[query_params.include_current_vips]`` {bool}: Include currently assigned VIPs. Default: True.
-                ``[query_params.source_ip]`` {str}: The source IP address.
-                ``[query_params.latitude]`` {str}: Latitude coordinate of GRE tunnel source.
-                ``[query_params.longitude]`` {str}: Longitude coordinate of GRE tunnel source.
-                ``[query_params.geo_override]`` {bool}: Override the geographic coordinates. Default: False.
-                ``[query_params.sub_cloud]`` {str}: The subcloud for the VIP.
-                
+            query_params (dict, optional): A dictionary of query parameters to filter results.
+
+        Keyword Args:
+            - **[query_params.routable_ip]** (bool, optional): The routable IP address. Default: `True`.
+            - **[query_params.within_country_only]** (bool, optional): Search within country only. Default: `False`.
+            - **[query_params.include_private_service_edge]** (bool, optional): The maximum number of GRE tunnel IP ranges that can be added.
+            - **[query_params.include_current_vips]** (bool, optional): Include currently assigned VIPs. Default: `True`.
+            - **[query_params.source_ip]** (str, optional): The source IP address.
+            - **[query_params.latitude]** (str, optional): Latitude coordinate of GRE tunnel source.
+            - **[query_params.longitude]** (str, optional): Longitude coordinate of GRE tunnel source.
+            - **[query_params.geo_override]** (bool, optional): Override the geographic coordinates. Default: `False`.
+            - **[query_params.sub_cloud]** (str, optional): The subcloud for the VIP.
+
         Returns:
-            :obj:`tuple`: A tuple containing (list of recommended VIPs, Response, error).
+            tuple: A tuple containing:
+
+                - **list[TrafficGRERecommendedVIP]**: A list of recommended VIPs.
+                - **Response**: The raw API response object.
+                - **Error**: An error message, if applicable.
 
         Examples:
             Return recommended VIPs for a given source IP:
 
             >>> vips, response, err = zia.traffic.list_vips_recommended(source_ip='203.0.113.30')
             >>> for vip in vips:
-            ...    pprint(vip)
+            ...     pprint(vip)
         """
+
         http_method = "get".upper()
         api_url = format_url(
             f"""
@@ -575,13 +582,14 @@ class TrafficForwardingGRETunnelAPI(APIClient):
         Returns a list of virtual IP addresses (VIPs) available in the Zscaler cloud.
 
         Args:
-            query_params {dict}: Map of query parameters for the request.
+            query_params (dict):
+                Map of query parameters for the request.
+
                 ``[query_params.dc]`` {str}: Filter based on data center.
                 ``[query_params.region]`` {str}: Filter based on region.
                 ``[query_params.page]`` {int}: Specifies the page offset.
                 ``[query_params.page_size]`` {int}: Specifies the page size. The default size is 100, but the maximum size is 1000.
-                ``[query_params.include]`` {str}: Include all, private, or public VIPs in the list.
-                    Supported values: `all`, `private`, `public`
+                ``[query_params.include]`` {str}: Include all, private, or public VIPs in the list. Supported values: `all`, `private`, `public`
                 ``[query_params.sub_cloud]`` {str}: Filter based on the subcloud for the VIP. 
 
         Returns:

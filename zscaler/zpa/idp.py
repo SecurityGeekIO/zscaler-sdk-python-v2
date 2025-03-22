@@ -47,7 +47,19 @@ class IDPControllerAPI(APIClient):
                 ``[query_params.user_attributes]`` {bool}: Returns user attributes.
 
         Returns:
-            tuple: A tuple containing (list of IDP instances, Response, error)
+            :obj:`Tuple`: A tuple containing (list of IDP instances, Response, error)
+            
+        Examples:
+            Retrieve enrollment certificates with pagination parameters:
+            
+            >>> idp_list, _, err = client.zpa.idp.list_idps(
+            ... query_params={'search': 'IDP01', 'page': '1', 'page_size': '100'})
+            ... if err:
+            ...     print(f"Error listing idps: {err}")
+            ...     return
+            ... print(f"Total certificates found: {len(idp_list)}")
+            ... for idp in idp_list:
+            ...     print(idp.as_dict())
         """
         http_method = "get".upper()
         api_url = format_url(
@@ -90,7 +102,14 @@ class IDPControllerAPI(APIClient):
             idp_id (str): The unique identifier for the identity provider.
 
         Returns:
-            IDP: The corresponding identity provider object.
+            :obj:`Tuple`: The corresponding identity provider object.
+            
+        Examples:
+            >>> fetched_cert, _, err = client.zpa.certificates.get_enrolment('999999')
+            ... if err:
+            ...     print(f"Error fetching certificate by ID: {err}")
+            ...     return
+            ... print(fetched_cert.id)
         """
         http_method = "get".upper()
         api_url = format_url(
