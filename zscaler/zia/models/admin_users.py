@@ -100,9 +100,9 @@ class AdminUser(ZscalerObject):
             else:
                 self.admin_scope = None
                 
-            # self.admin_scope_group_member_entities = config["adminScopescopeGroupMemberEntities"] if "adminScopescopeGroupMemberEntities" in config else []
-            # self.admin_scope_type = config["adminScopeType"] if "adminScopeType" in config else None
-            # self.admin_scope_scope_entities = config["adminScopeScopeEntities"] if "adminScopeScopeEntities" in config else []
+            self.admin_scope_group_member_entities = config["adminScopescopeGroupMemberEntities"] if "adminScopescopeGroupMemberEntities" in config else []
+            self.admin_scope_type = config["adminScopeType"] if "adminScopeType" in config else None
+            self.admin_scope_scope_entities = config["adminScopeScopeEntities"] if "adminScopeScopeEntities" in config else []
         else:
             self.id = None
             self.login_name = None
@@ -215,16 +215,8 @@ class ScopeGroupMemberEntities(ZscalerObject):
                 if "name" in config else None
             self.external_id = config["externalId"]\
                 if "externalId" in config else None
+            self.extensions = config if isinstance(config, dict) else {}
 
-            if "extensions" in config:
-                if isinstance(config["extensions"], AdminScope):
-                    self.admin_extensionsscope = config["extensions"]
-                elif config["extensions"] is not None:
-                    self.extensions = AdminScope(config["extensions"])
-                else:
-                    self.extensions = None
-            else:
-                self.extensions = None
         else:
             self.id = None
             self.name = None
@@ -267,15 +259,8 @@ class ScopeEntities(ZscalerObject):
             self.external_id = config["externalId"]\
                 if "externalId" in config else None
                    
-            if "extensions" in config:
-                if isinstance(config["extensions"], AdminScope):
-                    self.admin_extensionsscope = config["extensions"]
-                elif config["extensions"] is not None:
-                    self.extensions = AdminScope(config["extensions"])
-                else:
-                    self.extensions = None
-            else:
-                self.extensions = None
+            self.extensions = config if isinstance(config, dict) else {}
+
         else:
             self.id = None
             self.name = None

@@ -41,6 +41,7 @@ from zscaler.zia.cloud_firewall_ips import FirewallIPSRulesAPI
 from zscaler.zia.cloud_firewall_rules import FirewallPolicyAPI
 from zscaler.zia.cloud_firewall import FirewallResourcesAPI
 from zscaler.zia.forwarding_control import ForwardingControlAPI
+from zscaler.zia.ipv6_config import TrafficIPV6ConfigAPI
 from zscaler.zia.malware_protection_policy import MalwareProtectionPolicyAPI
 from zscaler.zia.locations import LocationsAPI
 from zscaler.zia.organization_information import OrganizationInformationAPI
@@ -53,7 +54,7 @@ from zscaler.zia.security_policy_settings import SecurityPolicyAPI
 from zscaler.zia.ssl_inspection_rules import SSLInspectionAPI
 from zscaler.zia.intermediate_certificates import IntermediateCertsAPI
 from zscaler.zia.traffic_extranet import TrafficExtranetAPI
-from zscaler.zia.traffic_gre_tunnels import TrafficForwardingGRETunnelAPI
+from zscaler.zia.gre_tunnel import TrafficForwardingGRETunnelAPI
 from zscaler.zia.traffic_vpn_credentials import TrafficVPNCredentialAPI
 from zscaler.zia.traffic_static_ip import TrafficStaticIPAPI
 from zscaler.zia.url_categories import URLCategoriesAPI
@@ -62,6 +63,7 @@ from zscaler.zia.user_management import UserManagementAPI
 from zscaler.zia.workload_groups import WorkloadGroupsAPI
 from zscaler.zia.zpa_gateway import ZPAGatewayAPI
 from zscaler.zia.sub_clouds import SubCloudsAPI
+# from zscaler.zia.system_audit import SystemAuditReportAPI
 
 class ZIAService:
     """ZIA Service client, exposing various ZIA APIs."""
@@ -76,7 +78,7 @@ class ZIAService:
         The interface object for the :ref:`ZIA Activation interface <zia-activate>`.
 
         """
-        return ActivationAPI(self)
+        return ActivationAPI(self._request_executor)
 
     @property
     def admin_roles(self):
@@ -256,6 +258,14 @@ class ZIAService:
         return FileTypeControlRuleAPI(self._request_executor)
 
     @property
+    def ipv6_config(self):
+        """
+        The interface object for the :ref:`ZIA Traffic IPV6 Configuration <zia-ipv6_config>`.
+
+        """
+        return TrafficIPV6ConfigAPI(self._request_executor)
+
+    @property
     def cloud_browser_isolation(self):
         """
         The interface object for the :ref:`ZIA Cloud Browser Isolation Profile <zia-cloud_browser_isolation>`.
@@ -376,9 +386,9 @@ class ZIAService:
         return TrafficExtranetAPI(self._request_executor)
 
     @property
-    def traffic_gre_tunnel(self):
+    def gre_tunnel(self):
         """
-        The interface object for the :ref:`ZIA Traffic Forwarding interface <zia-traffic_gre_tunnel>`.
+        The interface object for the :ref:`ZIA Traffic GRE Tunnel interface <zia-gre_tunnel>`.
 
         """
         return TrafficForwardingGRETunnelAPI(self._request_executor)
@@ -447,3 +457,12 @@ class ZIAService:
         """
 
         return SubCloudsAPI(self._request_executor)
+    
+    # @property
+    # def system_audit(self):
+    #     """
+    #     The interface object for the :ref:`ZIA System Audit Report <zia-system_audit>`.
+
+    #     """
+
+    #     return SystemAuditReportAPI(self._request_executor)

@@ -15,6 +15,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.oneapi_object import ZscalerObject
+from zscaler.zia.models import common as common
 
 class TrafficStaticIP(ZscalerObject):
     """
@@ -25,7 +26,6 @@ class TrafficStaticIP(ZscalerObject):
         super().__init__(config)
 
         if config:
-            # Top-level attributes
             self.id = config["id"]\
                 if "id" in config else None
             self.comment = config["comment"]\
@@ -42,12 +42,26 @@ class TrafficStaticIP(ZscalerObject):
                 if "routableIP" in config else None                 
             self.last_modification_time = config["lastModificationTime"]\
                 if "lastModificationTime" in config else None
-            self.last_modified_by = config["lastModifiedBy"]\
-                if "lastModifiedBy" in config else None
-            self.managed_by = config["managedBy"]\
-                if "managedBy" in config else None  
+
+            if "lastModifiedBy" in config:
+                if isinstance(config["lastModifiedBy"], common.CommonBlocks):
+                    self.last_modified_by = config["lastModifiedBy"]
+                elif config["lastModifiedBy"] is not None:
+                    self.last_modified_by = common.CommonBlocks(config["lastModifiedBy"])
+                else:
+                    self.last_modified_by = None
+
+            if "city" in config:
+                if isinstance(config["city"], common.CommonIDName):
+                    self.city = config["city"]
+                elif config["city"] is not None:
+                    self.city = common.CommonIDName(config["city"])
+                else:
+                    self.city = None
+            else:
+                self.city = None
+                                       
         else:
-            # Initialize with default None values
             self.id = None
             self.comment = None
             self.ip_address = None
@@ -58,7 +72,7 @@ class TrafficStaticIP(ZscalerObject):
             self.routable_ip = False
             self.last_modification_time = None
             self.last_modified_by = None
-            self.managed_by = None
+            self.city = None
             
     def request_format(self):
         """
@@ -75,7 +89,7 @@ class TrafficStaticIP(ZscalerObject):
             "routableIP": self.routable_ip,
             "lastModificationTime": self.last_modification_time,
             "lastModifiedBy": self.last_modified_by,
-            "managedBy": self.managed_by,
+            "city": self.city,
         }
         parent_req_format.update(current_obj_format)
         return parent_req_format

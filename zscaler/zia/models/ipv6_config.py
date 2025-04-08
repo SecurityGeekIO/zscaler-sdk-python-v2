@@ -15,57 +15,17 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.oneapi_object import ZscalerObject
+from zscaler.oneapi_collection import ZscalerCollection
 
-class ResourceReference(ZscalerObject):
-    def __init__(self, config=None):
-        super().__init__(config)
-        self.id = config["id"]\
-            if "id" in config else None
-        self.name = config["name"]\
-            if "name" in config else None
-        self.external_id = config["externalId"]\
-            if "externalId" in config else None
-
-    def request_format(self):
-        return {
-            "id": self.id,
-            "name": self.name,
-            "externalId": self.external_id
-        }
-
-class Extensions(ZscalerObject):
+class IPV6PrefixMask(ZscalerObject):
     """
-    A generic class to wrap dynamic extension data.
-    """
-    def __init__(self, config=None):
-        super().__init__(config)
-        # Simply store the dictionary as is
-        if config and isinstance(config, dict):
-            self.data = config
-        else:
-            self.data = {}
-
-    def request_format(self):
-        """
-        Return the extension data as a dictionary.
-        """
-        return self.data
-
-    def as_dict(self):
-        """
-        Return a dictionary representation of the extension data.
-        """
-        return self.data
-
-class CommonBlocks(ZscalerObject):
-    """
-    A class for CommonBlocks objects.
+    A class for IPV6PrefixMask objects.
     Handles common block attributes shared across multiple resources
     """
 
     def __init__(self, config=None):
         """
-        Initialize the CommonBlocks model based on API response.
+        Initialize the IPV6PrefixMask model based on API response.
 
         Args:
             config (dict): A dictionary representing the response.
@@ -76,16 +36,23 @@ class CommonBlocks(ZscalerObject):
                 if "id" in config else None
             self.name = config["name"] \
                 if "name" in config else None
-            self.external_id = config["externalId"] \
-                if "externalId" in config else False
-            self.extensions = config if isinstance(config, dict) else {}
-             
+            self.description = config["description"] \
+                if "description" in config else None
+            self.prefix_mask = config["prefixMask"] \
+                if "prefixMask" in config else None
+            self.dns_prefix = config["dnsPrefix"] \
+                if "dnsPrefix" in config else None
+            self.non_editable = config["nonEditable"] \
+                if "nonEditable" in config else None
+      
         else:
             self.id = None
             self.name = None
-            self.external_id = None
-            self.extensions = None
-
+            self.description = None
+            self.prefix_mask = None
+            self.dns_prefix = None
+            self.non_editable = None
+            
     def request_format(self):
         """
         Returns the object as a dictionary in the format expected for API requests.
@@ -94,44 +61,52 @@ class CommonBlocks(ZscalerObject):
         current_obj_format = {
             "id": self.id,
             "name": self.name,
-            "externalId": self.external_id,
-            "extensions": self.extensions,
+            "description": self.description,
+            "prefixMask": self.prefix_mask,
+            "dnsPrefix": self.dns_prefix,
+            "nonEditable": self.non_editable,
         }
         parent_req_format.update(current_obj_format)
         return parent_req_format
-
-class CommonIDName(ZscalerObject):
+    
+class IPV6Configuration(ZscalerObject):
     """
-    A class for CommonIDName objects.
+    A class for IPV6Configuration objects.
     Handles common block attributes shared across multiple resources
     """
 
     def __init__(self, config=None):
         """
-        Initialize the CommonIDName model based on API response.
+        Initialize the IPV6Configuration model based on API response.
 
         Args:
             config (dict): A dictionary representing the response.
         """
         super().__init__(config)
         if config:
-            self.id = config["id"] \
-                if "id" in config else None
-            self.name = config["name"] \
-                if "name" in config else None
-             
+            self.ipv6_enabled = config["ipV6Enabled"] \
+                if "ipV6Enabled" in config else None
+            self.dns_prefix = config["dnsPrefix"] \
+                if "dnsPrefix" in config else None
+                
+            self.nat_prefixes = ZscalerCollection.form_list(
+                config["natPrefixes"] if "natPrefixes" in config else [], IPV6PrefixMask
+            )
+                
         else:
-            self.id = None
-            self.name = None
-
+            self.ipv6_enabled = None
+            self.nat_prefixes = []
+            self.dns_prefix = None
+            
     def request_format(self):
         """
         Returns the object as a dictionary in the format expected for API requests.
         """
         parent_req_format = super().request_format()
         current_obj_format = {
-            "id": self.id,
-            "name": self.name,
+            "ipV6Enabled": self.ipv6_enabled,
+            "natPrefixes": self.nat_prefixes,
+            "dnsPrefix": self.dns_prefix,
         }
         parent_req_format.update(current_obj_format)
         return parent_req_format

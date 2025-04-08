@@ -412,6 +412,15 @@ class LegacyZIAClientHelper:
         return CloudApplicationsAPI(self.request_executor)
 
     @property
+    def cloud_browser_isolation(self):
+        """
+        The interface object for the :ref:`ZIA Cloud Browser Isolation Profile <zia-cloud_browser_isolation>`.
+
+        """
+        from zscaler.zia.cloud_browser_isolation import CBIProfileAPI
+        return CBIProfileAPI(self.request_executor)
+    
+    @property
     def cloud_nss(self):
         """
         The interface object for the :ref:`ZIA Cloud NSS interface <zia-cloud_nss>`.
@@ -530,6 +539,16 @@ class LegacyZIAClientHelper:
         from zscaler.zia.end_user_notification import EndUserNotificationAPI
 
         return EndUserNotificationAPI(self.request_executor)
+
+    @property
+    def ipv6_config(self):
+        """
+        The interface object for the :ref:`ZIA Traffic IPV6 Configuration <zia-ipv6_config>`.
+
+        """
+        from zscaler.zia.ipv6_config import TrafficIPV6ConfigAPI
+
+        return TrafficIPV6ConfigAPI(self.request_executor)
 
     @property
     def file_type_control_rule(self):
@@ -660,12 +679,12 @@ class LegacyZIAClientHelper:
         return TrafficExtranetAPI(self.request_executor)
 
     @property
-    def traffic_gre_tunnel(self):
+    def gre_tunnel(self):
         """
-        The interface object for the :ref:`ZIA Traffic Forwarding interface <zia-traffic_gre_tunnel>`.
+        The interface object for the :ref:`ZIA Traffic GRE Tunnel interface <zia-gre_tunnel>`.
 
         """
-        from zscaler.zia.traffic_gre_tunnels import TrafficForwardingGRETunnelAPI
+        from zscaler.zia.gre_tunnel import TrafficForwardingGRETunnelAPI
 
         return TrafficForwardingGRETunnelAPI(self.request_executor)
 
@@ -738,6 +757,16 @@ class LegacyZIAClientHelper:
         from zscaler.zia.workload_groups import WorkloadGroupsAPI
 
         return WorkloadGroupsAPI(self.request_executor)
+
+    # @property
+    # def system_audit(self):
+    #     """
+    #     The interface object for the :ref:`ZIA Policy Export interface <zia-system_audit>`.
+
+    #     """
+        # from zscaler.zia.system_audit import SystemAuditReportAPI
+
+    #     return SystemAuditReportAPI(self.request_executor)
 
     """
     Misc

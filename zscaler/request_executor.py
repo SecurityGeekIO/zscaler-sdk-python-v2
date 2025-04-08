@@ -180,7 +180,6 @@ class RequestExecutor:
         params: dict = None,
         use_raw_data_for_body: bool = False,
     ):
-        # Service type determination
         try:
             service_type = self.get_service_type(endpoint)
         except ValueError as e:
@@ -192,7 +191,6 @@ class RequestExecutor:
         params = params or {}
 
         if self.use_legacy_client:
-            # Remove the prefix if it starts with /zpa, /zia, /zcc, or /api/v1
             endpoint = self.remove_oneapi_endpoint_prefix(endpoint)
 
             if service_type == "zpa":
@@ -215,11 +213,10 @@ class RequestExecutor:
         final_url = f"{base_url}/{endpoint.lstrip('/')}"
 
         headers = self._prepare_headers(headers, endpoint)
-        params = self._prepare_params(endpoint, params, body)
-        # Extract and append query parameters from URL to request params
+        # [MODIFIED] Pass service_type to _prepare_params
+        params = self._prepare_params(service_type, endpoint, params, body)
         final_url, params = self._extract_and_append_query_params(final_url, params)
 
-        # Check and add sandbox token if needed
         if "/zscsb" in endpoint:
             sandbox_token = self._config["client"].get("sandboxToken")
             if not sandbox_token:
@@ -264,22 +261,46 @@ class RequestExecutor:
 
         return body
 
-    def _prepare_params(self, endpoint, params, body):
+    def _prepare_params(self, service_type, endpoint, params, body):
         if not isinstance(params, dict):
             return params
 
-        # Ensure ZDX query params remain snake_case
         if self.use_legacy_client and self.zdx_legacy_client:
-            return params  # Keep as snake_case
+            return params
 
-        # Keep existing logic for ZPA and other services
-        params = convert_keys_to_camel_case(params)
+        # If it's ZPA, handle pagesize special rules
+        if service_type.lower() == "zpa":
+            # If it's specifically /emergencyAccess/users ...
+            if "/emergencyAccess/users" in endpoint:
+                # Convert everything to camelCase
+                converted = convert_keys_to_camel_case(params)
+                # Then rename `pagesize` -> `pageSize` if it exists
+                if "pagesize" in converted:
+                    converted["pageSize"] = converted.pop("pagesize")
+                params = converted
+            else:
+                # For all other ZPA endpoints, keep `pagesize` in lowercase
+                psize_value = None
+                if "page_size" in params:
+                    psize_value = params.pop("page_size")
+                elif "pagesize" in params:
+                    psize_value = params.pop("pagesize")
 
-        if "/zpa/" in endpoint:
+                converted = convert_keys_to_camel_case(params)
+
+                if psize_value is not None:
+                    converted["pagesize"] = psize_value
+
+                params = converted
+
+            # Finally, handle microtenant (unchanged)
             microtenant_id = self._get_microtenant_id(body, params)
             if microtenant_id:
                 params["microtenantId"] = microtenant_id
+
         else:
+            # Normal param conversion if not ZPA
+            params = convert_keys_to_camel_case(params)
             params.pop("microtenantId", None)
 
         return params
