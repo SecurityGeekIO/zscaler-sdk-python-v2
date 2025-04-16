@@ -90,7 +90,8 @@ class Certificate(ZscalerObject):
         """
         Formats the Certificate data into a dictionary suitable for API requests.
         """
-        return {
+        parent_req_format = super().request_format()
+        current_obj_format = {
             "id": self.id,
             "name": self.name,
             "description": self.description,
@@ -107,3 +108,5 @@ class Certificate(ZscalerObject):
             "microtenantName": self.microtenant_name,
             "microtenantId": self.microtenant_id,
         }
+        parent_req_format.update(current_obj_format)
+        return parent_req_format

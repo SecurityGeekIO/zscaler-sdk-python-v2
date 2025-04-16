@@ -25,10 +25,6 @@ class ServiceEdgeGroupAPI(APIClient):
     A Client object for the Service Edge Group resource.
     """
 
-    reformat_params = [
-        ("trusted_network_ids", "trustedNetworks"),
-    ]
-
     def __init__(self, request_executor, config):
         super().__init__()
         self._request_executor: RequestExecutor = request_executor
@@ -236,6 +232,9 @@ class ServiceEdgeGroupAPI(APIClient):
         if "trusted_network_ids" in body:
             body["trustedNetworks"] = [{"id": network_id} for network_id in body.pop("trusted_network_ids")]
 
+        if "service_edge_ids" in body:
+            body["serviceEdges"] = [{"id": id} for id in body.pop("service_edge_ids")]
+            
         request, error = self._request_executor.\
             create_request(http_method, api_url, body=body, params=params)
         if error:
@@ -301,6 +300,12 @@ class ServiceEdgeGroupAPI(APIClient):
         # Use get instead of pop to keep microtenant_id in the body
         microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
+
+        if "trusted_network_ids" in body:
+            body["trustedNetworks"] = [{"id": network_id} for network_id in body.pop("trusted_network_ids")]
+
+        if "service_edge_ids" in body:
+            body["serviceEdges"] = [{"id": id} for id in body.pop("service_edge_ids")]
 
         request, error = self._request_executor.\
             create_request(http_method, api_url, body=body, params=params)

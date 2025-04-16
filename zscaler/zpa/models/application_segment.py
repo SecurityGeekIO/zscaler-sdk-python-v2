@@ -18,6 +18,7 @@ from zscaler.oneapi_object import ZscalerObject
 from zscaler.oneapi_collection import ZscalerCollection
 from zscaler.zpa.models import server_group\
     as server_group
+from zscaler.zpa.models import common as common
 
 class ApplicationSegment(ZscalerObject):
     """
@@ -32,18 +33,14 @@ class ApplicationSegment(ZscalerObject):
                 if "id" in config else None
             self.name = config["name"]\
                 if "name" in config else None
+            self.description = config["description"]\
+                if "description" in config else None
             self.domain_names = config["domainNames"]\
                 if "domainNames" in config else []
             self.enabled = config["enabled"]\
                 if "enabled" in config else True
             self.passive_health_enabled = config["passiveHealthEnabled"]\
                 if "passiveHealthEnabled" in config else False
-            self.tcp_port_ranges = ZscalerCollection.form_list(
-                config["tcpPortRanges"] if "tcpPortRanges" in config else [], str
-            )
-            self.udp_port_ranges = ZscalerCollection.form_list(
-                config["udpPortRanges"] if "udpPortRanges" in config else [], str
-            )
             self.double_encrypt = config["doubleEncrypt"]\
                 if "doubleEncrypt" in config else False
             self.config_space = config["configSpace"]\
@@ -68,7 +65,8 @@ class ApplicationSegment(ZscalerObject):
                 if "useInDrMode" in config else False
             self.tcp_keep_alive = config["tcpKeepAlive"]\
                 if "tcpKeepAlive" in config else "0"
-            self.select_connector_close_to_app = config["selectConnectorCloseToApp"] if "selectConnectorCloseToApp" in config else False
+            self.select_connector_close_to_app = config["selectConnectorCloseToApp"] \
+                if "selectConnectorCloseToApp" in config else False
             self.match_style = config["matchStyle"]\
                 if "matchStyle" in config else "EXCLUSIVE"
             self.is_incomplete_dr_config = config["isIncompleteDRConfig"]\
@@ -78,7 +76,8 @@ class ApplicationSegment(ZscalerObject):
                 if "autoAppProtectEnabled" in config else False
             self.api_protection_enabled = config["apiProtectionEnabled"]\
                 if "apiProtectionEnabled" in config else False
-            self.fqdn_dns_check = config["fqdnDnsCheck"] if "fqdnDnsCheck" in config else False
+            self.fqdn_dns_check = config["fqdnDnsCheck"]\
+                if "fqdnDnsCheck" in config else False
             self.weighted_load_balancing = config["weightedLoadBalancing"]\
                 if "weightedLoadBalancing" in config else False
             self.extranet_enabled = config["extranetEnabled"]\
@@ -91,9 +90,29 @@ class ApplicationSegment(ZscalerObject):
                 if "segmentGroupId" in config else None
             self.segment_group_name = config["segmentGroupName"]\
                 if "segmentGroupName" in config else None
+            self.modified_time = config["modifiedTime"]\
+                if "modifiedTime" in config else None
+            self.creation_time = config["creationTime"]\
+                if "creationTime" in config else None
+            self.modified_by = config["modifiedBy"]\
+                if "modifiedBy" in config else None
 
-            # Use ZscalerCollection for serverGroups
+            self.tcp_protocols = ZscalerCollection.form_list(
+                config["tcpProtocols"] if "tcpProtocols" in config else [], str
+            )
+
+            self.udp_protocols = ZscalerCollection.form_list(
+                config["udpProtocols"] if "udpProtocols" in config else [], str
+            )
+ 
             self.server_groups = ZscalerCollection.form_list(config.get("serverGroups", []), server_group.ServerGroup)
+
+            self.tcp_port_ranges = ZscalerCollection.form_list(
+                config["tcpPortRanges"] if "tcpPortRanges" in config else [], str
+            )
+            self.udp_port_ranges = ZscalerCollection.form_list(
+                config["udpPortRanges"] if "udpPortRanges" in config else [], str
+            )
 
             # Handle tcpPortRange using conditionals for defensive programming
             self.tcp_port_range = []
@@ -127,10 +146,24 @@ class ApplicationSegment(ZscalerObject):
                     self.shared_microtenant_details = None
             else:
                 self.shared_microtenant_details = None
-            
+
+            if "zpnErId	" in config:
+                if isinstance(config["zpnErId	"], ZPNExtranetResource):
+                    self.zpn_er_id = config["zpnErId	"]
+                elif config["zpnErId	"] is not None:
+                    self.zpn_er_id = ZPNExtranetResource(config["zpnErId	"])
+                else:
+                    self.zpn_er_id = None
+            else:
+                self.zpn_er_id = None
+
         else:
             self.id = None
+            self.modified_time = None
+            self.creation_time = None
+            self.modified_by = None
             self.name = None
+            self.description = None
             self.domain_names = []
             self.server_groups = []
             self.clientless_apps = []
@@ -139,20 +172,23 @@ class ApplicationSegment(ZscalerObject):
             self.udp_port_ranges = []
             self.tcp_port_range = []
             self.udp_port_range = []
+            self.tcp_protocols = []
+            self.udp_protocols = []
             self.double_encrypt = False
-            self.config_space = "DEFAULT"
-            self.bypass_type = "NEVER"
-            self.health_check_type = "NONE"
-            self.icmp_access_type = "NONE"
+            self.config_space = None
+            self.bypass_type = None
+            self.health_check_type = None
+            self.icmp_access_type = None
             self.is_cname_enabled = False
             self.ip_anchored = False
             self.bypass_on_reauth = False
             self.inspect_traffic_with_zia = False
-            self.health_reporting = "NONE"
+            self.health_reporting = None
             self.use_in_dr_mode = False
-            self.tcp_keep_alive = "0"
+            self.passive_health_enabled = False
+            self.tcp_keep_alive = None
             self.select_connector_close_to_app = False
-            self.match_style = "EXCLUSIVE"
+            self.match_style = None
             self.is_incomplete_dr_config = False
             self.adp_enabled = False
             self.auto_app_protect_enabled = False
@@ -160,18 +196,24 @@ class ApplicationSegment(ZscalerObject):
             self.fqdn_dns_check = False
             self.weighted_load_balancing = False
             self.extranet_enabled = False
-            self.microtenant_name = "Default"
+            self.microtenant_name = None
             self.microtenant_id = None
             self.segment_group_id = None
             self.segment_group_name = None
+            self.zpn_er_id = None
 
     def request_format(self):
         """
         Formats the Application Segment data into a dictionary suitable for API requests.
         """
-        return {
+        parent_req_format = super().request_format()
+        current_obj_format = {
             "id": self.id,
+            "modifiedTime": self.modified_time,
+            "creationTime": self.creation_time,
+            "modifiedBy": self.modified_by,
             "name": self.name,
+            "description": self.description,
             "domainNames": self.domain_names,
             "serverGroups": [group.request_format() for group in self.server_groups],
             "clientlessApps": [clientless.request_format() for clientless in self.clientless_apps],
@@ -180,6 +222,8 @@ class ApplicationSegment(ZscalerObject):
             "udpPortRanges": self.udp_port_ranges,
             "tcpPortRange": [{"from": pr["from"], "to": pr["to"]} for pr in self.tcp_port_range],
             "udpPortRange": [{"from": pr["from"], "to": pr["to"]} for pr in self.udp_port_range],
+            "tcpProtocols": self.tcp_protocols,
+            "udpProtocols": self.udp_protocols,
             "doubleEncrypt": self.double_encrypt,
             "configSpace": self.config_space,
             "bypassType": self.bypass_type,
@@ -190,6 +234,7 @@ class ApplicationSegment(ZscalerObject):
             "bypassOnReauth": self.bypass_on_reauth,
             "inspectTrafficWithZia": self.inspect_traffic_with_zia,
             "healthReporting": self.health_reporting,
+            "passiveHealthEnabled": self.passive_health_enabled,
             "useInDrMode": self.use_in_dr_mode,
             "tcpKeepAlive": self.tcp_keep_alive,
             "selectConnectorCloseToApp": self.select_connector_close_to_app,
@@ -205,7 +250,10 @@ class ApplicationSegment(ZscalerObject):
             "microtenantId": self.microtenant_id,
             "segmentGroupId": self.segment_group_id,
             "segmentGroupName": self.segment_group_name,
+            "zpnErId	": self.zpn_er_id,
         }
+        parent_req_format.update(current_obj_format)
+        return parent_req_format
 
 class AppSegmentClientlessApps(ZscalerObject):
     """
@@ -285,7 +333,8 @@ class AppSegmentClientlessApps(ZscalerObject):
         """
         Return a dictionary representing this object for API requests.
         """
-        return {
+        parent_req_format = super().request_format()
+        current_obj_format = {
             "id": self.id,
             "name": self.name,
             "description": self.description,
@@ -308,6 +357,8 @@ class AppSegmentClientlessApps(ZscalerObject):
             "extDomainName	": self.ext_domain_name,
             "extLabel	": self.ext_label,
         }
+        parent_req_format.update(current_obj_format)
+        return parent_req_format
 
 class SharedMicrotenantDetails(ZscalerObject):
     """
@@ -432,3 +483,184 @@ class SharedToMicrotenants(ZscalerObject):
         parent_req_format.update(current_obj_format)
         return parent_req_format
     
+
+class ZPNExtranetResource(ZscalerObject):
+    """
+    A class for ZPNExtranetResource objects.
+    Handles common block attributes shared across multiple resources
+    """
+
+    def __init__(self, config=None):
+        """
+        Initialize the ZPNExtranetResource model based on API response.
+
+        Args:
+            config (dict): A dictionary representing the response.
+        """
+        super().__init__(config)
+        if config:
+            self.id = config["id"] \
+                if "id" in config else None
+            self.modified_time = config["modifiedTime"]\
+                if "modifiedTime" in config else None
+            self.creation_time = config["creationTime"]\
+                if "creationTime" in config else None
+            self.modified_by = config["modifiedBy"]\
+                if "modifiedBy" in config else None
+            self.zia_cloud = config["ziaCloud"] \
+                if "ziaCloud" in config else None
+            self.zia_er_id = config["ziaErId"] \
+                if "ziaErId" in config else None
+            self.zia_er_name = config["ziaErName"] \
+                if "ziaErName" in config else None
+            self.zia_modified_time = config["ziaModifiedTime"] \
+                if "ziaModifiedTime" in config else None
+            self.zia_org_id = config["ziaOrgId"] \
+                if "ziaOrgId" in config else None                                                     
+        else:
+            self.id = None
+            self.modified_time = None
+            self.creation_time = None
+            self.modified_by = None
+            self.zia_cloud = None
+            self.zia_er_id = None
+            self.zia_er_name = None
+            self.zia_modified_time = None
+            self.zia_org_id = None
+
+    def request_format(self):
+        """
+        Returns the object as a dictionary in the format expected for API requests.
+        """
+        parent_req_format = super().request_format()
+        current_obj_format = {
+            "id": self.id,
+            "modifiedTime": self.modified_time,
+            "creationTime": self.creation_time,
+            "modifiedBy": self.modified_by,
+            "ziaCloud": self.zia_cloud,
+            "ziaErId": self.zia_er_id,
+            "ziaErName": self.zia_er_name,
+            "ziaModifiedTime": self.zia_modified_time,
+            "ziaOrgId": self.zia_org_id,
+        }
+        parent_req_format.update(current_obj_format)
+        return parent_req_format
+
+
+class AppSegmentByType(ZscalerObject):
+    """
+    A class for AppSegmentByType objects.
+    """
+
+    def __init__(self, config=None):
+        """
+        Initialize the AppSegmentByType model based on API response.
+
+        Args:
+            config (dict): A dictionary representing the Rule Labels configuration.
+        """
+        super().__init__(config)
+
+        if config:
+            self.id = config["id"]\
+                if "id" in config else None
+            self.name = config["name"]\
+                if "name" in config else None
+            self.enabled = config["enabled"]\
+                if "enabled" in config else None
+            self.application_port = config["applicationPort"]\
+                if "applicationPort" in config else None
+            self.application_protocol = config["applicationProtocol"]\
+                if "applicationProtocol" in config else None
+            self.domain = config["domain"]\
+                if "domain" in config else None
+            self.app_id = config["appId"]\
+                if "appId" in config else None
+            self.hidden = config["hidden"]\
+                if "hidden" in config else None
+            self.microtenant_name = config["microtenantName"]\
+                if "microtenantName" in config else None
+                
+            if "appResource" in config:
+                if isinstance(config["appResource"], AppResource):
+                    self.app_resource = config["appResource"]
+                elif config["appResource"] is not None:
+                    self.app_resource = AppResource(config["appResource"])
+                else:
+                    self.app_resource = None
+            else:
+                self.app_resource = None
+
+        else:
+            self.id = None
+            self.name = None
+            self.enabled = None
+            self.application_port = None
+            self.application_protocol = None
+            self.domain = None
+            self.app_id = None
+            self.hidden = None
+            self.microtenant_name = None
+            self.app_resource = None
+
+    def request_format(self):
+        """
+        Return the object as a dictionary in the format expected for API requests.
+        """
+        parent_req_format = super().request_format()
+        current_obj_format = {
+            "id": self.id,
+            "name": self.name,
+            "enabled": self.enabled,
+            "applicationPort": self.application_port,
+            "applicationProtocol": self.application_protocol,
+            "domain": self.domain,
+            "appId": self.app_id,
+            "hidden": self.hidden,
+            "microtenantName": self.microtenant_name,
+            "appResource": self.app_resource
+        }
+        parent_req_format.update(current_obj_format)
+        return parent_req_format
+    
+
+class AppResource(ZscalerObject):
+    """
+    A class for AppResource objects.
+    Handles common block attributes shared across multiple resources
+    """
+
+    def __init__(self, config=None):
+        """
+        Initialize the AppResource model based on API response.
+
+        Args:
+            config (dict): A dictionary representing the response.
+        """
+        super().__init__(config)
+        if config:
+
+            if "appResource" in config:
+                if isinstance(config["appResource"], ApplicationSegment	):
+                    self.app_resource = config["appResource"]
+                elif config["appResource"] is not None:
+                    self.app_resource = ApplicationSegment(config["appResource"])
+                else:
+                    self.app_resource = None
+            else:
+                self.app_resource = None
+
+        else:
+            self.app_resource = None
+
+    def request_format(self):
+        """
+        Returns the object as a dictionary in the format expected for API requests.
+        """
+        parent_req_format = super().request_format()
+        current_obj_format = {
+            "appResource": self.app_resource,
+        }
+        parent_req_format.update(current_obj_format)
+        return parent_req_format

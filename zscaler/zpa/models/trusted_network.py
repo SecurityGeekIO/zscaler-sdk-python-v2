@@ -59,7 +59,8 @@ class TrustedNetwork(ZscalerObject):
         """
         Formats the Trusted Network data into a dictionary suitable for API requests.
         """
-        return {
+        parent_req_format = super().request_format()
+        current_obj_format = {
             "id": self.id,
             "modifiedTime": self.modified_time,
             "creationTime": self.creation_time,
@@ -70,3 +71,5 @@ class TrustedNetwork(ZscalerObject):
             "zscalerCloud": self.zscaler_cloud,
             "masterCustomerId": self.master_customer_id,
         }
+        parent_req_format.update(current_obj_format)
+        return parent_req_format

@@ -159,7 +159,8 @@ class AppConnectorController(ZscalerObject):
         """
         Formats the App Connector data into a dictionary suitable for API requests.
         """
-        return {
+        parent_req_format = super().request_format()
+        current_obj_format = {
             "id": self.id,
             "name": self.name,
             "description": self.description,
@@ -203,3 +204,5 @@ class AppConnectorController(ZscalerObject):
             "zpnSubModuleUpgradeList": self.zpn_sub_module_upgrade_list,
             "assistantVersion": self.assistant_version,
         }
+        parent_req_format.update(current_obj_format)
+        return parent_req_format

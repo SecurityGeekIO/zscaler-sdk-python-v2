@@ -15,13 +15,15 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.oneapi_object import ZscalerObject
+from zscaler.oneapi_collection import ZscalerCollection
 from zscaler.zpa.models import app_connector_groups\
     as app_connector_groups
 from zscaler.zpa.models import server_group\
     as server_group
 from zscaler.zpa.models import service_edge_groups\
     as service_edge_groups
-from zscaler.oneapi_collection import ZscalerCollection
+from zscaler.zpa.models import common as common
+
 
 class PolicySetControllerV2(ZscalerObject):
     """
@@ -99,16 +101,20 @@ class PolicySetControllerV2(ZscalerObject):
                     else:
                         self.service_edge_groups.append(service_edge_groups.ServiceEdgeGroup(group))
 
-            # Handle extranetDTO using isinstance check
-            self.extranet_dto = ExtranetDTO(config["extranetDTO"]) if isinstance(config.get("extranetDTO"), ExtranetDTO) else ExtranetDTO(config.get("extranetDTO")) if "extranetDTO" in config else None
-
             # Handle privileged capabilities
             self.privileged_capabilities = config.get("privilegedCapabilities", {}).get("capabilities", [])
             self.privileged_portal_capabilities = config.get("privilegedPortalCapabilities", {}).get("capabilities", [])
 
-            # Handle credential using isinstance check
-            # self.credential = Credential(config["credential"]) if isinstance(config.get("credential"), Credential) else Credential(config.get("credential")) if "credential" in config else None
-
+            if "extranetDTO" in config:
+                if isinstance(config["extranetDTO"], common.ExtranetDTO):
+                    self.extranet_dto = config["extranetDTO"]
+                elif config["extranetDTO"] is not None:
+                    self.extranet_dto = common.ExtranetDTO(config["extranetDTO"])
+                else:
+                    self.extranet_dto = None
+            else:
+                self.extranet_dto = None
+                
             if "credential" in config:
                 if isinstance(config["credential"], Credential):
                     self.credential = config["credential"]
@@ -128,6 +134,7 @@ class PolicySetControllerV2(ZscalerObject):
                     self.credential_pool = None
             else:
                 self.credential_pool = None
+
                 
         else:
             # Defaults when config is None
@@ -206,10 +213,13 @@ class Condition(ZscalerObject):
             self.operands = []
 
     def request_format(self):
-        return {
+        parent_req_format = super().request_format()
+        current_obj_format = {
             "operator": self.operator,
             "operands": [operand.request_format() for operand in self.operands]
         }
+        parent_req_format.update(current_obj_format)
+        return parent_req_format
 
 # The Operand class used within Condition
 class Operand(ZscalerObject):
@@ -227,40 +237,15 @@ class Operand(ZscalerObject):
             self.entry_values = []
 
     def request_format(self):
-        return {
+        parent_req_format = super().request_format()
+        current_obj_format = {
             "objectType": self.object_type,
             "values": self.values,
             "entryValues": self.entry_values
         }
+        parent_req_format.update(current_obj_format)
+        return parent_req_format
 
-# The ExtranetDTO class used within PolicySetControllerV2
-class ExtranetDTO(ZscalerObject):
-    def __init__(self, config=None):
-        super().__init__(config)
-
-        if config:
-            self.location_dto = [{"id": loc["id"], "name": loc["name"]} for loc in config.get("locationDTO", [])]
-            self.location_group_dto = [{
-                "id": group["id"],
-                "name": group["name"],
-                "ziaLocations": [{"id": loc["id"], "name": loc["name"]} for loc in group.get("ziaLocations", [])]
-            } for group in config.get("locationGroupDTO", [])]
-            self.zia_er_name = config.get("ziaErName")
-            self.zpn_er_id = config.get("zpnErId")
-
-        else:
-            self.location_dto = []
-            self.location_group_dto = []
-            self.zia_er_name = None
-            self.zpn_er_id = None
-
-    def request_format(self):
-        return {
-            "locationDTO": self.location_dto,
-            "locationGroupDTO": self.location_group_dto,
-            "ziaErName": self.zia_er_name,
-            "zpnErId": self.zpn_er_id
-        }
 
 # The Credential class used within PolicySetControllerV2
 class Credential(ZscalerObject):
@@ -279,7 +264,10 @@ class Credential(ZscalerObject):
             self.name = None
 
     def request_format(self):
-        return {
+        parent_req_format = super().request_format()
+        current_obj_format = {
             "id": self.id,
             "name": self.name
         }
+        parent_req_format.update(current_obj_format)
+        return parent_req_format

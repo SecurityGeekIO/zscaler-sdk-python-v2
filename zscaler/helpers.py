@@ -11,6 +11,7 @@ def to_snake_case(string):
     Applies known field-specific corrections first.
     """
     FIELD_EXCEPTIONS = {
+        "predefinedADPControls": "predefined_adp_controls",
         "surrogateIP": "surrogate_ip",
         "surrogateIPEnforcedForKnownBrowsers": "surrogate_ip_enforced_for_known_browsers",
         "capturePCAP": "capture_pcap",
@@ -35,6 +36,10 @@ def to_snake_case(string):
         "emailIds": "email_ids",
         "showEUN": "show_eun",
         "showEUNATP": "show_eunatp",
+        "enableCIPACompliance": "enable_cipa_compliance",
+        "enablePOEPrompt": "enable_poe_prompt",
+        "cookieStealingPCAPEnabled": "cookie_stealing_pcap_enabled",
+        "alertForUnknownOrSuspiciousC2Traffic": "alert_for_unknown_or_suspicious_c2_traffic",
         "enableIPv6DnsResolutionOnTransparentProxy": "enable_ipv6_dns_resolution_on_transparent_proxy",
         "enableEvaluatePolicyOnGlobalSSLBypass": "enable_evaluate_policy_on_global_ssl_bypass",
         "dnsResolutionOnTransparentProxyIPv6ExemptApps": "dns_resolution_on_transparent_proxy_ipv6_exempt_apps",
@@ -63,6 +68,7 @@ def to_lower_camel_case(string):
     """
 
     FIELD_EXCEPTIONS = {
+        "predefined_adp_controls": "predefinedADPControls",
         "surrogate_ip": "surrogateIP",
         "internal_ip_range": "internalIpRange",
         "start_ip_address": "startIPAddress",
@@ -86,6 +92,10 @@ def to_lower_camel_case(string):
         "email_ids": "emailIds",
         "show_eun": "showEUN",
         "show_eunatp": "showEUNATP",
+        "enable_cipa_compliance": "enableCIPACompliance",
+        "enable_poe_prompt": "enablePOEPrompt",
+        "cookie_stealing_pcap_enabled": "cookieStealingPCAPEnabled",
+        "alert_for_unknown_or_suspicious_c2_traffic": "alertForUnknownOrSuspiciousC2Traffic",
         "enable_ipv6_dns_resolution_on_transparent_proxy": "enableIPv6DnsResolutionOnTransparentProxy",
         "enable_evaluate_policy_on_global_ssl_bypass": "enableEvaluatePolicyOnGlobalSSLBypass",
         "dns_resolution_on_transparent_proxy_ipv6_exempt_apps": "dnsResolutionOnTransparentProxyIPv6ExemptApps",

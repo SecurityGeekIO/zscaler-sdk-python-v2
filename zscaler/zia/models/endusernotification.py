@@ -36,14 +36,16 @@ class EndUserNotification(ZscalerObject):
                 if "aupFrequency" in config else None
             self.aup_custom_frequency = config["aupCustomFrequency"] \
                 if "aupCustomFrequency" in config else None
-            self.aup_day_offset = config["aupDayOffset"] \
-                if "aupDayOffset" in config else None
+                
+            self.aup_day_offset = config.get("aupDayOffset")
+            
             self.aup_message = config["aupMessage"] \
                 if "aupMessage" in config else None
             self.notification_type = config["notificationType"] \
                 if "notificationType" in config else None
-            self.display_reason = config["displayReason"] \
-                if "displayReason" in config else False
+                
+            self.display_reason = config.get("displayReason")
+            
             self.display_comp_name = config["displayCompName"] \
                 if "displayCompName" in config else False
             self.display_comp_logo = config["displayCompLogo"] \

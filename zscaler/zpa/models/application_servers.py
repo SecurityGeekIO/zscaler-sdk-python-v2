@@ -54,7 +54,8 @@ class AppServers(ZscalerObject):
         """
         Return a dictionary representing this object for API requests.
         """
-        return {
+        parent_req_format = super().request_format()
+        current_obj_format = {
             "id": self.id,
             "name": self.name,
             "address": self.address,
@@ -63,3 +64,5 @@ class AppServers(ZscalerObject):
             "appServerGroupIds": self.app_server_group_ids,
             "configSpace": self.config_space,
         }
+        parent_req_format.update(current_obj_format)
+        return parent_req_format

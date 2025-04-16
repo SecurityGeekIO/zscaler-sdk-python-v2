@@ -8,7 +8,7 @@ readme = "README.md"
 homepage = "https://github.com/zscaler/zscaler-sdk-python"
 repository = "https://github.com/zscaler/zscaler-sdk-python"
 documentation = "https://zscaler-sdk-python.readthedocs.io"
-keywords = ["zscaler", "sdk", "zcc", "zcon", "zdx", "zia", "zpa", "zwa"]
+keywords = ["zscaler", "sdk", "zcc", "ztw", "zdx", "zia", "zpa", "zwa"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",

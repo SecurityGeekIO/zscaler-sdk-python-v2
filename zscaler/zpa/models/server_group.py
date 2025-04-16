@@ -48,6 +48,8 @@ class ServerGroup(ZscalerObject):
                 if "ipAnchored" in config else None
             self.config_space = config["configSpace"]\
                 if "configSpace" in config else None
+            self.weight = config["weight"]\
+                if "weight" in config else None
             self.extranet_enabled = config["extranetEnabled"]\
                 if "extranetEnabled" in config else None
             self.microtenant_id = config["microtenantId"]\
@@ -77,6 +79,7 @@ class ServerGroup(ZscalerObject):
             self.config_space = None
             self.extranet_enabled = None
             self.microtenant_name = None
+            self.weight = None
             self.dynamic_discovery = True
             self.applications = []
             self.app_connector_groups = []
@@ -96,6 +99,7 @@ class ServerGroup(ZscalerObject):
             "description": self.description,
             "ipAnchored": self.ip_anchored,
             "configSpace": self.config_space,
+            "weight": self.weight,
             "extranetEnabled": self.extranet_enabled,
             "microtenantName": self.microtenant_name,
             "dynamicDiscovery": True if self.dynamic_discovery else False,

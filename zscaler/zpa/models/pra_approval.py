@@ -16,7 +16,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from zscaler.oneapi_object import ZscalerObject
 from zscaler.oneapi_collection import ZscalerCollection
-from zscaler.zpa.models import application_segment_pra as application_segment_pra
+from zscaler.zpa.models import application_segment as application_segment
 
 class PrivilegedRemoteAccessApproval(ZscalerObject):
     """
@@ -44,7 +44,7 @@ class PrivilegedRemoteAccessApproval(ZscalerObject):
             )
 
             self.applications = ZscalerCollection.form_list(
-                config["applications"] if "applications" in config else [], application_segment_pra.ApplicationSegmentPRA
+                config["applications"] if "applications" in config else [], application_segment.ApplicationSegment
             )
 
             if "workingHours" in config:
@@ -64,9 +64,9 @@ class PrivilegedRemoteAccessApproval(ZscalerObject):
             self.modified_time = None
             self.creation_time = None
             self.status = None
-            self.email_ids = ZscalerCollection.form_list([], str)
+            self.email_ids = []
             self.applications = []
-            self.working_hours = {}
+            self.working_hours = None
 
     def request_format(self):
         """
@@ -83,7 +83,7 @@ class PrivilegedRemoteAccessApproval(ZscalerObject):
             "status": self.status,
             "emailIds": self.email_ids,
             "applications": self.applications,
-            # "applications": [app.request_format() for app in self.applications],
+            "workingHours": self.working_hours,
         }
         parent_req_format.update(current_obj_format)
         return parent_req_format
@@ -129,7 +129,7 @@ class WorkingHours(ZscalerObject):
             self.start_time = None
             self.start_time_cron = None
             self.time_zone = None
-            self.days = None
+            self.days = []
 
     def request_format(self):
         """

@@ -136,7 +136,8 @@ class ServiceEdgeGroup(ZscalerObject):
         """
         Formats the Service Edge Group data into a dictionary suitable for API requests.
         """
-        return {
+        parent_req_format = super().request_format()
+        current_obj_format = {
             "id": self.id,
             "modifiedTime": self.modified_time,
             "creationTime": self.creation_time,
@@ -169,3 +170,5 @@ class ServiceEdgeGroup(ZscalerObject):
             "trustedNetworks": [tn.request_format() for tn in self.trusted_networks],
             "serviceEdges": [se.request_format() for se in self.service_edges],
         }
+        parent_req_format.update(current_obj_format)
+        return parent_req_format

@@ -95,7 +95,8 @@ class PostureProfile(ZscalerObject):
         Returns:
             dict: A dictionary representing the posture profile for API requests.
         """
-        return {
+        parent_req_format = super().request_format()
+        current_obj_format = {
             "id": self.id,
             "modifiedTime": self.modified_time,
             "creationTime": self.creation_time,
@@ -112,3 +113,5 @@ class PostureProfile(ZscalerObject):
             "postureType": self.posture_type,
             "rootCert	": self.root_cert,
         }
+        parent_req_format.update(current_obj_format)
+        return parent_req_format

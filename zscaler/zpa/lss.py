@@ -16,8 +16,8 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from zscaler.api_client import APIClient
 from zscaler.request_executor import RequestExecutor
-from zscaler.zpa.models.lss import LSSConfig
-from zscaler.utils import format_url, snake_to_camel
+from zscaler.zpa.models.lss import LSSResourceModel
+from zscaler.utils import format_url
 
 
 class LSSConfigControllerAPI(APIClient):
@@ -131,7 +131,7 @@ class LSSConfigControllerAPI(APIClient):
         try:
             result = []
             for item in response.get_results():
-                result.append(LSSConfig(
+                result.append(LSSResourceModel(
                     self.form_response_body(item))
                 )
         except Exception as error:
@@ -164,12 +164,12 @@ class LSSConfigControllerAPI(APIClient):
             return (None, None, error)
 
         response, error = self._request_executor\
-            .execute(request, LSSConfig)
+            .execute(request, LSSResourceModel)
         if error:
             return (None, response, error)
 
         try:
-            result = LSSConfig(
+            result = LSSResourceModel(
                 self.form_response_body(response.get_body())
             )
         except Exception as error:
@@ -280,10 +280,6 @@ class LSSConfigControllerAPI(APIClient):
         if kwargs.get("filter_status_codes"):
             payload["config"]["filter"] = kwargs.pop("filter_status_codes")
 
-        # Add additional optional parameters to the payload
-        for key, value in kwargs.items():
-            payload[snake_to_camel(key)] = value
-
         # Create the request
         request, error = self._request_executor\
             .create_request(http_method, api_url, body=payload)
@@ -292,12 +288,12 @@ class LSSConfigControllerAPI(APIClient):
 
         # Execute the request
         response, error = self._request_executor\
-            .execute(request, LSSConfig)
+            .execute(request, LSSResourceModel)
         if error:
             return (None, response, error)
 
         try:
-            result = LSSConfig(
+            result = LSSResourceModel(
                 self.form_response_body(response.get_body())
             )
         except Exception as error:
@@ -406,10 +402,6 @@ class LSSConfigControllerAPI(APIClient):
         if kwargs.get("filter_status_codes"):
             current_config["config"]["filter"] = kwargs.pop("filter_status_codes")
 
-        # Add additional optional parameters to the payload
-        for key, value in kwargs.items():
-            current_config[snake_to_camel(key)] = value
-
         # Create the request
         request, error = self._request_executor\
             .create_request(http_method, api_url, body=current_config)
@@ -418,18 +410,18 @@ class LSSConfigControllerAPI(APIClient):
 
         # Execute the request
         response, error = self._request_executor\
-            .execute(request, LSSConfig)
+            .execute(request, LSSResourceModel)
         if error:
             return (None, response, error)
 
         # Handle case where no content is returned (204 No Content)
         if response is None:
             # Return a meaningful result to indicate success
-            return (LSSConfig({"id": lss_config_id}), None, None)
+            return (LSSResourceModel({"id": lss_config_id}), None, None)
 
         # Parse the response into an LSSConfig instance
         try:
-            result = LSSConfig(
+            result = LSSResourceModel(
                 self.form_response_body(response.get_body())
             )
         except Exception as error:
@@ -491,11 +483,13 @@ class LSSConfigControllerAPI(APIClient):
         """
         )
 
-        request, error = self._request_executor.create_request(http_method, api_url)
+        request, error = self._request_executor.\
+            create_request(http_method, api_url)
         if error:
             return None
 
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor.\
+            execute(request)
         if error:
             return None
 
@@ -543,7 +537,8 @@ class LSSConfigControllerAPI(APIClient):
             )
 
         # Prepare request and execute
-        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.\
+            create_request(http_method, api_url, params=query_params)
         if error:
             return None
 

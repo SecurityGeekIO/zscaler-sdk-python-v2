@@ -109,7 +109,8 @@ class ServiceEdge(ZscalerObject):
         """
         Formats the Service Edge data into a dictionary suitable for API requests.
         """
-        return {
+        parent_req_format = super().request_format()
+        current_obj_format = {
             "id": self.id,
             "name": self.name,
             "modifiedTime": self.modified_time,
@@ -148,3 +149,5 @@ class ServiceEdge(ZscalerObject):
             "enrollmentCert": {"name": self.enrollment_cert} if self.enrollment_cert else None,
             "zpnSubModuleUpgradeList": self.zpn_sub_module_upgrade_list,
         }
+        parent_req_format.update(current_obj_format)
+        return parent_req_format

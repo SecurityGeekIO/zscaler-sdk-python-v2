@@ -25,7 +25,7 @@ class AppServersAPI(APIClient):
     """
     A Client object for the Application Server resource.
     """
-    
+
     def __init__(self, request_executor, config):
         super().__init__()
         self._request_executor: RequestExecutor = request_executor
@@ -168,10 +168,8 @@ class AppServersAPI(APIClient):
             {self._zpa_base_endpoint}
             /server""")
 
-        # Construct the body from kwargs (as a dictionary)
         body = kwargs
 
-        # Check if microtenant_id is set in the body, and use it to set query parameter
         microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
@@ -222,10 +220,8 @@ class AppServersAPI(APIClient):
             /server/{server_id}
         """)
 
-        # Start with an empty body or an existing resource's current data
         body = {}
 
-        # Update the body with the fields passed in kwargs
         body.update(kwargs)
 
         # Use get instead of pop to keep microtenant_id in the body
@@ -247,7 +243,6 @@ class AppServersAPI(APIClient):
             # Return a meaningful result to indicate success
             return (AppServers({"id": server_id}), None, None)
 
-        # Parse the response into an AppConnectorGroup instance
         try:
             result = AppServers(
                 self.form_response_body(response.get_body())

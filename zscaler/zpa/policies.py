@@ -60,6 +60,8 @@ class PolicySetControllerAPI(APIClient):
         "client_forwarding": "CLIENT_FORWARDING_POLICY",
         "clientless": "CLIENTLESS_SESSION_PROTECTION_POLICY",
         "credential": "CREDENTIAL_POLICY",
+        "portal_policy": "PRIVILEGED_PORTAL_POLICY",
+        "vpn_policy": "VPN_TUNNEL_POLICY",
         "inspection": "INSPECTION_POLICY",
         "isolation": "ISOLATION_POLICY",
         "redirection": "REDIRECTION_POLICY",
@@ -356,16 +358,16 @@ class PolicySetControllerAPI(APIClient):
             return (None, None, error)
 
         response, error = self._request_executor\
-            .execute(request)
+            .execute(request, PolicySetControllerV1)
         if error:
             return (None, response, error)
 
         try:
-            # Directly return the response body as a dictionary
-            result = self.form_response_body(response.get_body())
+            result = PolicySetControllerV1(
+                self.form_response_body(response.get_body())
+            )
         except Exception as error:
             return (None, response, error)
-
         return (result, response, None)
 
     def list_rules(self, policy_type: str, query_params=None) -> tuple:
@@ -429,13 +431,13 @@ class PolicySetControllerAPI(APIClient):
             return (None, response, error)
 
         try:
-            # Directly return the results as a list of dictionaries
-            result = [
-                self.form_response_body(item) for item in response.get_results()
-            ]
+            result = []
+            for item in response.get_results():
+                result.append(PolicySetControllerV1(
+                    self.form_response_body(item))
+                )
         except Exception as error:
             return (None, response, error)
-
         return (result, response, None)
 
     @synchronized(global_rule_lock)

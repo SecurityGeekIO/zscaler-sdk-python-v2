@@ -162,7 +162,8 @@ class ApplicationSegmentInspection(ZscalerObject):
         """
         Formats the Application Segment data into a dictionary suitable for API requests.
         """
-        return {
+        parent_req_format = super().request_format()
+        current_obj_format = {
             "id": self.id,
             "name": self.name,
             "domainNames": self.domain_names,
@@ -200,3 +201,5 @@ class ApplicationSegmentInspection(ZscalerObject):
             "commonAppsDto": self.common_apps_dto,
             "inspectionApps": self.inspection_apps,
         }
+        parent_req_format.update(current_obj_format)
+        return parent_req_format

@@ -38,7 +38,7 @@ class ZPACBIProfile(ZscalerObject):
             if config and "creationTime" in config else None
         self.modified_by = config["modifiedBy"]\
             if config and "modifiedBy" in config else None
-        self.name = config["name"]\
+        self.name = config["name"] \
             if config and "name" in config else None
         self.cbi_tenant_id = config["cbiTenantId"]\
             if config and "cbiTenantId" in config else None

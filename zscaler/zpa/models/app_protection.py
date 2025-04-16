@@ -17,6 +17,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 from zscaler.oneapi_object import ZscalerObject
 from zscaler.oneapi_collection import ZscalerCollection
 from zscaler.zpa.models import app_protection_predefined_controls as app_protection_predefined_controls
+from zscaler.zpa.models import common as common
 
 class InspectionProfile(ZscalerObject):
     """
@@ -158,11 +159,6 @@ class AppProtectionCustomControl(ZscalerObject):
                 if "action" in config else None
             self.action_value = config["actionValue"] \
                 if "actionValue" in config else None
-            self.associated_inspection_profile_names = ZscalerCollection.form_list(
-                config["associatedInspectionProfileNames"] if "associatedInspectionProfileNames" in config else [], str
-            )
-            self.control_exception = config["controlException"] \
-                if "controlException" in config else None
             self.control_number = config["controlNumber"] \
                 if "controlNumber" in config else None
             self.control_rule_json = config["controlRuleJson"] \
@@ -189,19 +185,35 @@ class AppProtectionCustomControl(ZscalerObject):
                 if "paranoiaLevel" in config else None
             self.protocol_type = config["protocolType"] \
                 if "protocolType" in config else None
-            self.rules = ZscalerCollection.form_list(
-                config["rules"] if "rules" in config else [], str
-            )
             self.severity = config["severity"] \
                 if "severity" in config else None
             self.type = config["type"] \
                 if "type" in config else None
             self.version = config["version"] \
                 if "version" in config else None
+
+            self.associated_inspection_profile_names = ZscalerCollection.form_list(
+                config["associatedInspectionProfileNames"] if "associatedInspectionProfileNames" in config else [], common.CommonIDName
+            )
+
+            self.rules = ZscalerCollection.form_list(
+                config["rules"] if "rules" in config else [], InspectionRule
+            )
+
+            if "controlException" in config:
+                if isinstance(config["controlException"], common.InspectionControlException):
+                    self.control_exception = config["controlException"]
+                elif config["controlException"] is not None:
+                    self.control_exception = common.InspectionControlException(config["controlException"])
+                else:
+                    self.control_exception = None
+            else:
+                self.control_exception = None
+
         else:
             self.action = None
             self.action_value = None
-            self.associated_inspection_profile_names = ZscalerCollection.form_list([], str)
+            self.associated_inspection_profile_names = []
             self.control_exception = None
             self.control_number = None
             self.control_rule_json = None
@@ -216,7 +228,7 @@ class AppProtectionCustomControl(ZscalerObject):
             self.name = None
             self.paranoia_level = None
             self.protocol_type = None
-            self.rules = ZscalerCollection.form_list([], str)
+            self.rules = []
             self.severity = None
             self.type = None
             self.version = None
@@ -252,4 +264,82 @@ class AppProtectionCustomControl(ZscalerObject):
         parent_req_format.update(current_obj_format)
         return parent_req_format
 
+class InspectionRule(ZscalerObject):
+    """
+    A class for Rules objects.
+    Handles common block attributes shared across multiple resources
+    """
 
+    def __init__(self, config=None):
+        """
+        Initialize the Rules model based on API response.
+
+        Args:
+            config (dict): A dictionary representing the response.
+        """
+        super().__init__(config)
+        if config:
+            self.names = config["names"] \
+                if "names" in config else None
+            self.type = config["type"] \
+                if "type" in config else None
+            self.conditions = ZscalerCollection.form_list(
+                config["conditions"] if "conditions" in config else [], InspectionRuleCondition
+            )
+             
+        else:
+            self.names = None
+            self.type = None
+            self.conditions = []
+
+    def request_format(self):
+        """
+        Returns the object as a dictionary in the format expected for API requests.
+        """
+        parent_req_format = super().request_format()
+        current_obj_format = {
+            "names": self.names,
+            "type": self.type,
+            "conditions": self.conditions,
+        }
+        parent_req_format.update(current_obj_format)
+        return parent_req_format
+    
+class InspectionRuleCondition(ZscalerObject):
+    """
+    A class for InspectionRuleCondition objects.
+    Handles common block attributes shared across multiple resources
+    """
+
+    def __init__(self, config=None):
+        """
+        Initialize the Rules model based on API response.
+
+        Args:
+            config (dict): A dictionary representing the response.
+        """
+        super().__init__(config)
+        if config:
+            self.lhs = config["lhs"] \
+                if "lhs" in config else None
+            self.op = config["op"] \
+                if "op" in config else None
+            self.rhs = config["rhs"] \
+                if "rhs" in config else None             
+        else:
+            self.lhs = None
+            self.op = None
+            self.rhs = None
+
+    def request_format(self):
+        """
+        Returns the object as a dictionary in the format expected for API requests.
+        """
+        parent_req_format = super().request_format()
+        current_obj_format = {
+            "lhs": self.lhs,
+            "op": self.op,
+            "rhs": self.rhs,
+        }
+        parent_req_format.update(current_obj_format)
+        return parent_req_format

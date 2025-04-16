@@ -14,6 +14,7 @@
 
 # Official Zscaler Python SDK Overview
 
+* [Migration](#need-help)
 * [Release status](#release-status)
 * [Need help?](#need-help)
 * [Getting Started](#getting-started)
@@ -33,13 +34,44 @@ used in your server-side code to interact with the Zscaler API platform across m
 * [ZIA API](https://help.zscaler.com/zia/getting-started-zia-api)
 * [ZDX API](https://help.zscaler.com/zdx/understanding-zdx-api)
 * [ZCC API](https://help.zscaler.com/client-connector/getting-started-client-connector-api)
-* [ZCON API](https://help.zscaler.com/cloud-branch-connector/getting-started-cloud-branch-connector-api)
+* [ZTW API](https://help.zscaler.com/cloud-branch-connector/getting-started-cloud-branch-connector-api)
 * [ZWA API](https://help.zscaler.com/workflow-automation/getting-started-workflow-automation-api)
 
 This SDK is designed to support the new Zscaler API framework [OneAPI](https://help.zscaler.com/oneapi/understanding-oneapi)
 via a single OAuth2 HTTP client. The SDK is also backwards compatible with the previous
 Zscaler API framework, and each package is supported by an individual and robust HTTP client
 designed to handle failures on different levels by performing intelligent retries.
+
+## Breaking Changes & Migration Guide to Multi-Client SDK
+
+This SDK is a complete redesign from the older `zscaler-sdk-python` or `pyzscaler packages`. If you've used either of those, please review the following before upgrading:
+
+### What's Changed
+
+| Feature                         | Legacy SDK (Restfly + Box)                      | New SDK (OneAPI + Pythonic Dict)                |
+|---------------------------------|--------------------------------------------------|--------------------------------------------------|
+| **Data Structure**              | Used `Python-Box` objects (dot notation)        | Uses native Python `dict` with `snake_case`     |
+| **HTTP Engine**                 | [Restfly](https://github.com/tdunham/restfly)   | Custom HTTP executor with retries, caching, etc.|
+| **Auth Model**                  | One set of credentials per service              | Unified OAuth2 (Zidentity) with scoped access    |
+| **Multi-Service Support**       | Separate SDKs or config per service             | Unified client with `.zia`, `.zpa`, `.zcc`      |
+| **Pagination**                  | Inconsistent or manual                          | Built-in with `resp.has_next()` and `resp.next()` |
+| **Error Handling**              | Raw HTTP exceptions                             | Returns `(result, response, error)` tuples      |
+| **Models**                      | Custom models + `.attribute` access             | Plain Python dict access: `object["field"]`     |
+| **Return Types**                | Box-style nested objects                        | Pure JSON-serializable `dict` responses          |
+
+### Legacy SDK Examples
+
+```py
+# Old SDK (Pyzscaler / Restfly)
+client = ZIAClientHelper(api_key="...", cloud="...")
+
+users = client.users.list()
+print(users[0].name)  # Box-style access
+```
+
+
+
+
 
 ## Release Status
 
@@ -48,8 +80,7 @@ This library uses semantic versioning and updates are posted in ([release notes]
 | Version | Status                           |
 | ------- | -------------------------------- |
 | 0.x     | :warning: Beta Release (Retired) |
-| 1.x     | :warning: Retired                |
-| 2.x     | :heavy_check_mark: Release       |
+| 1.x     | :heavy_check_mark: Release       |
 
 The latest release can always be found on the ([releases page](github-releases))
 
@@ -93,7 +124,7 @@ In most cases, you won't need to build the SDK from source. If you want to build
 * [ZIA API](https://help.zscaler.com/zia/getting-started-zia-api)
 * [ZDX API](https://help.zscaler.com/zdx/understanding-zdx-api)
 * [ZCC API](https://help.zscaler.com/client-connector/getting-started-client-connector-api)
-* [ZCON API](https://help.zscaler.com/cloud-branch-connector/getting-started-cloud-branch-connector-api)
+* [ZTW API](https://help.zscaler.com/cloud-branch-connector/getting-started-cloud-branch-connector-api)
 * [ZWA API](https://help.zscaler.com/workflow-automation/getting-started-workflow-automation-api)
 
 ## Usage guide
@@ -120,7 +151,7 @@ As of the publication of SDK version => 0.20.x, OneAPI is available for programm
 * [ZPA API](https://help.zscaler.com/oneapi/understanding-oneapi#:~:text=Workload%20Groups-,ZPA%20API,-Zscaler%20Private%20Access)
 * [Zscaler Client Connector API](https://help.zscaler.com/oneapi/understanding-oneapi#:~:text=Version%20Profiles-,Zscaler%20Client%20Connector%20API,-Zscaler%20Client%20Connector)
 
-**NOTE** All other products such as Zscaler Cloud Connector (ZCON) and Zscaler Digital Experience (ZDX) are supported only via the legacy authentication method described in this README.
+**NOTE** All other products such as Zscaler Cloud Connector (ZTW) and Zscaler Digital Experience (ZDX) are supported only via the legacy authentication method described in this README.
 
 ### OneAPI (API Client Scope)
 
@@ -531,14 +562,14 @@ if __name__ == "__main__":
     main()
 ```
 
-### ZCON Legacy Authentication
+### ZTW Legacy Authentication
 
-Organizations whose tenant is still not migrated to Zidentity must continue using their previous ZCON API credentials.
-This SDK provides a dedicated API client `LegacyZCONClient` compatible with the legacy framework, which must be used in this scenario.
+Organizations whose tenant is still not migrated to Zidentity must continue using their previous ZTW API credentials.
+This SDK provides a dedicated API client `LegacyZTWClient` compatible with the legacy framework, which must be used in this scenario.
 
 - For authentication via Zscaler Internet Access, you must provide `username`, `password`, `api_key` and `cloud`
 
-The ZCON Cloud is identified by several cloud name prefixes, which determines which API endpoint the requests should be sent to. The following cloud environments are supported:
+The ZTW Cloud is identified by several cloud name prefixes, which determines which API endpoint the requests should be sent to. The following cloud environments are supported:
 
 * `zscaler`
 * `zscalerone`
@@ -552,20 +583,20 @@ The ZCON Cloud is identified by several cloud name prefixes, which determines wh
 
 ### Environment variables
 
-You can provide credentials via the `ZCON_USERNAME`, `ZCON_PASSWORD`, `ZCON_API_KEY`, `ZCON_CLOUD` environment variables, representing your ZCON `username`, `password`, `api_key` and `cloud` respectively.
+You can provide credentials via the `ZTW_USERNAME`, `ZTW_PASSWORD`, `ZTW_API_KEY`, `ZTW_CLOUD` environment variables, representing your ZTW `username`, `password`, `api_key` and `cloud` respectively.
 
 | Argument     | Description | Environment variable |
 |--------------|-------------|-------------------|
-| `username`       | _(String)_ A string that contains the email ID of the API admin.| `ZCON_USERNAME` |    
-| `password`       | _(String)_ A string that contains the password for the API admin.| `ZCON_PASSWORD` |
-| `api_key`       | _(String)_ A string that contains the obfuscated API key (i.e., the return value of the obfuscateApiKey() method).| `ZCON_API_KEY` |   
-| `cloud`       | _(String)_ The host and basePath for the cloud services API is `$zsapi.<Zscaler Cloud Name>/api/v1`.| `ZCON_CLOUD` |
+| `username`       | _(String)_ A string that contains the email ID of the API admin.| `ZTW_USERNAME` |    
+| `password`       | _(String)_ A string that contains the password for the API admin.| `ZTW_PASSWORD` |
+| `api_key`       | _(String)_ A string that contains the obfuscated API key (i.e., the return value of the obfuscateApiKey() method).| `ZTW_API_KEY` |   
+| `cloud`       | _(String)_ The host and basePath for the cloud services API is `$zsapi.<Zscaler Cloud Name>/api/v1`.| `ZTW_CLOUD` |
 
-### ZCON Legacy Client Initialization
+### ZTW Legacy Client Initialization
 
 ```py
 import random
-from zscaler.oneapi_client import LegacyZCONClient
+from zscaler.oneapi_client import LegacyZTWClient
 
 config = {
     "username": '{yourUsername}',
@@ -576,8 +607,8 @@ config = {
 }
 
 def main():
-    with LegacyZCONClient(config) as client:
-        fetched_prov_url, response, error = client.zcon.provisioning_url.list_provisioning_url()
+    with LegacyZTWClient(config) as client:
+        fetched_prov_url, response, error = client.ztw.provisioning_url.list_provisioning_url()
         if error:
             print(f"Error fetching prov url by ID: {error}")
             return
@@ -806,7 +837,7 @@ The header `RateLimit-Reset` is returned in the API response for each API call. 
 * [ZWA Rate Limiting][rate-limiting-zwa] for rate limiting requirements.
 
 When a 429 error is received, the `Retry-After` header is returned in the API response. The SDK uses the returned value to calculate the retry time. The following services are rate limited based on its respective endpoint.
-* [ZCON Rate Limiting][rate-limiting-zcon] for a complete list of which endpoints are rate limited.
+* [ZTW Rate Limiting][rate-limiting-ztw] for a complete list of which endpoints are rate limited.
 * [ZIA Rate Limiting][rate-limiting-zia] for a complete list of which endpoints are rate limited.
 
 When a 429 error is received, the `retry-after` header will tell you the time at which you can retry. The SDK uses the returned value to calculate the retry time. 
@@ -824,7 +855,7 @@ At this moment we are not accepting contributions, but we welcome suggestions on
 [zscaler-support]: https://help.zscaler.com/contact-support
 [github-issues]: https://github.com/zscaler/zscaler-sdk-python/issues
 [rate-limiting-zcc]: https://help.zscaler.com/zscaler-client-connector/understanding-rate-limiting
-[rate-limiting-zcon]: https://help.zscaler.com/cloud-branch-connector/understanding-rate-limits
+[rate-limiting-ztw]: https://help.zscaler.com/cloud-branch-connector/understanding-rate-limits
 [rate-limiting-zdx]: https://help.zscaler.com/zdx/understanding-rate-limiting
 [rate-limiting-zia]: https://help.zscaler.com/zia/understanding-rate-limiting
 [rate-limiting-zpa]: https://help.zscaler.com/zpa/understanding-rate-limiting

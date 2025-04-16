@@ -55,7 +55,8 @@ class CloudConnectorGroup(ZscalerObject):
         """
         Formats the Cloud Connector Group data into a dictionary suitable for API requests.
         """
-        return {
+        parent_req_format = super().request_format()
+        current_obj_format = {
             "creationTime": self.creation_time,
             "modifiedBy": self.modified_by,
             "id": self.id,
@@ -65,3 +66,5 @@ class CloudConnectorGroup(ZscalerObject):
             "ziaCloud": self.zia_cloud,
             "ziaOrgId": self.zia_org_id,
         }
+        parent_req_format.update(current_obj_format)
+        return parent_req_format

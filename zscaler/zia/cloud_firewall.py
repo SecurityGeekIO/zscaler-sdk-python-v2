@@ -2129,7 +2129,7 @@ class FirewallResourcesAPI(APIClient):
         try:
             results = []
             for item in response.get_results():
-                results.append(FirewallRule(
+                results.append(NetworkServices(
                     self.form_response_body(item))
                 )
         except Exception as exc:

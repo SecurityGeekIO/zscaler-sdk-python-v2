@@ -237,7 +237,8 @@ class AppConfig(ZscalerObject):
         """
         Formats the AppConfig data into a dictionary suitable for API requests.
         """
-        return {
+        parent_req_format = super().request_format()
+        current_obj_format = {
             "appTypes": self.app_types,
             "applicationPort": self.application_port,
             "applicationProtocol": self.application_protocol,
@@ -246,3 +247,5 @@ class AppConfig(ZscalerObject):
             "domain": self.domain,
             "name": self.name,
         }
+        parent_req_format.update(current_obj_format)
+        return parent_req_format

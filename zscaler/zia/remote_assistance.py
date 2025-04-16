@@ -79,7 +79,7 @@ class RemoteAssistanceAPI(APIClient):
         except Exception as ex:
             return (None, response, ex)
     
-    def update_remote_assistance(self, settings: RemoteAssistance) -> tuple:
+    def update_remote_assistance(self, **kwargs) -> tuple:
         """
         Retrieves information about the Remote Assistance option configured in the ZIA Admin Portal.
         
@@ -124,19 +124,28 @@ class RemoteAssistanceAPI(APIClient):
             """
         )
 
-        payload = settings.request_format()
-
-        request, error = self._request_executor.create_request(
-            http_method, api_url, payload
-        )
-
+        body = {}
+        body.update(kwargs)
+        
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, {}, {})
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
-
+        response, error = self._request_executor\
+            .execute(request, RemoteAssistance)
         if error:
             return (None, response, error)
 
-        # Fetch updated settings from API after successful update
-        return self.get_remote_assistance()
+        try:
+            if response and hasattr(response, "get_body") and response.get_body():
+                result = RemoteAssistance(
+                    self.form_response_body(response.get_body())
+                )
+            else:
+                # No content returned (204) – return empty RemoteAssistance object
+                result = RemoteAssistance()
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)

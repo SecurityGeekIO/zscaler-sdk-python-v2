@@ -62,7 +62,8 @@ class MachineGroup(ZscalerObject):
         Returns:
             dict: Formatted data for Machine Group.
         """
-        return {
+        parent_req_format = super().request_format()
+        current_obj_format = {
             "id": self.id,
             "name": self.name,
             "enabled": self.enabled,
@@ -71,3 +72,5 @@ class MachineGroup(ZscalerObject):
             "modifiedTime": self.modified_time,
             "modifiedBy": self.modified_by,
         }
+        parent_req_format.update(current_obj_format)
+        return parent_req_format

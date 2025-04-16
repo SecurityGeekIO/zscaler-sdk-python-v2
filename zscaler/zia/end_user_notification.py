@@ -85,8 +85,8 @@ class EndUserNotificationAPI(APIClient):
         This method pushes updated advanced threat protection policy settings.
 
         Args:
-            settings (:obj:`AdvancedThreatProtectionSettings`): 
-                An instance of `AdvancedThreatProtectionSettings` containing the updated configuration.
+            settings (:obj:`EndUserNotification`): 
+                An instance of `EndUserNotification` containing the updated configuration.
 
                 Supported attributes:
                     - aup_frequency (str): The frequency at which the Acceptable Use Policy (AUP) is shown to the end users
@@ -115,7 +115,7 @@ class EndUserNotificationAPI(APIClient):
                     - support_email: (str): The email address for writing to IT Support
                     - support_phone: (str): The phone number for contacting IT Support
                     - org_policy_link: (str): The URL of the organization's policy page. This field is required for the default notification type.
-                    - caution_gain_after: (int): The time interval at which the caution notification is shown when users continue browsing a restricted site.
+                    - caution_again_after: (int): The time interval at which the caution notification is shown when users continue browsing a restricted site.
                     - caution_per_domain: (bool): Specifies whether to display the caution notification at a specific time interval for URLs in the Miscellaneous or Unknown category.                
                     - caution_custom_text: (str): The custom message that appears in the caution notification
                     - idp_proxy_notification_text: (str): The message that appears in the IdP Proxy notification
@@ -161,5 +161,4 @@ class EndUserNotificationAPI(APIClient):
         if error:
             return (None, response, error)
 
-        # Fetch updated settings from API after successful update
         return self.get_eun_settings()

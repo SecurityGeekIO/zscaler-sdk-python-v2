@@ -17,6 +17,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 import mimetypes
 import time
 from zscaler.request_executor import RequestExecutor
+from zscaler.utils import format_url
 
 class CloudSandboxAPI:
     """
@@ -47,8 +48,13 @@ class CloudSandboxAPI:
 
         """
         http_method = "post".upper()
-        api_url = f"{self._sandbox_base_endpoint}/submit"
-
+        api_url = format_url(
+            f"""
+            {self._sandbox_base_endpoint}
+            /submit
+            """
+        )
+        
         # Read the file content
         with open(file_path, "rb") as file:
             file_content = file.read()
@@ -72,7 +78,8 @@ class CloudSandboxAPI:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor.\
+            execute(request)
 
         if error:
             return (None, response, error)
@@ -95,7 +102,12 @@ class CloudSandboxAPI:
             tuple: A tuple containing the result, response, and error.
         """
         http_method = "post".upper()
-        api_url = f"{self._sandbox_base_endpoint}/discan"
+        api_url = format_url(
+            f"""
+            {self._sandbox_base_endpoint}
+            /discan
+            """
+        )
 
         # Read the file content
         with open(file_path, "rb") as file:
@@ -140,7 +152,12 @@ class CloudSandboxAPI:
             tuple: A tuple containing the result, response, and error.
         """
         http_method = "get".upper()
-        api_url = f"{self._zia_base_endpoint}/sandbox/report/quota"
+        api_url = format_url(
+            f"""
+            {self._zia_base_endpoint}
+            /sandbox/report/quota
+            """
+        )
 
         # Create the request
         request, error = self._request_executor.create_request(
@@ -178,7 +195,12 @@ class CloudSandboxAPI:
             tuple: A tuple containing the result, response, and error.
         """
         http_method = "get".upper()
-        api_url = f"{self._zia_base_endpoint}/sandbox/report/{md5_hash}?details={report_details}"
+        api_url = format_url(
+            f"""
+            {self._zia_base_endpoint}
+            /sandbox/report/{md5_hash}?details={report_details}
+            """
+        )
 
         # Create the request
         request, error = self._request_executor.create_request(
@@ -210,7 +232,12 @@ class CloudSandboxAPI:
             tuple: A tuple containing the result, response, and error.
         """
         http_method = "get".upper()
-        api_url = f"{self._zia_base_endpoint}/behavioralAnalysisAdvancedSettings"
+        api_url = format_url(
+            f"""
+            {self._zia_base_endpoint}
+            /behavioralAnalysisAdvancedSettings
+            """
+        )
 
         request, error = self._request_executor.create_request(
             method=http_method,
@@ -243,7 +270,12 @@ class CloudSandboxAPI:
             tuple: A tuple containing the result, response, and error.
         """
         http_method = "get".upper()
-        api_url = f"{self._zia_base_endpoint}/behavioralAnalysisAdvancedSettings/fileHashCount"
+        api_url = format_url(
+            f"""
+            {self._zia_base_endpoint}
+            /behavioralAnalysisAdvancedSettings/fileHashCount
+            """
+        )
 
         # Create the request
         request, error = self._request_executor.create_request(
@@ -279,7 +311,12 @@ class CloudSandboxAPI:
             tuple: A tuple containing the result, response, and error.
         """
         http_method = "put".upper()
-        api_url = f"{self._zia_base_endpoint}/behavioralAnalysisAdvancedSettings"
+        api_url = format_url(
+            f"""
+            {self._zia_base_endpoint}
+            /behavioralAnalysisAdvancedSettings
+            """
+        )
 
         payload = {"fileHashesToBeBlocked": file_hashes_to_be_blocked}
 
@@ -289,7 +326,6 @@ class CloudSandboxAPI:
         if error:
             return (None, None, error)
 
-        # Execute the request
         response, error = self._request_executor\
             .execute(request)
 

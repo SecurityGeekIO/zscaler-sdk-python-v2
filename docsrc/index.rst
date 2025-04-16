@@ -7,7 +7,7 @@
    :caption: Contents
 
    zs/zcc/index
-   zs/zcon/index
+   zs/ztw/index
    zs/zdx/index
    zs/zia/index
    zs/zpa/index
@@ -53,7 +53,7 @@ across multiple products such as:
 - `ZIA API <https://help.zscaler.com/zia/getting-started-zia-api>`__
 - `ZDX API <https://help.zscaler.com/zdx/understanding-zdx-api>`__
 - `ZCC API <https://help.zscaler.com/client-connector/getting-started-client-connector-api>`__
-- `ZCON API <https://help.zscaler.com/cloud-branch-connector/getting-started-cloud-branch-connector-api>`__
+- `ZTW API <https://help.zscaler.com/cloud-branch-connector/getting-started-cloud-branch-connector-api>`__
 - `ZWA API <https://help.zscaler.com/workflow-automation/getting-started-workflow-automation-api>`__
 
 This SDK is designed to support the new Zscaler API framework
@@ -152,7 +152,7 @@ You'll also need
 -  `ZCC
    API <https://help.zscaler.com/client-connector/getting-started-client-connector-api>`__
 
--  `ZCON
+-  `ZTW
    API <https://help.zscaler.com/cloud-branch-connector/getting-started-cloud-branch-connector-api>`__
 
 -  `ZWA
@@ -208,7 +208,7 @@ programmatic interaction with the following products:
 -  `Zscaler Client Connector
    API <https://help.zscaler.com/oneapi/understanding-oneapi#:~:text=Version%20Profiles-,Zscaler%20Client%20Connector%20API,-Zscaler%20Client%20Connector>`__
 
-**NOTE** All other products such as Zscaler Cloud Connector (ZCON) and
+**NOTE** All other products such as Zscaler Cloud Connector (ZTW) and
 Zscaler Digital Experience (ZDX) are supported only via the legacy
 authentication method described in this README.
 
@@ -892,18 +892,18 @@ ZIA Legacy Client Initialization
    if __name__ == "__main__":
        main()
 
-ZCON Legacy Authentication
+ZTW Legacy Authentication
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Organizations whose tenant is still not migrated to Zidentity must
-continue using their previous ZCON API credentials. This SDK provides a
-dedicated API client ``LegacyZCONClient`` compatible with the legacy
+continue using their previous ZTW API credentials. This SDK provides a
+dedicated API client ``LegacyZTWClient`` compatible with the legacy
 framework, which must be used in this scenario.
 
 -  For authentication via Zscaler Internet Access, you must provide
    ``username``, ``password``, ``api_key`` and ``cloud``
 
-The ZCON Cloud is identified by several cloud name prefixes, which
+The ZTW Cloud is identified by several cloud name prefixes, which
 determines which API endpoint the requests should be sent to. The
 following cloud environments are supported:
 
@@ -922,27 +922,27 @@ following cloud environments are supported:
 Environment variables
 ~~~~~~~~~~~~~~~~~~~~~
 
-You can provide credentials via the ``ZCON_USERNAME``,
-``ZCON_PASSWORD``, ``ZCON_API_KEY``, ``ZCON_CLOUD`` environment
-variables, representing your ZCON ``username``, ``password``,
+You can provide credentials via the ``ZTW_USERNAME``,
+``ZTW_PASSWORD``, ``ZTW_API_KEY``, ``ZTW_CLOUD`` environment
+variables, representing your ZTW ``username``, ``password``,
 ``api_key`` and ``cloud`` respectively.
 
 +--------------------+-------------------+----------------------------+
 | Argument           | Description       | Environment variable       |
 +====================+===================+============================+
-| ``username``       | *(String)* A      | ``ZCON_USERNAME``          |
+| ``username``       | *(String)* A      | ``ZTW_USERNAME``          |
 |                    | string that       |                            |
 |                    | contains the      |                            |
 |                    | email ID of the   |                            |
 |                    | API admin.        |                            |
 +--------------------+-------------------+----------------------------+
-| ``password``       | *(String)* A      | ``ZCON_PASSWORD``          |
+| ``password``       | *(String)* A      | ``ZTW_PASSWORD``          |
 |                    | string that       |                            |
 |                    | contains the      |                            |
 |                    | password for the  |                            |
 |                    | API admin.        |                            |
 +--------------------+-------------------+----------------------------+
-| ``api_key``        | *(String)* A      | ``ZCON_API_KEY``           |
+| ``api_key``        | *(String)* A      | ``ZTW_API_KEY``           |
 |                    | string that       |                            |
 |                    | contains the      |                            |
 |                    | obfuscated API    |                            |
@@ -952,7 +952,7 @@ variables, representing your ZCON ``username``, ``password``,
 |                    | obfuscateApiKey() |                            |
 |                    | method).          |                            |
 +--------------------+-------------------+----------------------------+
-| ``cloud``          | *(String)* The    | ``ZCON_CLOUD``             |
+| ``cloud``          | *(String)* The    | ``ZTW_CLOUD``             |
 |                    | host and basePath |                            |
 |                    | for the cloud     |                            |
 |                    | services API is   |                            |
@@ -961,13 +961,13 @@ variables, representing your ZCON ``username``, ``password``,
 |                    | d Name>/api/v1``. |                            |
 +--------------------+-------------------+----------------------------+
 
-ZCON Legacy Client Initialization
+ZTW Legacy Client Initialization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: py
 
    import random
-   from zscaler.oneapi_client import LegacyZCONClient
+   from zscaler.oneapi_client import LegacyZTWClient
 
    config = {
        "username": '{yourUsername}',
@@ -978,8 +978,8 @@ ZCON Legacy Client Initialization
    }
 
    def main():
-       with LegacyZCONClient(config) as client:
-           fetched_prov_url, response, error = client.zcon.provisioning_url.list_provisioning_url()
+       with LegacyZTWClient(config) as client:
+           fetched_prov_url, response, error = client.ztw.provisioning_url.list_provisioning_url()
            if error:
                print(f"Error fetching prov url by ID: {error}")
                return
@@ -1346,7 +1346,7 @@ for rate limiting requirements.
 When a 429 error is received, the ``Retry-After`` header is returned in
 the API response. The SDK uses the returned value to calculate the retry
 time. The following services are rate limited based on its respective
-endpoint. \* `ZCON Rate
+endpoint. \* `ZTW Rate
 Limiting <https://help.zscaler.com/cloud-branch-connector/understanding-rate-limits>`__
 for a complete list of which endpoints are rate limited. \* `ZIA Rate
 Limiting <https://help.zscaler.com/zia/understanding-rate-limiting>`__

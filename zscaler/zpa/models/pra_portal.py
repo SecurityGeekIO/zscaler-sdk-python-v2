@@ -96,7 +96,8 @@ class PrivilegedRemoteAccessPortal(ZscalerObject):
         """
         Formats the PRA portal data into a dictionary suitable for API requests.
         """
-        return {
+        parent_req_format = super().request_format()
+        current_obj_format = {
             "certificateId": self.certificate_id,
             "certificateName": self.certificate_name,
             "creationTime": self.creation_time,
@@ -119,3 +120,5 @@ class PrivilegedRemoteAccessPortal(ZscalerObject):
             "userPortalGid": self.user_portal_gid,
             "userPortalName": self.user_portal_name
         }
+        parent_req_format.update(current_obj_format)
+        return parent_req_format

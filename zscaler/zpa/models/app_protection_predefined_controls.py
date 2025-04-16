@@ -17,6 +17,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 from zscaler.oneapi_object import ZscalerObject
 from zscaler.oneapi_collection import ZscalerCollection
 from zscaler.zpa.models import app_protection_predefined_controls as app_protection_predefined_controls
+from zscaler.zpa.models import common as common
 
 
 class PredefinedInspectionControlResource(ZscalerObject):
@@ -43,7 +44,6 @@ class PredefinedInspectionControlResource(ZscalerObject):
             self.predefined_inspection_controls = ZscalerCollection.form_list(
                 config["predefinedInspectionControls"] if "predefinedInspectionControls" in config else [], PredefinedInspectionControls
             )
-
         else:
             self.control_group = None
             self.default_group = None
@@ -132,14 +132,14 @@ class PredefinedInspectionControls(ZscalerObject):
                 if "version" in config else None   
                                                 
             self.associated_inspection_profile_names = ZscalerCollection.form_list(
-                config["associatedInspectionProfileNames"] if "associatedInspectionProfileNames" in config else [], AssociatedInspectionProfileNames
+                config["associatedInspectionProfileNames"] if "associatedInspectionProfileNames" in config else [], common.CommonIDName
             )
 
             if "controlException" in config:
-                if isinstance(config["controlException"], InspectionControlException):
+                if isinstance(config["controlException"], common.InspectionControlException):
                     self.control_exception = config["controlException"]
                 elif config["controlException"] is not None:
-                    self.control_exception = InspectionControlException(config["controlException"])
+                    self.control_exception = common.InspectionControlException(config["controlException"])
                 else:
                     self.control_exception = None
             else:
@@ -195,195 +195,5 @@ class PredefinedInspectionControls(ZscalerObject):
             "version": self.version,
         }
         parent_req_format.update(current_obj_format)
-        return 
-    
-class AssociatedInspectionProfileNames(ZscalerObject):
-    """
-    A class for AssociatedInspectionProfileNames objects.
-    """
-
-    def __init__(self, config=None):
-        """
-        Initialize the AssociatedInspectionProfileNames model based on API response.
-
-        Args:
-            config (dict): A dictionary representing the Rule Labels configuration.
-        """
-        super().__init__(config)
-
-        if config:
-            self.id = config["id"]\
-                if "id" in config else None
-            self.name = config["name"]\
-                if "name" in config else None
-
-        else:
-            self.id = None
-            self.name = None
-
-    def request_format(self):
-        """
-        Return the object as a dictionary in the format expected for API requests.
-        """
-        parent_req_format = super().request_format()
-        current_obj_format = {
-            "id": self.id,
-            "name": self.name,
-        }
-        parent_req_format.update(current_obj_format)
-        return 
-    
-class InspectionControlException(ZscalerObject):
-    """
-    A class for InspectionControlException objects.
-    """
-
-    def __init__(self, config=None):
-        """
-        Initialize the InspectionControlException model based on API response.
-
-        Args:
-            config (dict): A dictionary representing the Rule Labels configuration.
-        """
-        super().__init__(config)
-
-        if config:
-            self.domains = ZscalerCollection.form_list(
-                config["domains"] if "domains" in config else [], Domains
-            )
-            
-            self.paths = ZscalerCollection.form_list(
-                config["paths"] if "paths" in config else [], Paths
-            )
-            
-            self.variables = ZscalerCollection.form_list(
-                config["variables"] if "variables" in config else [], Variables
-            )
-
-            self.version = config["version"] \
-                if "version" in config else None
-                
-        else:
-            self.domains = None
-            self.paths = None
-            self.variables = None
-            self.version = None
-
-    def request_format(self):
-        """
-        Return the object as a dictionary in the format expected for API requests.
-        """
-        parent_req_format = super().request_format()
-        current_obj_format = {
-            "domains": self.domains,
-            "paths": self.paths,
-            "variables": self.variables,
-            "version": self.version,
-        }
-        parent_req_format.update(current_obj_format)
         return parent_req_format
     
-class Domains(ZscalerObject):
-    """
-    A class for Domains objects.
-    """
-
-    def __init__(self, config=None):
-        """
-        Initialize the Domains model based on API response.
-
-        Args:
-            config (dict): A dictionary representing the Rule Labels configuration.
-        """
-        super().__init__(config)
-
-        if config:
-            self.match_type = config["matchType"]\
-                if "matchType" in config else None
-            self.var_value = config["varValue"]\
-                if "varValue" in config else None
-        else:
-            self.match_type = None
-            self.var_value = None
-
-    def request_format(self):
-        """
-        Return the object as a dictionary in the format expected for API requests.
-        """
-        parent_req_format = super().request_format()
-        current_obj_format = {
-            "matchType": self.match_type,
-            "varValue": self.var_value,
-        }
-        parent_req_format.update(current_obj_format)
-        return parent_req_format
-    
-class Paths(ZscalerObject):
-    """
-    A class for Paths objects.
-    """
-
-    def __init__(self, config=None):
-        """
-        Initialize the Paths model based on API response.
-
-        Args:
-            config (dict): A dictionary representing the Rule Labels configuration.
-        """
-        super().__init__(config)
-
-        if config:
-            self.match_type = config["matchType"]\
-                if "matchType" in config else None
-            self.var_value = config["varValue"]\
-                if "varValue" in config else None
-        else:
-            self.match_type = None
-            self.var_value = None
-
-    def request_format(self):
-        """
-        Return the object as a dictionary in the format expected for API requests.
-        """
-        parent_req_format = super().request_format()
-        current_obj_format = {
-            "matchType": self.match_type,
-            "varValue": self.var_value,
-        }
-        parent_req_format.update(current_obj_format)
-        return parent_req_format
-    
-class Variables(ZscalerObject):
-    """
-    A class for Variables objects.
-    """
-
-    def __init__(self, config=None):
-        """
-        Initialize the Variables model based on API response.
-
-        Args:
-            config (dict): A dictionary representing the Rule Labels configuration.
-        """
-        super().__init__(config)
-
-        if config:
-            self.match_type = config["matchType"]\
-                if "matchType" in config else None
-            self.var_value = config["varValue"]\
-                if "varValue" in config else None
-        else:
-            self.match_type = None
-            self.var_value = None
-
-    def request_format(self):
-        """
-        Return the object as a dictionary in the format expected for API requests.
-        """
-        parent_req_format = super().request_format()
-        current_obj_format = {
-            "matchType": self.match_type,
-            "varValue": self.var_value,
-        }
-        parent_req_format.update(current_obj_format)
-        return parent_req_format

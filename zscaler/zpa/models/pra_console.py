@@ -45,10 +45,6 @@ class PrivilegedRemoteAccessConsole(ZscalerObject):
                 if "microtenantId" in config else None
             self.microtenant_name = config["microtenantName"]\
                 if "microtenantName" in config else "Default"
-                
-            # # Handling the nested PRA Application
-            # self.pra_application = application_segment_pra.ApplicationSegmentPRA(config["praApplication"]) \
-            #     if "praApplication" in config else None
 
             if "praApplication" in config:
                 if isinstance(config["praApplication"], PRAApplication):

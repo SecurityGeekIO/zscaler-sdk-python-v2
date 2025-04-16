@@ -14,10 +14,13 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
-from zscaler.zia.models.url_filtering_rules import URLFilteringRule
+
 from zscaler.request_executor import RequestExecutor
-from zscaler.utils import format_url, transform_common_id_fields, reformat_params
 from zscaler.api_client import APIClient
+from zscaler.zia.models.url_filtering_rules import URLFilteringRule
+from zscaler.zia.models.url_filter_cloud_app_settings import AdvancedUrlFilterAndCloudAppSettings
+from zscaler.utils import format_url, transform_common_id_fields, reformat_params
+
 
 
 class URLFilteringAPI(APIClient):
@@ -437,3 +440,145 @@ class URLFilteringAPI(APIClient):
             return (None, response, error)
 
         return (None, response, None)
+
+    def get_url_and_app_settings(self) -> tuple:
+        """
+        Retrieves information about URL and Cloud App Control advanced policy settings
+
+        Returns:
+            tuple: A tuple containing:
+                - AdvancedUrlFilterAndCloudAppSettings: The current advanced settings object.
+                - Response: The raw HTTP response returned by the API.
+                - error: An error message if the request failed; otherwise, `None`.
+
+        Examples:
+            Retrieve and print the current url and app settings:
+
+            >>> settings, response, err = client.zia.url_filtering.get_update_url_and_app_settings()
+            >>> if err:
+            ...     print(f"Error fetching settings: {err}")
+            ... else:
+            ...     print(f"Enable Office365: {settings.enable_office365}")
+        """
+        http_method = "get".upper()
+        api_url = format_url(
+            f"""
+            {self._zia_base_endpoint}
+            /advancedUrlFilterAndCloudAppSettings
+        """
+        )
+
+        request, error = self._request_executor.\
+            create_request(
+            http_method, api_url
+        )
+
+        if error:
+            return (None, None, error)
+
+        response, error = self._request_executor.\
+            execute(request)
+
+        if error:
+            return (None, response, error)
+
+        try:
+            advanced_settings = AdvancedUrlFilterAndCloudAppSettings(response.get_body())
+            return (advanced_settings, response, None)
+        except Exception as ex:
+            return (None, response, ex)
+
+    def update_url_and_app_settings(self, **kwargs) -> tuple:
+        """
+        Updates the URL and Cloud App Control advanced policy settings
+
+        Args:
+            settings (:obj:`AdvancedUrlFilterAndCloudAppSettings`):
+                An instance of `AdvancedSettings` containing the updated configuration.
+
+                **Supported attributes**:
+
+                - **enable_dynamic_content_cat (bool)**: Indicates if dynamic categorization of URLs by analyzing content of uncategorized websites using AI/ML tools is enabled or not.
+                - **consider_embedded_sites (bool)**: Indicates if URL filtering rules must be applied to sites that are translated using translation services or not.
+                - **enforce_safe_search (bool)**: Indicates whether only safe content must be returned for web, image, and video search. 
+                - **enable_office365 (bool)**: Enables or disables Microsoft Office 365 configuration.
+                - **enable_msft_o365 (bool)**: Enables or disables Microsoft-recommended Office 365 one click configuration
+                - **enable_ucaas_zoom (bool)**: Indicates if the Zscaler service is allowed to automatically permit secure local breakout for Zoom traffic
+                - **enable_ucaas_log_me_in (bool)**: Indicates if the Zscaler service is allowed to automatically permit secure local breakout for GoTo traffic
+                - **enable_ucaas_ring_central (bool)**: Indicates if the Zscaler service is allowed to automatically permit secure local breakout for RingCentral traffic
+                - **enable_ucaas_webex (bool)**: Indicates if the Zscaler service is allowed to automatically permit secure local breakout for Webex traffic
+                - **enable_ucaas_talkdesk (bool)**: Indicates if the Zscaler service is allowed to automatically permit secure local breakout for Talkdesk traffic
+                - **enable_chat_gpt_prompt (bool)**: Indicates if the use of generative AI prompts with ChatGPT by users should be categorized and logged
+                - **enable_microsoft_copilot_prompt (bool)**: Indicates if the use of generative AI prompts with Microsoft Copilot by users should be categorized and logged
+                - **enable_gemini_prompt (bool)**: Indicates if the use of generative AI prompts with Google Gemini by users should be categorized and logged
+                - **enable_poe_prompt (bool)**: Indicates if the use of generative AI prompts with Poe by users should be categorized and logged
+                - **enable_meta_prompt (bool)**: Indicates if the use of generative AI prompts with Meta AI by users should be categorized and logged
+                - **enable_perplexity_prompt (bool)**: Indicates if the use of generative AI prompts with Perplexity by users should be categorized and logged
+                - **block_skype (bool)**: Indicates whether access to Skype is blocked or not.
+                - **enable_newly_registered_domains (bool)**: Indicates whether newly registered and observed domains that are identified within hours of going live are allowed or blocked
+                - **enable_block_override_for_non_auth_user (bool)**: Indicates authorized users can temporarily override block action on websites by providing their authentication information
+                - **enable_cipa_compliance (bool)**: Indicates if the predefined CIPA Compliance Rule is enabled or not.
+        Returns:
+            tuple:
+                - **AdvancedUrlFilterAndCloudAppSettings**: The updated URL and Cloud App Control advanced object.
+                - **Response**: The raw HTTP response returned by the API.
+                - **error**: An error message if the update failed; otherwise, `None`.
+
+        Examples:
+            Update URL and Cloud App Control advanced by enabling Office365 and adjusting the session timeout:
+
+            >>> settings, response, err = client.zia.url_filtering.get_advanced_settings()
+            >>> if not err:
+            ...     settings.enable_office365 = True
+            ...     settings.ui_session_timeout = 7200
+            ...     updated_settings, response, err = client.zia.url_filtering.update_url_and_app_settings(settings)
+            ...     if not err:
+            ...         print(f"Updated Enable Office365: {updated_settings.enable_office365}")
+            ...     else:
+            ...         print(f"Failed to update settings: {err}")
+        """
+        if kwargs.get("enable_cipa_compliance") is True:
+            mutually_exclusive = [
+                "enable_newly_registered_domains",
+                "consider_embedded_sites",
+                "enforce_safe_search",
+                "enable_dynamic_content_cat",
+            ]
+            for key in mutually_exclusive:
+                if kwargs.get(key) is True:
+                    return (
+                        None,
+                        None,
+                        ValueError(
+                            f"Invalid configuration: '{key}' cannot be True when 'enable_cipa_compliance' is True"
+                        )
+                    )
+
+        http_method = "put".upper()
+        api_url = format_url(
+            f"""
+            {self._zia_base_endpoint}
+            /advancedUrlFilterAndCloudAppSettings
+            """
+        )
+        body = {}
+        body.update(kwargs)
+
+        request, error = self._request_executor\
+            .create_request(http_method, api_url, body, {}, {})
+        if error:
+            return (None, None, error)
+
+        response, error = self._request_executor\
+            .execute(request, AdvancedUrlFilterAndCloudAppSettings)
+        if error:
+            return (None, response, error)
+
+        try:
+            result = AdvancedUrlFilterAndCloudAppSettings(
+                self.form_response_body(response.get_body())
+            )
+        except Exception as error:
+            return (None, response, error)
+
+        return (result, response, None)

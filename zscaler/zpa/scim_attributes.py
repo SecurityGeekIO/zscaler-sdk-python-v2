@@ -139,8 +139,10 @@ class ScimAttributeHeaderAPI(APIClient):
             attribute_id (str): The unique identifier for the attribute.
 
         Keyword Args:
-            pagesize (int): Specifies the page size, default is 20, maximum is 500.
-            search (str, optional): The search string used to match against features and fields.
+            query_params {dict}: Map of query parameters for the request.
+                ``[query_params.page]`` {str}: Specifies the page number.
+                ``[query_params.page_size]`` {int}: Specifies the page size. If not provided, the default page size is 20. The max page size is 500.
+                ``[query_params.search]`` {str}: The search string used to support search by features and fields for the API.
 
         Returns:
             list: A list of attribute values for the SCIM attribute.

@@ -18,37 +18,110 @@ from zscaler.oneapi_object import ZscalerObject
 from zscaler.oneapi_collection import ZscalerCollection
 from zscaler.zpa.models import app_connector_groups\
     as app_connector_groups
-from zscaler.zpa.models import policyset_controller_v2\
-    as policyset_controller_v2
+from zscaler.zpa.models import policyset_controller_v1\
+    as policyset_controller_v1
 
-class LSSConfig(ZscalerObject):
+class LSSResourceModel(ZscalerObject):
     """
-    A class representing the LSS Receiver configuration.
+    A class for LSSResourceModel objects.
+    Handles common block attributes shared across multiple resources
     """
 
     def __init__(self, config=None):
         """
-        Initialize the LSSConfig object with given config data.
-        Uses defensive programming with conditionals for handling configuration attributes.
+        Initialize the LSSResourceModel model based on API response.
 
         Args:
-            config (dict): The configuration dictionary from API response.
+            config (dict): A dictionary representing the response.
         """
         super().__init__(config)
-
         if config:
-            self.id = config["id"]\
+            self.id = config["id"] \
                 if "id" in config else None
+
+            self.connector_groups = ZscalerCollection.form_list(
+                config["connectorGroups"] if "connectorGroups" in config else [], app_connector_groups.AppConnectorGroup
+            )
+
+            if "config" in config:
+                if isinstance(config["config"], LSSConfig):
+                    self.config = config["config"]
+                elif config["config"] is not None:
+                    self.config = LSSConfig(config["config"])
+                else:
+                    self.config = None
+            else:
+                self.config = None
+                
+            if "policyRule" in config:
+                if isinstance(config["policyRule"], policyset_controller_v1.PolicySetControllerV1):
+                    self.policy_rule = config["policyRule"]
+                elif config["policyRule"] is not None:
+                    self.policy_rule = policyset_controller_v1.PolicySetControllerV1(config["policyRule"])
+                else:
+                    self.policy_rule = None
+            else:
+                self.policy_rule = None
+
+            if "policyRuleResource" in config:
+                if isinstance(config["policyRuleResource"], policyset_controller_v1.PolicySetControllerV1):
+                    self.policy_rule_resource = config["policyRuleResource"]
+                elif config["policyRuleResource"] is not None:
+                    self.policy_rule_resource = policyset_controller_v1.PolicySetControllerV1(config["policyRuleResource"])
+                else:
+                    self.policy_rule_resource = None
+            else:
+                self.policy_rule_resource = None
+
+        else:
+            self.id = None
+            self.connector_groups = []
+            self.policy_rule = None
+            self.policy_rule_resource = None
+            self.lss_config = None
+
+    def request_format(self):
+        """
+        Returns the object as a dictionary in the format expected for API requests.
+        """
+        parent_req_format = super().request_format()
+        current_obj_format = {
+            "id": self.id,
+            "config": self.config.request_format() if self.config else None,
+            "connectorGroups": [g.request_format() for g in self.connector_groups],
+            "policyRule": self.policy_rule.request_format() if self.policy_rule else None,
+            "policyRuleResource": self.policy_rule_resource.request_format() if self.policy_rule_resource else None,
+        }
+        parent_req_format.update(current_obj_format)
+        return parent_req_format
+
+class LSSConfig(ZscalerObject):
+    """
+    A class for LSSConfig objects.
+    Handles common block attributes shared across multiple resources
+    """
+
+    def __init__(self, config=None):
+        """
+        Initialize the LSSConfig model based on API response.
+
+        Args:
+            config (dict): A dictionary representing the response.
+        """
+        super().__init__(config)
+        if config:
+            self.id = config["id"] \
+                if "id" in config else None
+            self.name = config["name"]\
+                if "name" in config else None
+            self.description = config["description"]\
+                if "description" in config else None
             self.modified_time = config["modifiedTime"]\
                 if "modifiedTime" in config else None
             self.creation_time = config["creationTime"]\
                 if "creationTime" in config else None
             self.modified_by = config["modifiedBy"]\
                 if "modifiedBy" in config else None
-            self.name = config["name"]\
-                if "name" in config else None
-            self.description = config["description"]\
-                if "description" in config else None
             self.enabled = config["enabled"]\
                 if "enabled" in config else True
             self.source_log_type = config["sourceLogType"]\
@@ -66,14 +139,6 @@ class LSSConfig(ZscalerObject):
             self.lss_port = config["lssPort"]\
                 if "lssPort" in config else None
 
-            self.connector_groups = ZscalerCollection.form_list(
-                config["connectorGroups"] if "connectorGroups" in config else [], app_connector_groups.AppConnectorGroup
-            )
-            
-            if "policyRule" in config:
-                self.policy_rule = policyset_controller_v2.PolicySetControllerV2(config["policyRule"])
-            else:
-                self.policy_rule = None
         else:
             self.id = None
             self.modified_time = None
@@ -89,14 +154,13 @@ class LSSConfig(ZscalerObject):
             self.audit_message = None
             self.lss_host = None
             self.lss_port = None
-            self.connector_groups = []
-            self.policy_rule = None
 
     def request_format(self):
         """
-        Formats the LSS Config data into a dictionary suitable for API requests.
+        Returns the object as a dictionary in the format expected for API requests.
         """
-        return {
+        parent_req_format = super().request_format()
+        current_obj_format = {
             "id": self.id,
             "modifiedTime": self.modified_time,
             "creationTime": self.creation_time,
@@ -111,6 +175,6 @@ class LSSConfig(ZscalerObject):
             "auditMessage": self.audit_message,
             "lssHost": self.lss_host,
             "lssPort": self.lss_port,
-            "connectorGroups": self.connector_groups,
-            "policyRule": self.policy_rule.request_format() if self.policy_rule else None,
         }
+        parent_req_format.update(current_obj_format)
+        return parent_req_format

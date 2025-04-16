@@ -15,6 +15,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 from zscaler.oneapi_object import ZscalerObject
+from zscaler.oneapi_collection import ZscalerCollection 
 from zscaler.zpa.models import app_connector_groups\
     as app_connector_groups
 from zscaler.zpa.models import server_group\
@@ -23,7 +24,8 @@ from zscaler.zpa.models import service_edge_groups\
     as service_edge_groups
 from zscaler.zpa.models import policyset_controller_v2\
     as credentials
-from zscaler.oneapi_collection import ZscalerCollection 
+from zscaler.zpa.models import common as common
+
 
 class PolicySetControllerV1(ZscalerObject):
     """
@@ -115,12 +117,19 @@ class PolicySetControllerV1(ZscalerObject):
                         self.service_edge_groups.append(service_edge_groups.ServiceEdgeGroup(group))
 
             # Handle privileged capabilities
-            self.privileged_capabilities = config.get("privilegedCapabilities", {}).get("capabilities", [])
             self.privileged_portal_capabilities = config.get("privilegedPortalCapabilities", {}).get("capabilities", [])
-
-            # Handle credential using isinstance check
-            # self.credential = credentials.Credential(config["credential"]) if isinstance(config.get("credential"), credentials.Credential) else credentials.Credential(config.get("credential")) if "credential" in config else None
-
+            self.privileged_capabilities = config.get("privilegedCapabilities", {}).get("capabilities", [])
+            
+            if "extranetDTO" in config:
+                if isinstance(config["extranetDTO"], common.ExtranetDTO):
+                    self.extranet_dto = config["extranetDTO"]
+                elif config["extranetDTO"] is not None:
+                    self.extranet_dto = common.ExtranetDTO(config["extranetDTO"])
+                else:
+                    self.extranet_dto = None
+            else:
+                self.extranet_dto = None
+                
             if "credential" in config:
                 if isinstance(config["credential"], credentials.Credential):
                     self.credential = config["credential"]
@@ -156,6 +165,7 @@ class PolicySetControllerV1(ZscalerObject):
             self.action = None
             self.custom_msg = None
             self.disabled = None
+            self.extranet_dto = None
             self.extranet_enabled = False
             self.default_rule = False
             self.microtenant_id = None
@@ -196,6 +206,7 @@ class PolicySetControllerV1(ZscalerObject):
             "zpnInspectionProfileName": self.zpn_inspection_profile_name,
             "version": self.version,
             "credential": self.credential,
+            "extranetDTO": self.extranet_dto,
             "credentialPool": self.credential_pool,
             "conditions": [condition.request_format() for condition in self.conditions],
             "appConnectorGroups": [group.request_format() for group in self.app_connector_groups],
@@ -232,7 +243,8 @@ class Condition(ZscalerObject):
             self.operands = []
 
     def request_format(self):
-        return {
+        parent_req_format = super().request_format()
+        current_obj_format = {
             "id": self.id,
             "modifiedTime": self.modified_time,
             "creationTime": self.creation_time,
@@ -241,6 +253,8 @@ class Condition(ZscalerObject):
             "negated": self.negated,
             "operands": [operand.request_format() for operand in self.operands]
         }
+        parent_req_format.update(current_obj_format)
+        return parent_req_format
 
 # The Operand class used within Condition
 class Operand(ZscalerObject):
@@ -272,7 +286,8 @@ class Operand(ZscalerObject):
             self.idp_name = None
 
     def request_format(self):
-        return {
+        parent_req_format = super().request_format()
+        current_obj_format = {
             "id": self.id,
             "modifiedTime": self.modified_time,
             "creationTime": self.creation_time,
@@ -284,3 +299,9 @@ class Operand(ZscalerObject):
             "idpId": self.idp_id,
             "idpName": self.idp_name
         }
+        parent_req_format.update(current_obj_format)
+        return parent_req_format
+
+
+
+    

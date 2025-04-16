@@ -68,7 +68,8 @@ class SegmentGroup(ZscalerObject):
         """
         Formats the Segment Group data into a dictionary suitable for API requests.
         """
-        return {
+        parent_req_format = super().request_format()
+        current_obj_format = {
             "id": self.id,
             "name": self.name,
             "description": self.description,
@@ -80,3 +81,5 @@ class SegmentGroup(ZscalerObject):
             "microtenantName": self.microtenant_name,
             "applications": [app.as_dict() for app in self.applications],
         }
+        parent_req_format.update(current_obj_format)
+        return parent_req_format

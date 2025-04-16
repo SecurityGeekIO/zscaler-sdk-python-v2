@@ -184,21 +184,21 @@ class PRACredentialAPI(APIClient):
 
         # Validate and process the credential type
         credential_type = body.get("credential_type")
-        username = body.get("username")
+        username = body.get("user_name")
         password = body.get("password")
         private_key = body.get("private_key")
 
         if credential_type == "USERNAME_PASSWORD":
             if not username or not password:
                 raise ValueError("Username and password must be provided for USERNAME_PASSWORD type.")
-            body.update({"userName": username, "password": password})
+            body.update({"user_name": username, "password": password})
 
         elif credential_type == "SSH_KEY":
             if not username or not private_key:
                 raise ValueError("Username and private_key must be provided for SSH_KEY type.")
             if not is_valid_ssh_key(private_key):
                 raise ValueError("Invalid SSH key format.")
-            body.update({"userName": username, "privateKey": private_key})
+            body.update({"user_name": username, "private_key": private_key})
 
         elif credential_type == "PASSWORD":
             if not password:
@@ -276,21 +276,21 @@ class PRACredentialAPI(APIClient):
 
         # Validate and process the credential type
         credential_type = body.get("credential_type")
-        username = body.get("username")
+        username = body.get("user_name")
         password = body.get("password")
         private_key = body.get("private_key")
 
         if credential_type == "USERNAME_PASSWORD":
             if not username or not password:
                 raise ValueError("Username and password must be provided for USERNAME_PASSWORD type.")
-            body.update({"userName": username, "password": password})
+            body.update({"user_name": username, "password": password})
 
         elif credential_type == "SSH_KEY":
             if not username or not private_key:
                 raise ValueError("Username and private_key must be provided for SSH_KEY type.")
             if not is_valid_ssh_key(private_key):
                 raise ValueError("Invalid SSH key format.")
-            body.update({"userName": username, "privateKey": private_key})
+            body.update({"user_name": username, "private_key": private_key})
 
         elif credential_type == "PASSWORD":
             if not password:
