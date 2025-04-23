@@ -16,8 +16,9 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from zscaler.api_client import APIClient
 from zscaler.request_executor import RequestExecutor
-from zscaler.ztw.models.location_templates import  LocationTemplate
+from zscaler.ztw.models.location_templates import LocationTemplate
 from zscaler.utils import format_url
+
 
 class LocationTemplateAPI(APIClient):
     """
@@ -45,10 +46,25 @@ class LocationTemplateAPI(APIClient):
             :obj:`Tuple`: The list of location templates.
 
         Examples:
-            List all location templates::
+            List all Provisioning Templates:
 
-                for template in ztw.locations.list_location_templates():
-                    print(template)
+            >>> template_list, _, error = client.ztw.location_template.list_location_templates()
+            ... if error:
+            ...     print(f"Error listing location templates: {error}")
+            ...     return
+            ... print(f"Total templates found: {len(template_list)}")
+            ... for template in template_list:
+            ...     print(template.as_dict())
+
+            Gets a Provisioning Templates by name.
+
+            >>> template_list, _, error = client.ztw.location_template.list_location_templates(query_params={'search': 'Template01'})
+            ... if error:
+            ...     print(f"Error listing location templates: {error}")
+            ...     return
+            ... print(f"Total templates found: {len(template_list)}")
+            ... for template in template_list:
+            ...     print(template.as_dict())
 
         """
         http_method = "get".upper()
@@ -61,20 +77,15 @@ class LocationTemplateAPI(APIClient):
 
         query_params = query_params or {}
 
-        # Prepare request body and headers
         body = {}
         headers = {}
 
-        # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, headers, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)
 
-        # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
@@ -93,29 +104,24 @@ class LocationTemplateAPI(APIClient):
 
         Keyword Args:
             query_params {dict}: Optional query parameters.
-            
+
                 ``[query_params.page]`` {int}: Specifies the page offset.
-                
+
                 ``[query_params.page_size]`` {int}: Specifies the page size. The default size is 100.
 
         Returns:
             :obj:`Tuple`: A list of configured locations.
 
         Examples:
-            List locations with default settings:
+            List all Provisioning Templates:
 
-            >>> for location in zia.locations.list_locations_lite():
-            ...    print(location)
-
-            List locations, limiting to a maximum of 10 items:
-
-            >>> for location in zia.locations.list_locations_lite(max_items=10):
-            ...    print(location)
-
-            List locations, returning 200 items per page for a maximum of 2 pages:
-
-            >>> for location in zia.locations.list_locations_lite(page_size=200, max_pages=2):
-            ...    print(location)
+            >>> template_list, _, error = client.ztw.location_template.list_template_lite()
+            ... if error:
+            ...     print(f"Error listing location templates: {error}")
+            ...     return
+            ... print(f"Total templates found: {len(template_list)}")
+            ... for template in template_list:
+            ...     print(template.as_dict())
 
         """
         http_method = "get".upper()
@@ -128,18 +134,14 @@ class LocationTemplateAPI(APIClient):
 
         query_params = query_params or {}
 
-        # Prepare request body and headers
         body = {}
         headers = {}
 
-        # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, headers, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)
 
-        # Execute the request
         response, error = self._request_executor.execute(request)
 
         if error:
@@ -148,66 +150,12 @@ class LocationTemplateAPI(APIClient):
         try:
             result = []
             for item in response.get_results():
-                result.append(
-                    LocationTemplate(
-                        self.form_response_body(item))
-                    )
-        except Exception as error:
-            return (None, response, error)
-        return (result, response, None)
-    
-    def get_location_template(self, template_id: str) -> tuple:
-        """
-        Get details for a specific location template.
-
-        Args:
-            template_id (str): The ID of the location template to retrieve.
-
-        Returns:
-            :obj:`Tuple`: The location template details.
-
-        Examples:
-            Get details of a specific location template::
-
-                print(ztw.locations.get_location_template("123456789"))
-
-        """
-        http_method = "get".upper()
-        api_url = format_url(
-            f"""
-            {self._ztw_base_endpoint}
-            /locationTemplate/{template_id}
-        """
-        )
-
-        body = {}
-        headers = {}
-
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, headers)
-
-        if error:
-            return (None, None, error)
-
-        response, error = self._request_executor\
-            .execute(request, LocationTemplate)
-
-        if error:
-            return (None, response, error)
-
-        try:
-            result = LocationTemplate(
-                self.form_response_body(response.get_body())
-            )
+                result.append(LocationTemplate(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def add_location_template(
-        self,
-        name: str,
-        template: dict = None,
-        **kwargs) -> tuple:
+    def add_location_template(self, name: str, template: dict = None, **kwargs) -> tuple:
         """
         Add a new location template.
 
@@ -242,28 +190,25 @@ class LocationTemplateAPI(APIClient):
         Examples:
             Add a new location template with minimal settings::
 
-                print(ztw.locations.add_location_template(name="MyTemplate"))
-
-            Add a new location template with additional settings::
-
-                template_settings = {
-                    "surrogate_ip": True,
-                    "surrogate_ip_enforced_for_known_browsers": False,
-                    "template_prefix": "office",
-                    "aup_enabled": True,
-                    "aup_timeout_in_days": 30,
-                    "ofw_enabled": True,
-                    "idle_time_in_minutes": 35,
-                    "auth_required": True,
-                    "display_time_unit": "MINUTE",
-                }
-                print(ztw.locations.add_location_template(name="MyTemplate", template=template_settings))
+                >>> added_template, _, error = client.ztw.location_template.add_location_template(
+                ...     name=f"NewTemplate_{random.randint(1000, 10000)}",
+                ...     description=f"NewTemplate_{random.randint(1000, 10000)}",
+                ...     template={
+                ...         "template_prefix": f"Template_{random.randint(1000, 10000)}",
+                ...         "xff_forward_enabled": True,
+                ...         "auth_required": False,
+                ...         "caution_enabled": True,
+                ...         "ofw_enabled": True
+                ...     }
+                ... )
+                >>> if error:
+                ...     print(f"Error adding template: {error}")
+                ... else:
+                ...     print(f"Template added successfully: {added_template.as_dict()}")
         """
-        # Rename 'description' to 'desc' if it exists
         if "description" in kwargs:
             kwargs["desc"] = kwargs.pop("description")
 
-        # Use the Okta approach to handle the template parameter:
         if template is not None:
             if isinstance(template, dict):
                 tmpl = template
@@ -285,18 +230,12 @@ class LocationTemplateAPI(APIClient):
         """
         )
 
-        # Pass the merged payload as the request body
         request, error = self._request_executor.create_request(
-            method=http_method,
-            endpoint=api_url,
-            body=payload,  # <-- Use payload here
-            headers={},
-            params={}
+            method=http_method, endpoint=api_url, body=payload, headers={}, params={}
         )
         if error:
             return (None, None, error)
 
-        # Execute the request and parse the response into a LocationTemplate model
         response, error = self._request_executor.execute(request, LocationTemplate)
         if error:
             return (None, response, error)
@@ -346,30 +285,28 @@ class LocationTemplateAPI(APIClient):
               the existing template.
 
         Examples:
-            Update the name of a location template::
+            Update existing location template with minimal settings::
 
-                print(ztw.locations.update_location_template(template_id="123456789", name="MyTemplate"))
-
-            Update the template details of a location template::
-
-                template_settings = {
-                    "surrogate_ip": True,
-                    "surrogate_ip_enforced_for_known_browsers": False,
-                    "template_prefix": "office",
-                    "aup_enabled": True,
-                    "aup_timeout_in_days": 30,
-                    "ofw_enabled": True,
-                    "idle_time_in_minutes": 4,  # <-- changed to 4 hours
-                    "auth_required": True,
-                    "display_time_unit": "HOUR",  # <-- changed from minutes to hours
-                }
-                print(ztw.locations.update_location_template(template_id="123456789", template=template_settings))
+                >>> updated_template, _, error = client.ztw.location_template.add_location_template(
+                ...     template_id='12345'
+                ...     name=f"UpdateTemplate_{random.randint(1000, 10000)}",
+                ...     description=f"UpdateTemplate_{random.randint(1000, 10000)}",
+                ...     template={
+                ...         "template_prefix": f"Template_{random.randint(1000, 10000)}",
+                ...         "xff_forward_enabled": True,
+                ...         "auth_required": False,
+                ...         "caution_enabled": True,
+                ...         "ofw_enabled": True
+                ...     }
+                ... )
+                >>> if error:
+                ...     print(f"Error updating template: {error}")
+                ... else:
+                ...     print(f"Template updated successfully: {updated_template.as_dict()}")
         """
-        # Rename 'description' to 'desc' if provided
         if "description" in kwargs:
             kwargs["desc"] = kwargs.pop("description")
 
-        # Use the flexible approach for the 'template' key if provided:
         if "template" in kwargs:
             if isinstance(kwargs["template"], dict):
                 tmpl = kwargs["template"]
@@ -385,10 +322,8 @@ class LocationTemplateAPI(APIClient):
         """
         )
 
-        # Build the payload from kwargs (only include keys with non-None values)
         payload = {k: v for k, v in kwargs.items() if v is not None}
-        
-        # Create the request using the merged payload
+
         request, error = self._request_executor.create_request(
             method=http_method,
             endpoint=api_url,
@@ -396,18 +331,16 @@ class LocationTemplateAPI(APIClient):
         )
         if error:
             return (None, None, error)
-        
-        # Execute the request
+
         response, error = self._request_executor.execute(request, LocationTemplate)
         if error:
             return (None, response, error)
-        
+
         try:
             result = LocationTemplate(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
-
 
     def delete_location_template(self, template_id: str):
         """
@@ -417,12 +350,19 @@ class LocationTemplateAPI(APIClient):
             template_id (str): The ID of the location template to delete.
 
         Returns:
-            :obj:`int`: The status code of the operation.
+            :obj:`Tuple`: A tuple containing:
+                - `None`: Placeholder for deleted object.
+                - `Response`: The response object.
+                - `Exception` or `None`: Any error encountered during the operation.
 
         Examples:
             Delete a location template::
 
-                print(ztw.locations.delete_location_template("123456789"))
+                >>> _, _, error = client.ztw.location_template.delete_location_template(update_template.id)
+                >>> if error:
+                ...     print(f"Error deleting location template: {error}")
+                ... else:
+                ...     print(f"Template with ID {update_template.id} deleted successfully.")
         """
         http_method = "delete".upper()
         api_url = format_url(
@@ -434,13 +374,11 @@ class LocationTemplateAPI(APIClient):
 
         params = {}
 
-        request, error = self._request_executor.\
-            create_request(http_method, api_url, params=params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.\
-            execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 

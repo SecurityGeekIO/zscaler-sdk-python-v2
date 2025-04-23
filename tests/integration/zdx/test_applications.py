@@ -14,7 +14,6 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
-
 import pytest
 import time
 from pprint import pprint
@@ -30,25 +29,6 @@ class TestApplications:
     """
     Integration Tests for the applications
     """
-
-    # def test_list_applications(self, fs):
-    #     client = MockZDXClient(fs)
-    #     errors = []
-
-    #     try:
-    #         apps_iterator = client.zdx.apps.list_apps(query_params={"since": 2})
-    #         apps = list(apps_iterator)
-
-    #         if not apps:
-    #             print("No applications found within the specified time range.")
-    #         else:
-    #             print(f"Retrieved {len(apps)} applications")
-    #             for app in apps:
-    #                 pprint(app)
-    #     except Exception as e:
-    #         errors.append(f"Exception occurred: {e}")
-
-    #     assert not errors, "Errors occurred:\n{}".format("\n".join(errors))
 
     def test_get_app(self, fs):
         client = MockZDXClient(fs)
@@ -85,7 +65,7 @@ class TestApplications:
             errors.append(f"Exception occurred: {e}")
 
         assert not errors, "Errors occurred:\n{}".format("\n".join(errors))
-        
+
     # def test_get_app_score(self, fs):
     #     client = MockZDXClient(fs)
     #     errors = []
@@ -251,4 +231,3 @@ class TestApplications:
     #         errors.append(f"Exception occurred: {e}")
 
     #     assert not errors, "Errors occurred:\n{}".format("\n".join(errors))
-

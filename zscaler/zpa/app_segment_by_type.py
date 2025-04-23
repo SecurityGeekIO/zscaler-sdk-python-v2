@@ -19,6 +19,7 @@ from zscaler.request_executor import RequestExecutor
 from zscaler.utils import format_url
 from zscaler.zpa.models.application_segment import AppSegmentByType
 
+
 class ApplicationSegmentByTypeAPI(APIClient):
     """
     A client object for the Application Segment By Type resource.
@@ -30,12 +31,7 @@ class ApplicationSegmentByTypeAPI(APIClient):
         customer_id = config["client"].get("customerId")
         self._zpa_base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
-    def get_segments_by_type(
-        self,
-        application_type: str,
-        expand_all: bool = False,
-        query_params=None, **kwargs
-    ) -> tuple:
+    def get_segments_by_type(self, application_type: str, expand_all: bool = False, query_params=None, **kwargs) -> tuple:
         """
         Retrieve all configured application segments of a specified type, optionally expanding all related data.
 
@@ -80,22 +76,18 @@ class ApplicationSegmentByTypeAPI(APIClient):
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body={}, headers={}, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, body={}, headers={}, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
             for item in response.get_results():
-                result.append(AppSegmentByType(
-                    self.form_response_body(item))
-                )
+                result.append(AppSegmentByType(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -157,12 +149,12 @@ class ApplicationSegmentByTypeAPI(APIClient):
     #     if error:
     #         return (None, response, error)
 
-        # try:
-        #     result = []
-        #     for item in response.get_results():
-        #         result.append(AppSegmentByType(
-        #             self.form_response_body(item))
-        #         )
-        # except Exception as error:
-        #     return (None, response, error)
-        # return (result, response, None)
+    # try:
+    #     result = []
+    #     for item in response.get_results():
+    #         result.append(AppSegmentByType(
+    #             self.form_response_body(item))
+    #         )
+    # except Exception as error:
+    #     return (None, response, error)
+    # return (result, response, None)

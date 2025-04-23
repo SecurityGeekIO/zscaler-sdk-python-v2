@@ -54,7 +54,7 @@ class InspectionControllerAPI(APIClient):
                 }
             )
         return rule_set
-    
+
     def list_profiles(
         self,
         query_params=None,
@@ -66,15 +66,20 @@ class InspectionControllerAPI(APIClient):
 
         Args:
             query_params {dict}: Map of query parameters for the request.
+
                 ``[query_params.page]`` {str}: Specifies the page number.
-                ``[query_params.page_size]`` {str}: Specifies the page size. If not provided, the default page size is 20. The max page size is 500.
+
+                ``[query_params.page_size]`` {str}: Specifies the page size.
+                    If not provided, the default page size is 20. The max page size is 500.
+
                 ``[query_params.search]`` {str}: Search string for filtering results.
 
         Returns:
             tuple: A tuple containing (list of InspectionProfile instances, Response, error)
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /inspectionProfile
         """
@@ -82,22 +87,18 @@ class InspectionControllerAPI(APIClient):
 
         query_params = query_params or {}
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
             for item in response.get_results():
-                result.append(InspectionProfile(
-                    self.form_response_body(item))
-                )
+                result.append(InspectionProfile(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -120,20 +121,16 @@ class InspectionControllerAPI(APIClient):
             """
         )
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, {}, kwargs)
+        request, error = self._request_executor.create_request(http_method, api_url, {}, kwargs)
         if error:
             return None
 
-        response, error = self._request_executor\
-            .execute(request, InspectionProfile)
+        response, error = self._request_executor.execute(request, InspectionProfile)
         if error:
             return (None, response, error)
 
         try:
-            result = InspectionProfile(
-                self.form_response_body(response.get_body())
-            )
+            result = InspectionProfile(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -219,10 +216,12 @@ class InspectionControllerAPI(APIClient):
                 A tuple containing the `InspectionProfile` instance, the response object, and an error (if any).
         """
         http_method = "post".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /inspectionProfile
-        """)
+        """
+        )
 
         # Fetch all predefined control groups
         control_groups, _, err = self.list_predef_controls()
@@ -271,22 +270,17 @@ class InspectionControllerAPI(APIClient):
         print("Payload being sent:", payload)
 
         # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body=payload, headers={}, params={}
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body=payload, headers={}, params={})
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, InspectionProfile)
+        response, error = self._request_executor.execute(request, InspectionProfile)
         if error:
             return (None, response, error)
 
         try:
-            result = InspectionProfile(
-                self.form_response_body(response.get_body())
-            )
+            result = InspectionProfile(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -302,10 +296,12 @@ class InspectionControllerAPI(APIClient):
             InspectionProfile: The updated inspection profile object.
         """
         http_method = "put".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /inspectionProfile/{profile_id}
-        """)
+        """
+        )
 
         # Fetch all predefined control groups
         control_groups, _, err = self.list_predef_controls()
@@ -353,17 +349,12 @@ class InspectionControllerAPI(APIClient):
         # Debugging: Log the payload before sending the request
         print("Payload being sent:", payload)
 
-
-        # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body=payload, headers={}, params={}
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body=payload, headers={}, params={})
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, InspectionProfile)
+        response, error = self._request_executor.execute(request, InspectionProfile)
         if error:
             return (None, response, error)
 
@@ -373,9 +364,7 @@ class InspectionControllerAPI(APIClient):
 
         # Parse the response into an InspectionProfile instance
         try:
-            result = InspectionProfile(
-                self.form_response_body(response.get_body())
-            )
+            result = InspectionProfile(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -391,20 +380,20 @@ class InspectionControllerAPI(APIClient):
             int: Status code of the delete operation.
         """
         http_method = "delete".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /inspectionProfile/{profile_id}
-        """)
+        """
+        )
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url)
+        request, error = self._request_executor.create_request(http_method, api_url)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
@@ -438,14 +427,12 @@ class InspectionControllerAPI(APIClient):
         else:
             raise ValueError("Unknown action provided. Valid actions are 'attach' or 'detach'.")
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, payload)
+        request, error = self._request_executor.create_request(http_method, api_url, payload)
         if error:
             return None
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, InspectionProfile)
+        response, error = self._request_executor.execute(request, InspectionProfile)
         if error:
             return (None, response, error)
 
@@ -454,9 +441,7 @@ class InspectionControllerAPI(APIClient):
             return (InspectionProfile({"id": profile_id}), None, None)
 
         try:
-            result = InspectionProfile(
-                self.form_response_body(response.get_body())
-            )
+            result = InspectionProfile(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -474,7 +459,8 @@ class InspectionControllerAPI(APIClient):
             InspectionProfile: The updated ZPA Inspection Profile resource record.
         """
         http_method = "patch".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /inspectionProfile/{profile_id}/patch
         """
@@ -527,15 +513,12 @@ class InspectionControllerAPI(APIClient):
         print("Payload being sent:", payload)
 
         # Create the request
-        request, error = self._request_executor.create_request(
-            http_method, api_url, body=payload, headers={}, params={}
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body=payload, headers={}, params={})
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, InspectionProfile)
+        response, error = self._request_executor.execute(request, InspectionProfile)
         if error:
             return (None, response, error)
 
@@ -545,9 +528,7 @@ class InspectionControllerAPI(APIClient):
 
         # Parse the response into an InspectionProfile instance
         try:
-            result = InspectionProfile(
-                self.form_response_body(response.get_body())
-            )
+            result = InspectionProfile(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -563,16 +544,20 @@ class InspectionControllerAPI(APIClient):
 
         Args:
             query_params {dict}: Map of query parameters for the request.
+
                 ``[query_params.page]`` {int}: Specifies the page number.
                 ``[query_params.page_size]`` {int}: Page size for pagination.
                 ``[query_params.search]`` {str}: Search string for filtering results.
-                ``[query_params.sort_dir]`` {str}: Specifies the sorting order (ascending/descending) for the search results. Available values : ASC, DESC
+
+                ``[query_params.sort_dir]`` {str}: Specifies the sorting order (ascending/descending) for the search results.
+                    Available values : ASC, DESC
 
         Returns:
             tuple: A tuple containing (list of AppProtectionCustomControl instances, Response, error)
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /inspectionControls/custom
         """
@@ -580,24 +565,18 @@ class InspectionControllerAPI(APIClient):
 
         query_params = query_params or {}
 
-        # Prepare request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
             for item in response.get_results():
-                result.append(AppProtectionCustomControl(
-                    self.form_response_body(item))
-                )
+                result.append(AppProtectionCustomControl(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -613,26 +592,23 @@ class InspectionControllerAPI(APIClient):
             AppProtectionCustomControl: The corresponding predefined control object.
         """
         http_method = "get".upper()
-        api_url = format_url(f""""
+        api_url = format_url(
+            f""""
             {self._zpa_base_endpoint}
             /inspectionControls/predefined/{control_id}
         """
         )
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, {})
+        request, error = self._request_executor.create_request(http_method, api_url, {})
         if error:
             return None
 
-        response, error = self._request_executor\
-            .execute(request, PredefinedInspectionControlResource)
+        response, error = self._request_executor.execute(request, PredefinedInspectionControlResource)
         if error:
             return (None, response, error)
 
         try:
-            result = PredefinedInspectionControlResource(
-                self.form_response_body(response.get_body())
-            )
+            result = PredefinedInspectionControlResource(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -648,24 +624,22 @@ class InspectionControllerAPI(APIClient):
             AppProtectionCustomControl: The corresponding custom control object.
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}/inspectionControls/custom/{control_id}
-        """)
+        """
+        )
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, {})
+        request, error = self._request_executor.create_request(http_method, api_url, {})
         if error:
             return None
 
-        response, error = self._request_executor\
-            .execute(request, AppProtectionCustomControl)
+        response, error = self._request_executor.execute(request, AppProtectionCustomControl)
         if error:
             return (None, response, error)
 
         try:
-            result = AppProtectionCustomControl(
-                self.form_response_body(response.get_body())
-            )
+            result = AppProtectionCustomControl(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -681,30 +655,28 @@ class InspectionControllerAPI(APIClient):
             AppProtectionCustomControl: The newly created custom control object.
         """
         http_method = "post".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}/inspectionControls/custom
-        """)
+        """
+        )
 
         # Extract rules from kwargs
         rules = kwargs.pop("rules", [])
         kwargs["rules"] = [self._create_rule(rule) for rule in rules]
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, kwargs)
+        request, error = self._request_executor.create_request(http_method, api_url, kwargs)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, AppProtectionCustomControl)
+        response, error = self._request_executor.execute(request, AppProtectionCustomControl)
         if error:
             return (None, response, error)
 
         try:
-            result = AppProtectionCustomControl(
-                self.form_response_body(response.get_body())
-            )
+            result = AppProtectionCustomControl(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -721,7 +693,8 @@ class InspectionControllerAPI(APIClient):
             AppProtectionCustomControl: The updated custom control object.
         """
         http_method = "put".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /inspectionControls/custom/{control_id}
         """
@@ -744,14 +717,12 @@ class InspectionControllerAPI(APIClient):
         payload.update(kwargs)
 
         # Create the request
-        request, error = self._request_executor.\
-            create_request(http_method, api_url, payload)
+        request, error = self._request_executor.create_request(http_method, api_url, payload)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor.\
-            execute(request, AppProtectionCustomControl)
+        response, error = self._request_executor.execute(request, AppProtectionCustomControl)
         if error:
             return (None, response, error)
 
@@ -776,20 +747,18 @@ class InspectionControllerAPI(APIClient):
             int: The status code for the operation.
         """
         http_method = "delete".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /inspectionControls/custom/{control_id}
         """
         )
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, {})
+        request, error = self._request_executor.create_request(http_method, api_url, {})
         if error:
             return None
 
-        # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
@@ -819,10 +788,10 @@ class InspectionControllerAPI(APIClient):
             ...         query_params={"search": "controlGroup", "search_field": "Protocol Issues"}):
             ...     print(control)
         """
-        # Initialize URL and HTTP method
         http_method = "get".upper()
         encoded_version = quote("OWASP_CRS/3.3.0", safe="")
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /inspectionControls/predefined?version={encoded_version}
         """
@@ -840,27 +809,17 @@ class InspectionControllerAPI(APIClient):
             additional_params = "&".join(f"{key}={quote(str(value))}" for key, value in query_params.items())
             api_url = f"{api_url}&{additional_params}"
 
-        # Create the request
-        request, error = self._request_executor\
-            .create_request(
-            http_method, api_url
-        )
+        request, error = self._request_executor.create_request(http_method, api_url)
+
         if error:
             return (None, None, error)
 
-        # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
         try:
-            result = [
-                PredefinedInspectionControlResource(
-                    self.form_response_body(item)
-                )
-                for item in response.get_results()
-            ]
+            result = [PredefinedInspectionControlResource(self.form_response_body(item)) for item in response.get_results()]
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -877,36 +836,30 @@ class InspectionControllerAPI(APIClient):
             ...     print(action_type)
 
         """
-        # Initialize URL and HTTP method
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /inspectionControls/actionTypes
         """
         )
 
-        # Prepare request body and headers
         body = {}
         headers = {}
         form = {}
 
-        # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, headers, form)
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, form)
 
         if error:
             return (None, None, error)
 
-        # Execute the request
-        response, error = self._request_executor\
-            .execute(request, str)  # Expecting a list of strings
+        response, error = self._request_executor.execute(request, str)
 
         if error:
             return (None, response, error)
 
-        # Parse the response
         try:
-            result = response.get_body()  # In this case, response is a list of strings like ["PASS", "BLOCK", "REDIRECT"]
+            result = response.get_body()
         except Exception as error:
             return (None, response, error)
 
@@ -925,7 +878,8 @@ class InspectionControllerAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /inspectionControls/severityTypes
         """
@@ -935,23 +889,18 @@ class InspectionControllerAPI(APIClient):
         headers = {}
         form = {}
 
-        # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, headers, form)
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, form)
 
         if error:
             return (None, None, error)
 
-        # Execute the request
-        response, error = self._request_executor\
-            .execute(request, str)  # Expecting a list of strings
+        response, error = self._request_executor.execute(request, str)
 
         if error:
             return (None, response, error)
 
-        # Parse the response
         try:
-            result = response.get_body()  # In this case, response is a list of strings like ["PASS", "BLOCK", "REDIRECT"]
+            result = response.get_body()
         except Exception as error:
             return (None, response, error)
 
@@ -970,34 +919,29 @@ class InspectionControllerAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /inspectionControls/controlTypes
         """
         )
 
-        # Prepare request body and headers
         body = {}
         headers = {}
         form = {}
 
-        # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, headers, form)
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, form)
 
         if error:
             return (None, None, error)
 
-        # Execute the request
-        response, error = self._request_executor\
-            .execute(request, str)  # Expecting a list of strings
+        response, error = self._request_executor.execute(request, str)
 
         if error:
             return (None, response, error)
 
-        # Parse the response
         try:
-            result = response.get_body()  # In this case, response is a list of strings like ["PASS", "BLOCK", "REDIRECT"]
+            result = response.get_body()
         except Exception as error:
             return (None, response, error)
 
@@ -1016,7 +960,8 @@ class InspectionControllerAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /inspectionControls/custom/httpMethods
         """
@@ -1026,23 +971,18 @@ class InspectionControllerAPI(APIClient):
         headers = {}
         form = {}
 
-        # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, headers, form)
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, form)
 
         if error:
             return (None, None, error)
 
-        # Execute the request
-        response, error = self._request_executor\
-            .execute(request, str)  # Expecting a list of strings
+        response, error = self._request_executor.execute(request, str)
 
         if error:
             return (None, response, error)
 
-        # Parse the response
         try:
-            result = response.get_body()  # In this case, response is a list of strings like ["PASS", "BLOCK", "REDIRECT"]
+            result = response.get_body()
         except Exception as error:
             return (None, response, error)
 
@@ -1061,7 +1001,8 @@ class InspectionControllerAPI(APIClient):
 
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /inspectionControls/predefined/versions
         """
@@ -1071,23 +1012,18 @@ class InspectionControllerAPI(APIClient):
         headers = {}
         form = {}
 
-        # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, headers, form)
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, form)
 
         if error:
             return (None, None, error)
 
-        # Execute the request
-        response, error = self._request_executor\
-            .execute(request, str)  # Expecting a list of strings
+        response, error = self._request_executor.execute(request, str)
 
         if error:
             return (None, response, error)
 
-        # Parse the response
         try:
-            result = response.get_body()  # In this case, response is a list of strings like ["PASS", "BLOCK", "REDIRECT"]
+            result = response.get_body()
         except Exception as error:
             return (None, response, error)
 
@@ -1105,7 +1041,8 @@ class InspectionControllerAPI(APIClient):
             AppProtectionCustomControl: The corresponding predefined control object.
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /inspectionControls/predefined/adp
         """
@@ -1116,8 +1053,7 @@ class InspectionControllerAPI(APIClient):
         body = {}
         headers = {}
 
-        request, error = self._request_executor.\
-            create_request(http_method, api_url, body, headers, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)
@@ -1129,14 +1065,12 @@ class InspectionControllerAPI(APIClient):
         try:
             result = []
             for item in response.get_results():
-                result.append(PredefinedInspectionControlResource(
-                    self.form_response_body(item))
-                )
+                result.append(PredefinedInspectionControlResource(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def list_predef_control_api(self) -> tuple:
+    def list_predef_control_api(self, query_params=None) -> tuple:
         """
         Returns all predefined inspection controls for the specified customer.
 
@@ -1148,7 +1082,8 @@ class InspectionControllerAPI(APIClient):
             AppProtectionCustomControl: The corresponding predefined control object.
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /inspectionControls/predefined/api
         """
@@ -1159,8 +1094,7 @@ class InspectionControllerAPI(APIClient):
         body = {}
         headers = {}
 
-        request, error = self._request_executor.\
-            create_request(http_method, api_url, body, headers, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)
@@ -1172,9 +1106,7 @@ class InspectionControllerAPI(APIClient):
         try:
             result = []
             for item in response.get_results():
-                result.append(PredefinedInspectionControlResource(
-                    self.form_response_body(item))
-                )
+                result.append(PredefinedInspectionControlResource(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)

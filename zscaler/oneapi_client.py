@@ -23,7 +23,6 @@ from zscaler.zia.legacy import LegacyZIAClientHelper
 from zscaler.zwa.legacy import LegacyZWAClientHelper
 
 
-# Zscaler Client Connector APIs
 class Client:
     """A Zscaler client object"""
 

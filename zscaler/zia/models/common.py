@@ -16,27 +16,35 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from zscaler.oneapi_object import ZscalerObject
 
+
 class ResourceReference(ZscalerObject):
     def __init__(self, config=None):
         super().__init__(config)
-        self.id = config["id"]\
-            if "id" in config else None
-        self.name = config["name"]\
-            if "name" in config else None
-        self.external_id = config["externalId"]\
-            if "externalId" in config else None
+        if config:
+            self.id = config["id"] if "id" in config else None
+            self.name = config["name"] if "name" in config else None
+            self.external_id = config["externalId"] if "externalId" in config else None
+            self.extensions = config if isinstance(config, dict) else {}
+
+        else:
+            # Defaults when config is None
+            self.id = None
+            self.name = None
+            self.external_id = None
+            self.extensions = None
 
     def request_format(self):
-        return {
-            "id": self.id,
-            "name": self.name,
-            "externalId": self.external_id
-        }
+        parent_req_format = super().request_format()
+        current_obj_format = {"id": self.id, "name": self.name, "externalId": self.external_id, "extensions": self.extensions}
+        parent_req_format.update(current_obj_format)
+        return parent_req_format
+
 
 class Extensions(ZscalerObject):
     """
     A generic class to wrap dynamic extension data.
     """
+
     def __init__(self, config=None):
         super().__init__(config)
         # Simply store the dictionary as is
@@ -57,6 +65,7 @@ class Extensions(ZscalerObject):
         """
         return self.data
 
+
 class CommonBlocks(ZscalerObject):
     """
     A class for CommonBlocks objects.
@@ -72,14 +81,11 @@ class CommonBlocks(ZscalerObject):
         """
         super().__init__(config)
         if config:
-            self.id = config["id"] \
-                if "id" in config else None
-            self.name = config["name"] \
-                if "name" in config else None
-            self.external_id = config["externalId"] \
-                if "externalId" in config else False
+            self.id = config["id"] if "id" in config else None
+            self.name = config["name"] if "name" in config else None
+            self.external_id = config["externalId"] if "externalId" in config else False
             self.extensions = config if isinstance(config, dict) else {}
-             
+
         else:
             self.id = None
             self.name = None
@@ -100,6 +106,7 @@ class CommonBlocks(ZscalerObject):
         parent_req_format.update(current_obj_format)
         return parent_req_format
 
+
 class CommonIDName(ZscalerObject):
     """
     A class for CommonIDName objects.
@@ -115,11 +122,9 @@ class CommonIDName(ZscalerObject):
         """
         super().__init__(config)
         if config:
-            self.id = config["id"] \
-                if "id" in config else None
-            self.name = config["name"] \
-                if "name" in config else None
-             
+            self.id = config["id"] if "id" in config else None
+            self.name = config["name"] if "name" in config else None
+
         else:
             self.id = None
             self.name = None
@@ -135,6 +140,7 @@ class CommonIDName(ZscalerObject):
         }
         parent_req_format.update(current_obj_format)
         return parent_req_format
+
 
 class CommonIDNameTag(ZscalerObject):
     """
@@ -151,27 +157,19 @@ class CommonIDNameTag(ZscalerObject):
         """
         super().__init__(config)
         if config:
-            self.id = config["id"] \
-                if "id" in config else None
-            self.name = config["name"] \
-                if "name" in config else None
-            self.is_name_l10n_tag = config["isNameL10nTag"] \
-                if "isNameL10nTag" in config else False             
+            self.id = config["id"] if "id" in config else None
+            self.name = config["name"] if "name" in config else None
+            self.is_name_l10n_tag = config["isNameL10nTag"] if "isNameL10nTag" in config else False
         else:
             self.id = None
             self.name = None
-            self.is_name_l10n_tag=False
+            self.is_name_l10n_tag = False
 
     def request_format(self):
         """
         Returns the object as a dictionary in the format expected for API requests.
         """
         parent_req_format = super().request_format()
-        current_obj_format = {
-            "id": self.id,
-            "name": self.name,
-            "isNameL10nTag": self.is_name_l10n_tag
-        }
+        current_obj_format = {"id": self.id, "name": self.name, "isNameL10nTag": self.is_name_l10n_tag}
         parent_req_format.update(current_obj_format)
         return parent_req_format
-    

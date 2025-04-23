@@ -17,7 +17,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 import pytest
 
 from tests.integration.zpa.conftest import MockZPAClient
-from tests.test_utils import generate_random_password, generate_random_string
+from tests.test_utils import generate_random_string
 
 
 @pytest.fixture
@@ -78,7 +78,7 @@ class TestAccessPrivilegedConsoleV2:
             # Create a Segment Group
             try:
                 segment_group_name = "tests-" + generate_random_string()
-                created_segment_group, _, err  = client.zpa.segment_groups.add_group(name=segment_group_name, enabled=True)
+                created_segment_group, _, err = client.zpa.segment_groups.add_group(name=segment_group_name, enabled=True)
                 assert err is None, f"Error during segment group creation: {err}"
                 segment_group_id = created_segment_group.id
             except Exception as exc:
@@ -116,7 +116,6 @@ class TestAccessPrivilegedConsoleV2:
                         "apps_config": [
                             {
                                 "enabled": True,
-                                "app_types": ["SECURE_REMOTE_ACCESS"],
                                 "application_port": "3389",
                                 "application_protocol": "RDP",
                                 "connection_security": "ANY",
@@ -128,7 +127,7 @@ class TestAccessPrivilegedConsoleV2:
                 assert err is None, f"Error creating application segment PRA: {err}"
                 assert app_segment is not None, "No application segment PRA data returned"
                 assert app_segment.name == app_segment_name
-                
+
                 app_segment_id = app_segment.id
             except Exception as exc:
                 errors.append(f"Creating PRA Application Segment failed: {exc}")
@@ -137,8 +136,7 @@ class TestAccessPrivilegedConsoleV2:
             try:
                 search_name = "rdp_pra01.acme.com"
                 app_segments, _, err = client.zpa.app_segment_by_type.get_segments_by_type(
-                    application_type="SECURE_REMOTE_ACCESS",
-                    query_params={"search": search_name}
+                    application_type="SECURE_REMOTE_ACCESS", query_params={"search": search_name}
                 )
                 assert err is None, f"Failed to get Application Segment by type: {err}"
                 assert isinstance(app_segments, list), "Expected app_segments to be a list"
@@ -147,7 +145,7 @@ class TestAccessPrivilegedConsoleV2:
                     raise AssertionError(f"No segments found with the specified name: {search_name}")
 
                 # Extract `id` and `appId` from the first segment
-                pra_app_id = app_segments[0]["id"]
+                pra_app_id = app_segments[0].id
                 # app_id = app_segments[0]["appId"]
 
             except Exception as exc:
@@ -205,7 +203,7 @@ class TestAccessPrivilegedConsoleV2:
                 assert any(console.id == console_id for console in all_consoles), "Created console not found in list"
             except Exception as exc:
                 errors.append(f"Listing PRA Consoles failed: {exc}")
-                
+
             try:
                 # Test retrieving the specific PRA Console
                 retrieved_console, _, err = client.zpa.pra_console.get_console(console_id)
@@ -240,7 +238,7 @@ class TestAccessPrivilegedConsoleV2:
                 errors.append(f"Updating PRA Console failed: {exc}")
 
         finally:
-            
+
             if console_id:
                 try:
                     delete_response, _, err = client.zpa.pra_console.delete_console(console_id=console_id)
@@ -267,7 +265,9 @@ class TestAccessPrivilegedConsoleV2:
 
             if app_segment_id:
                 try:
-                    delete_response, _, err = client.zpa.app_segments_pra.delete_segment_pra(segment_id=app_segment_id, force_delete=True)
+                    delete_response, _, err = client.zpa.app_segments_pra.delete_segment_pra(
+                        segment_id=app_segment_id, force_delete=True
+                    )
                     assert err is None, f"App Segment deletion failed: {err}"
                     assert delete_response is None, f"Expected None for 204 No Content, got {delete_response}"
                 except Exception as exc:
@@ -291,7 +291,9 @@ class TestAccessPrivilegedConsoleV2:
 
             if app_connector_group_id:
                 try:
-                    delete_response, _, err = client.zpa.app_connector_groups.delete_connector_group(group_id=app_connector_group_id)
+                    delete_response, _, err = client.zpa.app_connector_groups.delete_connector_group(
+                        group_id=app_connector_group_id
+                    )
                     assert err is None, f"Connector Group deletion failed: {err}"
                     assert delete_response is None, f"Expected None for 204 No Content, got {delete_response}"
                 except Exception as exc:

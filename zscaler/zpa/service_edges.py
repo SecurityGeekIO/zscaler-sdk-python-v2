@@ -21,7 +21,6 @@ from zscaler.utils import format_url
 
 
 class ServiceEdgeControllerAPI(APIClient):
-    # Parameter names that will be reformatted to be compatible with ZPAs API
     reformat_params = [
         ("service_edge_ids", "serviceEdges"),
         ("trusted_network_ids", "trustedNetworks"),
@@ -31,7 +30,7 @@ class ServiceEdgeControllerAPI(APIClient):
         super().__init__()
         self._request_executor: RequestExecutor = request_executor
         customer_id = config["client"].get("customerId")
-        self._base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
+        self._zpa_base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
     def list_service_edges(self, query_params=None) -> tuple:
         """
@@ -41,9 +40,13 @@ class ServiceEdgeControllerAPI(APIClient):
 
         Args:
             query_params {dict}: Map of query parameters for the request.
+
                 ``[query_params.page]`` {str}: Specifies the page number.
-                ``[query_params.page_size]`` {int}: Specifies the page size. If not provided, the default page size is 20. The max page size is 500.
-                ``[query_params.search]`` {str}: The search string used to support search by features and fields for the API.
+
+                ``[query_params.page_size]`` {int}: Specifies the page size.
+                    If not provided, the default page size is 20. The max page size is 500.
+
+                ``[query_params.search]`` {str}: Search string used to support search by features.
 
         Returns:
             :obj:`Tuple`: A tuple containing (list of ServiceEdge instances, Response, error)
@@ -61,7 +64,7 @@ class ServiceEdgeControllerAPI(APIClient):
         http_method = "get".upper()
         api_url = format_url(
             f"""
-            {self._zpa_base_endpoint}
+            {self._zpa}
             /serviceEdge
         """
         )
@@ -71,22 +74,18 @@ class ServiceEdgeControllerAPI(APIClient):
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        request, error = self._request_executor.\
-            create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.\
-            execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
             for item in response.get_results():
-                result.append(ServiceEdge(
-                    self.form_response_body(item))
-                )
+                result.append(ServiceEdge(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
@@ -103,7 +102,7 @@ class ServiceEdgeControllerAPI(APIClient):
 
         Returns:
             :obj:`Tuple`: ServiceEdge: The corresponding Service Edge object.
-            
+
         Examples:
             >>> fetched_service_edge, _, err = client.zpa.service_edges.get_service_edge('999999')
             ... if err:
@@ -121,13 +120,11 @@ class ServiceEdgeControllerAPI(APIClient):
         microtenant_id = kwargs.pop("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        request, error = self._request_executor.\
-            create_request(http_method, api_url, params=params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=params)
         if error:
             return None
 
-        response, error = self._request_executor.\
-            execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return None
 
@@ -148,7 +145,7 @@ class ServiceEdgeControllerAPI(APIClient):
 
         Returns:
             :obj:`Tuple`: ServiceEdge: The updated Service Edge object.
-            
+
         Examples:
             Update an Service Edge name, description and disable it.
 
@@ -177,13 +174,11 @@ class ServiceEdgeControllerAPI(APIClient):
         microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, {}, params)
+        request, error = self._request_executor.create_request(http_method, api_url, body, {}, params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, ServiceEdge)
+        response, error = self._request_executor.execute(request, ServiceEdge)
         if error:
             return (None, response, error)
 
@@ -193,18 +188,12 @@ class ServiceEdgeControllerAPI(APIClient):
             return (ServiceEdge({"id": service_edge_id}), None, None)
 
         try:
-            result = ServiceEdge(
-                self.form_response_body(response.get_body())
-            )
+            result = ServiceEdge(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def delete_service_edge(
-        self,
-        service_edge_id: str,
-        **kwargs
-    ) -> int:
+    def delete_service_edge(self, service_edge_id: str, **kwargs) -> int:
         """
         Deletes the specified ZPA Service Edge.
 
@@ -213,7 +202,7 @@ class ServiceEdgeControllerAPI(APIClient):
 
         Returns:
             int: Status code of the delete operation.
-            
+
         Examples:
             >>> _, _, err = client.zpa.service_edges.delete_service_edge(
             ...     service_edge_id='999999'

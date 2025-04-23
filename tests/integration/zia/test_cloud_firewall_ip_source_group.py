@@ -21,6 +21,7 @@ from tests.integration.zia.conftest import MockZIAClient
 from tests.test_utils import generate_random_string
 import time
 
+
 @pytest.fixture
 def fs():
     yield
@@ -28,7 +29,7 @@ def fs():
 
 class TestCloudFirewallIPSourceGroup:
     """
-    Integration Tests for the Cloud Firewall IP Source Group with enhanced debugging.
+    Integration Tests for the Cloud Firewall IP Source Group.
     """
 
     def test_add_ip_source_group(self, fs):
@@ -36,15 +37,16 @@ class TestCloudFirewallIPSourceGroup:
         errors = []
         group_name = "tests-" + generate_random_string()
         group_description = "tests-" + generate_random_string()
+        group_addresses = ["192.168.1.1", "192.168.1.2", "192.168.1.3"]
         group_id = None
 
         try:
-            # Create the IP source group
+            # Step 1: Create the IP source group
             try:
-                created_group, _, error = client.zia.cloud_firewall_rules.add_ip_source_group(
+                created_group, _, error = client.zia.cloud_firewall.add_ip_source_group(
                     name=group_name,
                     description=group_description,
-                    ip_addresses=["192.168.1.1", "192.168.1.2", "192.168.1.3"]
+                    ip_addresses=group_addresses,
                 )
                 print(f"Created Group: {created_group.as_dict() if created_group else 'Not Found'}, Error: {error}")
                 assert error is None, f"Error creating group: {error}"
@@ -55,49 +57,56 @@ class TestCloudFirewallIPSourceGroup:
             except Exception as exc:
                 errors.append(f"Failed to add group: {exc}")
 
-            # Update the IP source group
-            if group_id:
-                try:
+            # Step 2: Update the IP source group
+            try:
+                if group_id:
                     updated_name = group_name + " Updated"
+                    updated_description = group_description + " Updated"
 
-                    # Fetch Before Update
-                    time.sleep(5)
-                    fetched_group, _, fetch_error = client.zia.cloud_firewall_rules.get_ip_source_group(group_id)
-                    print(f"Group Before Update: {fetched_group.as_dict() if fetched_group else 'Not Found'}, Error: {fetch_error}")
-
-                    # Update the group
-                    time.sleep(5)
-                    updated_group, zscaler_resp, error = client.zia.cloud_firewall_rules.update_ip_source_group(
-                        group_id, name=updated_name
+                    # Optional: Fetch before update
+                    time.sleep(3)
+                    fetched_before, _, fetch_error = client.zia.cloud_firewall.get_ip_source_group(group_id)
+                    print(
+                        f"Group Before Update: {fetched_before.as_dict() if fetched_before else 'Not Found'}, Error: {fetch_error}"
                     )
-                    print(f"Updated Group: {updated_group.as_dict() if updated_group else 'Not Found'}, Response: {zscaler_resp}, Error: {error}")
 
+                    # Update
+                    time.sleep(3)
+                    updated_group, _, error = client.zia.cloud_firewall.update_ip_source_group(
+                        group_id=group_id,
+                        name=updated_name,
+                        description=updated_description,
+                        ip_addresses=group_addresses,
+                    )
+                    print(f"Updated Group: {updated_group.as_dict() if updated_group else 'Not Found'}, Error: {error}")
                     assert error is None, f"Error updating group: {error}"
                     assert updated_group is not None, "Updated group response is None"
-                    assert updated_group.name == updated_name, f"Failed to update group name: {updated_group.as_dict()}"
+                    assert updated_group.name == updated_name, "Group name mismatch after update"
+                    assert updated_group.description == updated_description, "Group description mismatch after update"
 
-                    # Verify using a GET request
-                    time.sleep(5)
-                    fetched_group, _, fetch_error = client.zia.cloud_firewall_rules.get_ip_source_group(group_id)
-                    print(f"Fetched Group After Update: {fetched_group.as_dict() if fetched_group else 'Not Found'}, Error: {fetch_error}")
-
+                    # Fetch after update to confirm
+                    time.sleep(3)
+                    fetched_after, _, fetch_error = client.zia.cloud_firewall.get_ip_source_group(group_id)
+                    print(
+                        f"Fetched Group After Update: {fetched_after.as_dict() if fetched_after else 'Not Found'}, Error: {fetch_error}"
+                    )
                     assert fetch_error is None, f"Error retrieving updated group: {fetch_error}"
-                    assert fetched_group.name == updated_name, f"Failed to update group name: {fetched_group.as_dict()}"
-
-                except Exception as exc:
-                    errors.append(f"Failed to update group: {exc}")
+                    assert fetched_after.name == updated_name, "Group name not updated correctly"
+                    assert fetched_after.description == updated_description, "Group description not updated correctly"
+            except Exception as exc:
+                errors.append(f"Failed to update group: {exc}")
 
         finally:
-            # Cleanup: Attempt to delete the IP source group
-            if group_id:
-                try:
-                    time.sleep(5)
-                    delete_response_code = client.zia.cloud_firewall_rules.delete_ip_source_group(group_id)
-                    print(f"Delete Response Code: {delete_response_code}")
-                    assert delete_response_code == 204, f"Failed to delete IP source group: {delete_response_code}"
+            # Step 3: Cleanup
+            try:
+                if group_id:
+                    time.sleep(3)
+                    _, _, error = client.zia.cloud_firewall.delete_ip_source_group(group_id)
+                    assert error is None, f"Failed to delete IP source group: {error}"
                     print(f"Group deleted successfully with ID: {group_id}")
-                except Exception as exc:
-                    errors.append(f"Cleanup failed: {exc}")
+            except Exception as exc:
+                errors.append(f"Cleanup failed: {exc}")
 
-        # Assert that no errors occurred during the test
-        assert len(errors) == 0, f"Errors occurred during the IP source group lifecycle test: {errors}"
+        # Final assertion
+        if errors:
+            raise AssertionError(f"Integration Test Errors:\n{chr(10).join(errors)}")

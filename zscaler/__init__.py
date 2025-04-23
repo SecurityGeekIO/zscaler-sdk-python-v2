@@ -14,7 +14,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
-"""Official Python SDK for the Zscaler Products (Beta)
+"""Official Python SDK for the Zscaler Products
 
 Zscaler SDK Python is an SDK that provides a uniform and easy-to-use
 interface for each of the Zscaler product APIs.
@@ -29,7 +29,7 @@ __license__ = "MIT"
 __contributors__ = [
     "William Guilherme",
 ]
-__version__ = "1.0.0"
+__version__ = "1.0.2"
 
 
-from zscaler.oneapi_client import Client as ZscalerClient # noqa
+from zscaler.oneapi_client import Client as ZscalerClient  # noqa

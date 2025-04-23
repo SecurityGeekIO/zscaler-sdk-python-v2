@@ -73,8 +73,7 @@ This library uses semantic versioning and updates are posted in
 Version Status
 ======= ================================
 0.x     :warning: Beta Release (Retired)
-1.x     :warning: Retired
-2.x     :heavy_check_mark: Release
+1.x     :heavy_check_mark: Release
 ======= ================================
 
 The latest release can always be found on the (`releases
@@ -294,12 +293,18 @@ environments you must provide the following values:
 |                    | ain>.zslogin.net/ |                            |
 |                    | oauth2/v1/token`` |                            |
 +--------------------+-------------------+----------------------------+
-| ``cloud``          | *(String)* The    | ``ZSCALER_CLOUD``          |
+| ``cloud``          | *(String)* The    |   ``ZSCALER_CLOUD``        |
 |                    | host and basePath |                            |
 |                    | for the cloud     |                            |
 |                    | services API is   |                            |
 |                    | ``$api.<cloud_n   |                            |
 |                    | ame>.zsapi.net``. |                            |
++--------------------+-------------------+----------------------------+
+| ``sandboxToken``   | *(String)* The ZIA| ``ZSCALER_SANDBOX_TOKEN``  |
+|                    | Sandbox Token     |                            |
++--------------------+-------------------+----------------------------+
+| ``sandboxCloud``   | *(String)* The ZIA| ``ZSCALER_SANDBOX_CLOUD``  |
+|                    | Sandbox Cloud     |                            |
 +--------------------+-------------------+----------------------------+
 
 For example: Authenticating to Zscaler Beta environment:
@@ -315,6 +320,18 @@ an alternative Zidentity cloud environment.
 
 **Note 2**: By default this SDK will send the authentication request and
 subsequent API calls to the default base URL.
+
+**Note 3**: Authentication to Zscaler Sandbox requires the attribute/parameter `sandboxCloud`.The following cloud environments are supported:
+
+* `zscaler`
+* `zscalerone`
+* `zscalertwo`
+* `zscalerthree`
+* `zscloud`
+* `zscalerbeta`
+* `zscalergov`
+* `zscalerten`
+* `zspreview`
 
 Authenticating to Zscaler Private Access (ZPA)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -460,7 +477,7 @@ OneAPI Client ID and Private Key Authentication
        main()
 
 Note, that ``privateKey`` can be passed in JWK format or in PEM format,
-i.e. (examples generated with https://mkjwk.org):
+i.e. (examples generated with https://mkjwk.org):
 
    Using a Python dictionary to hard-code the Zscaler API credentials is
    encouraged for development ONLY; In production, you should use a more
@@ -473,7 +490,7 @@ i.e. (examples generated with https://mkjwk.org):
    **NOTE**: THIS IS NOT A PRODUCTION KEY AND IS DISPLAYED FOR EXAMPLE
    PURPOSES ONLY
 
-.. figure:: https://raw.githubusercontent.com/SecurityGeekIO/zscaler-sdk-python-v2/refs/heads/master/docsrc/jwk.svg?token=GHSAT0AAAAAACPKPSHRINMJR26AL6HIRMOIZ6PA5YQ
+.. figure:: https://raw.githubusercontent.com/willguibr/servicenow-application/refs/heads/main/jwk.svg
    :alt: JWK Example
 
    JWK Example
@@ -510,12 +527,12 @@ Client ``ZscalerClient``.
 
        # clear all custom headers
        client.clear_custom_headers()
-       
+
        # output should be: {}
        print(client.get_custom_headers())
 
 Note, that custom headers will be overwritten with default headers with
-the same name. This doesn’t allow breaking the client. Get default
+the same name. This doesn't allow breaking the client. Get default
 headers:
 
 Zscaler OneAPI Rate Limiting
@@ -550,13 +567,41 @@ retry time for the following services:
 Pagination
 ----------
 
-The pagination logic in this SDK applies to both the OneAPI Client and
-Legacy API Client Framework. This way, the transition from the legacy to
-OneAPI is seamless and no code changes are required at the resource
-level.
-
+The pagination system in this SDK is unified across `ZCC`, `ZTW`, `ZDX`, `ZIA`, `ZPA`, `ZWA`
+and is applied transparently whether you're using the Legacy API Client or the new OneAPI OAuth2 Client.
 Filter or search for Segment Groups
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✅ This means no code changes are needed when transitioning from the legacy API framework to OneAPI framework.
+
+When calling a method that supports pagination (e.g., `list_users`, `list_groups`, `list_app_segments`), only the first page of results is returned initially. The SDK returns a response tuple:
+
+.. code:: py
+
+   items, response, error = client.zia.user_management.list_groups()
+
+
+You can then use the `response.has_next()` and `response.next()` methods to retrieve subsequent pages.
+
+Basic Pagination Example
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: py
+
+   query_parameters = {'page_size': 100}
+   groups, resp, err = client.zia.user_management.list_groups(query_parameters)
+
+   while resp.has_next():
+      more_groups, err = resp.next()
+      if err:
+         break
+      groups.extend(more_groups)
+
+
+Searching and Filtering
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can filter or search using available query parameters. The available parameters vary by service, so refer to each method's documentation for details.
+
 
 .. code:: py
 
@@ -572,6 +617,97 @@ Filter or search for Segment Groups
    # Using the search parameter to support search by features and fields.
    query_parameters = {'search': 'Group1'}
    groups, resp, err = client.zpa.segment_groups.list_groups(query_parameters)
+
+Full Example with Error Handling
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: py
+
+   def main():
+      with ZscalerClient(config) as client:
+         query_parameters = {}
+         groups, resp, err = client.zia.user_management.list_groups(query_parameters)
+
+         if err:
+               print(f"Error: {err}")
+               return
+
+         print(f"Processing {len(groups)} groups:")
+         for group in groups:
+               print(group)
+
+         while resp.has_next():
+               next_page, err = resp.next()
+               if err:
+                  print(f"Error fetching next page: {err}")
+                  break
+               for group in next_page:
+                  print(group)
+
+         try:
+               resp.next()  # Will raise StopIteration if no more data
+         except StopIteration:
+               print("✅ No more groups to retrieve.")
+
+   if __name__ == "__main__":
+      main()
+
+Pagination Limits and Controls
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Each Zscaler service has its own pagination requiremens and max page size:
+
++--------------------+-------------------+----------------------------+---------------------------------+
+|     Service Notes  | Default Page Size |        Max Page Size       |          Notes                  |
++====================+===================+============================+=================================+
+|                    |                   |                            |                                 |
+|      ``ZPA``       |     ``20``        |         ``500``            |  Uses ``pagesize``` (lowercase) |
+|                    |                   |                            |                                 |
++--------------------+-------------------+----------------------------+---------------------------------+
+|                    |                   |                            |                                 |
+|      ``ZIA``       |     ``100``       |  ``10,000`` for `/users`   |  Uses ``pageSize``` (camelCase) |
+|                    |                   |      Others varies         |                                 |
++--------------------+-------------------+----------------------------+---------------------------------+
+|                    |                   |                            |                                 |
+|      ``ZDX``       |     ``10``        |         ``Varies``         |    Uses `limit` + `offset`,     |
+|                    |                   |                            |     similar to cursor API       |
++--------------------+-------------------+----------------------------+---------------------------------+
+|                    |                   |                            |                                 |
+|      ``ZCC``       |    ``Varies``     |          ``Varies``        |   Uses ``pageSize``` (camelCase)|
+|                    |                   |                            |                                 |
++--------------------+-------------------+----------------------------+---------------------------------+
+|                    |                   |                            |                                 |
+|      ``ZTW``       |     ``100``       |  ``10,000`` for `/users`   |  Uses ``pageSize``` (camelCase) |
+|                    |                   |      Others varies         |                                 |
++--------------------+-------------------+----------------------------+---------------------------------+
+|                    |                   |                            |                                 |
+|      ``ZWA``       |     ``varies``    |           ``varies``       |  Uses ``pageSize``` (camelCase) |
+|                    |                   |                            |                                 |
++--------------------+-------------------+----------------------------+---------------------------------+
+
+⚠️ **Note:** Always use `snake_case` for all parameter names, even when the API expects camelCase.The SDK handles conversion internally.
+
+Internal Pagination Handling
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The `ZscalerAPIResponse` object returned as resp handles:
+
+* Tracking the current page
+* Automatically applying proper pagination parameters per service
+* Mapping pagination fields like page, pagesize, limit, offset, next_offset, etc.
+* Fallback handling when the API doesn't indicate the total count
+
+You don't need to worry about API quirks—just use `resp.has_next()` and `resp.next()` safely.
+
+⚠️ Note on StopIteration
+The SDK raises a StopIteration if `next()` is called and no more pages are available:
+
+.. code:: py
+
+   try:
+      resp.next()
+   except StopIteration:
+      print("All data fetched.")
 
 Logging
 -------
@@ -930,19 +1066,19 @@ variables, representing your ZTW ``username``, ``password``,
 +--------------------+-------------------+----------------------------+
 | Argument           | Description       | Environment variable       |
 +====================+===================+============================+
-| ``username``       | *(String)* A      | ``ZTW_USERNAME``          |
+| ``username``       | *(String)* A      | ``ZTW_USERNAME``           |
 |                    | string that       |                            |
 |                    | contains the      |                            |
 |                    | email ID of the   |                            |
 |                    | API admin.        |                            |
 +--------------------+-------------------+----------------------------+
-| ``password``       | *(String)* A      | ``ZTW_PASSWORD``          |
+| ``password``       | *(String)* A      | ``ZTW_PASSWORD``           |
 |                    | string that       |                            |
 |                    | contains the      |                            |
 |                    | password for the  |                            |
 |                    | API admin.        |                            |
 +--------------------+-------------------+----------------------------+
-| ``api_key``        | *(String)* A      | ``ZTW_API_KEY``           |
+| ``api_key``        | *(String)* A      | ``ZTW_API_KEY``            |
 |                    | string that       |                            |
 |                    | contains the      |                            |
 |                    | obfuscated API    |                            |
@@ -952,7 +1088,7 @@ variables, representing your ZTW ``username``, ``password``,
 |                    | obfuscateApiKey() |                            |
 |                    | method).          |                            |
 +--------------------+-------------------+----------------------------+
-| ``cloud``          | *(String)* The    | ``ZTW_CLOUD``             |
+| ``cloud``          | *(String)* The    | ``ZTW_CLOUD``              |
 |                    | host and basePath |                            |
 |                    | for the cloud     |                            |
 |                    | services API is   |                            |
@@ -984,7 +1120,7 @@ ZTW Legacy Client Initialization
                print(f"Error fetching prov url by ID: {error}")
                return
            print(f"Fetched prov url by ID: {fetched_prov_url.as_dict()}")
-           
+
    if __name__ == "__main__":
        main()
 
@@ -1174,7 +1310,7 @@ ZCC Legacy Client Initialization
        with LegacyZCCClient(config) as client:
 
            for group in client.zcc.devices.list_devices():
-               print(group)     
+               print(group)
    if __name__ == "__main__":
        main()
 
@@ -1316,7 +1452,7 @@ ZWA Legacy Client Initialization
                return
            for incident in transactions:
                print(incident.as_dict())
-               
+
    if __name__ == "__main__":
        main()
 

@@ -82,9 +82,7 @@ class TestCloudApplicationRules:
             try:
                 # Update the Cloud Application Rule
                 updated_description = "Updated integration test Cloud Application Rule"
-                _, _, error = client.zia.cloudappcontrol.update_rule(
-                    rule_type, rule_id, description=updated_description
-                )
+                _, _, error = client.zia.cloudappcontrol.update_rule(rule_type, rule_id, description=updated_description)
                 assert error is None, f"Error updating Cloud App Rule: {error}"
 
                 updated_rule, _, error = client.zia.cloudappcontrol.get_rule(rule_type, rule_id)
@@ -126,7 +124,7 @@ class TestCloudApplicationRules:
         errors = []
 
         try:
-            actions, response, error = client.zia.cloudappcontrol.list_available_actions(rule_type, cloud_apps)
+            actions, _, error = client.zia.cloudappcontrol.list_available_actions(rule_type, cloud_apps)
 
             # Check for errors
             assert error is None, f"API returned an error: {error}"

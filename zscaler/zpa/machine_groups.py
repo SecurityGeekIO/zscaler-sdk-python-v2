@@ -31,8 +31,7 @@ class MachineGroupsAPI(APIClient):
         customer_id = config["client"].get("customerId")
         self._zpa_base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
-    def list_machine_groups(
-        self, query_params=None) -> tuple:
+    def list_machine_groups(self, query_params=None) -> tuple:
         """
         Enumerates machine groups in your organization with pagination.
         A subset of machine groups can be returned that match a supported
@@ -50,7 +49,7 @@ class MachineGroupsAPI(APIClient):
 
         Examples:
             Retrieve machine groups with pagination parameters:
-            
+
             >>> group_list, _, err = client.zpa.machine_groups.list_machine_groups(
             ... query_params={'search': 'MGRP01', 'page': '1', 'page_size': '100'})
             ... if err:
@@ -74,23 +73,19 @@ class MachineGroupsAPI(APIClient):
             query_params["microtenantId"] = microtenant_id
 
         # Prepare request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
             for item in response.get_results():
-                result.append(MachineGroup(
-                    self.form_response_body(item))
-                )
+                result.append(MachineGroup(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -106,7 +101,7 @@ class MachineGroupsAPI(APIClient):
 
         Returns:
             dict: The machine group object.
-            
+
         Examples:
             >>> fetched_group, _, err = client.zpa.machine_groups.get_group('999999')
             ... if err:
@@ -115,30 +110,28 @@ class MachineGroupsAPI(APIClient):
             ... print(fetched_group.id)
         """
         http_method = "get".upper()
-        api_url = format_url(f"""{
+        api_url = format_url(
+            f"""{
             self._zpa_base_endpoint}
             /machineGroup/{group_id}
-        """)
+        """
+        )
 
         query_params = query_params or {}
         microtenant_id = query_params.get("microtenant_id", None)
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, MachineGroup)
+        response, error = self._request_executor.execute(request, MachineGroup)
         if error:
             return (None, response, error)
 
         try:
-            result = MachineGroup(
-                self.form_response_body(response.get_body())
-            )
+            result = MachineGroup(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)

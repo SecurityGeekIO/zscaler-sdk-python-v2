@@ -18,7 +18,7 @@
 import pytest
 
 from tests.integration.zia.conftest import MockZIAClient
-from tests.test_utils import generate_random_string
+import random
 
 
 @pytest.fixture
@@ -35,50 +35,56 @@ class TestRuleLabels:
         client = MockZIAClient(fs)
         errors = []
         label_id = None
+        update_label = None
 
         try:
             # Test: Add Rule Label
             try:
-                label_data = {"name": "Test Label", "description": "Test Description"}
-                label, response, error = client.zia.rule_labels.add_label(**label_data)
+                create_label, _, error = client.zia.rule_labels.add_label(
+                    name=f"TestLabel_{random.randint(1000, 10000)}", description="Test Description"
+                )
                 assert error is None, f"Add Label Error: {error}"
-                assert label is not None, "Label creation failed."
-                label_id = label.id
+                assert create_label is not None, "Label creation failed."
+                label_id = create_label.id
             except Exception as e:
                 errors.append(f"Exception during add_label: {str(e)}")
 
-            # Test: Get Rule Label
+            # Test: Update Rule Label
             try:
                 if label_id:
-                    label, response, error = client.zia.rule_labels.get_label(label_id)
+                    update_label, _, error = client.zia.rule_labels.update_label(
+                        label_id=label_id,
+                        name=f"UpdatedLabel_{random.randint(1000, 10000)}",
+                        description="Updated Description",
+                    )
+                    assert error is None, f"Update Label Error: {error}"
+                    assert update_label is not None, "Label update returned None."
+            except Exception as e:
+                errors.append(f"Exception during update_label: {str(e)}")
+
+            # Test: Get Rule Label
+            try:
+                if update_label:
+                    label, _, error = client.zia.rule_labels.get_label(update_label.id)
                     assert error is None, f"Get Label Error: {error}"
                     assert label.id == label_id, "Retrieved label ID mismatch."
             except Exception as e:
                 errors.append(f"Exception during get_label: {str(e)}")
 
-            # Test: Update Rule Label
-            try:
-                if label_id:
-                    updated_data = {"description": "Updated Description"}
-                    label, response, error = client.zia.rule_labels.update_label(label_id, **updated_data)
-                    assert error is None, f"Update Label Error: {error}"
-                    assert label.description == "Updated Description", "Label update failed."
-            except Exception as e:
-                errors.append(f"Exception during update_label: {str(e)}")
-
             # Test: List Rule Labels
             try:
-                labels, response, error = client.zia.rule_labels.list_labels()
-                assert error is None, f"List Labels Error: {error}"
-                assert labels is not None and isinstance(labels, list), "No labels found."
+                if update_label:
+                    labels, _, error = client.zia.rule_labels.list_labels(query_params={"search": update_label.name})
+                    assert error is None, f"List Labels Error: {error}"
+                    assert labels is not None and isinstance(labels, list), "No labels found or invalid format."
             except Exception as e:
                 errors.append(f"Exception during list_labels: {str(e)}")
 
         finally:
             # Ensure label cleanup
             try:
-                if label_id:
-                    _, response, error = client.zia.rule_labels.delete_label(label_id)
+                if update_label:
+                    _, _, error = client.zia.rule_labels.delete_label(update_label.id)
                     assert error is None, f"Delete Label Error: {error}"
             except Exception as e:
                 errors.append(f"Exception during delete_label: {str(e)}")

@@ -16,11 +16,13 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from zscaler.api_client import APIClient
 from zscaler.request_executor import RequestExecutor
-from zscaler.zpa.models.application_segment import ApplicationSegment 
+from zscaler.zpa.models.application_segment import ApplicationSegment
 from zscaler.zpa.app_segment_by_type import ApplicationSegmentByTypeAPI
 from zscaler.utils import format_url, add_id_groups
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class ApplicationSegmentAPI(APIClient):
     reformat_params = [
@@ -46,8 +48,12 @@ class ApplicationSegmentAPI(APIClient):
 
         Args:
             query_params {dict}: Map of query parameters for the request.
+
                 ``[query_params.page]`` {str}: Specifies the page number.
-                ``[query_params.page_size]`` {str}: Specifies the page size. If not provided, the default page size is 20. The max page size is 500.
+
+                ``[query_params.page_size]`` {str}: Specifies the page size.
+                    If not provided, the default page size is 20. The max page size is 500.
+
                 ``[query_params.search]`` {str}: Search string for filtering results.
                 ``[query_params.microtenant_id]`` {str}: The unique identifier of the microtenant of ZPA tenant.
 
@@ -65,10 +71,12 @@ class ApplicationSegmentAPI(APIClient):
             ...     print(app.as_dict())
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /application
-        """)
+        """
+        )
 
         query_params = query_params or {}
 
@@ -76,30 +84,23 @@ class ApplicationSegmentAPI(APIClient):
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
             for item in response.get_results():
-                result.append(ApplicationSegment(
-                    self.form_response_body(item)))
+                result.append(ApplicationSegment(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def get_segment(
-        self,
-        segment_id: str,
-        query_params=None
-    ) -> tuple:
+    def get_segment(self, segment_id: str, query_params=None) -> tuple:
         """
         Retrieve an application segment by its ID.
 
@@ -111,7 +112,7 @@ class ApplicationSegmentAPI(APIClient):
 
         Returns:
             :obj:`Tuple`: A tuple containing the `ApplicationSegment` instance, response object, and error if any.
-            
+
         Examples:
             >>> fetched_segment, _, err = client.zpa.application_segment.get_segment('999999')
             ... if err:
@@ -120,10 +121,12 @@ class ApplicationSegmentAPI(APIClient):
             ... print(f"Fetched segment by ID: {fetched_segment.as_dict()}")
         """
         http_method = "get".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /application/{segment_id}
-        """)
+        """
+        )
 
         query_params = query_params or {}
 
@@ -131,20 +134,16 @@ class ApplicationSegmentAPI(APIClient):
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, ApplicationSegment)
+        response, error = self._request_executor.execute(request, ApplicationSegment)
         if error:
             return (None, response, error)
 
         try:
-            result = ApplicationSegment(
-                self.form_response_body(response.get_body())
-            )
+            result = ApplicationSegment(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -181,7 +180,7 @@ class ApplicationSegmentAPI(APIClient):
             :obj:`Tuple`: A tuple containing the `ApplicationSegment` instance, response object, and error if any.
 
         Examples:
-        
+
             Create an application segment using **legacy TCP port format** (`tcp_port_ranges`):
 
             >>> added_segment, _, err = client.zpa.application_segment.add_segment(
@@ -197,7 +196,7 @@ class ApplicationSegmentAPI(APIClient):
             ...     print(f"Error creating segment: {err}")
             ...     return
             ... print(f"segment created successfully: {added_segment.as_dict()}")
-            
+
            Create an application segment using **new TCP port format** (`tcp_port_range`):
 
             >>> added_segment, _, err = client.zpa.application_segment.add_segment(
@@ -213,7 +212,7 @@ class ApplicationSegmentAPI(APIClient):
             ...     print(f"Error creating segment: {err}")
             ...     return
             ... print(f"segment created successfully: {added_segment.as_dict()}")
-            
+
            Create an Browser Access application segment:
 
             >>> added_segment, _, err = client.zpa.application_segment.add_segment(
@@ -241,10 +240,12 @@ class ApplicationSegmentAPI(APIClient):
             ... print(f"segment created successfully: {added_segment.as_dict()}")
         """
         http_method = "post".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /application
-        """)
+        """
+        )
 
         # Construct the body from kwargs (as a dictionary)
         body = kwargs
@@ -275,26 +276,22 @@ class ApplicationSegmentAPI(APIClient):
         # Convert clientless_app_ids to clientlessApps if present
         if "clientless_app_ids" in body:
             body["clientlessApps"] = body.pop("clientless_app_ids")
-            
+
         # Apply add_id_groups to reformat params based on self.reformat_params
         add_id_groups(self.reformat_params, kwargs, body)
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body=body, params=params)
+        request, error = self._request_executor.create_request(http_method, api_url, body=body, params=params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, ApplicationSegment)
+        response, error = self._request_executor.execute(request, ApplicationSegment)
         if error:
             return (None, response, error)
 
         try:
-            result = ApplicationSegment(
-                self.form_response_body(response.get_body())
-            )
+            result = ApplicationSegment(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -311,9 +308,9 @@ class ApplicationSegmentAPI(APIClient):
 
         Returns:
             :obj:`Tuple`: A tuple containing the updated `ApplicationSegment` instance, response object, and error if any.
-            
+
         Examples:
-        
+
             Update an application segment using **legacy TCP port format** (`tcp_port_ranges`):
 
             >>> update_segment, _, err = client.zpa.application_segment.add_segment(
@@ -329,7 +326,7 @@ class ApplicationSegmentAPI(APIClient):
             ...     print(f"Error updating segment: {err}")
             ...     return
             ... print(f"segment updated successfully: {update_segment.as_dict()}")
-            
+
             Update an application segment using **new TCP port format** (`tcp_port_range`):
 
             >>> update_segment, _, err = client.zpa.application_segment.add_segment(
@@ -345,7 +342,7 @@ class ApplicationSegmentAPI(APIClient):
             ...     print(f"Error updating segment: {err}")
             ...     return
             ... print(f"segment updated successfully: {update_segment.as_dict()}")
-            
+
             Update an Browser Access application segment
 
             >>> update_segment, _, err = client.zpa.application_segment.add_segment(
@@ -429,13 +426,11 @@ class ApplicationSegmentAPI(APIClient):
 
         add_id_groups(self.reformat_params, kwargs, body)
 
-        request, error = self._request_executor.\
-            create_request(http_method, api_url, body, {}, params)
+        request, error = self._request_executor.create_request(http_method, api_url, body, {}, params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.\
-            execute(request, ApplicationSegment)
+        response, error = self._request_executor.execute(request, ApplicationSegment)
         if error:
             return (None, response, error)
 
@@ -443,20 +438,13 @@ class ApplicationSegmentAPI(APIClient):
             return (ApplicationSegment({"id": segment_id}), None, None)
 
         try:
-            result = ApplicationSegment(
-                self.form_response_body(response.get_body())
-            )
+            result = ApplicationSegment(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
 
         return (result, response, None)
 
-    def delete_segment(
-        self,
-        segment_id: str,
-        force_delete: bool = False,
-        microtenant_id: str = None
-    ) -> tuple:
+    def delete_segment(self, segment_id: str, force_delete: bool = False, microtenant_id: str = None) -> tuple:
         """
         Deletes the specified Application Segment from ZPA.
 
@@ -468,7 +456,7 @@ class ApplicationSegmentAPI(APIClient):
 
         Returns:
             tuple: A tuple containing the response and error (if any).
-            
+
         Examples:
             >>> _, _, err = client.zpa.application_segment.delete_segment(
             ...     segment_id='999999'
@@ -491,13 +479,11 @@ class ApplicationSegmentAPI(APIClient):
         if force_delete:
             params["forceDelete"] = "true"
 
-        request, error = self._request_executor.\
-            create_request(http_method, api_url, params=params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.\
-            execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
@@ -536,10 +522,12 @@ class ApplicationSegmentAPI(APIClient):
 
         """
         http_method = "post".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /application/{application_id}/move
-        """)
+        """
+        )
 
         payload = {
             "targetSegmentGroupId": kwargs.pop("target_segment_group_id", None),
@@ -551,10 +539,7 @@ class ApplicationSegmentAPI(APIClient):
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         request, error = self._request_executor.create_request(
-            method=http_method,
-            endpoint=api_url,
-            body=payload,
-            params=params
+            method=http_method, endpoint=api_url, body=payload, params=params
         )
 
         if error:
@@ -604,23 +589,22 @@ class ApplicationSegmentAPI(APIClient):
 
         """
         http_method = "put".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /application/{application_id}/share
-        """)
-        
+        """
+        )
+
         payload = {
             "shareToMicrotenants": kwargs.pop("share_to_microtenants", None),
         }
-        
+
         microtenant_id = kwargs.pop("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         request, error = self._request_executor.create_request(
-            method=http_method,
-            endpoint=api_url,
-            body=payload,
-            params=params
+            method=http_method, endpoint=api_url, body=payload, params=params
         )
 
         if error:

@@ -15,16 +15,8 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 import pytest
-
-from tests.integration.zia.conftest import MockZIAClient
-
-
-@pytest.fixture
-def fs():
-    yield
-
-
-import pytest
+import random
+import string
 from tests.integration.zia.conftest import MockZIAClient
 
 
@@ -35,32 +27,45 @@ def fs():
 
 class TestExemptedUrls:
     """
-    Integration Tests for Authentication Settings Exempted URLs.
+    Integration Test for Authentication Settings Exempted URLs Workflow.
     """
 
-    def test_add_urls_to_exempt_list(self, fs):
-        client = MockZIAClient(fs)
-        urls_to_add = ["example.com", "testsite.com"]
-        try:
-            updated_exempt_list = client.zia.authentication_settings.add_urls_to_exempt_list(urls_to_add)
-            assert updated_exempt_list is not None, "The update exempt list operation returned None."
-        except Exception as exc:
-            pytest.fail(f"Failed to add URLs to exempt list: {exc}")
+    def generate_random_urls(self, count=5, domain="example.com"):
+        """Generate a list of random test URLs."""
+        return [f"{''.join(random.choices(string.ascii_lowercase, k=8))}.{domain}" for _ in range(count)]
 
-    def test_get_exempted_urls(self, fs):
+    def test_exempted_urls_workflow(self, fs):
         client = MockZIAClient(fs)
-        try:
-            exempt_list, response, err = client.zia.authentication_settings.get_exempted_urls()
-            assert err is None, f"Error occurred: {err}"
-            assert isinstance(exempt_list, list), "Failed to retrieve exempt list."
-        except Exception as exc:
-            pytest.fail(f"Exempt list retrieval failed: {exc}")
+        errors = []
 
-    def test_delete_urls_from_exempt_list(self, fs):
-        client = MockZIAClient(fs)
+        # Use valid format to ensure ZIA accepts them
+        test_urls = self.generate_random_urls(count=5, domain="test.com")
+
         try:
-            urls_to_clean = ["example.com", "testsite.com"]
-            client.zia.authentication_settings.delete_urls_from_exempt_list(urls_to_clean)
-            print("Cleanup successful for exempt URLs list.")
-        except Exception as exc:
-            print(f"Cleanup failed for exempt URLs list: {exc}")
+            # Step 1: Add URLs to the exempt list
+            try:
+                updated_urls, _, error = client.zia.authentication_settings.add_urls_to_exempt_list(test_urls)
+                assert error is None, f"Error adding URLs to exempt list: {error}"
+                assert isinstance(updated_urls, list), "Expected a list in response"
+                assert all(url in updated_urls for url in test_urls), "Some test URLs were not added"
+            except Exception as exc:
+                errors.append(f"Failed to add URLs to exempt list: {exc}")
+
+            # Step 2: Retrieve and verify the exempt list
+            try:
+                current_urls, _, error = client.zia.authentication_settings.get_exempted_urls()
+                assert error is None, f"Error retrieving exempt list: {error}"
+                assert isinstance(current_urls, list), "Expected list response from get_exempted_urls"
+                assert all(url in current_urls for url in test_urls), "Some test URLs not found in exempt list"
+            except Exception as exc:
+                errors.append(f"Failed to retrieve or verify exempt list: {exc}")
+
+        finally:
+            # Step 3: Cleanup - delete all URLs
+            try:
+                _, _, error = client.zia.authentication_settings.delete_urls_from_exempt_list([])
+                assert error is None, f"Error clearing exempt list: {error}"
+            except Exception as exc:
+                errors.append(f"Cleanup failed: {exc}")
+
+        assert len(errors) == 0, f"Errors occurred during the exempt URL workflow test:\n{chr(10).join(errors)}"

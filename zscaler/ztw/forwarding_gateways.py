@@ -19,6 +19,7 @@ from zscaler.api_client import APIClient
 from zscaler.ztw.models.forwarding_gateways import ForwardingGateways
 from zscaler.utils import format_url
 
+
 class ForwardingGatewaysAPI(APIClient):
 
     _ztw_base_endpoint = "/ztw/api/v1"
@@ -26,8 +27,8 @@ class ForwardingGatewaysAPI(APIClient):
     def __init__(self, request_executor):
         super().__init__()
         self._request_executor: RequestExecutor = request_executor
-        
-    def list_gateways(self) -> tuple:
+
+    def list_gateways(self, query_params=None) -> tuple:
         """
         Retrieves a list of ZIA gateways and Log and Control gateways.
 
@@ -36,7 +37,7 @@ class ForwardingGatewaysAPI(APIClient):
                 N/A
 
         Examples:
-            >>> proxy, response, err = client.zia.forwarding_gateways.list_gateways()
+            >>> proxy, response, err = client.ztw.forwarding_gateways.list_gateways()
 
         """
 
@@ -55,14 +56,7 @@ class ForwardingGatewaysAPI(APIClient):
         body = {}
         headers = {}
 
-        request, error = self._request_executor.\
-            create_request(
-            http_method,
-            api_url,
-            body,
-            headers,
-            params=query_params
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
         if error:
             return (None, None, error)
 
@@ -73,18 +67,13 @@ class ForwardingGatewaysAPI(APIClient):
         try:
             results = []
             for item in response.get_results():
-                results.append(ForwardingGateways(
-                    self.form_response_body(item))
-                )
+                results.append(ForwardingGateways(self.form_response_body(item)))
         except Exception as exc:
             return (None, response, exc)
 
         if local_search:
             lower_search = local_search.lower()
-            results = [
-                r for r in results
-                if lower_search in (r.name.lower() if r.name else "")
-            ]
+            results = [r for r in results if lower_search in (r.name.lower() if r.name else "")]
 
         return (results, response, None)
 
@@ -102,28 +91,28 @@ class ForwardingGatewaysAPI(APIClient):
                 ``[query_params.search]`` {str}: The search string used to match against a group's name or description attributes.
 
         Returns:
-            tuple: List of IP Source Groups resource records.
+            tuple: List of forward gateways resource records.
 
         Examples:
-            Gets a list of all IP source groups.
-            
-            >>> group_list, response, error = zia.cloud_firewall.list_ip_source_groups_lite():
+            Gets a list of all forward gateways.
+
+            >>> gw_list, response, error = ztw.forwarding_gateways.list_gateway_lite():
             ... if error:
-            ...     print(f"Error listing IP source groups: {error}")
+            ...     print(f"Error listing forward gateways: {error}")
             ...     return
-            ... print(f"Total groups found: {len(group_list)}")
-            ... for group in group_list:
-            ...     print(group.as_dict())
-            
-            Gets a list of all IP source groups name and ID.
-            
-            >>> group_list, response, error = zia.cloud_firewall.list_ip_source_groups_lite(query_params={"search": 'Group01'}):
+            ... print(f"Total gateways found: {len(gw_list)}")
+            ... for gw in gw_list:
+            ...     print(gw.as_dict())
+
+            Gets a list of all forward gateways name and ID.
+
+            >>> gw_list, response, error = ztw.forwarding_gateways.list_gateway_lite(query_params={"search": 'Group01'}):
             ... if error:
-            ...     print(f"Error listing IP source groups: {error}")
+            ...     print(f"Error listing forward gateways: {error}")
             ...     return
-            ... print(f"Total groups found: {len(group_list)}")
-            ... for group in group_list:
-            ...     print(group.as_dict())
+            ... print(f"Total gateways found: {len(gw_list)}")
+            ... for gw in gw_list:
+            ...     print(gw.as_dict())
 
         """
         http_method = "get".upper()
@@ -141,14 +130,7 @@ class ForwardingGatewaysAPI(APIClient):
         body = {}
         headers = {}
 
-        request, error = self._request_executor.\
-            create_request(
-            http_method,
-            api_url,
-            body,
-            headers,
-            params=query_params
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
         if error:
             return (None, None, error)
 
@@ -159,55 +141,66 @@ class ForwardingGatewaysAPI(APIClient):
         try:
             results = []
             for item in response.get_results():
-                results.append(ForwardingGateways(
-                    self.form_response_body(item))
-                )
+                results.append(ForwardingGateways(self.form_response_body(item)))
         except Exception as exc:
             return (None, response, exc)
 
         if local_search:
             lower_search = local_search.lower()
-            results = [
-                r for r in results
-                if lower_search in (r.name.lower() if r.name else "")
-            ]
+            results = [r for r in results if lower_search in (r.name.lower() if r.name else "")]
 
         return (results, response, None)
-    
-    def get_gateway(self, gateway_id: int) -> tuple:
+
+    def add_gateway(self, **kwargs) -> tuple:
         """
-        Fetches a specific ZIA gateways and Log and Control gateways by ID.
+        Creates a new ZTW Forwarding Gateway.
 
         Args:
-            gateway_id (int): The unique identifier for the ZIA gateways and Log and Control gateways.
+            name (str): Name of the gateway.
+            **kwargs: Optional keyword args.
+
+        Keyword Args:
+            type (str): Type of the gateway. Supported types are ZIA and ECSELF (Log and Control gateway).
+                Supported Values: "PROXYCHAIN", "ZIA", "ECSELF"
+            description (str): Description of the gateway.
+            fail_closed (bool): Indicates that traffic must be dropped when both primary and secondary proxies defined in the gateway are unreachable.
+            manual_primary (str): Specifies the primary proxy through which traffic must be forwarded.
+            manual_secondary (str): Specifies the secondary proxy through which traffic must be forwarded.
+            subcloud_primary (list): If a manual (DC) primary proxy is used and if the organization has subclouds associated, you can specify a subcloud using this field for the specified DC
+            subcloud_secondary (list): If a manual (DC) secondary proxy is used and if the organization has subclouds associated, you can specify a subcloud using this field for the specified DC
+            primary_type (str): Type of the primary proxy, such as automatic proxy (AUTO), manual proxy (DC)
+                Supported values: "NONE", "AUTO", "MANUAL_OVERRIDE", "SUBCLOUD", "VZEN", "PZEN", "DC"
+            secondary_type (str): Type of the secondary proxy, such as automatic proxy (AUTO), manual proxy (DC)
+                Supported values: "NONE", "AUTO", "MANUAL_OVERRIDE", "SUBCLOUD", "VZEN", "PZEN", "DC"
 
         Returns:
-            tuple: A tuple containing (ZIA gateways and Log and Control gateways instance, Response, error).
+            tuple: A tuple containing the newly added Forwarding Gateway, response, and error.
         """
-        http_method = "get".upper()
-        api_url = format_url(f"""
+        http_method = "post".upper()
+        api_url = format_url(
+            f"""
             {self._ztw_base_endpoint}
-            /gateways/{gateway_id}
-        """)
+            /gateways
+        """
+        )
 
-        body = {}
-        headers = {}
+        body = kwargs
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, headers)
+        request, error = self._request_executor.create_request(
+            method=http_method,
+            endpoint=api_url,
+            body=body,
+        )
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, ForwardingGateways)
+        response, error = self._request_executor.execute(request, ForwardingGateways)
         if error:
             return (None, response, error)
 
         try:
-            result = ForwardingGateways(
-                self.form_response_body(response.get_body())
-            )
+            result = ForwardingGateways(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -223,20 +216,20 @@ class ForwardingGatewaysAPI(APIClient):
             tuple: A tuple containing the response object and error (if any).
         """
         http_method = "delete".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._ztw_base_endpoint}
             /gateways/{gateway_id}
-        """)
+        """
+        )
 
         params = {}
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
         return (None, response, None)

@@ -1,4 +1,4 @@
-# Official Python SDK for the Zscaler Products (Beta)
+# Official Python SDK for the Zscaler Products
 
 [![PyPI - Downloads](https://img.shields.io/pypi/dw/zscaler-sdk-python)](https://pypistats.org/packages/zscaler-sdk-python)
 [![License](https://img.shields.io/github/license/zscaler/zscaler-sdk-python.svg)](https://github.com/zscaler/zscaler-sdk-python)
@@ -14,14 +14,14 @@
 
 # Official Zscaler Python SDK Overview
 
-* [Migration](#need-help)
 * [Release status](#release-status)
+* [Breaking Changes & Migration Guide to Multi-Client SDK](#breaking-changes--migration-guide-to-multi-client-sdk)
 * [Need help?](#need-help)
 * [Getting Started](#getting-started)
 - [Building the SDK](#building-the-sdk)
 * [Usage guide](#usage-guide)
 * [Authentication](#authentication)
-* [OneAPI New Framework](#oneapi-new-framework)
+* [Zscaler OneAPI New Framework](#zscaler-oneapi-new-framework)
 * [Zscaler Legacy API Framework](#zscaler-legacy-api-framework)
 * [Configuration reference](#configuration-reference)
 * [Pagination](#pagination)
@@ -41,6 +41,28 @@ This SDK is designed to support the new Zscaler API framework [OneAPI](https://h
 via a single OAuth2 HTTP client. The SDK is also backwards compatible with the previous
 Zscaler API framework, and each package is supported by an individual and robust HTTP client
 designed to handle failures on different levels by performing intelligent retries.
+
+## Release Status
+
+This library uses semantic versioning and updates are posted in ([release notes](/docs/guides/release-notes.md)) |
+
+| Version | Status                           |
+| ------- | -------------------------------- |
+| 0.x     | :warning: Beta Release (Retired) |
+| 1.x     | :heavy_check_mark: Release       |
+
+The latest release can always be found on the ([releases page](github-releases))
+
+> Requires Python version 3.8.0 or higher.
+Zscaler SDK for Python is compatible with Python 3.8 _(until [June 2023](https://devguide.python.org/versions/))_, 3.8, 3.9, 3.10, and 3.11.
+
+## Need help?
+
+If you run into problems, please refer to our [General Support Statement](docs/guides/support.md) before proceeding with the use of this SDK. You can also refer to our [troubleshooting guide](docs/guides/troubleshooting.md) for guidance on typical problems. You can also raise an issue via ([github issues page](https://github.com/zscaler/zscaler-sdk-go/issues))
+
+- Ask questions on the [Zenith Community][zenith]
+- Post [issues on GitHub][github-issues] (for code errors)
+- Support [customer support portal][zscaler-support]
 
 ## Breaking Changes & Migration Guide to Multi-Client SDK
 
@@ -69,31 +91,61 @@ users = client.users.list()
 print(users[0].name)  # Box-style access
 ```
 
+### New SDK Example
+```py
+from zscaler import ZscalerClient
 
+config = {
+    "clientId": "...",
+    "clientSecret": "...",
+    "vanityDomain": "...",
+    "cloud": "beta", # (Optional)
+}
 
+with ZscalerClient(config) as client:
+    users, _, err = client.zia.user_management.list_users()
+    if err:
+        print("Error:", err)
+    else:
+        print(users[0]["name"])  # Pythonic dict access
+```
 
+### Migration Summary
 
-## Release Status
+If you're upgrading from a previous version:
 
-This library uses semantic versioning and updates are posted in ([release notes](/docs/guides/release-notes.md)) |
+* Refactor any `.attribute` access to dictionary access: `user["name"]` instead of `user.name`
+* Update authentication to use OAuth2 via OneAPI:
+Choose either:
+```py
+client = ZscalerClient({
+    "client_id": "...",
+    "client_secret": "...",
+    "vanity_domain": "..."
+})
+```
 
-| Version | Status                           |
-| ------- | -------------------------------- |
-| 0.x     | :warning: Beta Release (Retired) |
-| 1.x     | :heavy_check_mark: Release       |
+or (for JWT private key auth):
+```py
+client = ZscalerClient({
+    "client_id": "...",
+    "private_key": "...",
+    "vanity_domain": "..."
+})
+```
 
-The latest release can always be found on the ([releases page](github-releases))
+* If your tenant is still `NOT` migrated to Zidentity:
+You can still use this SDK by instantiating the respective legacy API client directly. See section: [Zscaler Legacy API Framework](#zscaler-legacy-api-framework)
+```py
+from zscaler.oneapi_client import LegacyZIAClient
 
-> Requires Python version 3.8.0 or higher.
-Zscaler SDK for Python is compatible with Python 3.8 _(until [June 2023](https://devguide.python.org/versions/))_, 3.8, 3.9, 3.10, and 3.11.
+def main():
+    with LegacyZIAClient(config) as client:
+        users, _, _ = client.user_management.list_users()
+        ...
+```
 
-## Need help?
-
-If you run into problems, please refer to our [General Support Statement](docs/guides/support.md) before proceeding with the use of this SDK. You can also refer to our [troubleshooting guide](docs/guides/troubleshooting.md) for guidance on typical problems. You can also raise an issue via ([github issues page](https://github.com/zscaler/zscaler-sdk-go/issues))
-
-- Ask questions on the [Zenith Community][zenith]
-- Post [issues on GitHub][github-issues] (for code errors)
-- Support [customer support portal][zscaler-support]
+* All data returned from the SDK is pure `dict` — no Box, no attribute-style access — just native, Pythonic, serializable output.
 
 ## Getting started
 
@@ -143,7 +195,7 @@ If your Zscaler tenant has not been migrated to the new Zscaler [Zidentity platf
 
    :warning: **Caution**: Zscaler does not recommend hard-coding credentials into arguments, as they can be exposed in plain text in version control systems. Use environment variables instead.
 
-## Zscaler OneAPI New Framework (Zidentity)
+## Zscaler OneAPI New Framework
 
 As of the publication of SDK version => 0.20.x, OneAPI is available for programmatic interaction with the following products:
 
@@ -164,6 +216,8 @@ dropdown you will see the newly created Role. In the event a newly created role 
 ZIdentity Admin UI a `Sync Now` button is provided in the API Resources menu which will initiate an
 on-demand sync of newly created roles.
 
+**WARNING**: Attention Government customers. OneAPI and Zidentity is not currently supported for the following ZIA clouds: `zscalergov` and `zscalerten` or ZPA `GOV`, and `GOVUS`.
+
 ### Default Environment Variables
 
 You can provide credentials via the `ZSCALER_CLIENT_ID`, `ZSCALER_CLIENT_SECRET`, `ZSCALER_VANITY_DOMAIN`, `ZSCALER_CLOUD` environment variables, representing your Zidentity OneAPI credentials `clientId`, `clientSecret`, `vanityDomain` and `cloud` respectively.
@@ -175,6 +229,8 @@ You can provide credentials via the `ZSCALER_CLIENT_ID`, `ZSCALER_CLIENT_SECRET`
 | `privateKey`       | _(String)_ A string Private key value.| `ZSCALER_PRIVATE_KEY` |
 | `vanityDomain`       | _(String)_ Refers to the domain name used by your organization `https://<vanity_domain>.zslogin.net/oauth2/v1/token` | `ZSCALER_VANITY_DOMAIN` |
 | `cloud`       | _(String)_ The host and basePath for the cloud services API is `$api.<cloud_name>.zsapi.net`.| `ZSCALER_CLOUD` |
+| `sandboxToken`       | _(String)_ The Zscaler Internet Access Sandbox Token | `ZSCALER_SANDBOX_TOKEN` |
+| `sandboxCloud`       | _(String)_ The Zscaler Internet Access Sandbox cloud name | `ZSCALER_SANDBOX_CLOUD` |
 
 ### Alternative OneAPI Cloud Environments
 
@@ -195,6 +251,18 @@ export ZSCALER_CLOUD="beta"
 **Note 1**: The attribute `cloud` or environment variable `ZSCALER_CLOUD` is optional and only required when authenticating to an alternative Zidentity cloud environment.
 
 **Note 2**: By default this SDK will send the authentication request and subsequent API calls to the default base URL.
+
+**Note 3**: Authentication to Zscaler Sandbox requires the attribute/parameter `sandboxCloud`.The following cloud environments are supported:
+
+* `zscaler`
+* `zscalerone`
+* `zscalertwo`
+* `zscalerthree`
+* `zscloud`
+* `zscalerbeta`
+* `zscalergov`
+* `zscalerten`
+* `zspreview`
 
 ### Authenticating to Zscaler Private Access (ZPA)
 
@@ -294,7 +362,7 @@ Note, that `privateKey` can be passed in JWK format or in PEM format, i.e. (exam
 
 > **NOTE**: THIS IS NOT A PRODUCTION KEY AND IS DISPLAYED FOR EXAMPLE PURPOSES ONLY
 
-![JWK Example](https://raw.githubusercontent.com/SecurityGeekIO/zscaler-sdk-python-v2/refs/heads/master/docsrc/jwk.svg?token=GHSAT0AAAAAACPKPSHRINMJR26AL6HIRMOIZ6PA5YQ)
+![JWK Example](https://raw.githubusercontent.com/zscaler/zscaler-sdk-python/refs/heads/master/docsrc/jwk.svg)
 
 or
 
@@ -309,7 +377,7 @@ MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCv3krdYg3z7h0H
 
 ### Get and set custom headers
 
-It is possible to set custom headers, which will be sent with each request. This feature is only supported when instantiating the OneAPI Client `ZscalerClient`. 
+It is possible to set custom headers, which will be sent with each request. This feature is only supported when instantiating the OneAPI Client `ZscalerClient`.
 
 ```py
 from zscaler import ZscalerClient
@@ -323,7 +391,7 @@ def main():
 
     # clear all custom headers
     client.clear_custom_headers()
-    
+
     # output should be: {}
     print(client.get_custom_headers())
 ```
@@ -333,7 +401,7 @@ This doesn't allow breaking the client. Get default headers:
 
 ## Zscaler OneAPI Rate Limiting
 
-Zscaler OneAPI provides unique rate limiting numbers for each individual product. Regardless of the product, a 429 response will be returned if too many requests are made within a given time. 
+Zscaler OneAPI provides unique rate limiting numbers for each individual product. Regardless of the product, a 429 response will be returned if too many requests are made within a given time.
 
 ### Built-In Retry
 
@@ -347,9 +415,43 @@ The header `x-ratelimit-reset` is returned in the API response for each API call
 
 ## Pagination
 
-The pagination logic in this SDK applies to both the OneAPI Client and Legacy API Client Framework. This way, the transition from the legacy to OneAPI is seamless and no code changes are required at the resource level.
+The pagination system in this SDK is unified across `ZCC`, `ZTW`, `ZDX`, `ZIA`, `ZPA`, `ZWA`
+and is applied transparently whether you're using the Legacy API Client or the new OneAPI OAuth2 Client.
 
-### Filter or search for Segment Groups
+✅ This means no code changes are needed when transitioning from the legacy API framework to OneAPI framework.
+
+When calling a method that supports pagination (e.g., `list_users`, `list_groups`, `list_app_segments`), only the first page of results is returned initially. The SDK returns a response tuple:
+
+```py
+items, response, error = client.zia.user_management.list_groups()
+```
+
+You can then use the `response.has_next()` and `response.next()` methods to retrieve subsequent pages.
+
+### Basic Pagination Example
+
+```py
+query_parameters = {'page_size': 100}
+groups, resp, err = client.zia.user_management.list_groups(query_parameters)
+
+while resp.has_next():
+    more_groups, err = resp.next()
+    if err:
+        break
+    groups.extend(more_groups)
+```
+
+### Searching and Filtering
+
+You can filter or search using available query parameters. The available parameters vary by service, so refer to each method's documentation for details.
+
+```py
+# Query parameters are optional on methods that can use them!
+# Check the method definition for details on which query parameters are accepted.
+# Using the search parameter to support search by features and fields.
+query_parameters = {'search': 'Group1'}
+groups, resp, err = client.zpa.segment_groups.list_groups(query_parameters)
+```
 
 ```py
 # Query parameters are optional on methods that can use them!
@@ -358,12 +460,75 @@ query_parameters = {'page': '1', 'page_size': '100'}
 groups, resp, err = client.zpa.segment_groups.list_groups(query_parameters)
 ```
 
+### Full Example with Error Handling
 ```py
-# Query parameters are optional on methods that can use them!
-# Check the method definition for details on which query parameters are accepted.
-# Using the search parameter to support search by features and fields.
-query_parameters = {'search': 'Group1'}
-groups, resp, err = client.zpa.segment_groups.list_groups(query_parameters)
+def main():
+    with ZscalerClient(config) as client:
+        query_parameters = {}
+        groups, resp, err = client.zia.user_management.list_groups(query_parameters)
+
+        if err:
+            print(f"Error: {err}")
+            return
+
+        print(f"Processing {len(groups)} groups:")
+        for group in groups:
+            print(group)
+
+        while resp.has_next():
+            next_page, err = resp.next()
+            if err:
+                print(f"Error fetching next page: {err}")
+                break
+            for group in next_page:
+                print(group)
+
+        try:
+            resp.next()  # Will raise StopIteration if no more data
+        except StopIteration:
+            print("✅ No more groups to retrieve.")
+
+if __name__ == "__main__":
+    main()
+```
+
+### Pagination Limits and Controls
+
+Each Zscaler service has its own pagination requiremens and max page size:
+
+| Service | Default Page Size | Max Page Size |             Notes                               |
+|---------|-------------------|---------------|-------------------------------------------------|
+| ZCC     | Varies            | Varies        | Uses `pageSize` (camelCase)                     |
+| ZDX     | 10                | Varies        | Uses `limit` + `offset`, similar to cursor API  |
+| ZIA     | 100               | Varies        | Uses `pageSize` (camelCase)                     |
+| ZPA     | 100               | 500           | Uses `pagesize` (lowercase)                     |
+| ZTW     | 100               | Varies        | Uses `pageSize` (camelCase)                     |
+| ZWA     | Varies            | Varies        | Uses `pageSize` (camelCase)                     |
+
+⚠️ **Note:** Always use `snake_case` for all parameter names, even when the API expects camelCase.The SDK handles conversion internally.
+
+
+You can control how many total items or pages the SDK will fetch even if more data is available.
+
+###  Internal Pagination Handling
+
+The `ZscalerAPIResponse` object returned as resp handles:
+
+* Tracking the current page
+* Automatically applying proper pagination parameters per service
+* Mapping pagination fields like page, pagesize, limit, offset, next_offset, etc.
+* Fallback handling when the API doesn't indicate the total count
+
+You don’t need to worry about API quirks—just use `resp.has_next()` and `resp.next()` safely.
+
+⚠️ Note on StopIteration
+The SDK raises a StopIteration if `next()` is called and no more pages are available:
+
+```py
+try:
+    resp.next()
+except StopIteration:
+    print("All data fetched.")
 ```
 
 ## Logging
@@ -498,6 +663,8 @@ Each one of the configuration values above can be turned into an environment var
 | `proxyUsername`       | _(String)_ HTTP proxy username  | `ZSCALER_CLIENT_PROXY_USERNAME` |
 | `proxyPassword`       | _(String)_ HTTP proxy password  | `ZSCALER_CLIENT_PROXY_PASSWORD` |
 | `disableHttpsCheck`       | _(String)_ Disable SSL checks  | `ZSCALER_TESTING_TESTINGDISABLEHTTPSCHECK` |
+| `sandboxToken`       | _(String)_ The Zscaler Internet Access Sandbox Token | `ZSCALER_SANDBOX_TOKEN` |
+| `sandboxCloud`       | _(String)_ The Zscaler Internet Access Sandbox cloud name | `ZSCALER_SANDBOX_CLOUD` |
 
 ## Zscaler Legacy API Framework
 
@@ -528,10 +695,12 @@ You can provide credentials via the `ZIA_USERNAME`, `ZIA_PASSWORD`, `ZIA_API_KEY
 
 | Argument     | Description | Environment variable |
 |--------------|-------------|-------------------|
-| `username`       | _(String)_ A string that contains the email ID of the API admin.| `ZIA_USERNAME` |    
+| `username`       | _(String)_ A string that contains the email ID of the API admin.| `ZIA_USERNAME` |
 | `password`       | _(String)_ A string that contains the password for the API admin.| `ZIA_PASSWORD` |
-| `api_key`       | _(String)_ A string that contains the obfuscated API key (i.e., the return value of the obfuscateApiKey() method).| `ZIA_API_KEY` |   
+| `api_key`       | _(String)_ A string that contains the obfuscated API key (i.e., the return value of the obfuscateApiKey() method).| `ZIA_API_KEY` |
 | `cloud`       | _(String)_ The host and basePath for the cloud services API is `$zsapi.<Zscaler Cloud Name>/api/v1`.| `ZIA_CLOUD` |
+| `sandboxToken`       | _(String)_ The Zscaler Internet Access Sandbox Token | `ZSCALER_SANDBOX_TOKEN` |
+| `sandboxCloud`       | _(String)_ The Zscaler Internet Access Sandbox cloud name | `ZSCALER_SANDBOX_CLOUD` |
 
 ### ZIA Legacy Client Initialization
 
@@ -587,9 +756,9 @@ You can provide credentials via the `ZTW_USERNAME`, `ZTW_PASSWORD`, `ZTW_API_KEY
 
 | Argument     | Description | Environment variable |
 |--------------|-------------|-------------------|
-| `username`       | _(String)_ A string that contains the email ID of the API admin.| `ZTW_USERNAME` |    
+| `username`       | _(String)_ A string that contains the email ID of the API admin.| `ZTW_USERNAME` |
 | `password`       | _(String)_ A string that contains the password for the API admin.| `ZTW_PASSWORD` |
-| `api_key`       | _(String)_ A string that contains the obfuscated API key (i.e., the return value of the obfuscateApiKey() method).| `ZTW_API_KEY` |   
+| `api_key`       | _(String)_ A string that contains the obfuscated API key (i.e., the return value of the obfuscateApiKey() method).| `ZTW_API_KEY` |
 | `cloud`       | _(String)_ The host and basePath for the cloud services API is `$zsapi.<Zscaler Cloud Name>/api/v1`.| `ZTW_CLOUD` |
 
 ### ZTW Legacy Client Initialization
@@ -608,12 +777,12 @@ config = {
 
 def main():
     with LegacyZTWClient(config) as client:
-        fetched_prov_url, response, error = client.ztw.provisioning_url.list_provisioning_url()
+        fetched_prov_url, response, error = client.ZTW.provisioning_url.list_provisioning_url()
         if error:
             print(f"Error fetching prov url by ID: {error}")
             return
         print(f"Fetched prov url by ID: {fetched_prov_url.as_dict()}")
-        
+
 if __name__ == "__main__":
     main()
 ```
@@ -641,7 +810,7 @@ You can provide credentials via the `ZPA_CLIENT_ID`, `ZPA_CLIENT_SECRET`, `ZPA_C
 
 | Argument     | Description | Environment variable |
 |--------------|-------------|-------------------|
-| `clientId`       | _(String)_ The ZPA API client ID generated from the ZPA console.| `ZPA_CLIENT_ID` |    
+| `clientId`       | _(String)_ The ZPA API client ID generated from the ZPA console.| `ZPA_CLIENT_ID` |
 | `clientSecret`       | _(String)_ The ZPA API client secret generated from the ZPA console.| `ZPA_CLIENT_SECRET` |
 | `customerId`       | _(String)_ The ZPA tenant ID found in the Administration > Company menu in the ZPA console.| `ZPA_CUSTOMER_ID` |
 | `microtenantId`       | _(String)_ The ZPA microtenant ID found in the respective microtenant instance under Configuration & Control > Public API > API Keys menu in the ZPA console.| `ZPA_MICROTENANT_ID` |
@@ -725,7 +894,7 @@ config = {
     with LegacyZCCClient(config) as client:
 
         for group in client.zcc.devices.list_devices():
-            print(group)     
+            print(group)
 if __name__ == "__main__":
     main()
 ```
@@ -794,7 +963,7 @@ You can provide credentials via the `ZWA_CLIENT_ID`, `ZWA_CLIENT_SECRET` environ
 
 | Argument     | Description | Environment variable |
 |--------------|-------------|-------------------|
-| `key_id`       | _(String)_ The ZWA string that contains the API key ID.| `ZWA_CLIENT_ID` |    
+| `key_id`       | _(String)_ The ZWA string that contains the API key ID.| `ZWA_CLIENT_ID` |
 | `key_secret`       | _(String)_ The ZWA string that contains the key secret.| `ZWA_CLIENT_SECRET` |
 | `cloud`       | _(String)_ The ZWA string containing cloud provisioned for your organization.| `ZWA_CLOUD` |
 
@@ -819,14 +988,14 @@ def main():
             return
         for incident in transactions:
             print(incident.as_dict())
-            
+
 if __name__ == "__main__":
     main()
 ```
 
 ## Zscaler Legacy API Rate Limiting
 
-Zscaler provides unique rate limiting numbers for each individual product. Regardless of the product, a 429 response will be returned if too many requests are made within a given time. 
+Zscaler provides unique rate limiting numbers for each individual product. Regardless of the product, a 429 response will be returned if too many requests are made within a given time.
 Please see:
 
 The header `X-Rate-Limit-Remaining` is returned in the API response for each API call. This header indicates the time in seconds until the rate limit resets. The SDK uses the returned value to calculate the retry time for the following services:
@@ -837,10 +1006,10 @@ The header `RateLimit-Reset` is returned in the API response for each API call. 
 * [ZWA Rate Limiting][rate-limiting-zwa] for rate limiting requirements.
 
 When a 429 error is received, the `Retry-After` header is returned in the API response. The SDK uses the returned value to calculate the retry time. The following services are rate limited based on its respective endpoint.
-* [ZTW Rate Limiting][rate-limiting-ztw] for a complete list of which endpoints are rate limited.
+* [ZTW Rate Limiting][rate-limiting-ZTW] for a complete list of which endpoints are rate limited.
 * [ZIA Rate Limiting][rate-limiting-zia] for a complete list of which endpoints are rate limited.
 
-When a 429 error is received, the `retry-after` header will tell you the time at which you can retry. The SDK uses the returned value to calculate the retry time. 
+When a 429 error is received, the `retry-after` header will tell you the time at which you can retry. The SDK uses the returned value to calculate the retry time.
 * [ZPA Rate Limiting][rate-limiting-zpa] for rate limiting requirements.
 
 ### Built-In Retry
@@ -855,7 +1024,7 @@ At this moment we are not accepting contributions, but we welcome suggestions on
 [zscaler-support]: https://help.zscaler.com/contact-support
 [github-issues]: https://github.com/zscaler/zscaler-sdk-python/issues
 [rate-limiting-zcc]: https://help.zscaler.com/zscaler-client-connector/understanding-rate-limiting
-[rate-limiting-ztw]: https://help.zscaler.com/cloud-branch-connector/understanding-rate-limits
+[rate-limiting-ZTW]: https://help.zscaler.com/cloud-branch-connector/understanding-rate-limits
 [rate-limiting-zdx]: https://help.zscaler.com/zdx/understanding-rate-limiting
 [rate-limiting-zia]: https://help.zscaler.com/zia/understanding-rate-limiting
 [rate-limiting-zpa]: https://help.zscaler.com/zpa/understanding-rate-limiting
@@ -870,7 +1039,7 @@ Contributors
 - Eddie Parra - [eparra](https://github.com/eparra)
 - Paul Abbot - [abbottp](https://github.com/abbottp)
 
-Thank you to [Mitch Kelly](https://github.com/mitchos/pyZscaler), creator of the [PyZscaler](https://github.com/mitchos/pyZscaler) SDK, 
+Thank you to [Mitch Kelly](https://github.com/mitchos/pyZscaler), creator of the [PyZscaler](https://github.com/mitchos/pyZscaler) SDK,
 which this SDK was inspired on.
 
 ## MIT License

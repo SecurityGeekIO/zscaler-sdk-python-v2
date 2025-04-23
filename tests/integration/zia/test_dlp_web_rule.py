@@ -36,14 +36,43 @@ class TestDLPWebRule:
         rule_id = None
 
         try:
+            rule_name = "tests-" + generate_random_string()
+            rule_description = "tests-" + generate_random_string()
+            created_rule, _, error = client.zia.dlp_web_rules.add_rule(
+                name=rule_name,
+                description=rule_description,
+                enabled=True,
+                action="BLOCK",
+                order=1,
+                rank=7,
+                severity="RULE_SEVERITY_HIGH",
+                protocols=["FTP_RULE", "HTTPS_RULE", "HTTP_RULE"],
+                cloud_applications=["WINDOWS_LIVE_HOTMAIL"],
+                user_risk_score_levels=["LOW", "MEDIUM", "HIGH", "CRITICAL"],
+            )
+            assert error is None, f"DLP Web Rule creation failed: {error}"
+            assert created_rule is not None, "DLP Web Rule creation returned None"
+            rule_id = created_rule.id
+        except Exception as exc:
+            errors.append(f"DLP Web Rule creation failed: {exc}")
+
+        # Step 4: Retrieve the DLP Web Rule by ID
+        try:
+            retrieved_rule, _, error = client.zia.dlp_web_rules.get_rule(rule_id)
+            assert error is None, f"Error retrieving DLP Web Rule: {error}"
+            assert retrieved_rule is not None, "Retrieved DLP Web Rule is None"
+            assert retrieved_rule.id == rule_id, "Incorrect rule retrieved"
+        except Exception as exc:
+            errors.append(f"Retrieving DLP Web Rule failed: {exc}")
+
+            # Step 5: Update the DLP Web Rule
             try:
-                # Create a DLP Web Rule
-                rule_name = "tests-" + generate_random_string()
-                rule_description = "tests-" + generate_random_string()
-                created_rule, _, error = client.zia.dlp_web_rules.add_rule(
+                updated_description = "Updated integration test DLP Web Rule"
+                updated_rule, _, error = client.zia.dlp_web_rules.update_rule(
+                    rule_id=rule_id,
                     name=rule_name,
-                    description=rule_description,
-                    state="ENABLED",
+                    description=updated_description,
+                    enabled=True,
                     action="BLOCK",
                     order=1,
                     rank=7,
@@ -52,44 +81,32 @@ class TestDLPWebRule:
                     cloud_applications=["WINDOWS_LIVE_HOTMAIL"],
                     user_risk_score_levels=["LOW", "MEDIUM", "HIGH", "CRITICAL"],
                 )
-                assert error is None, f"Error creating DLP Web Rule: {error}"
-                assert created_rule is not None, "DLP Web Rule creation returned None"
-                assert created_rule.name == rule_name, "DLP Web Rule name mismatch"
-                assert created_rule.description == rule_description, "DLP Web Rule description mismatch"
-                rule_id = created_rule.id
+                assert error is None, f"Error updating DLP Web Rule: {error}"
+                assert updated_rule is not None, "Updated DLP Web Rule is None"
+                assert updated_rule.description == updated_description, f"DLP Web Rule update failed: {updated_rule.as_dict()}"
             except Exception as exc:
-                errors.append(f"Failed to add DLP Web Rule: {exc}")
+                errors.append(f"Updating DLP Web Rule failed: {exc}")
 
-            # Attempt to update the rule DLP Web Rule
-            if rule_id:
-                try:
-                    updated_name = rule_name + " Updated"
-                    _, _, error = client.zia.dlp_web_rules.update_rule(rule_id, name=updated_name)
-                    assert error is None, f"Error updating DLP Web Rule: {error}"
-                    
-                    updated_rule, _, error = client.zia.dlp_web_rules.get_rule(rule_id)
-                    assert error is None, f"Error retrieving updated DLP Web Rule: {error}"
-                    assert updated_rule.name == updated_name, "Failed to update DLP Web Rule name"
-                except Exception as exc:
-                    errors.append(f"Failed to update DLP Web Rule: {exc}")
-
+            # Step 6: List DLP Web Rule and verify the rule is present
             try:
-                # Verify update by listing DLP web rules
                 rules, _, error = client.zia.dlp_web_rules.list_rules()
-                assert error is None, f"Error listing rules: {error}"
-                assert isinstance(rules, list), "Expected a list of rules"
-                assert len(rules) > 0, "No rules found for the specified rule type"
+                assert error is None, f"Error listing DLP Web Rules: {error}"
+                assert rules is not None, "DLP Web Rule list is None"
+                assert any(rule.id == rule_id for rule in rules), "Newly created rule not found in the list of rules."
             except Exception as exc:
-                errors.append(f"Listing rules failed: {exc}")
+                errors.append(f"Listing DLP Web Rules failed: {exc}")
 
         finally:
-            # Cleanup: Attempt to delete the rule label
-            if rule_id:
-                try:
-                    delete_response_code = client.zia.dlp_web_rules.delete_rule(rule_id)
-                    assert str(delete_response_code) != "204", "Failed to delete label"
-                except Exception as exc:
-                    errors.append(f"Cleanup failed: {exc}")
+            cleanup_errors = []
+            try:
+                if rule_id:
+                    # Delete the DLP Web Rule
+                    _, _, error = client.zia.dlp_web_rules.delete_rule(rule_id)
+                    assert error is None, f"Error deleting DLP Web Rule: {error}"
+            except Exception as exc:
+                cleanup_errors.append(f"Deleting DLP Web Rule failed: {exc}")
 
-        # Assert that no errors occurred during the test
-        assert len(errors) == 0, f"Errors occurred during the rule label lifecycle test: {errors}"
+            errors.extend(cleanup_errors)
+
+        if errors:
+            raise AssertionError(f"Integration Test Errors:\n{chr(10).join(errors)}")

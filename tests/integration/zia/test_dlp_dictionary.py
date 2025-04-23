@@ -14,7 +14,6 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
-
 import pytest
 
 from tests.integration.zia.conftest import MockZIAClient
@@ -33,68 +32,71 @@ class TestDLPDictionary:
 
     def test_dlp_dictionary(self, fs):
         client = MockZIAClient(fs)
-        errors = []  # Initialize an empty list to collect errors
+        errors = []
+        dict_id = None
 
-        dict_id = None  # Placeholder for the dictionary ID
-        custom_phrase_match_type = "MATCH_ALL_CUSTOM_PHRASE_PATTERN_DICTIONARY"
-        dictionary_type = "PATTERNS_AND_PHRASES"
-        phrases = ([{"action": "PHRASE_COUNT_TYPE_ALL", "phrase": "test"}],)
-        patterns = [{"action": "PATTERN_COUNT_TYPE_ALL", "pattern": "test"}]
+        dict_name = f"tests-{generate_random_string()}"
+        dict_description = f"tests-{generate_random_string()}"
 
-        # Attempt to add a DLP dictionary
         try:
-            dlp_dict = client.zia.dlp_dictionary.add_dict(
-                name="tests-" + generate_random_string(),
-                description="updated-" + generate_random_string(),
-                custom_phrase_match_type=custom_phrase_match_type,
-                dictionary_type=dictionary_type,
-                phrases=[{"action": "PHRASE_COUNT_TYPE_ALL", "phrase": "test"}],
-                patterns=[{"action": "PATTERN_COUNT_TYPE_ALL", "pattern": "test"}],
-            )
-            dict_id = dlp_dict.get("id")
-            assert dict_id is not None, "Failed to create DLP Dictionary"
-        except Exception as exc:
-            errors.append(f"Adding DLP Dictionary failed: {exc}")
+            phrases = [("PHRASE_COUNT_TYPE_ALL", "YourPhrase")]
+            patterns = [("PATTERN_COUNT_TYPE_UNIQUE", "YourPattern")]
 
-        # Attempt to update the DLP dictionary
-        if dict_id:
-            try:
+            dlp_dict, _, error = client.zia.dlp_dictionary.add_dict(
+                name=dict_name,
+                description=dict_description,
+                custom_phrase_match_type="MATCH_ALL_CUSTOM_PHRASE_PATTERN_DICTIONARY",
+                dictionary_type="PATTERNS_AND_PHRASES",
+                phrases=phrases,
+                patterns=patterns,
+            )
+            assert error is None, f"Add DLP Dictionary Error: {error}"
+            assert dlp_dict is not None, "DLP Dictionary creation failed."
+            assert dlp_dict.name == dict_name
+            assert dlp_dict.description == dict_description
+            dict_id = dlp_dict.id
+        except Exception as e:
+            errors.append(f"Exception during add_dlp_engine: {str(e)}")
+
+        try:
+            if dict_id:
                 updated_name = "updated-" + generate_random_string()
-                updated_dict = client.zia.dlp_dictionary.update_dict(
+                updated_dict, _, error = client.zia.dlp_dictionary.update_dict(
                     dict_id=dict_id,
                     name=updated_name,
                     description=updated_name,
-                    custom_phrase_match_type=custom_phrase_match_type,
-                    dictionary_type=dictionary_type,
-                    phrases=[{"action": "PHRASE_COUNT_TYPE_ALL", "phrase": "test"}],
-                    patterns=[{"action": "PATTERN_COUNT_TYPE_ALL", "pattern": "test"}],
+                    custom_phrase_match_type="MATCH_ALL_CUSTOM_PHRASE_PATTERN_DICTIONARY",
+                    dictionary_type="PATTERNS_AND_PHRASES",
+                    phrases=[("PHRASE_COUNT_TYPE_ALL", "YourUpdatedPhrase")],
+                    patterns=[("PATTERN_COUNT_TYPE_UNIQUE", "YourUpdatedPattern")],
                 )
-                assert updated_dict.get("name") == updated_name, "Failed to update DLP Dictionary"
-            except Exception as exc:
-                errors.append(f"Updating DLP Dictionary failed: {exc}")
+                assert error is None, f"Update DLP Dictionary Error: {error}"
+                assert updated_dict.name == updated_name
+        except Exception as e:
+            errors.append(f"Updating DLP Dictionary failed: {str(e)}")
 
-        # Attempt to list DLP dictionaries
         try:
-            dicts = client.zia.dlp_dictionary.list_dicts()
-            assert isinstance(dicts, list), "Failed to list DLP Dictionaries"
-        except Exception as exc:
-            errors.append(f"Listing DLP Dictionaries failed: {exc}")
+            dict_list, _, error = client.zia.dlp_dictionary.list_dicts()
+            assert error is None, f"List DLP Dictionary Error: {error}"
+            assert any(dictionary.id == dict_id for dictionary in dict_list), "Dictionary not found in list."
+        except Exception as e:
+            errors.append(f"Exception during list_dicts: {str(e)}")
 
-        # Attempt to get the specific DLP dictionary
-        if dict_id:
-            try:
-                specific_dict = client.zia.dlp_dictionary.get_dict(dict_id)
-                assert specific_dict.get("id") == dict_id, "Failed to retrieve specific DLP Dictionary"
-            except Exception as exc:
-                errors.append(f"Retrieving specific DLP Dictionary failed: {exc}")
+        try:
+            if dict_id:
+                retrieved_dict, _, error = client.zia.dlp_dictionary.get_dict(dict_id)
+                assert error is None, f"Get DLP Dictionary Error: {error}"
+                assert retrieved_dict is not None
+                assert retrieved_dict.id == dict_id
+        except Exception as e:
+            errors.append(f"Exception during get_dict: {str(e)}")
 
-        # Attempt to delete the DLP dictionary
-        if dict_id:
-            try:
-                delete_response = client.zia.dlp_dictionary.delete_dict(dict_id)
-                assert delete_response == 204, "Failed to delete DLP Dictionary"
-            except Exception as exc:
-                errors.append(f"Deleting DLP Dictionary failed: {exc}")
+        try:
+            if dict_id:
+                _, _, error = client.zia.dlp_dictionary.delete_dict(dict_id)
+                assert error is None, f"Delete DLP Dictionary Error: {error}"
+        except Exception as e:
+            errors.append(f"Deleting DLP Dictionary failed: {str(e)}")
 
-        # Assert no errors occurred during the test
-        assert len(errors) == 0, f"Errors occurred during DLP dictionary operations test: {errors}"
+        if errors:
+            raise AssertionError(f"Integration Test Errors:\n{chr(10).join(errors)}")

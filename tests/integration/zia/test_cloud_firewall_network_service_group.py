@@ -39,25 +39,22 @@ class TestCloudFirewallNetworkServicesGroup:
         group_id = None
         service_ids = []
 
-        # Search for the required network services and extract their IDs
+        # Step 1: Search for the required network services and extract their IDs
         try:
             for service_name in ["ICMP_ANY", "UDP_ANY", "TCP_ANY", "DNS"]:
-                services, _, error = client.zia.cloud_firewall_rules.list_network_services(
-                    query_params={"search": service_name}
-                )
+                services, _, error = client.zia.cloud_firewall.list_network_services(query_params={"search": service_name})
                 assert error is None, f"Error searching for network service '{service_name}': {error}"
                 assert services, f"No services found for '{service_name}'"
 
-                # Extract the correct service by matching the name
                 service = next((svc for svc in services if svc.name == service_name), None)
                 assert service is not None, f"Service '{service_name}' not found in list"
                 service_ids.append(service.id)
         except Exception as exc:
             errors.append(f"Failed to retrieve network service IDs: {exc}")
 
+        # Step 2: Add the network service group
         try:
-            # Add the network service group
-            created_group, _, error = client.zia.cloud_firewall_rules.add_network_svc_group(
+            created_group, _, error = client.zia.cloud_firewall.add_network_svc_group(
                 name=group_name,
                 description=group_description,
                 service_ids=service_ids,
@@ -70,31 +67,37 @@ class TestCloudFirewallNetworkServicesGroup:
         except Exception as exc:
             errors.append(f"Failed to add network service group: {exc}")
 
-        # Retrieve the created network services group by ID
-        if group_id:
-            try:
-                group, _, error = client.zia.cloud_firewall_rules.get_network_svc_group(group_id)
+        # Step 3: Retrieve the group by ID
+        try:
+            if group_id:
+                group, _, error = client.zia.cloud_firewall.get_network_svc_group(group_id)
                 assert error is None, f"Error retrieving network service group: {error}"
                 assert group is not None, "Retrieved network service group is None"
                 assert group.id == group_id, "Incorrect network service group retrieved"
-            except Exception as exc:
-                errors.append(f"Failed to retrieve network service group: {exc}")
+        except Exception as exc:
+            errors.append(f"Failed to retrieve network service group: {exc}")
 
-        # Update the network services group
-        if group_id:
-            try:
+        # Step 4: Update the network services group
+        try:
+            if group_id:
                 updated_name = "updated-" + generate_random_string()
-                updated_group, _, error = client.zia.cloud_firewall_rules.update_network_svc_group(
-                    group_id=group_id, name=updated_name
+                updated_description = group_description + " updated"
+
+                updated_group, _, error = client.zia.cloud_firewall.update_network_svc_group(
+                    group_id=group_id,
+                    name=updated_name,
+                    description=updated_description,
+                    service_ids=service_ids,  # Reuse original IDs to avoid clearing
                 )
                 assert error is None, f"Error updating network service group: {error}"
                 assert updated_group.name == updated_name, "Group name mismatch after update"
-            except Exception as exc:
-                errors.append(f"Failed to update network service group: {exc}")
+                assert updated_group.description == updated_description, "Group description mismatch after update"
+        except Exception as exc:
+            errors.append(f"Failed to update network service group: {exc}")
 
-        # List network services group and check if the updated group is in the list
+        # Step 5: List network service groups and verify update
         try:
-            groups, _, error = client.zia.cloud_firewall_rules.list_network_svc_groups()
+            groups, _, error = client.zia.cloud_firewall.list_network_svc_groups()
             assert error is None, f"Error listing network service groups: {error}"
             assert groups is not None, "Network service group list is None"
             assert any(g.id == group_id for g in groups), "Updated network service group not found in list"
@@ -102,15 +105,14 @@ class TestCloudFirewallNetworkServicesGroup:
             errors.append(f"Failed to list network service groups: {exc}")
 
         finally:
-            cleanup_errors = []
+            # Ensure label cleanup
             try:
                 if group_id:
-                    delete_status, _, error = client.zia.cloud_firewall_rules.delete_network_svc_group(group_id)
-                    assert error is None, f"Error deleting network service group: {error}"
-                    assert delete_status == 204, "Network service group deletion failed"
-            except Exception as exc:
-                cleanup_errors.append(f"Deleting network service group failed: {exc}")
+                    _, _, error = client.zia.cloud_firewall.delete_network_svc_group(group_id)
+                    assert error is None, f"Delete network service group Error: {error}"
+            except Exception as e:
+                errors.append(f"Exception during network service group: {str(e)}")
 
-        # Assert that no errors occurred during the test
-        errors.extend(cleanup_errors)
-        assert len(errors) == 0, f"Errors occurred during the network services group lifecycle test: {errors}"
+        # Final Assertion
+        if errors:
+            raise AssertionError(f"Integration Test Errors:\n{chr(10).join(errors)}")

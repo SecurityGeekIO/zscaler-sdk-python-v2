@@ -14,7 +14,6 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
-
 import pytest
 import time
 from pprint import pprint
@@ -36,17 +35,18 @@ class TestAdministration:
         errors = []
 
         try:
-            departments_iterator = client.zdx.admin.list_departments(query_params={"since": 2})
-            departments = list(departments_iterator)
+            departments, _, err = client.zdx.admin.list_departments(query_params={"since": 2})
+            assert err is None, f"Error listing departments: {err}"
+            assert isinstance(departments, list), "Expected departments to be a list"
 
             if not departments:
                 print("No departments found within the specified time range.")
             else:
                 print(f"Retrieved {len(departments)} departments")
                 for department in departments:
-                    pprint(department)
+                    pprint(department.as_dict())
         except Exception as e:
-            errors.append(f"Exception occurred: {e}")
+            errors.append(f"Exception occurred in departments: {e}")
 
         assert not errors, "Errors occurred:\n{}".format("\n".join(errors))
 
@@ -55,16 +55,17 @@ class TestAdministration:
         errors = []
 
         try:
-            locations_iterator = client.zdx.admin.list_locations(query_params={"since": 2})
-            locations = list(locations_iterator)
+            locations, _, err = client.zdx.admin.list_locations(query_params={"since": 2})
+            assert err is None, f"Error listing locations: {err}"
+            assert isinstance(locations, list), "Expected locations to be a list"
 
             if not locations:
                 print("No locations found within the specified time range.")
             else:
                 print(f"Retrieved {len(locations)} locations")
                 for location in locations:
-                    pprint(location)
+                    pprint(location.as_dict())
         except Exception as e:
-            errors.append(f"Exception occurred: {e}")
+            errors.append(f"Exception occurred in locations: {e}")
 
         assert not errors, "Errors occurred:\n{}".format("\n".join(errors))

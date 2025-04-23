@@ -17,6 +17,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 from zscaler.oneapi_object import ZscalerObject
 from zscaler.oneapi_collection import ZscalerCollection
 
+
 class ServiceEdge(ZscalerObject):
     """
     A class representing the Service Edge.
@@ -44,9 +45,15 @@ class ServiceEdge(ZscalerObject):
             self.control_channel_status = config["controlChannelStatus"] if "controlChannelStatus" in config else None
             self.ctrl_broker_name = config["ctrlBrokerName"] if "ctrlBrokerName" in config else None
             self.last_broker_connect_time = config["lastBrokerConnectTime"] if "lastBrokerConnectTime" in config else None
-            self.last_broker_connect_time_duration = config["lastBrokerConnectTimeDuration"] if "lastBrokerConnectTimeDuration" in config else None
-            self.last_broker_disconnect_time = config["lastBrokerDisconnectTime"] if "lastBrokerDisconnectTime" in config else None
-            self.last_broker_disconnect_time_duration = config["lastBrokerDisconnectTimeDuration"] if "lastBrokerDisconnectTimeDuration" in config else None
+            self.last_broker_connect_time_duration = (
+                config["lastBrokerConnectTimeDuration"] if "lastBrokerConnectTimeDuration" in config else None
+            )
+            self.last_broker_disconnect_time = (
+                config["lastBrokerDisconnectTime"] if "lastBrokerDisconnectTime" in config else None
+            )
+            self.last_broker_disconnect_time_duration = (
+                config["lastBrokerDisconnectTimeDuration"] if "lastBrokerDisconnectTimeDuration" in config else None
+            )
             self.private_ip = config["privateIp"] if "privateIp" in config else None
             self.public_ip = config["publicIp"] if "publicIp" in config else None
             self.platform = config["platform"] if "platform" in config else None
@@ -60,12 +67,12 @@ class ServiceEdge(ZscalerObject):
             self.provisioning_key_name = config["provisioningKeyName"] if "provisioningKeyName" in config else None
             self.service_edge_group_id = config["serviceEdgeGroupId"] if "serviceEdgeGroupId" in config else None
             self.service_edge_group_name = config["serviceEdgeGroupName"] if "serviceEdgeGroupName" in config else None
-            self.enrollment_cert = config["enrollmentCert"]["name"] if "enrollmentCert" in config and "name" in config["enrollmentCert"] else None
+            self.enrollment_cert = (
+                config["enrollmentCert"]["name"] if "enrollmentCert" in config and "name" in config["enrollmentCert"] else None
+            )
 
             # Handling the nested zpnSubModuleUpgradeList using ZscalerCollection
-            self.zpn_sub_module_upgrade_list = ZscalerCollection.form_list(
-                config.get("zpnSubModuleUpgradeList", []), dict
-            )
+            self.zpn_sub_module_upgrade_list = ZscalerCollection.form_list(config.get("zpnSubModuleUpgradeList", []), dict)
         else:
             self.id = None
             self.name = None

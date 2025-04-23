@@ -31,18 +31,25 @@ class TestIsolationProfile:
 
     def test_isolation_profile(self, fs):
         client = MockZIAClient(fs)
-        errors = []  # Initialize an empty list to collect errors
+        errors = []
 
         try:
-            # List all profiles
-            profiles = client.zia.isolation_profile.list_isolation_profiles()
+            # Step 1: List all isolation profiles
+            profiles, _, error = client.zia.cloud_browser_isolation.list_isolation_profiles()
+            assert error is None, f"List Isolation Profiles Error: {error}"
             assert isinstance(profiles, list), "Expected a list of profiles"
-            if profiles:  # If there are any profiles
-                # Select the first profile for further testing
+
+            if profiles:
+                # Step 2: Select first profile (could be extended later)
                 first_profile = profiles[0]
+                profile_id = first_profile.id  # ✅ Model-based access
+
+                # Optionally: validate field
+                assert profile_id is not None, "Profile ID should not be None"
 
         except Exception as exc:
             errors.append(f"Listing profiles failed: {exc}")
 
-        # Assert that no errors occurred during the test
-        assert len(errors) == 0, f"Errors occurred during profiles test: {errors}"
+        # Final assertion
+        if errors:
+            raise AssertionError(f"Integration Test Errors:\n{chr(10).join(errors)}")

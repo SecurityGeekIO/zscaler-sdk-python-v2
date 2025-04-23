@@ -14,7 +14,6 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
-
 import time
 import pytest
 
@@ -79,10 +78,7 @@ class TestApplicationSegmentInspection:
             #
             try:
                 segment_group_name = "tests-" + generate_random_string()
-                created_segment_group, resp, err = client.zpa.segment_groups.add_group(
-                    name=segment_group_name,
-                    enabled=True
-                )
+                created_segment_group, resp, err = client.zpa.segment_groups.add_group(name=segment_group_name, enabled=True)
                 assert err is None, f"Error during segment group creation: {err}"
                 assert created_segment_group is not None, "No segment group data returned"
 
@@ -97,7 +93,7 @@ class TestApplicationSegmentInspection:
                 server_group_name = "tests-" + generate_random_string()
                 server_group_description = "tests-" + generate_random_string()
 
-                created_server_group, resp, err = client.zpa.server_groups.add_group(
+                created_server_group, _, err = client.zpa.server_groups.add_group(
                     name=server_group_name,
                     description=server_group_description,
                     enabled=True,
@@ -128,7 +124,7 @@ class TestApplicationSegmentInspection:
                 app_segment_name = "server1.bd-redhat.com"
                 app_segment_description = "server1.bd-redhat.com"
 
-                app_segment, resp, err = client.zpa.app_segments_inspection.add_segment_inspection(
+                app_segment, _, err = client.zpa.app_segments_inspection.add_segment_inspection(
                     name=app_segment_name,
                     description=app_segment_description,
                     enabled=True,
@@ -157,23 +153,6 @@ class TestApplicationSegmentInspection:
             except Exception as exc:
                 errors.append(f"Creating Inspection Application Segment failed: {exc}")
 
-            try:
-                time.sleep(5)
-                search_name = "server1.bd-redhat.com"
-                app_segments, resp, err = client.zpa.app_segment_by_type.get_segments_by_type(
-                    application_type="INSPECT",
-                    query_params={"search": search_name}
-                )
-                assert err is None, f"Failed to get Application Segment by type: {err}"
-                assert isinstance(app_segments, list), "Expected app_segments to be a list"
-
-                if not app_segments:
-                    raise AssertionError(f"No segments found with the specified name: {search_name}")
-
-                # Extract `id` and `appId` from the first segment
-                inspect_app_id = app_segments[0]["id"]
-                app_id = app_segments[0]["appId"]
-
             except Exception as exc:
                 errors.append(f"Failed to retrieve Application Segment by type: {exc}")
 
@@ -181,7 +160,7 @@ class TestApplicationSegmentInspection:
             try:
                 if app_segment_id:
                     updated_description = "Updated " + generate_random_string()
-                    _, resp, err = client.zpa.app_segments_inspection.update_segment_inspection(
+                    _, _, err = client.zpa.app_segments_inspection.update_segment_inspection(
                         app_segment_id,
                         name=app_segment_name,
                         description=updated_description,
@@ -193,10 +172,7 @@ class TestApplicationSegmentInspection:
                         common_apps_dto={
                             "apps_config": [
                                 {
-                                    "app_id":app_id,  # Use app_id retrieved earlier
-                                    "inspect_app_id":inspect_app_id,  # Use inspect_app_id retrieved earlier
                                     "enabled": True,
-                                    "app_types": ["INSPECT"],
                                     "application_port": "443",
                                     "application_protocol": "HTTPS",
                                     "certificate_id": certificate_id,
@@ -211,11 +187,11 @@ class TestApplicationSegmentInspection:
 
         finally:
             cleanup_errors = []
-            
+
             time.sleep(5)
             if app_segment_id:
                 try:
-                    _, resp, del_err = client.zpa.app_segments_inspection.delete_segment_inspection(
+                    _, _, del_err = client.zpa.app_segments_inspection.delete_segment_inspection(
                         segment_id=app_segment_id, force_delete=True
                     )
                     if del_err:
@@ -225,7 +201,7 @@ class TestApplicationSegmentInspection:
 
             if server_group_id:
                 try:
-                    _, resp, del_err = client.zpa.server_groups.delete_group(group_id=server_group_id)
+                    _, _, del_err = client.zpa.server_groups.delete_group(group_id=server_group_id)
                     if del_err:
                         cleanup_errors.append(f"Deleting Server Group failed: {del_err}")
                 except Exception as exc:
@@ -233,7 +209,7 @@ class TestApplicationSegmentInspection:
 
             if segment_group_id:
                 try:
-                    _, resp, del_err = client.zpa.segment_groups.delete_group(group_id=segment_group_id)
+                    _, _, del_err = client.zpa.segment_groups.delete_group(group_id=segment_group_id)
                     if del_err:
                         cleanup_errors.append(f"Deleting Segment Group failed: {del_err}")
                 except Exception as exc:

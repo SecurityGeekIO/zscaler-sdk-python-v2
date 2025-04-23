@@ -44,8 +44,12 @@ class AppConnectorControllerAPI(APIClient):
 
         Args:
             query_params {dict}: Map of query parameters for the request.
+
                 ``[query_params.page]`` {str}: Specifies the page number.
-                ``[query_params.page_size]`` {str}: Specifies the page size. If not provided, the default page size is 20. The max page size is 500.
+
+                ``[query_params.page_size]`` {str}: Specifies the page size.
+                    If not provided, the default page size is 20. The max page size is 500.
+
                 ``[query_params.search]`` {str}: Search string for filtering results.
                 ``[query_params.microtenant_id]`` {str}: The unique identifier of the microtenant of ZPA tenant.
 
@@ -75,31 +79,23 @@ class AppConnectorControllerAPI(APIClient):
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        request, error = self._request_executor.\
-            create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.\
-            execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
             for item in response.get_results():
-                result.append(AppConnectorController(
-                    self.form_response_body(item))
-                )
+                result.append(AppConnectorController(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def get_connector(
-        self,
-        connector_id: str,
-        query_params=None
-    ) -> tuple:
+    def get_connector(self, connector_id: str, query_params=None) -> tuple:
         """
         Returns information on the specified App Connector.
 
@@ -129,29 +125,21 @@ class AppConnectorControllerAPI(APIClient):
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, AppConnectorController)
+        response, error = self._request_executor.execute(request, AppConnectorController)
         if error:
             return (None, response, error)
 
         try:
-            result = AppConnectorController(
-                self.form_response_body(response.get_body())
-            )
+            result = AppConnectorController(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def update_connector(
-        self,
-        connector_id: str,
-        **kwargs
-    ) -> tuple:
+    def update_connector(self, connector_id: str, **kwargs) -> tuple:
         """
         Updates an existing ZPA App Connector.
 
@@ -195,35 +183,24 @@ class AppConnectorControllerAPI(APIClient):
         microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, {}, params)
+        request, error = self._request_executor.create_request(http_method, api_url, body, {}, params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, AppConnectorController)
+        response, error = self._request_executor.execute(request, AppConnectorController)
         if error:
             return (None, response, error)
 
-        # Handle case where no content is returned (204 No Content)
         if response is None:
-            # Return a meaningful result to indicate success
             return (AppConnectorController({"id": connector_id}), None, None)
 
-        # Parse the response into an AppConnectorGroup instance
         try:
-            result = AppConnectorController(
-                self.form_response_body(response.get_body())
-            )
+            result = AppConnectorController(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def delete_connector(
-        self,
-        connector_id: str,
-        microtenant_id: str = None
-    ) -> tuple:
+    def delete_connector(self, connector_id: str, microtenant_id: str = None) -> tuple:
         """
         Deletes the specified App Connector from ZPA.
 
@@ -252,23 +229,17 @@ class AppConnectorControllerAPI(APIClient):
 
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        request, error = self._request_executor.\
-            create_request(http_method, api_url, params=params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.\
-            execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
         return (None, response, None)
 
-    def bulk_delete_connectors(
-        self,
-        connector_ids: list,
-        microtenant_id: str = None
-    ) -> tuple:
+    def bulk_delete_connectors(self, connector_ids: list, microtenant_id: str = None) -> tuple:
         """
         Deletes all specified App Connectors from ZPA.
 
@@ -298,14 +269,12 @@ class AppConnectorControllerAPI(APIClient):
 
         payload = {"ids": connector_ids}
 
-        request, error = self._request_executor.\
-            create_request(http_method, api_url, payload, params=params)
+        request, error = self._request_executor.create_request(http_method, api_url, payload, params=params)
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.\
-            execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 

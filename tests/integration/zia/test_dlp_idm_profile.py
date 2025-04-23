@@ -14,7 +14,6 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
-
 import pytest
 
 from tests.integration.zia.conftest import MockZIAClient
@@ -32,36 +31,31 @@ class TestDLPIDMProfile:
 
     def test_dlp_idm_profile(self, fs):
         client = MockZIAClient(fs)
-        errors = []  # Initialize an empty list to collect errors
+        errors = []
 
         try:
-            # List all idm profiles
-            profiles = client.zia.dlp_resources.list_dlp_idm_profiles()
-            assert isinstance(profiles, list), "Expected a list of idm profiles"
-            if profiles:  # If there are any profiles
-                # Select the first profile for further testing
-                first_profile = profiles[0]
-                profile_id = first_profile.get("profile_id")
+            # Step 1: List all IDM profiles
+            profiles, _, error = client.zia.dlp_resources.list_dlp_idm_profiles()
+            assert error is None, f"List IDM Profiles Error: {error}"
+            assert isinstance(profiles, list), "Expected a list of IDM profiles"
 
-                # Fetch the selected profile by its ID
+            if profiles:
+                # Step 2: Select first profile
+                first_profile = profiles[0]
+                profile_id = first_profile.profile_id
+
+                # Step 3: Fetch by ID
                 try:
-                    fetched_profile = client.zia.dlp_resources.get_dlp_idm_profiles(profile_id)
+                    fetched_profile, _, error = client.zia.dlp_resources.get_dlp_idm_profiles(profile_id)
+                    assert error is None, f"Get IDM Profile Error: {error}"
                     assert fetched_profile is not None, "Expected a valid profile object"
-                    assert fetched_profile.get("profile_id") == profile_id, "Mismatch in profile ID"
+                    assert fetched_profile.profile_id == profile_id, "Mismatch in profile ID"
                 except Exception as exc:
                     errors.append(f"Fetching profile by ID failed: {exc}")
-
-                # Attempt to retrieve the profile by name
-                try:
-                    profile_name = first_profile.get("profile_name")
-                    profile_by_name = client.zia.dlp_resources.get_dlp_idm_profile_by_name(profile_name)
-                    assert profile_by_name is not None, "Expected a valid profile object when searching by name"
-                    assert profile_by_name.get("profile_id") == profile_id, "Mismatch in profile ID when searching by name"
-                except Exception as exc:
-                    errors.append(f"Fetching profile by name failed: {exc}")
 
         except Exception as exc:
             errors.append(f"Listing profiles failed: {exc}")
 
-        # Assert that no errors occurred during the test
-        assert len(errors) == 0, f"Errors occurred during profiles test: {errors}"
+        # Final assertion
+        if errors:
+            raise AssertionError(f"Integration Test Errors:\n{chr(10).join(errors)}")

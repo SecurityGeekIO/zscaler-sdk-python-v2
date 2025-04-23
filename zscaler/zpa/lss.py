@@ -96,8 +96,12 @@ class LSSConfigControllerAPI(APIClient):
 
         Args:
             query_params {dict}: Map of query parameters for the request.
+
                 ``[query_params.page]`` {str}: Specifies the page number.
-                ``[query_params.page_size]`` {int}: Specifies the page size. If not provided, the default page size is 20. The max page size is 500.
+
+                ``[query_params.page_size]`` {int}: Specifies the page size.
+                    If not provided, the default page size is 20. The max page size is 500.
+
                 ``[query_params.search]`` {str}: The search string used to support search by features and fields for the API.
 
         Returns:
@@ -117,23 +121,19 @@ class LSSConfigControllerAPI(APIClient):
         query_params = query_params or {}
 
         # Prepare request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
             for item in response.get_results():
-                result.append(LSSResourceModel(
-                    self.form_response_body(item))
-                )
+                result.append(LSSResourceModel(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -158,20 +158,16 @@ class LSSConfigControllerAPI(APIClient):
 
         query_params = query_params or {}
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, LSSResourceModel)
+        response, error = self._request_executor.execute(request, LSSResourceModel)
         if error:
             return (None, response, error)
 
         try:
-            result = LSSResourceModel(
-                self.form_response_body(response.get_body())
-            )
+            result = LSSResourceModel(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -192,7 +188,7 @@ class LSSConfigControllerAPI(APIClient):
         Adds a new LSS Receiver Config to ZPA.
 
         Args:
-            app_connector_group_ids (list): A list of unique IDs for the App Connector Groups associated with this LSS Config. `Defaults to None.`
+            app_connector_group_ids (list): A list of unique IDs for the App Connector Groups associated with this LSS Config.
             enabled (bool): Enable the LSS Receiver. `Defaults to True`.
             lss_host (str): The IP address of the LSS Receiver.
             lss_port (str): The port number for the LSS Receiver.
@@ -281,21 +277,17 @@ class LSSConfigControllerAPI(APIClient):
             payload["config"]["filter"] = kwargs.pop("filter_status_codes")
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body=payload)
+        request, error = self._request_executor.create_request(http_method, api_url, body=payload)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, LSSResourceModel)
+        response, error = self._request_executor.execute(request, LSSResourceModel)
         if error:
             return (None, response, error)
 
         try:
-            result = LSSResourceModel(
-                self.form_response_body(response.get_body())
-            )
+            result = LSSResourceModel(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -403,14 +395,12 @@ class LSSConfigControllerAPI(APIClient):
             current_config["config"]["filter"] = kwargs.pop("filter_status_codes")
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body=current_config)
+        request, error = self._request_executor.create_request(http_method, api_url, body=current_config)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, LSSResourceModel)
+        response, error = self._request_executor.execute(request, LSSResourceModel)
         if error:
             return (None, response, error)
 
@@ -421,9 +411,7 @@ class LSSConfigControllerAPI(APIClient):
 
         # Parse the response into an LSSConfig instance
         try:
-            result = LSSResourceModel(
-                self.form_response_body(response.get_body())
-            )
+            result = LSSResourceModel(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
 
@@ -448,14 +436,12 @@ class LSSConfigControllerAPI(APIClient):
         )
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url)
+        request, error = self._request_executor.create_request(http_method, api_url)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
@@ -483,13 +469,11 @@ class LSSConfigControllerAPI(APIClient):
         """
         )
 
-        request, error = self._request_executor.\
-            create_request(http_method, api_url)
+        request, error = self._request_executor.create_request(http_method, api_url)
         if error:
             return None
 
-        response, error = self._request_executor.\
-            execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return None
 
@@ -537,8 +521,7 @@ class LSSConfigControllerAPI(APIClient):
             )
 
         # Prepare request and execute
-        request, error = self._request_executor.\
-            create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return None
 

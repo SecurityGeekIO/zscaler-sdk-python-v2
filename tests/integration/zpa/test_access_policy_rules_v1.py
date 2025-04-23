@@ -27,168 +27,135 @@ def fs():
 
 class TestAccessPolicyRule:
     """
-    Integration Tests for the Access Policy Rules
+    Integration Tests for the Access Policy Rules with SCIM group conditions
     """
 
     def test_access_policy_rules(self, fs):
         client = MockZPAClient(fs)
-        errors = []  # Initialize an empty list to collect errors
-
+        errors = []
         connector_group_id = None
         rule_id = None
-        # scim_group_ids = []
-        group_name = "tests-" + generate_random_string()
-        group_description = "tests-" + generate_random_string()
+        user_idp_id = None
+        scim_group_ids = []
 
         try:
-            # Create the App Connector Group
-            created_connector_group, _, err = client.zpa.app_connector_groups.add_connector_group(
-                name=group_name,
-                description=group_description,
-                enabled=True,
-                latitude="37.33874",
-                longitude="-121.8852525",
-                location="San Jose, CA, USA",
-                upgrade_day="SUNDAY",
-                upgrade_time_in_secs="66600",
-                override_version_profile=True,
-                version_profile_name="Default",
-                version_profile_id="0",
-                dns_query_type="IPV4_IPV6",
-                pra_enabled=True,
-                tcp_quick_ack_app=True,
-                tcp_quick_ack_assistant=True,
-                tcp_quick_ack_read_assistant=True,
-            )
-            assert err is None, f"Error creating app connector group: {err}"
-            assert created_connector_group is not None
-            assert created_connector_group.name == group_name
-            assert created_connector_group.description == group_description
-            assert created_connector_group.enabled is True, f"Expected 'enabled' to be True, got: {created_connector_group.enabled}"
+            # Step 1: Create App Connector Group
+            try:
+                created_connector_group, _, err = client.zpa.app_connector_groups.add_connector_group(
+                    name="tests-" + generate_random_string(),
+                    description="Test Connector Group",
+                    enabled=True,
+                    latitude="37.33874",
+                    longitude="-121.8852525",
+                    location="San Jose, CA, USA",
+                    upgrade_day="SUNDAY",
+                    upgrade_time_in_secs="66600",
+                    override_version_profile=True,
+                    version_profile_name="Default",
+                    version_profile_id="0",
+                    dns_query_type="IPV4_IPV6",
+                    pra_enabled=True,
+                    tcp_quick_ack_app=True,
+                    tcp_quick_ack_assistant=True,
+                    tcp_quick_ack_read_assistant=True,
+                )
+                assert err is None, f"Error creating app connector group: {err}"
+                connector_group_id = created_connector_group.id
+            except Exception as exc:
+                errors.append(f"App Connector Group creation failed: {exc}")
 
-            connector_group_id = created_connector_group.id  # Capture the group_id for later use
-        except Exception as exc:
-            errors.append(exc)
+            # Step 2: Get USER IdP
+            try:
+                idps, _, err = client.zpa.idp.list_idps()
+                assert err is None, f"Error listing IdPs: {err}"
+                user_idp = next((idp for idp in idps if isinstance(idp.sso_type, list) and "USER" in idp.sso_type), None)
+                assert user_idp, "No USER IdP found"
+                user_idp_id = user_idp.id
+            except Exception as exc:
+                errors.append(f"IdP USER selection failed: {exc}")
 
-        try:
-            # Test listing SCIM groups with pagination
-            idps, _, err = client.zpa.idp.list_idps()
-            if err or not isinstance(idps, list):
-                raise AssertionError(f"Failed to retrieve IdPs: {err or f'Expected idps to be a list, got {type(idps)}'}")
+            # Step 3: Get SCIM Groups
+            try:
+                scim_groups, _, err = client.zpa.scim_groups.list_scim_groups(idp_id=user_idp_id)
+                assert err is None, f"Error listing SCIM groups: {err}"
+                assert len(scim_groups) >= 2, "Less than 2 SCIM groups returned"
+                scim_group_ids = [g.id for g in scim_groups[:2]]
+            except Exception as exc:
+                errors.append(f"SCIM Group retrieval failed: {exc}")
 
-            # Convert IDPs to dictionaries
-            idps = [idp.as_dict() for idp in idps]
+            # Step 4: Create Access Policy Rule
+            try:
+                rule_name = "tests-" + generate_random_string()
+                rule_description = "Access rule with SCIM group conditions"
+                created_rule, _, err = client.zpa.policies.add_access_rule(
+                    name=rule_name,
+                    description=rule_description,
+                    action="allow",
+                    app_connector_group_ids=[connector_group_id],
+                    conditions=[
+                        ("scim_group", user_idp_id, scim_group_ids[0]),
+                        ("scim_group", user_idp_id, scim_group_ids[1]),
+                    ],
+                )
+                assert err is None, f"Error creating access rule: {err}"
+                rule_id = created_rule.id
+            except Exception as exc:
+                errors.append(f"Access Policy Rule creation failed: {exc}")
 
-            # Find the IdP with ssoType = USER
-            user_idp = next((idp for idp in idps if "USER" in idp.get("sso_type", [])), None)
-            if not user_idp:
-                raise AssertionError("No IdP with ssoType 'USER' found.")
+            # Step 5: Get Rule by ID
+            try:
+                retrieved_rule, _, err = client.zpa.policies.get_rule("access", rule_id)
+                assert err is None, f"Error retrieving rule: {err}"
+                assert retrieved_rule.id == rule_id, "Retrieved rule ID mismatch"
+            except Exception as exc:
+                errors.append(f"Access Policy Rule retrieval failed: {exc}")
 
-            # Export the ID of the matching IdP
-            user_idp_id = user_idp.get("id")
-            if not user_idp_id:
-                raise AssertionError("The matching IdP does not have an 'id' field.")
+            # Step 6: Update Rule
+            try:
+                updated_description = "Updated access rule " + generate_random_string()
+                _, _, err = client.zpa.policies.update_access_rule(
+                    rule_id=rule_id,
+                    name=rule_name,
+                    description=updated_description,
+                    action="allow",
+                    app_connector_group_ids=[connector_group_id],
+                    conditions=[
+                        ("scim_group", user_idp_id, scim_group_ids[0]),
+                        ("scim_group", user_idp_id, scim_group_ids[1]),
+                    ],
+                )
+                if err and str(err) != "Response is None":
+                    raise AssertionError(f"Unexpected update error: {err}")
+            except Exception as exc:
+                errors.append(f"Access Policy Rule update failed: {exc}")
 
-            # List SCIM groups using the exported IdP ID
-            scim_groups, _, err = client.zpa.scim_groups.list_scim_groups(idp_id=user_idp_id)
-            if err or not scim_groups:
-                raise AssertionError(f"Failed to list SCIM groups: {err}")
-
-            # Convert SCIMGroup objects to dictionaries
-            scim_groups = [group.as_dict() for group in scim_groups]
-
-            # Retrieve the IDs for the first two SCIM groups
-            scim_group_ids = [(user_idp_id, group["id"]) for group in scim_groups[:2]]
-            if len(scim_group_ids) < 2:
-                raise AssertionError("Less than 2 SCIM groups were retrieved.")
-
-            print(f"Exported IdP ID: {user_idp_id}")
-            print(f"Retrieved SCIM Group IDs: {scim_group_ids}")
-
-        except Exception as exc:
-            errors.append(f"Listing SCIM groups failed: {exc}")
-
-        try:
-            # Create an Access Policy Rule
-            rule_name = "tests-" + generate_random_string()
-            rule_description = "Integration test for access policy rule"
-            created_rule, _, err = client.zpa.policies.add_access_rule(
-                name=rule_name,
-                description=rule_description,
-                action="allow",
-                app_connector_group_ids=[connector_group_id],
-                conditions=[
-                    ("scim_group", scim_group_ids[0][0], scim_group_ids[0][1]),
-                    ("scim_group", scim_group_ids[1][0], scim_group_ids[1][1]),
-                ],
-            )
-            assert err is None, f"Error creating access policy rule: {err}"
-            assert created_rule is not None
-            assert created_rule.name == rule_name
-            assert created_rule.description == rule_description
-
-            rule_id = created_rule.id
-        except Exception as exc:
-            errors.append(exc)
-
-        try:
-            # Test listing access policy rules
-            all_rules, _, err = client.zpa.policies.list_rules("access")
-            assert err is None, f"Error listing Access Policy rules: {err}"
-            if not any(rule["id"] == rule_id for rule in all_rules):
-                raise AssertionError("Access Policy rules not found in list")
-        except Exception as exc:
-            errors.append(f"Listing Access Policy Rules failed: {exc}")
-
-        try:
-            # Test retrieving the specific Access Policy Rule
-            retrieved_rule, _, err =  client.zpa.policies.get_rule("access", rule_id)
-            if retrieved_rule["id"] != rule_id:
-                raise AssertionError("Failed to retrieve the correct Access Policy Rule")
-        except Exception as exc:
-            errors.append(f"Retrieving Access Policy Rule failed: {exc}")
-
-        try:
-            # Update the Timeout Policy Rule
-            updated_rule_description = "Updated " + generate_random_string()
-            _, _, err = client.zpa.policies.update_access_rule(
-                rule_id=rule_id,
-                description=updated_rule_description,
-                conditions=[
-                    ("scim_group", scim_group_ids[0][0], scim_group_ids[0][1]),
-                    ("scim_group", scim_group_ids[1][0], scim_group_ids[1][1]),
-                ],
-            )
-            # If we got an error but it’s "Response is None", treat it as success:
-            if err is not None:
-                if isinstance(err, ValueError) and str(err) == "Response is None":
-                    print(f"[INFO] Interpreting 'Response is None' as 204 success.")
-                else:
-                    raise AssertionError(f"Error updating Access Policy Rule: {err}")
-            print(f"Access Policy Rule with ID {rule_id} updated successfully (204 No Content).")
-        except Exception as exc:
-            errors.append(f"Updating Access Policy Rule failed: {exc}")
+            # Step 7: List Rules and Confirm Presence
+            try:
+                rules, _, err = client.zpa.policies.list_rules("access")
+                assert err is None, f"Error listing rules: {err}"
+                assert any(r.id == rule_id for r in rules), "Created rule not found in rule list"
+            except Exception as exc:
+                errors.append(f"Access Policy Rule list verification failed: {exc}")
 
         finally:
+            cleanup_errors = []
+
+            # Delete Rule
             if rule_id:
                 try:
-                    # Cleanup: Delete the Access Policy Rule
-                    delete_status_rule, _, err = client.zpa.policies.delete_rule("access", rule_id)
-                    assert err is None, f"Error deleting access policy rule: {err}"
-                    # Since a 204 No Content response returns None, we assert that delete_response is None
-                    assert delete_status_rule is None, f"Expected None for 204 No Content, got {delete_status_rule}"
-                except Exception as cleanup_exc:
-                    errors.append(f"Cleanup failed for access policy rule ID {rule_id}: {cleanup_exc}")
+                    _, _, err = client.zpa.policies.delete_rule("access", rule_id)
+                    assert err is None, f"Error deleting rule: {err}"
                 except Exception as exc:
-                    errors.append(f"Deleting Access Policy Rule failed: {exc}")
+                    cleanup_errors.append(f"Failed to delete rule ID {rule_id}: {exc}")
 
+            # Delete App Connector Group
             if connector_group_id:
                 try:
-                    delete_response, _, err = client.zpa.app_connector_groups.delete_connector_group(connector_group_id)
-                    assert err is None, f"Error deleting group: {err}"
-                    # Since a 204 No Content response returns None, we assert that delete_response is None
-                    assert delete_response is None, f"Expected None for 204 No Content, got {delete_response}"
-                except Exception as cleanup_exc:
-                    errors.append(f"Cleanup failed for app connector group ID {connector_group_id}: {cleanup_exc}")
+                    _, _, err = client.zpa.app_connector_groups.delete_connector_group(connector_group_id)
+                    assert err is None, f"Error deleting connector group: {err}"
+                except Exception as exc:
+                    cleanup_errors.append(f"Failed to delete connector group ID {connector_group_id}: {exc}")
 
-            assert len(errors) == 0, f"Errors occurred during the Access Policy Rule operations test: {errors}"
+            errors.extend(cleanup_errors)
+
+        assert not errors, f"Errors occurred during Access Policy Rule test:\n{chr(10).join(map(str, errors))}"

@@ -18,6 +18,7 @@ from zscaler.oneapi_object import ZscalerObject
 from zscaler.oneapi_collection import ZscalerCollection
 from zscaler.zpa.models import application_segment as application_segment
 
+
 class PrivilegedRemoteAccessApproval(ZscalerObject):
     """
     A class representing the Privileged Remote Access Approval.
@@ -26,22 +27,14 @@ class PrivilegedRemoteAccessApproval(ZscalerObject):
     def __init__(self, config=None):
         super().__init__(config)
         if config:
-            self.id = config["id"]\
-                if "id" in config else None
-            self.start_time = config["startTime"]\
-                if "startTime" in config else None
-            self.end_time = config["endTime"]\
-                if "endTime" in config else None
-            self.modified_time = config["modifiedTime"]\
-                if "modifiedTime" in config else None
-            self.creation_time = config["creationTime"]\
-                if "creationTime" in config else None
-            self.status = config["status"]\
-                if "status" in config else None
+            self.id = config["id"] if "id" in config else None
+            self.start_time = config["startTime"] if "startTime" in config else None
+            self.end_time = config["endTime"] if "endTime" in config else None
+            self.modified_time = config["modifiedTime"] if "modifiedTime" in config else None
+            self.creation_time = config["creationTime"] if "creationTime" in config else None
+            self.status = config["status"] if "status" in config else None
 
-            self.email_ids = ZscalerCollection.form_list(
-                config["emailIds"] if "emailIds" in config else [], str
-            )
+            self.email_ids = ZscalerCollection.form_list(config["emailIds"] if "emailIds" in config else [], str)
 
             self.applications = ZscalerCollection.form_list(
                 config["applications"] if "applications" in config else [], application_segment.ApplicationSegment
@@ -55,8 +48,8 @@ class PrivilegedRemoteAccessApproval(ZscalerObject):
                 else:
                     self.working_hours = None
             else:
-                self.working_hours = None   
-            
+                self.working_hours = None
+
         else:
             self.id = None
             self.start_time = None
@@ -87,8 +80,8 @@ class PrivilegedRemoteAccessApproval(ZscalerObject):
         }
         parent_req_format.update(current_obj_format)
         return parent_req_format
-    
-    
+
+
 class WorkingHours(ZscalerObject):
     """
     A class for WorkingHours objects.
@@ -104,24 +97,17 @@ class WorkingHours(ZscalerObject):
         super().__init__(config)
 
         if config:
-            self.end_time = config["endTime"] \
-                if "endTime" in config else None
+            self.end_time = config["endTime"] if "endTime" in config else None
 
-            self.end_time_cron = config["endTimeCron"] \
-                if "endTimeCron" in config else None
+            self.end_time_cron = config["endTimeCron"] if "endTimeCron" in config else None
 
-            self.start_time = config["startTime"] \
-                if "startTime" in config else None
+            self.start_time = config["startTime"] if "startTime" in config else None
 
-            self.start_time_cron = config["startTimeCron"] \
-                if "startTimeCron" in config else None
+            self.start_time_cron = config["startTimeCron"] if "startTimeCron" in config else None
 
-            self.time_zone = config["timeZone"] \
-                if "timeZone" in config else None
+            self.time_zone = config["timeZone"] if "timeZone" in config else None
 
-            self.days = ZscalerCollection.form_list(
-                config["days"] if "days" in config else [], str
-            )
+            self.days = ZscalerCollection.form_list(config["days"] if "days" in config else [], str)
 
         else:
             self.end_time = None
@@ -142,7 +128,7 @@ class WorkingHours(ZscalerObject):
             "startTime": self.start_time,
             "startTimeCron": self.start_time_cron,
             "timeZone": self.time_zone,
-            "days": self.days
+            "days": self.days,
         }
         parent_req_format.update(current_obj_format)
         return parent_req_format

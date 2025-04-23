@@ -41,16 +41,24 @@ class ScimAttributeHeaderAPI(APIClient):
 
         Keyword Args:
             query_params {dict}: Map of query parameters for the request.
+
                 ``[query_params.page]`` {str}: Specifies the page number.
-                ``[query_params.page_size]`` {int}: Specifies the page size. If not provided, the default page size is 20. The max page size is 500.
+
+                ``[query_params.page_size]`` {int}: Specifies the page size.
+                    If not provided, the default page size is 20. The max page size is 500.
+
                 ``[query_params.search]`` {str}: The search string used to support search by features and fields for the API.
 
         Returns:
             list: A list of SCIMAttributeHeader instances.
 
         Examples:
-            >>> for scim_attribute in zpa.scim_attributes.list_attributes_by_idp('99999'):
-            ...    pprint(scim_attribute)
+            >>> attributes_list, _, err = client.zpa.scim_attributes.list_scim_attributes(
+            ...     idp_id=idp_id, query_params={"page": '1', "page_size": '10'}
+            ... )
+            ... if err:
+            ...     print(f"Error listing SCIM Attributes: {err}")
+            ...     return
         """
         http_method = "get".upper()
         api_url = format_url(
@@ -67,23 +75,19 @@ class ScimAttributeHeaderAPI(APIClient):
         headers = {}
 
         # Prepare request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, headers, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
             for item in response.get_results():
-                result.append(SCIMAttributeHeader(
-                    self.form_response_body(item))
-                )
+                result.append(SCIMAttributeHeader(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -112,20 +116,16 @@ class ScimAttributeHeaderAPI(APIClient):
 
         query_params = query_params or {}
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, SCIMAttributeHeader)
+        response, error = self._request_executor.execute(request, SCIMAttributeHeader)
         if error:
             return (None, response, error)
 
         try:
-            result = SCIMAttributeHeader(
-                self.form_response_body(response.get_body())
-            )
+            result = SCIMAttributeHeader(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -140,15 +140,22 @@ class ScimAttributeHeaderAPI(APIClient):
 
         Keyword Args:
             query_params {dict}: Map of query parameters for the request.
+
                 ``[query_params.page]`` {str}: Specifies the page number.
-                ``[query_params.page_size]`` {int}: Specifies the page size. If not provided, the default page size is 20. The max page size is 500.
+
+                ``[query_params.page_size]`` {int}: Specifies the page size.
+                    If not provided, the default page size is 20. The max page size is 500.
+
                 ``[query_params.search]`` {str}: The search string used to support search by features and fields for the API.
 
         Returns:
             list: A list of attribute values for the SCIM attribute.
 
         Examples:
-            >>> values = zpa.scim_attributes.get_values('99999', '88888')
+            >>> fetched_attribute, _, err = client.zpa.scim_attributes.get_scim_values()
+            >>> if err:
+            ...     print(f"Error fetching SCIM Attribute by ID: {err}")
+            ...     return
         """
         http_method = "get".upper()
         api_url = format_url(
@@ -160,19 +167,15 @@ class ScimAttributeHeaderAPI(APIClient):
 
         query_params = query_params or {}
 
-        # Prepare request body and headers
         body = {}
         headers = {}
 
-        # Prepare request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, headers, params=query_params)
+        request, error = self._request_executor.\
+            create_request(http_method, api_url, body, headers, params=query_params)
         if error:
             return (None, None, error)
 
-        # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 

@@ -17,7 +17,6 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 from zscaler.api_client import APIClient
 from zscaler.request_executor import RequestExecutor
 from zscaler.zia.models.shadow_it_report import CloudapplicationsAndTags
-
 from zscaler.utils import format_url, convert_keys
 
 
@@ -67,29 +66,22 @@ class CloudAppsAPI(APIClient):
         """
         )
 
-        # Prepare request headers (no need for body or form in a GET request)
         headers = {}
 
-        # Create the request
-        request, error = self._request_executor.\
-            create_request(http_method, api_url, {}, headers, {}, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, {}, headers, {}, params=query_params)
 
         if error:
             return (None, None, error)
 
-        # Execute the request
         response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
 
-        # Parse the response into RuleLabels instances
         try:
             result = []
             for item in response.get_results():
-                result.append(CloudapplicationsAndTags(
-                    self.form_response_body(item))
-                )
+                result.append(CloudapplicationsAndTags(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
 
@@ -118,22 +110,18 @@ class CloudAppsAPI(APIClient):
         """
         )
 
-        # Prepare request headers (no need for body or form in a GET request)
         headers = {}
 
-        # Create the request
         request, error = self._request_executor.create_request(http_method, api_url, {}, headers, {}, params=query_params)
 
         if error:
             return (None, None, error)
 
-        # Execute the request
         response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
 
-        # Parse the response into RuleLabels instances
         try:
             result = []
             for item in response.get_results():
@@ -185,7 +173,6 @@ class CloudAppsAPI(APIClient):
         """
         )
 
-        # Mapping for user-friendly sanction state values to API-expected values
         sanction_state_mapping = {
             "sanctioned": "SANCTIONED",
             "unsanctioned": "UN_SANCTIONED",

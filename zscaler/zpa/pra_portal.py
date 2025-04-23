@@ -37,14 +37,18 @@ class PRAPortalAPI(APIClient):
 
         Keyword Args:
             query_params {dict}: Map of query parameters for the request.
+
                 ``[query_params.page]`` {str}: Specifies the page number.
-                ``[query_params.page_size]`` {int}: Specifies the page size. If not provided, the default page size is 20. The max page size is 500.
+
+                ``[query_params.page_size]`` {int}: Specifies the page size.
+                    If not provided, the default page size is 20. The max page size is 500.
+
                 ``[query_params.search]`` {str}: The search string used to support search by features and fields for the API.
                 ``[query_params.microtenant_id]`` {str}: ID of the microtenant, if applicable.
 
         Returns:
             :obj:`Tuple`: A list of `PrivilegedRemoteAccessPortal` instances.
-            
+
         Examples:
             >>> portals_list, _, err = client.zpa.pra_portal.list_portals(
             ... query_params={'search': 'portal01', 'page': '1', 'page_size': '100'})
@@ -68,30 +72,23 @@ class PRAPortalAPI(APIClient):
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
             for item in response.get_results():
-                result.append(PrivilegedRemoteAccessPortal(
-                    self.form_response_body(item)))
+                result.append(PrivilegedRemoteAccessPortal(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def get_portal(
-        self,
-        portal_id: str,
-        query_params=None
-    ) -> tuple:
+    def get_portal(self, portal_id: str, query_params=None) -> tuple:
         """
         Provides information on the specified PRA portal.
 
@@ -102,7 +99,7 @@ class PRAPortalAPI(APIClient):
 
         Returns:
             :obj:`Tuple`: PrivilegedRemoteAccessPortal: The corresponding portal object.
-            
+
         Examples:
             >>> fetched_portal, _, err = client.zpa.pra_portal.get_portal('999999')
             ... if err:
@@ -123,20 +120,16 @@ class PRAPortalAPI(APIClient):
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, PrivilegedRemoteAccessPortal)
+        response, error = self._request_executor.execute(request, PrivilegedRemoteAccessPortal)
         if error:
             return (None, response, error)
 
         try:
-            result = PrivilegedRemoteAccessPortal(
-                self.form_response_body(response.get_body())
-            )
+            result = PrivilegedRemoteAccessPortal(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -153,7 +146,7 @@ class PRAPortalAPI(APIClient):
 
         Returns:
             :obj:`Tuple`: PrivilegedRemoteAccessPortal: The newly created portal object.
-            
+
         Examples:
             >>> new_portal, _, err = client.zpa.pra_portal.add_portal(
             ...     name="PRA Portal",
@@ -177,27 +170,21 @@ class PRAPortalAPI(APIClient):
         """
         )
 
-        # Construct the body from kwargs (as a dictionary)
         body = kwargs
 
-        # Check if microtenant_id is set in the body, and use it to set query parameter
         microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body=body, params=params)
+        request, error = self._request_executor.create_request(http_method, api_url, body=body, params=params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, PrivilegedRemoteAccessPortal)
+        response, error = self._request_executor.execute(request, PrivilegedRemoteAccessPortal)
         if error:
             return (None, response, error)
 
         try:
-            result = PrivilegedRemoteAccessPortal(
-                self.form_response_body(response.get_body())
-            )
+            result = PrivilegedRemoteAccessPortal(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -212,7 +199,7 @@ class PRAPortalAPI(APIClient):
 
         Returns:
             :obj:`Tuple`: PrivilegedRemoteAccessPortal: The updated portal object.
-            
+
         Examples:
             >>> update_portal, _, err = client.zpa.pra_portal.update_portal(
             ...     portal_id="999999",
@@ -239,41 +226,29 @@ class PRAPortalAPI(APIClient):
 
         body = {}
 
-        # Update the body with the fields passed in kwargs
         body.update(kwargs)
 
-        # Use get instead of pop to keep microtenant_id in the body
         microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, {}, params)
+        request, error = self._request_executor.create_request(http_method, api_url, body, {}, params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, PrivilegedRemoteAccessPortal)
+        response, error = self._request_executor.execute(request, PrivilegedRemoteAccessPortal)
         if error:
             return (None, response, error)
 
-        # Handle case where no content is returned (204 No Content)
         if response is None:
-            # Return a meaningful result to indicate success
             return (PrivilegedRemoteAccessPortal({"id": portal_id}), None, None)
 
         try:
-            result = PrivilegedRemoteAccessPortal(
-                self.form_response_body(response.get_body())
-            )
+            result = PrivilegedRemoteAccessPortal(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def delete_portal(
-        self,
-        portal_id: str,
-        microtenant_id: str = None
-    ) -> tuple:
+    def delete_portal(self, portal_id: str, microtenant_id: str = None) -> tuple:
         """
         Deletes the specified PRA portal.
 
@@ -283,7 +258,7 @@ class PRAPortalAPI(APIClient):
 
         Returns:
             int: Status code of the delete operation.
-            
+
         Examples:
             >>> _, _, err = client.zpa.pra_portal.delete_portal(
             ...     portal_id='999999'
@@ -301,18 +276,13 @@ class PRAPortalAPI(APIClient):
         """
         )
 
-        # Handle microtenant_id in URL params if provided
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
-        # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 

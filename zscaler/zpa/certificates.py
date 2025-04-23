@@ -39,8 +39,12 @@ class CertificatesAPI(APIClient):
 
         Keyword Args:
             query_params {dict}: Map of query parameters for the request.
+
                 ``[query_params.page]`` {str}: Specifies the page number.
-                ``[query_params.page_size]`` {str}: Specifies the page size. If not provided, the default page size is 20. The max page size is 500.
+
+                ``[query_params.page_size]`` {str}: Specifies the page size.
+                    If not provided, the default page size is 20. The max page size is 500.
+
                 ``[query_params.search]`` {str}: Search string for filtering results.
                 ``[query_params.microtenant_id]`` {str}: The unique identifier of the microtenant of ZPA tenant.
 
@@ -49,7 +53,7 @@ class CertificatesAPI(APIClient):
 
         Examples:
             Retrieve browser certificates with pagination parameters:
-            
+
             >>> cert_list, _, err = client.zpa.certificates.list_certificates(
             ... query_params={'search': 'certificate01', 'page': '1', 'page_size': '100'})
             ... if err:
@@ -72,73 +76,11 @@ class CertificatesAPI(APIClient):
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
-        if error:
-            return (None, response, error)
-
-        try:
-            result = []
-            for item in response.get_results():
-                result.append(Certificate(
-                    self.form_response_body(item))
-                )
-        except Exception as error:
-            return (None, response, error)
-        return (result, response, None)
-
-    def list_issued_certificates(self, query_params=None) -> tuple:
-        """
-        Fetches a list of all issued certificates with pagination support.
-
-        Args:
-            query_params {dict}: Map of query parameters for the request.
-                ``[query_params.page]`` {str}: Specifies the page number.
-                ``[query_params.page_size]`` {str}: Specifies the page size. If not provided, the default page size is 20. The max page size is 500.
-                ``[query_params.search]`` {str}: Search string for filtering results.
-                ``[query_params.microtenant_id]`` {str}: The unique identifier of the microtenant of ZPA tenant.
-
-        Returns:
-            list: A list of `IssuedCertificate` instances.
-
-        Examples:
-            Retrieve browser certificates with pagination parameters:
-            
-            >>> cert_list, _, err = client.zpa.certificates.list_issued_certificates(
-            ... query_params={'search': 'certificate01', 'page': '1', 'page_size': '100'})
-            ... if err:
-            ...     print(f"Error listing certificates: {err}")
-            ...     return
-            ... print(f"Total certificates found: {len(cert_list)}")
-            ... for cert in cert_list:
-            ...     print(cert.as_dict())
-        """
-        http_method = "get".upper()
-        api_url = format_url(f"""
-            {self._zpa_base_endpoint_v2}
-            /clientlessCertificate/issued
-        """)
-
-        query_params = query_params or {}
-        microtenant_id = query_params.get("microtenant_id", None)
-        if microtenant_id:
-            query_params["microtenantId"] = microtenant_id
-
-        body = {}
-        headers = {}
-
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, headers, params=query_params)
-        if error:
-            return (None, None, error)
-
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
@@ -150,11 +92,69 @@ class CertificatesAPI(APIClient):
             return (None, response, error)
         return (result, response, None)
 
-    def get_certificate(
-        self,
-        certificate_id: str,
-        query_params=None
-    ) -> tuple:
+    def list_issued_certificates(self, query_params=None) -> tuple:
+        """
+        Fetches a list of all issued certificates with pagination support.
+
+        Args:
+            query_params {dict}: Map of query parameters for the request.
+
+                ``[query_params.page]`` {str}: Specifies the page number.
+
+                ``[query_params.page_size]`` {str}: Specifies the page size.
+                    If not provided, the default page size is 20. The max page size is 500.
+
+                ``[query_params.search]`` {str}: Search string for filtering results.
+                ``[query_params.microtenant_id]`` {str}: The unique identifier of the microtenant of ZPA tenant.
+
+        Returns:
+            list: A list of `IssuedCertificate` instances.
+
+        Examples:
+            Retrieve browser certificates with pagination parameters:
+
+            >>> cert_list, _, err = client.zpa.certificates.list_issued_certificates(
+            ... query_params={'search': 'certificate01', 'page': '1', 'page_size': '100'})
+            ... if err:
+            ...     print(f"Error listing certificates: {err}")
+            ...     return
+            ... print(f"Total certificates found: {len(cert_list)}")
+            ... for cert in cert_list:
+            ...     print(cert.as_dict())
+        """
+        http_method = "get".upper()
+        api_url = format_url(
+            f"""
+            {self._zpa_base_endpoint_v2}
+            /clientlessCertificate/issued
+        """
+        )
+
+        query_params = query_params or {}
+        microtenant_id = query_params.get("microtenant_id", None)
+        if microtenant_id:
+            query_params["microtenantId"] = microtenant_id
+
+        body = {}
+        headers = {}
+
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
+        if error:
+            return (None, None, error)
+
+        response, error = self._request_executor.execute(request)
+        if error:
+            return (None, response, error)
+
+        try:
+            result = []
+            for item in response.get_results():
+                result.append(Certificate(self.form_response_body(item)))
+        except Exception as error:
+            return (None, response, error)
+        return (result, response, None)
+
+    def get_certificate(self, certificate_id: str, query_params=None) -> tuple:
         """
         Fetches a specific certificate by ID.
 
@@ -165,7 +165,7 @@ class CertificatesAPI(APIClient):
 
         Returns:
             tuple: A tuple containing (Certificate instance, Response, error).
-            
+
         Examples:
             >>> fetched_cert, _, err = client.zpa.certificates.get_certificate('999999')
             ... if err:
@@ -186,21 +186,17 @@ class CertificatesAPI(APIClient):
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, Certificate)
+        response, error = self._request_executor.execute(request, Certificate)
 
         if error:
             return (None, response, error)
 
         try:
-            result = Certificate(
-                self.form_response_body(response.get_body())
-            )
+            result = Certificate(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -214,7 +210,7 @@ class CertificatesAPI(APIClient):
 
         Returns:
             :obj:`Tuple`: The newly created certificate object.
-            
+
         Examples:
             Creating a Cloud browser isolation with the minimum required parameters:
 
@@ -230,39 +226,33 @@ class CertificatesAPI(APIClient):
             ... print(f"BA Certificate added successfully: {added_certificate.as_dict()}")
         """
         http_method = "post".upper()
-        api_url = format_url(f"""
+        api_url = format_url(
+            f"""
             {self._zpa_base_endpoint}
             /certificate
-        """)
+        """
+        )
 
         body = kwargs
 
         microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body=body, params=params)
+        request, error = self._request_executor.create_request(http_method, api_url, body=body, params=params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, Certificate)
+        response, error = self._request_executor.execute(request, Certificate)
         if error:
             return (None, response, error)
 
         try:
-            result = Certificate(
-                self.form_response_body(response.get_body())
-            )
+            result = Certificate(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def update_certificate(
-        self,
-        certificate_id: str,
-        **kwargs
-    ) -> tuple:
+    def update_certificate(self, certificate_id: str, **kwargs) -> tuple:
         """
         Updates a specific certificate.
 
@@ -272,7 +262,7 @@ class CertificatesAPI(APIClient):
 
         Returns:
             :obj:`Tuple`: The updated certificate object.
-            
+
         Examples:
             Creating a Cloud browser isolation with the minimum required parameters:
 
@@ -302,13 +292,11 @@ class CertificatesAPI(APIClient):
         microtenant_id = body.get("microtenant_id", None)
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, {}, params)
+        request, error = self._request_executor.create_request(http_method, api_url, body, {}, params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, Certificate)
+        response, error = self._request_executor.execute(request, Certificate)
         if error:
             return (None, response, error)
 
@@ -318,18 +306,12 @@ class CertificatesAPI(APIClient):
             return (Certificate({"id": certificate_id}), None, None)
 
         try:
-            result = Certificate(
-                self.form_response_body(response.get_body())
-            )
+            result = Certificate(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def delete_certificate(
-        self,
-        certificate_id,
-        microtenant_id: str = None
-    ) -> tuple:
+    def delete_certificate(self, certificate_id, microtenant_id: str = None) -> tuple:
         """
         Deletes a certificate by its ID.
 
@@ -338,7 +320,7 @@ class CertificatesAPI(APIClient):
 
         Returns:
             Response: The response object for the delete operation.
-            
+
         Examples:
             >>> _, _, err = client.zpa.certificates.delete_certificate(
             ...     certificate_id='999999'
@@ -359,13 +341,11 @@ class CertificatesAPI(APIClient):
         params = {"microtenantId": microtenant_id} if microtenant_id else {}
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)

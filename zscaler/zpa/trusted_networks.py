@@ -38,8 +38,12 @@ class TrustedNetworksAPI(APIClient):
 
         Keyword Args:
             query_params {dict}: Map of query parameters for the request.
+
                 ``[query_params.page]`` {str}: Specifies the page number.
-                ``[query_params.page_size]`` {int}: Specifies the page size. If not provided, the default page size is 20. The max page size is 500.
+
+                ``[query_params.page_size]`` {int}: Specifies the page size.
+                    If not provided, the default page size is 20. The max page size is 500.
+
                 ``[query_params.search]`` {str}: The search string used to support search by features and fields for the API.
 
         Returns:
@@ -47,7 +51,7 @@ class TrustedNetworksAPI(APIClient):
 
         Examples:
             Retrieve trusted networks with pagination parameters:
-            
+
             >>> network_list, _, err = client.zpa.trusted_networks.list_trusted_networks(
             ... query_params={'search': 'pra_console01', 'page': '1', 'page_size': '100'})
             ... if err:
@@ -56,9 +60,9 @@ class TrustedNetworksAPI(APIClient):
             ... print(f"Total trusted networks found: {len(network_list)}")
             ... for network in network_list:
             ...     print(network.as_dict())
-            
+
             Retrieve posture profiles udid with:
-            
+
             >>> network_list, _, err = client.zpa.trusted_networks.list_trusted_networks()
             ... if err:
             ...     print(f"Error trusted networks: {err}")
@@ -81,22 +85,18 @@ class TrustedNetworksAPI(APIClient):
         body = {}
         headers = {}
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, headers, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
             for item in response.get_results():
-                result.append(TrustedNetwork(
-                    self.form_response_body(item))
-                )
+                result.append(TrustedNetwork(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -110,7 +110,7 @@ class TrustedNetworksAPI(APIClient):
 
         Returns:
             TrustedNetwork: The corresponding trusted network object.
-            
+
         Examples:
             >>> fetched_network, _, err = client.zpa.trusted_networks.get_network('999999')
             ... if err:
@@ -129,22 +129,18 @@ class TrustedNetworksAPI(APIClient):
         body = {}
         headers = {}
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, headers)
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers)
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, TrustedNetwork)
+        response, error = self._request_executor.execute(request, TrustedNetwork)
 
         if error:
             return (None, response, error)
 
         try:
-            result = TrustedNetwork(
-                self.form_response_body(response.get_body())
-            )
+            result = TrustedNetwork(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)

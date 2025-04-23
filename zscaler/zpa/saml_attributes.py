@@ -38,16 +38,24 @@ class SAMLAttributesAPI(APIClient):
 
         Keyword Args:
             query_params {dict}: Map of query parameters for the request.
+
                 ``[query_params.page]`` {str}: Specifies the page number.
-                ``[query_params.page_size]`` {int}: Specifies the page size. If not provided, the default page size is 20. The max page size is 500.
+
+                ``[query_params.page_size]`` {int}: Specifies the page size.
+                    If not provided, the default page size is 20. The max page size is 500.
+
                 ``[query_params.search]`` {str}: The search string used to support search by features and fields for the API.
 
         Returns:
             list: A list of SAMLAttribute instances.
 
         Examples:
-            >>> for saml_attribute in zpa.saml_attributes.list_attributes():
-            ...    pprint(saml_attribute)
+            >>> attributes_list, _, err = client.zpa.saml_attributes.list_saml_attributes(
+            ...     query_params={"page": '1', "page_size": '10'}
+            ... )
+            ... if err:
+            ...     print(f"Error listing SAML Attributes: {err}")
+            ...     return
         """
         http_method = "get".upper()
         api_url = format_url(
@@ -59,22 +67,18 @@ class SAMLAttributesAPI(APIClient):
 
         query_params = query_params or {}
 
-        request, error = self._request_executor.\
-            create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.\
-            execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
             for item in response.get_results():
-                result.append(SAMLAttribute(
-                    self.form_response_body(item))
-                )
+                result.append(SAMLAttribute(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -88,16 +92,24 @@ class SAMLAttributesAPI(APIClient):
 
         Keyword Args:
             query_params {dict}: Map of query parameters for the request.
+
                 ``[query_params.page]`` {str}: Specifies the page number.
-                ``[query_params.page_size]`` {int}: Specifies the page size. If not provided, the default page size is 20. The max page size is 500.
+
+                ``[query_params.page_size]`` {int}: Specifies the page size.
+                    If not provided, the default page size is 20. The max page size is 500.
+
                 ``[query_params.search]`` {str}: The search string used to support search by features and fields for the API.
 
         Returns:
             list: A list of SAMLAttribute instances.
 
         Examples:
-            >>> for saml_attribute in zpa.saml_attributes.list_attributes_by_idp('99999'):
-            ...    pprint(saml_attribute)
+            >>> attributes_list, _, err = client.zpa.saml_attributes.list_saml_attributes_by_idp(
+            ...     idp_id='15548452', query_params={"page": '1', "page_size": '10'}
+            ... )
+            ... if err:
+            ...     print(f"Error listing SAML Attributes: {err}")
+            ...     return
         """
         http_method = "get".upper()
         api_url = format_url(
@@ -109,22 +121,18 @@ class SAMLAttributesAPI(APIClient):
 
         query_params = query_params or {}
 
-        request, error = self._request_executor.\
-            create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.\
-            execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
             for item in response.get_results():
-                result.append(
-                    SAMLAttribute(self.form_response_body(item))
-                )
+                result.append(SAMLAttribute(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -154,13 +162,11 @@ class SAMLAttributesAPI(APIClient):
 
         query_params = query_params or {}
 
-        request, error = self._request_executor.\
-            create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.\
-            execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 

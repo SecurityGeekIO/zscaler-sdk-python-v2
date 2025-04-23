@@ -39,7 +39,7 @@ class TestAppProtectionCustomControl:
 
         try:
             # Create a new custom control
-            created_control, _, err = client.zpa.inspection.add_custom_control(
+            created_control, _, err = client.zpa.app_protection.add_custom_control(
                 name=control_name,
                 description=control_name,
                 action="PASS",
@@ -73,22 +73,22 @@ class TestAppProtectionCustomControl:
         try:
             if control_id:
                 # Retrieve the created Custom Control by ID
-                retrieved_control, _, err = client.zpa.inspection.get_custom_control(control_id)
+                retrieved_control, _, err = client.zpa.app_protection.get_custom_control(control_id)
                 assert err is None, f"Error fetching Custom Control: {err}"
                 assert retrieved_control.id == control_id
                 assert retrieved_control.name == control_name
 
                 # Update the Custom Control
                 updated_name = control_name + " Updated"
-                _, _, err = client.zpa.inspection.update_custom_control(control_id, name=updated_name)
+                _, _, err = client.zpa.app_protection.update_custom_control(control_id, name=updated_name)
                 assert err is None, f"Error updating Custom Control: {err}"
 
-                updated_group, _, err = client.zpa.inspection.get_custom_control(control_id)
+                updated_group, _, err = client.zpa.app_protection.get_custom_control(control_id)
                 assert err is None, f"Error fetching updated Custom Control: {err}"
                 assert updated_group.name == updated_name
 
                 # List Custom Control and ensure the updated group is in the list
-                control_list, _, err = client.zpa.inspection.list_custom_controls()
+                control_list, _, err = client.zpa.app_protection.list_custom_controls()
                 assert err is None, f"Error listing Custom Control: {err}"
                 assert any(control.id == control_id for control in control_list)
         except Exception as exc:
@@ -98,12 +98,12 @@ class TestAppProtectionCustomControl:
             if control_id:
                 # Update the custom control
                 updated_name = control_name + " Updated"
-                client.zpa.inspection.update_custom_control(control_id, name=updated_name)
-                updated_control = client.zpa.inspection.get_custom_control(control_id)
+                client.zpa.app_protection.update_custom_control(control_id, name=updated_name)
+                updated_control = client.zpa.app_protection.get_custom_control(control_id)
                 assert updated_control.name == updated_name  # Verify update by checking the updated attribute
 
                 # List custom controls and ensure the updated banner is in the list
-                controls_list = client.zpa.inspection.list_custom_controls()
+                controls_list = client.zpa.app_protection.list_custom_controls()
                 assert any(control.id == control_id for control in controls_list)
 
         except Exception as exc:
@@ -113,7 +113,7 @@ class TestAppProtectionCustomControl:
             # Cleanup resources
             if control_id:
                 try:
-                    delete_response, _, err = client.zpa.inspection.delete_custom_control(control_id)
+                    delete_response, _, err = client.zpa.app_protection.delete_custom_control(control_id)
                     assert err is None, f"Error deleting custom control: {err}"
                     # Since a 204 No Content response returns None, we assert that delete_response is None
                     assert delete_response is None, f"Expected None for 204 No Content, got {delete_response}"

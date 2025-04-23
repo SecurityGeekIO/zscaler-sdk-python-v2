@@ -37,18 +37,31 @@ class SCIMGroupsAPI(APIClient):
 
         Keyword Args:
             query_params {dict}: Map of query parameters for the request.
+
                 ``[query_params.page]`` {str}: Specifies the page number.
-                ``[query_params.page_size]`` {int}: Specifies the page size. If not provided, the default page size is 20. The max page size is 500.
+
+                ``[query_params.page_size]`` {int}: Specifies the page size.
+                    If not provided, the default page size is 20. The max page size is 500.
+
                 ``[query_params.search]`` {str}: The search string used to support search by features and fields for the API.
-                ``[query_params.start_time]`` (str, optional): The start of a time range for requesting last updated data (`modified_time`) for the SCIM group.
-                ``[query_params.end_time]`` (str, optional): The end of a time range for requesting last updated data (`modified_time`) for the SCIM group.
+
+                ``[query_params.start_time]`` (str, optional): The start of a time range for requesting
+                    last updated data (`modified_time`) for the SCIM group.
+
+                ``[query_params.end_time]`` (str, optional): The end of a time range for requesting
+                    last updated data (`modified_time`) for the SCIM group.
+
                 ``[query_params.idp_group_id]`` (str, optional): The unique identifier of the IdP group.
                 ``[query_params.scim_user_id]`` (str, optional): The unique identifier for the SCIM user.
                 ``[query_params.scim_user_name]`` (str, optional): The name of the SCIM user.
-                ``[query_params.search]``(str, optional): The search string used to match against features and fields.
-                ``[query_params.sort_order]`` (str, optional): Sort results by ascending (`ASC`) or descending (`DSC`) order. Default: `DSC`.
+
+                ``[query_params.sort_order]`` (str, optional): Sort results by ascending (`ASC`) or descending (`DSC`) order.
+                    Default: `DSC`.
+
                 ``[query_params.sort_by]`` (str, optional): Specifies the field name to sort the results.
-                ``[query_params.all_entries]`` (bool, optional): If `True`, returns all SCIM groups, including deleted ones. Default: `False`.
+
+                ``[query_params.all_entries]`` (bool, optional): If `True`, returns all SCIM groups, including deleted ones.
+                    Default: `False`.
 
         Returns:
             tuple: A tuple containing:
@@ -79,22 +92,18 @@ class SCIMGroupsAPI(APIClient):
         body = {}
         headers = {}
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, headers, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
-    
+
         try:
             result = []
             for item in response.get_results():
-                result.append(SCIMGroup(
-                    self.form_response_body(item))
-                )
+                result.append(SCIMGroup(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -126,20 +135,16 @@ class SCIMGroupsAPI(APIClient):
 
         query_params = query_params or {}
 
-        request, error = self._request_executor.\
-            create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.\
-            execute(request, SCIMGroup)
+        response, error = self._request_executor.execute(request, SCIMGroup)
         if error:
             return (None, response, error)
 
         try:
-            result = SCIMGroup(
-                self.form_response_body(response.get_body())
-            )
+            result = SCIMGroup(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)

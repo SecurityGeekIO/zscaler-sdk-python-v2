@@ -19,6 +19,7 @@ from zscaler.api_client import APIClient
 from zscaler.ztw.models.nw_service import NetworkServices
 from zscaler.utils import format_url
 
+
 class NWServiceAPI(APIClient):
 
     _ztw_base_endpoint = "/ztw/api/v1"
@@ -26,11 +27,8 @@ class NWServiceAPI(APIClient):
     def __init__(self, request_executor):
         super().__init__()
         self._request_executor: RequestExecutor = request_executor
-        
-    def list_network_services(
-        self,
-        query_params=None
-    ) -> tuple:
+
+    def list_network_services(self, query_params=None) -> tuple:
         """
         Lists network services in your organization with pagination.
         A subset of network services  can be returned that match a supported
@@ -39,30 +37,30 @@ class NWServiceAPI(APIClient):
         Args:
             query_params {dict}: Map of query parameters for the request.
                 ``[query_params.protocol]`` {str}: Filter based on the network service protocol.
-                Supported Values: `ICMP`, `TCP`, `UDP`, `GRE`, `ESP`, `OTHER`, 
+                Supported Values: `ICMP`, `TCP`, `UDP`, `GRE`, `ESP`, `OTHER`,
 
                 ``[query_params.search]`` {str}: The search string used to match against a service's name or description attributes.
 
-                ``[query_params.locale]`` (str): When set to one of the supported locales (e.g., ``en-US``, ``de-DE``, 
-                    ``es-ES``, ``fr-FR``, ``ja-JP``, ``zh-CN``), the network application 
+                ``[query_params.locale]`` (str): When set to one of the supported locales (e.g., ``en-US``, ``de-DE``,
+                    ``es-ES``, ``fr-FR``, ``ja-JP``, ``zh-CN``), the network application
                     description is localized into the requested language.
         Returns:
             tuple: A tuple containing (list of network services instances, Response, error)
 
         Examples:
             Gets a list of all network services.
-            
-            >>> service_list, response, error = zia.cloud_firewall.list_network_services():
+
+            >>> service_list, response, error = ztw.nw_service.list_network_services():
             ... if error:
             ...     print(f"Error listing network services: {error}")
             ...     return
             ... print(f"Total network services found: {len(service_list)}")
             ... for service in service_list:
             ...     print(service.as_dict())
-            
+
             Gets a list of all network services.
-            
-            >>> service_list, response, error = zia.cloud_firewall.list_network_services(query_params={"search": 'FTP'}):
+
+            >>> service_list, response, error = ztw.nw_service.list_network_services(query_params={"search": 'FTP'}):
             ... if error:
             ...     print(f"Error listing network services: {error}")
             ...     return
@@ -85,14 +83,12 @@ class NWServiceAPI(APIClient):
         headers = {}
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, headers, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
@@ -100,158 +96,12 @@ class NWServiceAPI(APIClient):
         try:
             result = []
             for item in response.get_results():
-                result.append(NetworkServices(
-                    self.form_response_body(item))
-                )
+                result.append(NetworkServices(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def list_network_services_lite(
-        self,
-        query_params=None,
-    ) -> tuple:
-        """
-        Lists network services name and ID all network services.
-        A subset of network service groups can be returned that match a supported
-        filter expression or query.
-
-        Args:
-            query_params {dict}: Map of query parameters for the request.
-                ``[query_params.search]`` {str}: The search string used to match against a group's name or description attributes.
-
-                ``[query_params.locale]`` (str): When set to one of the supported locales (e.g., ``en-US``, ``de-DE``, 
-                    ``es-ES``, ``fr-FR``, ``ja-JP``, ``zh-CN``), the network application 
-                    description is localized into the requested language.
-
-        Returns:
-            tuple: List of Network Services resource records.
-
-        Examples:
-            Gets a list of all network services.
-            
-            >>> service_list, response, error = zia.cloud_firewall.list_network_services_lite():
-            ... if error:
-            ...     print(f"Error listing network services: {error}")
-            ...     return
-            ... print(f"Total network services found: {len(service_list)}")
-            ... for service in service_list:
-            ...     print(service.as_dict())
-            
-            Gets a list of all network services.
-            
-            >>> service_list, response, error = zia.cloud_firewall.list_network_services_lite(
-                query_params={"search": 'FTP'}):
-            ... if error:
-            ...     print(f"Error listing network services: {error}")
-            ...     return
-            ... print(f"Total services found: {len(service_list)}")
-            ... for service in service_list:
-            ...     print(service.as_dict())
-
-        """
-        http_method = "get".upper()
-        api_url = format_url(
-            f"""
-            {self._ztw_base_endpoint}
-            /networkServices/lite
-        """
-        )
-
-        query_params = query_params or {}
-
-        local_search = query_params.pop("search", None)
-
-        body = {}
-        headers = {}
-
-        request, error = self._request_executor.\
-            create_request(
-            http_method,
-            api_url,
-            body,
-            headers,
-            params=query_params
-        )
-        if error:
-            return (None, None, error)
-
-        response, error = self._request_executor.execute(request)
-        if error:
-            return (None, response, error)
-
-        try:
-            results = []
-            for item in response.get_results():
-                results.append(NetworkServices(
-                    self.form_response_body(item))
-                )
-        except Exception as exc:
-            return (None, response, exc)
-
-        if local_search:
-            lower_search = local_search.lower()
-            results = [
-                r for r in results
-                if lower_search in (r.name.lower() if r.name else "")
-            ]
-
-        return (results, response, None)
-
-    def get_network_service(self, service_id: int) -> tuple:
-        """
-        Returns information for the specified Network Service.
-
-        Args:
-            service_id (str): The unique ID for the Network Service.
-
-        Returns:
-            :obj:`Tuple`: The Network Service resource record.
-
-        Examples:
-            >>> fetched_service, response, error = client.zia.cloud_firewall.get_network_service('18382907')
-            ... if error:
-            ...     print(f"Error fetching service by ID: {error}")
-            ...     return
-            ... print(f"Fetched service by ID: {fetched_service.as_dict()}")
-
-        """
-        http_method = "get".upper()
-        api_url = format_url(
-            f"""
-            {self._ztw_base_endpoint}
-            /networkServices/{service_id}
-        """
-        )
-
-        body = {}
-        headers = {}
-
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, headers)
-
-        if error:
-            return (None, None, error)
-
-        response, error = self._request_executor\
-            .execute(request, NetworkServices)
-
-        if error:
-            return (None, response, error)
-
-        try:
-            result = NetworkServices(
-                self.form_response_body(response.get_body())
-            )
-        except Exception as error:
-            return (None, response, error)
-        return (result, response, None)
-
-    def add_network_service(
-        self,
-        ports: list = None,
-        **kwargs
-    ) -> tuple:
+    def add_network_service(self, ports: list = None, **kwargs) -> tuple:
         """
         Adds a new Network Service.
 
@@ -280,7 +130,7 @@ class NWServiceAPI(APIClient):
         Examples:
             Add Network Service for Microsoft Exchange:
 
-            >>> zia.cloud_firewall.add_network_service('MS LDAP',
+            >>> ztw.nw_service.add_network_service('MS LDAP',
             ...    description='Covers all ports used by MS LDAP',
             ...    ports=[
             ...        ('dest', 'tcp', '389'),
@@ -290,7 +140,7 @@ class NWServiceAPI(APIClient):
 
             Add Network Service designed to match inbound SSH traffic:
 
-            >>> zia.cloud_firewall.add_network_service('Inbound SSH',
+            >>> ztw.nw_service.add_network_service('Inbound SSH',
             ...    description='Inbound SSH',
             ...    ports=[
             ...        ('src', 'tcp', '22'),
@@ -314,8 +164,7 @@ class NWServiceAPI(APIClient):
                     port_dict["end"] = int(items[3])
                 body.setdefault(f"{items[0]}{items[1].title()}Ports", []).append(port_dict)
 
-        request, error = self._request_executor\
-            .create_request(
+        request, error = self._request_executor.create_request(
             method=http_method,
             endpoint=api_url,
             body=body,
@@ -325,26 +174,18 @@ class NWServiceAPI(APIClient):
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, NetworkServices)
+        response, error = self._request_executor.execute(request, NetworkServices)
 
         if error:
             return (None, response, error)
 
         try:
-            result = NetworkServices(
-                self.form_response_body(response.get_body())
-            )
+            result = NetworkServices(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
 
-    def update_network_service(
-        self,
-        service_id: str,
-        ports: list = None,
-        **kwargs
-    ) -> tuple:
+    def update_network_service(self, service_id: str, ports: list = None, **kwargs) -> tuple:
         """
         Updates the specified Network Service.
 
@@ -375,13 +216,13 @@ class NWServiceAPI(APIClient):
         Examples:
             Update the name and description for a Network Service:
 
-            >>> zia.cloud_firewall.update_network_service('959093',
+            >>> ztw.nw_service.update_network_service('959093',
             ...    name='MS Exchange',
             ...    description='All ports related to the MS Exchange service.')
 
             Updates the ports for a Network Service, leaving other fields intact:
 
-            >>> zia.cloud_firewall.update_network_service('959093',
+            >>> ztw.nw_service.update_network_service('959093',
             ...    ports=[
             ...        ('dest', 'tcp', '500', '510')])
 
@@ -405,22 +246,18 @@ class NWServiceAPI(APIClient):
                     port_dict["end"] = int(items[3])
                 body.setdefault(f"{items[0]}{items[1].title()}Ports", []).append(port_dict)
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, {}, {})
+        request, error = self._request_executor.create_request(http_method, api_url, body, {}, {})
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, NetworkServices)
+        response, error = self._request_executor.execute(request, NetworkServices)
 
         if error:
             return (None, response, error)
 
         try:
-            result = NetworkServices(
-                self.form_response_body(response.get_body())
-            )
+            result = NetworkServices(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -436,7 +273,7 @@ class NWServiceAPI(APIClient):
             :obj:`int`: The status code for the operation.
 
         Examples:
-            >>> _, response, error = client.zia.cloud_firewall.delete_network_service(updated_group.id)
+            >>> _, response, error = client.ztw.nw_service.delete_network_service(updated_group.id)
             ... if error:
             ...     print(f"Error deleting group: {error}")
             ... return
@@ -452,13 +289,11 @@ class NWServiceAPI(APIClient):
 
         params = {}
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
         return (None, response, None)

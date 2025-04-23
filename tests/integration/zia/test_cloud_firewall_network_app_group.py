@@ -14,7 +14,6 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
-
 import pytest
 
 from tests.integration.zia.conftest import MockZIAClient
@@ -40,7 +39,7 @@ class TestCloudFirewallNetworkAppGroup:
         group_id = None
 
         try:
-            created_group, _, error = client.zia.cloud_firewall_rules.add_network_app_group(
+            created_group, _, error = client.zia.cloud_firewall.add_network_app_group(
                 name=group_name,
                 description=group_description,
                 network_applications=["APNS", "APPSTORE", "DICT"],
@@ -56,7 +55,7 @@ class TestCloudFirewallNetworkAppGroup:
             # Attempt to retrieve the created network application group by ID
             if group_id:
                 try:
-                    group, _, error = client.zia.cloud_firewall_rules.get_network_app_group(group_id)
+                    group, _, error = client.zia.cloud_firewall.get_network_app_group(group_id)
                     assert error is None, f"Error retrieving network application group group: {error}"
                     assert group is not None, "Retrieved network application group group is None"
                     assert group.id == group_id, "Incorrect network application group group retrieved"
@@ -67,7 +66,7 @@ class TestCloudFirewallNetworkAppGroup:
             if group_id:
                 try:
                     updated_name = "updated-" + generate_random_string()
-                    updated_group, _, error = client.zia.cloud_firewall_rules.update_network_app_group(
+                    updated_group, _, error = client.zia.cloud_firewall.update_network_app_group(
                         group_id=group_id, name=updated_name
                     )
                     assert error is None, f"Error updating network application group group: {error}"
@@ -77,7 +76,7 @@ class TestCloudFirewallNetworkAppGroup:
 
             # Attempt to list network application groups and check if the updated group is in the list
             try:
-                groups, _, error = client.zia.cloud_firewall_rules.list_network_app_groups()
+                groups, _, error = client.zia.cloud_firewall.list_network_app_groups()
                 assert error is None, f"Error listing network application group groups: {error}"
                 assert groups is not None, "network application group group list is None"
                 assert any(g.id == group_id for g in groups), "Updated network application group group not found in list"
@@ -85,13 +84,13 @@ class TestCloudFirewallNetworkAppGroup:
                 errors.append(f"Failed to list network application group groups: {exc}")
 
         finally:
-            cleanup_errors = []
             try:
                 if group_id:
-                    delete_status, _ = client.zia.cloud_firewall_rules.delete_network_app_group(group_id)
-                    assert delete_status == 204, "network application group deletion failed"
+                    _, _, error = client.zia.cloud_firewall.delete_network_app_group(group_id)
+                    assert error is None, f"Error deleting network application group: {error}"
             except Exception as exc:
-                cleanup_errors.append(f"Deleting network application group failed: {exc}")
- 
-            errors.extend(cleanup_errors)               
+                errors.append(f"Deleting network application group failed: {exc}")
 
+        # Final assertion
+        if errors:
+            raise AssertionError(f"Integration Test Errors:\n{chr(10).join(errors)}")

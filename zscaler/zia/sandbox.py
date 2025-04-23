@@ -19,6 +19,7 @@ import time
 from zscaler.request_executor import RequestExecutor
 from zscaler.utils import format_url
 
+
 class CloudSandboxAPI:
     """
     A Client object for the Cloud Sandbox resource.
@@ -44,8 +45,16 @@ class CloudSandboxAPI:
         Examples:
             Submit a file in the current directory called malware.exe to the cloud sandbox, forcing analysis.
 
-            >>> zia.sandbox.submit_file('malware.exe', force=True)
-
+            >>> script_dir = os.path.dirname(os.path.abspath(__file__))
+            ... file_path = os.path.join(script_dir, "test-pe-file.exe")
+            ... force_analysis = True
+            ...     submit, _, err = client.zia.sandbox.submit_file(
+                file_path=file_path, force=force_analysis)
+            >>>     if err:
+            ...         print(f"Error submitting file: {err}")
+            ...     else:
+            ...         print("File submitted successfully!")
+            ...         print(f"Response: {submit}")
         """
         http_method = "post".upper()
         api_url = format_url(
@@ -54,17 +63,14 @@ class CloudSandboxAPI:
             /submit
             """
         )
-        
-        # Read the file content
+
         with open(file_path, "rb") as file:
             file_content = file.read()
 
-        # Prepare request parameters
         params = {
             "force": int(force),
         }
 
-        # Create the request
         request, error = self._request_executor.create_request(
             method=http_method,
             endpoint=api_url,
@@ -77,9 +83,7 @@ class CloudSandboxAPI:
         if error:
             return (None, None, error)
 
-        # Execute the request
-        response, error = self._request_executor.\
-            execute(request)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
@@ -100,6 +104,20 @@ class CloudSandboxAPI:
 
         Returns:
             tuple: A tuple containing the result, response, and error.
+
+        Examples:
+            Submit a file in the current directory called malware.exe to the cloud sandbox, forcing analysis.
+
+            >>> script_dir = os.path.dirname(os.path.abspath(__file__))
+            ... file_path = os.path.join(script_dir, "test-pe-file.exe")
+            ... force_analysis = True
+            ...     submit, _, err = client.zia.sandbox.submit_file_for_inspection(
+                file_path=file_path, force=force_analysis)
+            >>>     if err:
+            ...         print(f"Error submitting file: {err}")
+            ...     else:
+            ...         print("File submitted successfully!")
+            ...         print(f"Response: {submit}")
         """
         http_method = "post".upper()
         api_url = format_url(
@@ -109,16 +127,14 @@ class CloudSandboxAPI:
             """
         )
 
-        # Read the file content
         with open(file_path, "rb") as file:
             file_content = file.read()
         content_type, _ = mimetypes.guess_type(file_path)
         if not content_type:
             content_type = "application/octet-stream"
-        # Prepare request parameters
+
         params = {}
 
-        # Create the request
         request, error = self._request_executor.create_request(
             method=http_method,
             endpoint=api_url,
@@ -131,7 +147,6 @@ class CloudSandboxAPI:
         if error:
             return (None, None, error)
 
-        # Execute the request
         response, error = self._request_executor.execute(request)
 
         if error:
@@ -159,7 +174,6 @@ class CloudSandboxAPI:
             """
         )
 
-        # Create the request
         request, error = self._request_executor.create_request(
             method=http_method,
             endpoint=api_url,
@@ -168,7 +182,6 @@ class CloudSandboxAPI:
         if error:
             return (None, None, error)
 
-        # Execute the request
         response, error = self._request_executor.execute(request)
 
         if error:
@@ -320,14 +333,12 @@ class CloudSandboxAPI:
 
         payload = {"fileHashesToBeBlocked": file_hashes_to_be_blocked}
 
-        request, error = self._request_executor\
-            .create_request(method=http_method, endpoint=api_url, body=payload)
+        request, error = self._request_executor.create_request(method=http_method, endpoint=api_url, body=payload)
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)

@@ -19,6 +19,7 @@ from zscaler.api_client import APIClient
 from zscaler.ztw.models.ip_groups import IPGroups
 from zscaler.utils import format_url
 
+
 class IPGroupsAPI(APIClient):
 
     _zia_base_endpoint = "/ztw/api/v1"
@@ -26,7 +27,7 @@ class IPGroupsAPI(APIClient):
     def __init__(self, request_executor):
         super().__init__()
         self._request_executor: RequestExecutor = request_executor
-        
+
     def list_ip_groups(
         self,
         query_params=None,
@@ -44,17 +45,17 @@ class IPGroupsAPI(APIClient):
         Examples:
             List all IP Groups:
 
-            >>> group_list, response, error = zia.cloud_firewall.list_ip_groups():
+            >>> group_list, response, error = ztw.ip_groups.list_ip_groups():
             ... if error:
             ...     print(f"Error listing IP Groups: {error}")
             ...     return
             ... print(f"Total groups found: {len(group_list)}")
             ... for group in group_list:
             ...     print(group.as_dict())
-            
+
             Gets a list of all IP Groups.
-            
-            >>> group_list, response, error = zia.cloud_firewall.list_ip_groups(query_params={"search": 'Group01'}):
+
+            >>> group_list, response, error = ztw.ip_groups.list_ip_groups(query_params={"search": 'Group01'}):
             ... if error:
             ...     print(f"Error listing IP Groups: {error}")
             ...     return
@@ -78,15 +79,13 @@ class IPGroupsAPI(APIClient):
         headers = {}
 
         # Create the request
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, headers, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
 
         if error:
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
@@ -94,9 +93,7 @@ class IPGroupsAPI(APIClient):
         try:
             result = []
             for item in response.get_results():
-                result.append(IPGroups(
-                    self.form_response_body(item))
-                )
+                result.append(IPGroups(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -119,18 +116,18 @@ class IPGroupsAPI(APIClient):
 
         Examples:
             Gets a list of all IP Groups.
-            
-            >>> group_list, response, error = zia.cloud_firewall.list_ip_groups_lite():
+
+            >>> group_list, response, error = ztw.ip_groups.list_ip_groups_lite():
             ... if error:
             ...     print(f"Error listing IP Groups: {error}")
             ...     return
             ... print(f"Total groups found: {len(group_list)}")
             ... for group in group_list:
             ...     print(group.as_dict())
-            
+
             Gets a list of all IP Groups name and ID.
-            
-            >>> group_list, response, error = zia.cloud_firewall.list_ip_groups_lite(query_params={"search": 'Group01'}):
+
+            >>> group_list, response, error = ztw.ip_groups.list_ip_groups_lite(query_params={"search": 'Group01'}):
             ... if error:
             ...     print(f"Error listing IP Groups: {error}")
             ...     return
@@ -154,14 +151,7 @@ class IPGroupsAPI(APIClient):
         body = {}
         headers = {}
 
-        request, error = self._request_executor.\
-            create_request(
-            http_method,
-            api_url,
-            body,
-            headers,
-            params=query_params
-        )
+        request, error = self._request_executor.create_request(http_method, api_url, body, headers, params=query_params)
         if error:
             return (None, None, error)
 
@@ -172,69 +162,15 @@ class IPGroupsAPI(APIClient):
         try:
             results = []
             for item in response.get_results():
-                results.append(IPGroups(
-                    self.form_response_body(item))
-                )
+                results.append(IPGroups(self.form_response_body(item)))
         except Exception as exc:
             return (None, response, exc)
 
         if local_search:
             lower_search = local_search.lower()
-            results = [
-                r for r in results
-                if lower_search in (r.name.lower() if r.name else "")
-            ]
+            results = [r for r in results if lower_search in (r.name.lower() if r.name else "")]
 
         return (results, response, None)
-
-    def get_ip_group(
-        self,
-        group_id: int,
-    ) -> tuple:
-        """
-        Returns information for the specified IP Group.
-
-        Args:
-            group_id (str): The unique identifier for the source group.
-
-        Examples:
-            >>> fetched_group, response, error = client.zia.cloud_firewall.get_ip_group('18382907')
-            ... if error:
-            ...     print(f"Error fetching group by ID: {error}")
-            ...     return
-            ... print(f"Fetched group by ID: {fetched_group.as_dict()}")
-
-        """
-        http_method = "get".upper()
-        api_url = format_url(
-            f"""
-            {self._zia_base_endpoint}
-            /ipGroups/{group_id}
-        """
-        )
-
-        body = {}
-        headers = {}
-
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, headers)
-
-        if error:
-            return (None, None, error)
-
-        response, error = self._request_executor\
-            .execute(request, IPGroups)
-
-        if error:
-            return (None, response, error)
-
-        try:
-            result = IPGroups(
-                self.form_response_body(response.get_body())
-            )
-        except Exception as error:
-            return (None, response, error)
-        return (result, response, None)
 
     def add_ip_group(self, **kwargs) -> tuple:
         """
@@ -251,8 +187,8 @@ class IPGroupsAPI(APIClient):
         Examples:
             Add a new IP Group:
 
-            >>> zia.cloud_firewall.add_ip_group(name='My IP Group',
-            ...    ip_addresses=['198.51.100.0/24', '192.0.2.1'],
+            >>> ztw.ip_groups.add_ip_group(name='My IP Group',
+            ...    ip_addresses=['198.51.100.0/24'],
             ...    description='Contains the IP addresses for the local network.')
 
         """
@@ -266,8 +202,7 @@ class IPGroupsAPI(APIClient):
 
         body = kwargs
 
-        request, error = self._request_executor\
-            .create_request(
+        request, error = self._request_executor.create_request(
             method=http_method,
             endpoint=api_url,
             body=body,
@@ -277,84 +212,12 @@ class IPGroupsAPI(APIClient):
             return (None, None, error)
 
         # Execute the request
-        response, error = self._request_executor\
-            .execute(request, IPGroups)
+        response, error = self._request_executor.execute(request, IPGroups)
         if error:
             return (None, response, error)
 
         try:
-            result = IPGroups(
-                self.form_response_body(response.get_body())
-            )
-        except Exception as error:
-            return (None, response, error)
-        return (result, response, None)
-
-    def update_ip_group(
-        self,
-        group_id: int, 
-        **kwargs
-    ) -> tuple:
-        """
-        Update an IP Group.
-
-        This method supports updating individual fields in the IP Group resource record.
-
-        Args:
-            group_id (str): The unique ID for the IP Group to update.
-            **kwargs: Optional keyword args.
-
-        Keyword Args:
-            name (str): The name of the IP Group.
-            ip_addresses (list): The list of IP addresses for the IP Group.
-            description (str): Additional information for the IP Group.
-
-        Returns:
-            :obj:`Tuple`: The updated IP Group resource record.
-
-        Examples:
-            Update the name of an IP Group:
-
-            >>> zia.cloud_firewall.update_ip_group('9032674',
-            ...    name='Updated Name')
-
-            Update the description and IP addresses of an IP Group:
-
-            >>> zia.cloud_firewall.update_ip_group('9032674',
-            ...    description='Local subnets, updated on 3 JUL 21'
-            ...    ip_addresses=['192.0.2.0/29', '192.0.2.8/29', '192.0.2.128/25'])
-
-        """
-        http_method = "put".upper()
-        api_url = format_url(
-            f"""
-            {self._zia_base_endpoint}
-            /ipGroups/{group_id}
-        """
-        )
-        body = {}
-
-        body.update(kwargs)
-
-        request, error = self._request_executor\
-            .create_request(
-            method=http_method,
-            endpoint=api_url,
-            body=body,
-        )
-
-        if error:
-            return (None, None, error)
-
-        response, error = self._request_executor\
-            .execute(request, IPGroups)
-        if error:
-            return (None, response, error)
-
-        try:
-            result = IPGroups(
-                self.form_response_body(response.get_body())
-            )
+            result = IPGroups(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -368,9 +231,9 @@ class IPGroupsAPI(APIClient):
 
         Returns:
             :obj:`int`: The status code for the operation.
-            
+
         Examples:
-            >>> _, response, error = client.zia.cloud_firewall.delete_ip_group(updated_group.id)
+            >>> _, response, error = client.ztw.ip_groups.delete_ip_group('545845')
             ... if error:
             ...     print(f"Error deleting group: {error}")
             ... return
@@ -386,13 +249,11 @@ class IPGroupsAPI(APIClient):
 
         params = {}
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
         return (None, response, None)

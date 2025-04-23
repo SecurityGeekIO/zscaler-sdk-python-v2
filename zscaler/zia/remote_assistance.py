@@ -19,6 +19,7 @@ from zscaler.request_executor import RequestExecutor
 from zscaler.zia.models.remoteassistance import RemoteAssistance
 from zscaler.utils import format_url
 
+
 class RemoteAssistanceAPI(APIClient):
     """
     A Client object for the Remote Assistance resource.
@@ -33,19 +34,19 @@ class RemoteAssistanceAPI(APIClient):
     def get_remote_assistance(self) -> tuple:
         """
         Retrieves information about the Remote Assistance option configured in the ZIA Admin Portal.
-        Using this option, you can allow Zscaler Support to access your organization's ZIA Admin Portal 
+        Using this option, you can allow Zscaler Support to access your organization's ZIA Admin Portal
         for a specified time period to troubleshoot issues.
 
         Returns:
             tuple: A tuple containing:
-                - RemoteAssistance: The current advanced settings object.
+                - RemoteAssistance: The current remote assistance settings object.
                 - Response: The raw HTTP response returned by the API.
                 - error: An error message if the request failed; otherwise, `None`.
 
         Examples:
-            Retrieve and print the current advanced settings:
+            Retrieve and print the current remote assistance settings:
 
-            >>> settings, response, err = client.zia.remoteassistance.get_remote_assistance()
+            >>> settings, response, err = client.zia.remote_assistance.get_remote_assistance()
             >>> if err:
             ...     print(f"Error fetching settings: {err}")
             ... else:
@@ -59,16 +60,12 @@ class RemoteAssistanceAPI(APIClient):
         """
         )
 
-        request, error = self._request_executor\
-            .create_request(
-            http_method, api_url
-        )
+        request, error = self._request_executor.create_request(http_method, api_url)
 
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
 
         if error:
             return (None, response, error)
@@ -78,23 +75,24 @@ class RemoteAssistanceAPI(APIClient):
             return (remote_assistance, response, None)
         except Exception as ex:
             return (None, response, ex)
-    
+
     def update_remote_assistance(self, **kwargs) -> tuple:
         """
         Retrieves information about the Remote Assistance option configured in the ZIA Admin Portal.
-        
+
         Using this option, you can allow Zscaler Support to access your organization's ZIA Admin Portal
         for a specified time period to troubleshoot issues.
 
         Args:
-            settings (:obj:`RemoteAssistance`): 
+            settings (:obj:`RemoteAssistance`):
                 An instance of `RemoteAssistance` containing the updated configuration.
 
                 Supported attributes:
-                    - **view_only_until (int)**: The time until when view-only access is granted. Unix time is used.
-                    - **full_access_until (int)**: Indicates whether the user names for single sign-on users should be obfuscated or visible
-                    - **username_obfuscated (bool)**: Indicates whether the user names for single sign-on users should be obfuscated or visible
-                    - **device_info_obfuscate (bool)**: Indicates whether the device information (Device Hostname, Device Name, and Device Owner) should be obfuscated or visible on the Dashboard and Analytics pages
+                    - view_only_until (int): Unix timestamp until which view-only access is allowed
+                    - full_access_until (int): Unix timestamp until which full access is allowed
+                    - username_obfuscated (bool): Whether usernames for SSO users are obfuscated
+                    - device_info_obfuscate (bool): Whether device info (hostname, name, owner) is hidden in UI
+
         Returns:
             tuple: A tuple containing:
                 - RemoteAssistance: The updated remote assistance object.
@@ -104,13 +102,13 @@ class RemoteAssistanceAPI(APIClient):
         Examples:
             Update Remote Assistance by enabling Office365 and adjusting the session timeout:
 
-            >>> settings, response, err = client.zia.remoteassistance.get_remote_assistance()
+            >>> settings, response, err = client.zia.remote_assistance.get_remote_assistance()
             >>> if not err:
             ...     settings.view_only_until = 78415241
             ...     settings.full_access_until = 78415242
             ...     settings.username_obfuscated = True
             ...     settings.device_info_obfuscate = True
-            ...     updated_settings, response, err = client.zia.remoteassistance.update_remote_assistance(settings)
+            ...     updated_settings, response, err = client.zia.remote_assistance.update_remote_assistance(settings)
             ...     if not err:
             ...         print(f"Updated View Only Until: {updated_settings.view_only_until}")
             ...     else:
@@ -126,24 +124,19 @@ class RemoteAssistanceAPI(APIClient):
 
         body = {}
         body.update(kwargs)
-        
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, body, {}, {})
+
+        request, error = self._request_executor.create_request(http_method, api_url, body, {}, {})
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request, RemoteAssistance)
+        response, error = self._request_executor.execute(request, RemoteAssistance)
         if error:
             return (None, response, error)
 
         try:
             if response and hasattr(response, "get_body") and response.get_body():
-                result = RemoteAssistance(
-                    self.form_response_body(response.get_body())
-                )
+                result = RemoteAssistance(self.form_response_body(response.get_body()))
             else:
-                # No content returned (204) – return empty RemoteAssistance object
                 result = RemoteAssistance()
         except Exception as error:
             return (None, response, error)

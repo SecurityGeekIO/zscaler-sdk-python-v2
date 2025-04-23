@@ -19,6 +19,7 @@ from zscaler.oneapi_collection import ZscalerCollection
 from zscaler.zpa.models import application_segment_pra as application_segment_pra
 from zscaler.zpa.models import pra_portal as pra_portal
 
+
 class PrivilegedRemoteAccessConsole(ZscalerObject):
     """
     A class representing the Privileged Remote Access Console.
@@ -27,24 +28,15 @@ class PrivilegedRemoteAccessConsole(ZscalerObject):
     def __init__(self, config=None):
         super().__init__(config)
         if config:
-            self.id = config["id"] \
-                if "id" in config else None
-            self.name = config["name"] \
-                if "name" in config else None
-            self.enabled = config["enabled"] \
-                if "enabled" in config else True
-            self.modified_time = config["modifiedTime"] \
-                if "modifiedTime" in config else None
-            self.creation_time = config["creationTime"] \
-                if "creationTime" in config else None
-            self.modified_by = config["modifiedBy"] \
-                if "modifiedBy" in config else None
-            self.description = config["description"] \
-                if "description" in config else None
-            self.microtenant_id = config["microtenantId"]\
-                if "microtenantId" in config else None
-            self.microtenant_name = config["microtenantName"]\
-                if "microtenantName" in config else "Default"
+            self.id = config["id"] if "id" in config else None
+            self.name = config["name"] if "name" in config else None
+            self.enabled = config["enabled"] if "enabled" in config else True
+            self.modified_time = config["modifiedTime"] if "modifiedTime" in config else None
+            self.creation_time = config["creationTime"] if "creationTime" in config else None
+            self.modified_by = config["modifiedBy"] if "modifiedBy" in config else None
+            self.description = config["description"] if "description" in config else None
+            self.microtenant_id = config["microtenantId"] if "microtenantId" in config else None
+            self.microtenant_name = config["microtenantName"] if "microtenantName" in config else "Default"
 
             if "praApplication" in config:
                 if isinstance(config["praApplication"], PRAApplication):
@@ -55,11 +47,13 @@ class PrivilegedRemoteAccessConsole(ZscalerObject):
                     self.pra_application = None
             else:
                 self.pra_application = None
-                
-            # Handling the nested PRA Portals (list)
-            self.pra_portals = ZscalerCollection.form_list(
-                config["praPortals"], pra_portal.PrivilegedRemoteAccessPortal
-            ) if "praPortals" in config else []
+
+            self.pra_portals = (
+                ZscalerCollection.form_list(config["praPortals"], pra_portal.PrivilegedRemoteAccessPortal)
+                if "praPortals" in config
+                else []
+            )
+
         else:
             self.id = None
             self.name = None
@@ -70,7 +64,7 @@ class PrivilegedRemoteAccessConsole(ZscalerObject):
             self.description = None
             self.pra_application = None
             self.microtenant_id = None
-            self.microtenant_name = "Default"
+            self.microtenant_name = None
             self.pra_portals = []
 
     def request_format(self):
@@ -84,11 +78,11 @@ class PrivilegedRemoteAccessConsole(ZscalerObject):
             "description": self.description,
             "microtenantId": self.microtenant_id,
             "microtenantName": self.microtenant_name,
-            "praApplication": self.pra_application.request_format() \
-                if self.pra_application else None,
+            "praApplication": self.pra_application,
             "praPortals": [portal.request_format() for portal in self.pra_portals],
         }
-        
+
+
 class PRAApplication(ZscalerObject):
     """
     A class for PRAApplication objects.
@@ -104,36 +98,21 @@ class PRAApplication(ZscalerObject):
         super().__init__(config)
 
         if config:
-            self.app_id = config["appId"] \
-                if "appId" in config else None
-            self.application_port = config["applicationPort"] \
-                if "applicationPort" in config else None
-            self.application_protocol = config["applicationProtocol"] \
-                if "applicationProtocol" in config else None
-            self.connection_security = config["connectionSecurity"] \
-                if "connectionSecurity" in config else None
-            self.creation_time = config["creationTime"] \
-                if "creationTime" in config else None
-            self.description = config["description"] \
-                if "description" in config else None
-            self.domain = config["domain"] \
-                if "domain" in config else None
-            self.enabled = config["enabled"] \
-                if "enabled" in config else None
-            self.hidden = config["hidden"] \
-                if "hidden" in config else None
-            self.id = config["id"] \
-                if "id" in config else None
-            self.modified_by = config["modifiedBy"] \
-                if "modifiedBy" in config else None
-            self.modified_time = config["modifiedTime"] \
-                if "modifiedTime" in config else None
-            self.name = config["name"] \
-                if "name" in config else None
-            self.microtenant_id = config["microtenantId"] \
-                if "microtenantId" in config else None
-            self.microtenant_name = config["microtenantName"] \
-                if "microtenantName" in config else None
+            self.app_id = config["appId"] if "appId" in config else None
+            self.application_port = config["applicationPort"] if "applicationPort" in config else None
+            self.application_protocol = config["applicationProtocol"] if "applicationProtocol" in config else None
+            self.connection_security = config["connectionSecurity"] if "connectionSecurity" in config else None
+            self.creation_time = config["creationTime"] if "creationTime" in config else None
+            self.description = config["description"] if "description" in config else None
+            self.domain = config["domain"] if "domain" in config else None
+            self.enabled = config["enabled"] if "enabled" in config else None
+            self.hidden = config["hidden"] if "hidden" in config else None
+            self.id = config["id"] if "id" in config else None
+            self.modified_by = config["modifiedBy"] if "modifiedBy" in config else None
+            self.modified_time = config["modifiedTime"] if "modifiedTime" in config else None
+            self.name = config["name"] if "name" in config else None
+            self.microtenant_id = config["microtenantId"] if "microtenantId" in config else None
+            self.microtenant_name = config["microtenantName"] if "microtenantName" in config else None
         else:
             self.app_id = None
             self.application_port = None
@@ -171,7 +150,7 @@ class PRAApplication(ZscalerObject):
             "modifiedTime": self.modified_time,
             "name": self.name,
             "microtenantId": self.microtenant_id,
-            "microtenantName": self.microtenant_name
+            "microtenantName": self.microtenant_name,
         }
         parent_req_format.update(current_obj_format)
         return parent_req_format

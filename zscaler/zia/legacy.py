@@ -158,7 +158,7 @@ class LegacyZIAClientHelper:
     def is_session_expired(self):
         """
         Checks whether the current session is expired.
-        
+
         Returns:
             bool: True if the session is expired or if the session details are missing.
         """
@@ -418,8 +418,9 @@ class LegacyZIAClientHelper:
 
         """
         from zscaler.zia.cloud_browser_isolation import CBIProfileAPI
+
         return CBIProfileAPI(self.request_executor)
-    
+
     @property
     def cloud_nss(self):
         """
@@ -758,15 +759,25 @@ class LegacyZIAClientHelper:
 
         return WorkloadGroupsAPI(self.request_executor)
 
-    # @property
-    # def system_audit(self):
-    #     """
-    #     The interface object for the :ref:`ZIA Policy Export interface <zia-system_audit>`.
+    @property
+    def system_audit(self):
+        """
+        The interface object for the :ref:`ZIA System Audit interface <zia-system_audit>`.
 
-    #     """
-        # from zscaler.zia.system_audit import SystemAuditReportAPI
+        """
+        from zscaler.zia.system_audit import SystemAuditReportAPI
 
-    #     return SystemAuditReportAPI(self.request_executor)
+        return SystemAuditReportAPI(self.request_executor)
+
+    @property
+    def iot_report(self):
+        """
+        The interface object for the :ref:`ZIA IOT Report interface <zia-iot_report>`.
+
+        """
+        from zscaler.zia.iot_report import IOTReportAPI
+
+        return IOTReportAPI(self.request_executor)
 
     """
     Misc

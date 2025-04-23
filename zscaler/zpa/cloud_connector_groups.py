@@ -37,8 +37,12 @@ class CloudConnectorGroupsAPI(APIClient):
 
         Keyword Args:
             query_params {dict}: Map of query parameters for the request.
+
                 ``[query_params.page]`` {str}: Specifies the page number.
-                ``[query_params.page_size]`` {str}: Specifies the page size. If not provided, the default page size is 20. The max page size is 500.
+
+                ``[query_params.page_size]`` {str}: Specifies the page size.
+                    If not provided, the default page size is 20. The max page size is 500.
+
                 ``[query_params.search]`` {str}: Search string for filtering results.
 
         Returns:
@@ -64,22 +68,18 @@ class CloudConnectorGroupsAPI(APIClient):
 
         query_params = query_params or {}
 
-        request, error = self._request_executor\
-            .create_request(http_method, api_url, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor\
-            .execute(request)
+        response, error = self._request_executor.execute(request)
         if error:
             return (None, response, error)
 
         try:
             result = []
             for item in response.get_results():
-                result.append(CloudConnectorGroup(
-                    self.form_response_body(item))
-                )
+                result.append(CloudConnectorGroup(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)
@@ -113,20 +113,16 @@ class CloudConnectorGroupsAPI(APIClient):
         """
         )
 
-        request, error = self._request_executor.\
-            create_request(http_method, api_url)
+        request, error = self._request_executor.create_request(http_method, api_url)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.\
-            execute(request, CloudConnectorGroup)
+        response, error = self._request_executor.execute(request, CloudConnectorGroup)
         if error:
             return (None, response, error)
 
         try:
-            result = CloudConnectorGroup(
-                self.form_response_body(response.get_body())
-            )
+            result = CloudConnectorGroup(self.form_response_body(response.get_body()))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)

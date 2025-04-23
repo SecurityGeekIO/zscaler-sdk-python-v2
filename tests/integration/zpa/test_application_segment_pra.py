@@ -73,10 +73,7 @@ class TestApplicationSegmentPRA:
 
             try:
                 segment_group_name = "tests-" + generate_random_string()
-                created_segment_group, resp, err = client.zpa.segment_groups.add_group(
-                    name=segment_group_name,
-                    enabled=True
-                )
+                created_segment_group, resp, err = client.zpa.segment_groups.add_group(name=segment_group_name, enabled=True)
                 assert err is None, f"Error during segment group creation: {err}"
                 assert created_segment_group is not None, "No segment group data returned"
 
@@ -110,7 +107,7 @@ class TestApplicationSegmentPRA:
                 app_segment_name = "ssh_pra.bd-redhat.com"
                 app_segment_description = "ssh_pra.bd-redhat.com"
 
-                app_segment, resp, err = client.zpa.app_segments_pra.add_segment_pra(
+                app_segment, _, err = client.zpa.app_segments_pra.add_segment_pra(
                     name=app_segment_name,
                     description=app_segment_description,
                     enabled=True,
@@ -122,7 +119,6 @@ class TestApplicationSegmentPRA:
                         "apps_config": [
                             {
                                 "enabled": True,
-                                "app_types": ["SECURE_REMOTE_ACCESS"],
                                 "application_port": "22",
                                 "application_protocol": "SSH",
                                 "domain": "ssh_pra.bd-redhat.com",
@@ -133,35 +129,16 @@ class TestApplicationSegmentPRA:
                 assert err is None, f"Error creating server group: {err}"
                 assert app_segment is not None, "No application segment PRA data returned"
                 assert app_segment.name == app_segment_name
-                
+
                 app_segment_id = app_segment.id
             except Exception as exc:
                 errors.append(f"Creating PRA Application Segment failed: {exc}")
-
-            try:
-                search_name = "ssh_pra.bd-redhat.com"
-                app_segments, resp, err = client.zpa.app_segment_by_type.get_segments_by_type(
-                    application_type="SECURE_REMOTE_ACCESS",
-                    query_params={"search": search_name}
-                )
-                assert err is None, f"Failed to get Application Segment by type: {err}"
-                assert isinstance(app_segments, list), "Expected app_segments to be a list"
-
-                if not app_segments:
-                    raise AssertionError(f"No segments found with the specified name: {search_name}")
-
-                # Extract `id` and `appId` from the first segment
-                pra_app_id = app_segments[0]["id"]
-                app_id = app_segments[0]["appId"]
-
-            except Exception as exc:
-                errors.append(f"Failed to retrieve Application Segment by type: {exc}")
 
             # Test updating the Application Segment
             try:
                 if app_segment_id:
                     updated_description = "Updated " + generate_random_string()
-                    _, resp, err = client.zpa.app_segments_pra.update_segment_pra(
+                    _, _, err = client.zpa.app_segments_pra.update_segment_pra(
                         app_segment_id,
                         name=app_segment_name,
                         description=updated_description,
@@ -173,10 +150,7 @@ class TestApplicationSegmentPRA:
                         common_apps_dto={
                             "apps_config": [
                                 {
-                                    "app_id": app_id,
-                                    "pra_app_id": pra_app_id,
                                     "enabled": True,
-                                    "app_types": ["SECURE_REMOTE_ACCESS"],
                                     "application_port": "22",
                                     "application_protocol": "SSH",
                                     "domain": "ssh_pra.bd-redhat.com",

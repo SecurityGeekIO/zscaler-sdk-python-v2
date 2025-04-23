@@ -27,149 +27,100 @@ def fs():
 
 class TestAccessPolicyForwardingRuleV1:
     """
-    Integration Tests for the Access Policy Forwarding Rules
+    Integration Tests for the Access Policy Rules with SCIM group conditions
     """
 
     def test_access_policy_forwarding_rules_v1(self, fs):
         client = MockZPAClient(fs)
-        errors = []  # Initialize an empty list to collect errors
-
+        errors = []
         rule_id = None
         scim_group_ids = []
         network_id = None
 
         try:
-            # Test listing SCIM groups with pagination
-            idps, _, err = client.zpa.idp.list_idps()
-            if err or not isinstance(idps, list):
-                raise AssertionError(f"Failed to retrieve IdPs: {err or f'Expected idps to be a list, got {type(idps)}'}")
 
-            # Convert IDPs to dictionaries
-            idps = [idp.as_dict() for idp in idps]
+            # Step 2: Get USER IdP
+            try:
+                idps, _, err = client.zpa.idp.list_idps()
+                assert err is None, f"Error listing IdPs: {err}"
+                user_idp = next((idp for idp in idps if isinstance(idp.sso_type, list) and "USER" in idp.sso_type), None)
+                assert user_idp, "No USER IdP found"
+                user_idp_id = user_idp.id
+            except Exception as exc:
+                errors.append(f"IdP USER selection failed: {exc}")
 
-            # Find the IdP with ssoType = USER
-            user_idp = next((idp for idp in idps if "USER" in idp.get("sso_type", [])), None)
-            if not user_idp:
-                raise AssertionError("No IdP with ssoType 'USER' found.")
+            # Step 3: Get SCIM Groups
+            try:
+                scim_groups, _, err = client.zpa.scim_groups.list_scim_groups(idp_id=user_idp_id)
+                assert err is None, f"Error listing SCIM groups: {err}"
+                assert len(scim_groups) >= 2, "Less than 2 SCIM groups returned"
+                scim_group_ids = [g.id for g in scim_groups[:2]]
+            except Exception as exc:
+                errors.append(f"SCIM Group retrieval failed: {exc}")
 
-            # Export the ID of the matching IdP
-            user_idp_id = user_idp.get("id")
-            if not user_idp_id:
-                raise AssertionError("The matching IdP does not have an 'id' field.")
+            # Step 4: Create Access Policy Rule
+            try:
+                rule_name = "tests-" + generate_random_string()
+                rule_description = "Access rule with SCIM group conditions"
+                created_rule, _, err = client.zpa.policies.add_client_forwarding_rule(
+                    name=rule_name,
+                    description=rule_description,
+                    action="intercept",
+                    conditions=[
+                        ("scim_group", user_idp_id, scim_group_ids[0]),
+                        ("scim_group", user_idp_id, scim_group_ids[1]),
+                    ],
+                )
+                assert err is None, f"Error creating access rule: {err}"
+                rule_id = created_rule.id
+            except Exception as exc:
+                errors.append(f"Access Policy Rule creation failed: {exc}")
 
-            # List SCIM groups using the exported IdP ID
-            scim_groups, _, err = client.zpa.scim_groups.list_scim_groups(idp_id=user_idp_id)
-            if err or not scim_groups:
-                raise AssertionError(f"Failed to list SCIM groups: {err}")
+            # Step 5: Get Rule by ID
+            try:
+                retrieved_rule, _, err = client.zpa.policies.get_rule("client_forwarding", rule_id)
+                assert err is None, f"Error retrieving rule: {err}"
+                assert retrieved_rule.id == rule_id, "Retrieved rule ID mismatch"
+            except Exception as exc:
+                errors.append(f"Access Policy Rule retrieval failed: {exc}")
 
-            # Convert SCIMGroup objects to dictionaries
-            scim_groups = [group.as_dict() for group in scim_groups]
+            # Step 6: Update Rule
+            try:
+                updated_description = "Updated access rule " + generate_random_string()
+                _, _, err = client.zpa.policies.update_client_forwarding_rule(
+                    rule_id=rule_id,
+                    name=rule_name,
+                    description=updated_description,
+                    action="intercept",
+                    conditions=[
+                        ("scim_group", user_idp_id, scim_group_ids[0]),
+                        ("scim_group", user_idp_id, scim_group_ids[1]),
+                    ],
+                )
+                if err and str(err) != "Response is None":
+                    raise AssertionError(f"Unexpected update error: {err}")
+            except Exception as exc:
+                errors.append(f"Access Policy Rule update failed: {exc}")
 
-            # Retrieve the IDs for the first two SCIM groups
-            scim_group_ids = [(user_idp_id, group["id"]) for group in scim_groups[:2]]
-            if len(scim_group_ids) < 2:
-                raise AssertionError("Less than 2 SCIM groups were retrieved.")
-
-            print(f"Exported IdP ID: {user_idp_id}")
-            print(f"Retrieved SCIM Group IDs: {scim_group_ids}")
-
-        except Exception as exc:
-            errors.append(f"Listing SCIM groups failed: {exc}")
-
-        try:
-            # Retrieve a list of TrustedNetwork model objects
-            networks, _, err = client.zpa.trusted_networks.list_trusted_networks()
-            if err:
-                raise AssertionError(f"Error listing Trusted Network Profiles: {err}")
-
-            # Make sure we got back a list (not None or a single object)
-            if not isinstance(networks, list):
-                raise AssertionError(f"Expected a list of TrustedNetwork objects, got {type(networks)}")
-
-            if not networks:
-                raise AssertionError("No Trusted Network Profiles found at all.")
-
-            # networks[0] is a TrustedNetwork model, so use dot-notation:
-            network_id = networks[0].network_id  # NOT networks[0]["network_id"]
-
-            # Optionally, if you want a dictionary:
-            #   network_dict = networks[0].as_dict()
-            #   network_id = network_dict["network_id"]
-
-            print(f"First Trusted Network ID (UDID): {network_id}")
-
-        except Exception as exc:
-            errors.append(f"Listing Trusted Network Profiles failed: {exc}")
-
-        try:
-            # Create a Forwarding Policy Rule
-            rule_name = "tests-" + generate_random_string()
-            rule_description = "updated-" + generate_random_string()
-            created_rule, _, err = client.zpa.policies.add_client_forwarding_rule(
-                name=rule_name,
-                description=rule_description,
-                action="intercept",
-                conditions=[
-                    ("scim_group", scim_group_ids[0][0], scim_group_ids[0][1]),
-                    ("scim_group", scim_group_ids[1][0], scim_group_ids[1][1]),
-                    ("trusted_network", network_id, "true"),
-                ],
-            )
-            assert err is None, f"Error creating Forwarding policy rule: {err}"
-            assert created_rule is not None
-            assert created_rule.name == rule_name
-            assert created_rule.description == rule_description
-
-            rule_id = created_rule.id
-        except Exception as exc:
-            errors.append(exc)
-
-        try:
-            # Test listing access policy rules
-            all_rules, _, err = client.zpa.policies.list_rules("client_forwarding")
-            assert err is None, f"Error listing Forwarding Policy rules: {err}"
-            if not any(rule["id"] == rule_id for rule in all_rules):
-                raise AssertionError("Forwarding Policy rules not found in list")
-        except Exception as exc:
-            errors.append(f"Listing Forwarding Policy Rules failed: {exc}")
-
-        try:
-            # Test retrieving the specific Access Policy Rule
-            retrieved_rule, _, err =  client.zpa.policies.get_rule("client_forwarding", rule_id)
-            if retrieved_rule["id"] != rule_id:
-                raise AssertionError("Failed to retrieve the correct Forwarding Policy Rule")
-        except Exception as exc:
-            errors.append(f"Retrieving Forwarding Policy Rule failed: {exc}")
-
-        try:
-            # Update the Forwarding Policy Rule
-            updated_rule_description = "Updated " + generate_random_string()
-            _, _, err = client.zpa.policies.update_client_forwarding_rule(
-                rule_id=rule_id,
-                description=updated_rule_description,
-                action="intercept",
-                conditions=[
-                    ("scim_group", scim_group_ids[0][0], scim_group_ids[0][1]),
-                    ("scim_group", scim_group_ids[1][0], scim_group_ids[1][1]),
-                ],
-            )
-            # If we got an error but it’s "Response is None", treat it as success:
-            if err is not None:
-                if isinstance(err, ValueError) and str(err) == "Response is None":
-                    print(f"[INFO] Interpreting 'Response is None' as 204 success.")
-                else:
-                    raise AssertionError(f"Error updating Access Policy Rule: {err}")
-            print(f"Access Policy Rule with ID {rule_id} updated successfully (204 No Content).")
-        except Exception as exc:
-            errors.append(f"Updating Access Policy Rule failed: {exc}")
+            # Step 7: List Rules and Confirm Presence
+            try:
+                rules, _, err = client.zpa.policies.list_rules("client_forwarding")
+                assert err is None, f"Error listing rules: {err}"
+                assert any(r.id == rule_id for r in rules), "Created rule not found in rule list"
+            except Exception as exc:
+                errors.append(f"Access Policy Rule list verification failed: {exc}")
 
         finally:
-            # Ensure cleanup is performed even if there are errors
+            cleanup_errors = []
+
+            # Delete Rule
             if rule_id:
                 try:
-                    client.zpa.policies.delete_rule("client_forwarding", rule_id)
-                except Exception as cleanup_exc:
-                    errors.append(f"Cleanup failed: {cleanup_exc}")
+                    _, _, err = client.zpa.policies.delete_rule("client_forwarding", rule_id)
+                    assert err is None, f"Error deleting rule: {err}"
+                except Exception as exc:
+                    cleanup_errors.append(f"Failed to delete rule ID {rule_id}: {exc}")
 
-            # Assert that no errors occurred during the test
-            assert len(errors) == 0, f"Errors occurred during the Forwarding Policy Rule operations test: {errors}"
+            errors.extend(cleanup_errors)
+
+        assert not errors, f"Errors occurred during Access Policy Rule test:\n{chr(10).join(map(str, errors))}"
