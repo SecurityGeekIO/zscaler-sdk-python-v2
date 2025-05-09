@@ -59,7 +59,13 @@ class TestSweepUtility:
     def run_sweep_functions(self):
         sweep_functions = [
             self.sweep_rule_labels,
+            self.sweep_bandwidth_rule,
+            self.sweep_bandwidth_class,
             self.sweep_cloud_firewall_rule,
+            self.sweep_cloud_firewall_ips_rule,
+            self.sweep_cloud_firewall_dns_rule,
+            self.sweep_file_type_control_rule,
+            self.sweep_sandbox_rules,
             self.sweep_cloud_firewall_ip_source_group,
             self.sweep_cloud_firewall_ip_destination_group,
             self.sweep_cloud_firewall_network_app_group,
@@ -74,7 +80,9 @@ class TestSweepUtility:
             self.sweep_dlp_engine,
             self.sweep_dlp_dictionary,
             self.sweep_dlp_template,
-            self.sweep_zpa_gateway,
+            # self.sweep_zpa_gateway,
+            self.sweep_nss_servers,
+            self.sweep_nat_control_policy,
         ]
 
         for func in sweep_functions:
@@ -105,6 +113,56 @@ class TestSweepUtility:
             raise
 
     @suppress_warnings
+    def sweep_bandwidth_class(self):
+        logging.info("Starting to sweep bandwidth class")
+        try:
+            classes, _, error = self.client.zia.bandwidth_classes.list_classes()
+            if error:
+                raise Exception(f"Error listing bandwidth classes: {error}")
+
+            test_classes = [bw for bw in classes if hasattr(bw, "name") and bw.name.startswith("tests-")]
+            logging.info(f"Found {len(test_classes)} bandwidth class to delete.")
+
+            for bdw_class in test_classes:
+                logging.info(
+                    f"sweep_bandwidth_class: Attempting to delete bandwidth class: Name='{bdw_class.name}', ID='{bdw_class.id}'"
+                )
+                _, _, error = self.client.zia.bandwidth_classes.delete_class(class_id=bdw_class["id"])
+                if error:
+                    logging.error(f"Failed to delete bandwidth class ID={bdw_class['id']} — {error}")
+                else:
+                    logging.info(f"Successfully deleted bandwidth class ID={bdw_class['id']}")
+
+        except Exception as e:
+            logging.error(f"An error occurred while sweeping bandwidth classs: {str(e)}")
+            raise
+
+    @suppress_warnings
+    def sweep_bandwidth_rule(self):
+        logging.info("Starting to sweep bandwidth control rule")
+        try:
+            rules, _, error = self.client.zia.bandwidth_control_rules.list_rules()
+            if error:
+                raise Exception(f"Error listing bandwidth control rules: {error}")
+
+            test_rules = [bw for bw in rules if hasattr(bw, "name") and bw.name.startswith("tests-")]
+            logging.info(f"Found {len(test_rules)} bandwidth control rule to delete.")
+
+            for rule in test_rules:
+                logging.info(
+                    f"sweep_cloud_firewall_rule: Attempting to delete bandwidth control rule: Name='{rule.name}', ID='{rule.id}'"
+                )
+                _, _, error = self.client.zia.bandwidth_control_rules.delete_rule(rule_id=rule["id"])
+                if error:
+                    logging.error(f"Failed to delete bandwidth control rule ID={rule['id']} — {error}")
+                else:
+                    logging.info(f"Successfully deleted bandwidth control rule ID={rule['id']}")
+
+        except Exception as e:
+            logging.error(f"An error occurred while sweeping bandwidth control rules: {str(e)}")
+            raise
+
+    @suppress_warnings
     def sweep_cloud_firewall_rule(self):
         logging.info("Starting to sweep cloud firewall rule")
         try:
@@ -127,6 +185,106 @@ class TestSweepUtility:
 
         except Exception as e:
             logging.error(f"An error occurred while sweeping cloud firewall rules: {str(e)}")
+            raise
+
+    @suppress_warnings
+    def sweep_cloud_firewall_ips_rule(self):
+        logging.info("Starting to sweep cloud firewall ips rule")
+        try:
+            rules, _, error = self.client.zia.cloud_firewall_ips.list_rules()
+            if error:
+                raise Exception(f"Error listing cloud firewall ips rules: {error}")
+
+            test_rules = [fw for fw in rules if hasattr(fw, "name") and fw.name.startswith("tests-")]
+            logging.info(f"Found {len(test_rules)} cloud firewall rule ips to delete.")
+
+            for rule in test_rules:
+                logging.info(
+                    f"sweep_cloud_firewall_rule: Attempting to delete cloud firewall ips rule: Name='{rule.name}', ID='{rule.id}'"
+                )
+                _, _, error = self.client.zia.cloud_firewall_ips.delete_rule(rule_id=rule["id"])
+                if error:
+                    logging.error(f"Failed to delete cloud firewall ips rule ID={rule['id']} — {error}")
+                else:
+                    logging.info(f"Successfully deleted cloud firewall ips rule ID={rule['id']}")
+
+        except Exception as e:
+            logging.error(f"An error occurred while sweeping cloud firewall ips rules: {str(e)}")
+            raise
+
+    @suppress_warnings
+    def sweep_cloud_firewall_dns_rule(self):
+        logging.info("Starting to sweep cloud firewall dns rule")
+        try:
+            rules, _, error = self.client.zia.cloud_firewall_dns.list_rules()
+            if error:
+                raise Exception(f"Error listing cloud firewall dns rules: {error}")
+
+            test_rules = [fw for fw in rules if hasattr(fw, "name") and fw.name.startswith("tests-")]
+            logging.info(f"Found {len(test_rules)} cloud firewall dns rule to delete.")
+
+            for rule in test_rules:
+                logging.info(
+                    f"sweep_cloud_firewall_rule: Attempting to delete cloud firewall dns rule: Name='{rule.name}', ID='{rule.id}'"
+                )
+                _, _, error = self.client.zia.cloud_firewall_dns.delete_rule(rule_id=rule["id"])
+                if error:
+                    logging.error(f"Failed to delete cloud firewall dns rule ID={rule['id']} — {error}")
+                else:
+                    logging.info(f"Successfully deleted cloud firewall dns rule ID={rule['id']}")
+
+        except Exception as e:
+            logging.error(f"An error occurred while sweeping cloud firewall dns rules: {str(e)}")
+            raise
+
+    @suppress_warnings
+    def sweep_file_type_control_rule(self):
+        logging.info("Starting to sweep file type control rule")
+        try:
+            rules, _, error = self.client.zia.file_type_control_rule.list_rules()
+            if error:
+                raise Exception(f"Error listing file type control rules: {error}")
+
+            test_rules = [fw for fw in rules if hasattr(fw, "name") and fw.name.startswith("tests-")]
+            logging.info(f"Found {len(test_rules)} file type control rule to delete.")
+
+            for rule in test_rules:
+                logging.info(
+                    f"sweep_cloud_firewall_rule: Attempting to delete file type control rule: Name='{rule.name}', ID='{rule.id}'"
+                )
+                _, _, error = self.client.zia.file_type_control_rule.delete_rule(rule_id=rule["id"])
+                if error:
+                    logging.error(f"Failed to delete file type control rule ID={rule['id']} — {error}")
+                else:
+                    logging.info(f"Successfully deleted file type control rule ID={rule['id']}")
+
+        except Exception as e:
+            logging.error(f"An error occurred while sweeping file type control rules: {str(e)}")
+            raise
+
+    @suppress_warnings
+    def sweep_sandbox_rules(self):
+        logging.info("Starting to sweep sandbox rule")
+        try:
+            rules, _, error = self.client.zia.sandbox_rules.list_rules()
+            if error:
+                raise Exception(f"Error listing sandbox rules: {error}")
+
+            test_rules = [fw for fw in rules if hasattr(fw, "name") and fw.name.startswith("tests-")]
+            logging.info(f"Found {len(test_rules)} sandbox rule to delete.")
+
+            for rule in test_rules:
+                logging.info(
+                    f"sweep_cloud_firewall_rule: Attempting to delete sandbox rule: Name='{rule.name}', ID='{rule.id}'"
+                )
+                _, _, error = self.client.zia.sandbox_rules.delete_rule(rule_id=rule["id"])
+                if error:
+                    logging.error(f"Failed to delete sandbox rule ID={rule['id']} — {error}")
+                else:
+                    logging.info(f"Successfully deleted sandbox rule ID={rule['id']}")
+
+        except Exception as e:
+            logging.error(f"An error occurred while sweeping sandbox rules: {str(e)}")
             raise
 
     @suppress_warnings
@@ -542,27 +700,75 @@ class TestSweepUtility:
             logging.error(f"An error occurred while sweeping dlp notification templates: {str(e)}")
             raise
 
+    # @suppress_warnings
+    # def sweep_zpa_gateway(self):
+    #     logging.info("Starting to sweep zpa gateway")
+    #     try:
+    #         gateways, _, error = self.client.zia.zpa_gateway.list_gateways()
+    #         if error:
+    #             raise Exception(f"Error listing zpa gateways: {error}")
+
+    #         test_gateways = [gw for gw in gateways if hasattr(gw, "name") and gw.name.startswith("tests-")]
+    #         logging.info(f"Found {len(test_gateways)} zpa gateway to delete.")
+
+    #         for gateway in test_gateways:
+    #             logging.info(f"sweep_zpa_gateway: Attempting to delete zpa gateway: Name='{gateway.name}', ID='{gateway.id}'")
+    #             _, _, error = self.client.zia.zpa_gateway.delete_gateway(gateway_id=gateway.id)
+    #             if error:
+    #                 logging.error(f"Failed to delete zpa gateway ID={gateway.id} — {error}")
+    #             else:
+    #                 logging.info(f"Successfully deleted zpa gateway ID={gateway.id}")
+
+    #     except Exception as e:
+    #         logging.error(f"An error occurred while sweeping zpa gateways: {str(e)}")
+    #         raise
+
     @suppress_warnings
-    def sweep_zpa_gateway(self):
-        logging.info("Starting to sweep zpa gateway")
+    def sweep_nss_servers(self):
+        logging.info("Starting to sweep nss servers")
         try:
-            gateways, _, error = self.client.zia.zpa_gateway.list_gateways()
+            nss_servers, _, error = self.client.zia.nss_servers.list_nss_servers()
             if error:
-                raise Exception(f"Error listing zpa gateways: {error}")
+                raise Exception(f"Error listing nss servers: {error}")
 
-            test_gateways = [gw for gw in gateways if hasattr(gw, "name") and gw.name.startswith("tests-")]
-            logging.info(f"Found {len(test_gateways)} zpa gateway to delete.")
+            test_nss = [gw for gw in nss_servers if hasattr(gw, "name") and gw.name.startswith("tests-")]
+            logging.info(f"Found {len(test_nss)} nss server to delete.")
 
-            for gateway in test_gateways:
-                logging.info(f"sweep_zpa_gateway: Attempting to delete zpa gateway: Name='{gateway.name}', ID='{gateway.id}'")
-                _, _, error = self.client.zia.zpa_gateway.delete_gateway(gateway_id=gateway.id)
+            for nss in test_nss:
+                logging.info(f"sweep_nss_servers: Attempting to delete nss server: Name='{nss.name}', ID='{nss.id}'")
+                _, _, error = self.client.zia.nss_servers.delete_nss_server(nss_id=nss.id)
                 if error:
-                    logging.error(f"Failed to delete zpa gateway ID={gateway.id} — {error}")
+                    logging.error(f"Failed to delete nss server ID={nss.id} — {error}")
                 else:
-                    logging.info(f"Successfully deleted zpa gateway ID={gateway.id}")
+                    logging.info(f"Successfully deleted nss server ID={nss.id}")
 
         except Exception as e:
-            logging.error(f"An error occurred while sweeping zpa gateways: {str(e)}")
+            logging.error(f"An error occurred while sweeping nss servers: {str(e)}")
+            raise
+
+    @suppress_warnings
+    def sweep_nat_control_policy(self):
+        logging.info("Starting to sweep nat control rule")
+        try:
+            rules, _, error = self.client.zia.nat_control_policy.list_rules()
+            if error:
+                raise Exception(f"Error listing nat control rules: {error}")
+
+            test_rules = [nat for nat in rules if hasattr(nat, "name") and nat.name.startswith("tests-")]
+            logging.info(f"Found {len(test_rules)} nat control  rule to delete.")
+
+            for rule in test_rules:
+                logging.info(
+                    f"sweep_nat_control_policy: Attempting to delete nat control  rule: Name='{rule.name}', ID='{rule.id}'"
+                )
+                _, _, error = self.client.zia.nat_control_policy.delete_rule(rule_id=rule["id"])
+                if error:
+                    logging.error(f"Failed to delete nat control rule ID={rule['id']} — {error}")
+                else:
+                    logging.info(f"Successfully deleted nat control rule ID={rule['id']}")
+
+        except Exception as e:
+            logging.error(f"An error occurred while sweeping nat control rules: {str(e)}")
             raise
 
 

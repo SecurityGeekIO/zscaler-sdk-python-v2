@@ -14,13 +14,14 @@ from zscaler.zdx.legacy import LegacyZDXClientHelper
 from zscaler.zpa.legacy import LegacyZPAClientHelper
 from zscaler.zia.legacy import LegacyZIAClientHelper
 from zscaler.zwa.legacy import LegacyZWAClientHelper
+# from zscaler.logger import setup_logging  # ✅ Import here
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('zscaler-sdk-python')
 
 
 class RequestExecutor:
     """
-    This class handles all of the requests sent by the Zscaler SDK Client (ZIA, ZPA, ZCC, ZDX, ZWA etc.).
+    This class handles all of the requests sent by the Zscaler SDK Client (ZIA, ZPA, ZCC, ZDX, ZWA, ZTW).
     """
 
     BASE_URL = "https://api.zsapi.net"  # Default base URL for API calls
@@ -74,6 +75,13 @@ class RequestExecutor:
         # Set configuration and cache
         self._config = config
         self._cache = cache
+
+        # ✅ Setup logging based on config flags
+        # log_config = self._config["client"].get("logging", {})
+        # setup_logging(
+        #     enabled=log_config.get("enabled", False),
+        #     verbose=log_config.get("verbose", False),
+        # )
 
         # Retrieve cloud, service, and customer ID (optional)
         self.cloud = self._config["client"].get("cloud", "production").lower()
@@ -323,16 +331,18 @@ class RequestExecutor:
         """
         try:
             request, response, response_body, error = self.fire_request(request)
+            logger.debug(
+                f"[DEBUG] Got response: {response} (status: {getattr(response, 'status_code', 'N/A')}) | error: {error}"
+            )
         except Exception as ex:
             logger.error(f"Exception during HTTP request: {ex}")
             return None, ex
 
-        if not response:
-            logger.error("Response is None after executing request.")
-            return None, ValueError("Response is None")
+        if response is None and error is None:
+            return None, None  # silently return None without manufacturing errors
 
         if error:
-            logger.error(f"Error during request execution: {error}")
+            # logger.error(f"Error during request execution: {error}")
             return None, error
 
         if response.status_code == 204:
@@ -350,7 +360,7 @@ class RequestExecutor:
             return None, ex
 
         if error:
-            logger.error(f"Error in HTTP response: {error}")
+            # logger.error(f"Error in HTTP response: {error}")
             return None, error
 
         logger.debug(f"Successful response from {request['url']}")
@@ -460,14 +470,14 @@ class RequestExecutor:
         req_timeout = self._request_timeout
 
         if req_timeout > 0 and (current_req_start_time - request_start_time) > req_timeout:
-            logger.error("Request Timeout exceeded.")
+            logger.warning("Request Timeout exceeded.")
             return None, None, None, Exception("Request Timeout exceeded.")
 
         response, error = self._http_client.send_request(request)
 
         if error:
-            logger.error(f"Error sending request: {error}")
-            return None, None, None, error
+            # logger.error(f"Error sending request: {error}")
+            return request, response, response.text if response else None, error
 
         headers = response.headers
 
@@ -486,10 +496,14 @@ class RequestExecutor:
         """
         Checks if HTTP status is retryable.
 
-        Retryable statuses: 429, 503, 504
+        Retryable statuses: 408, 409, 412, 429, 500, 502, 503, 504
         """
         return status is not None and status in (
+            HTTPStatus.REQUEST_TIMEOUT,
+            HTTPStatus.CONFLICT,
+            HTTPStatus.PRECONDITION_FAILED,
             HTTPStatus.TOO_MANY_REQUESTS,
+            HTTPStatus.INTERNAL_SERVER_ERROR,
             HTTPStatus.SERVICE_UNAVAILABLE,
             HTTPStatus.GATEWAY_TIMEOUT,
         )

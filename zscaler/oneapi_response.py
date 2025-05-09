@@ -26,8 +26,6 @@ class ZscalerAPIResponse:
         res_details=None,
         response_body="",
         data_type=None,
-        # max_items=None,
-        # max_pages=None,
         all_entries=False,
         sort_order=None,
         sort_by=None,
@@ -80,19 +78,7 @@ class ZscalerAPIResponse:
 
         if res_details:
             content_type = res_details.headers.get("Content-Type", "").lower()
-            #     if "application/json" in content_type:
-            #         self._build_json_response(response_body)
-            #     else:
-            #         # Attempt JSON parse, else store as text
-            #         try:
-            #             self._build_json_response(response_body)
-            #         except json.JSONDecodeError:
-            #             self._body = response_body
-            # else:
-            #     try:
-            #         self._build_json_response(response_body)
-            #     except json.JSONDecodeError:
-            #         self._body = response_body
+
             if "application/json" in content_type:
                 try:
                     self._build_json_response(response_body)
@@ -180,13 +166,21 @@ class ZscalerAPIResponse:
 
         self._items_fetched += len(self._list)
         self._pages_fetched += 1
-
+    
     def get_results(self):
         """
         Returns the current page of results.
         The initial call to the API returns only one page.
         """
         logger.debug("Fetching current page results")
+
+        if self._service_type.upper() == "ZCC" and self._type:
+            try:
+                return [self._type(item) for item in self._list if isinstance(item, dict)]
+            except Exception as wrap_error:
+                logger.warning(f"Failed to wrap results with {self._type}: {wrap_error}")
+                return self._list
+
         return self._list
 
     def has_next(self):
@@ -199,35 +193,28 @@ class ZscalerAPIResponse:
         return self._has_next()
 
     def next(self):
-        """
-        Fetch the next page of results if available.
-
-        Returns:
-            tuple: (list of items, error)
-
-        If there's an error fetching the next page, returns (None, error).
-        If no more pages exist, returns (None, None).
-        """
         if not self.has_next():
-            logger.debug("No further pages to retrieve.")
-            return (None, None)
+            raise StopIteration("No more pages available.")
 
-        next_page_results = self._fetch_next_page()
-        if next_page_results is None:
-            # An error occurred, already logged
-            return (None, ValueError("Error fetching next page."))
-        if not next_page_results:
-            # Empty result means no more data
-            return (None, None)
-        return (next_page_results, None)
+        results, error = self._fetch_next_page()
+        if error:
+            return None, self, error
+        if not results:
+            return None, self, None
+
+        if self._type:
+            try:
+                results = [self._type(item) for item in results if isinstance(item, dict)]
+            except Exception as wrap_error:
+                logger.warning(f"Failed to wrap pagination results with {self._type}: {wrap_error}")
+
+        return results, self, None
+
 
     def _fetch_next_page(self):
-        """
-        Internal method that fetches and returns the next page of results.
-        """
         if not self._has_next():
             logger.debug("No more pages to fetch")
-            return []
+            return [], None
 
         if self._service_type == "ZDX":
             self._params["offset"] = self._next_offset
@@ -248,20 +235,12 @@ class ZscalerAPIResponse:
 
         if error:
             logger.error(f"Error fetching the next page: {error}")
-            return None
+            return None, error
 
-        # Rebuild the response body for the next page
         self._build_json_response(response_body)
-        return self._list
+        return self._list, None
 
     def _has_next(self):
-        # Check max_items or max_pages constraints
-        # if self._max_items is not None and self._items_fetched >= self._max_items:
-        #     logger.debug("Reached max items limit: %d", self._max_items)
-        #     return False
-        # if self._max_pages is not None and self._pages_fetched >= self._max_pages:
-        #     logger.debug("Reached max pages limit: %d", self._max_pages)
-        #     return False
 
         if self._service_type == "ZPA":
             # More pages if current page < total_pages

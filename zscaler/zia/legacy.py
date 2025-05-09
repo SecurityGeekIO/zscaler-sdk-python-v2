@@ -25,10 +25,12 @@ from zscaler import __version__
 from zscaler.cache.cache import Cache
 from zscaler.cache.no_op_cache import NoOpCache
 from zscaler.cache.zscaler_cache import ZscalerCache
-from zscaler.logger import setup_logging
 from zscaler.ratelimiter.ratelimiter import RateLimiter
 from zscaler.user_agent import UserAgent
+from zscaler.errors.zscaler_api_error import ZscalerAPIError
 from zscaler.utils import obfuscate_api_key
+from zscaler.logger import setup_logging
+
 
 # Setup the logger
 setup_logging(logger_name="zscaler-sdk-python")
@@ -412,6 +414,16 @@ class LegacyZIAClientHelper:
         return CloudApplicationsAPI(self.request_executor)
 
     @property
+    def shadow_it_report(self):
+        """
+        The interface object for the :ref:`ZIA Shadow IT Report <zia-shadow_it_report>`.
+
+        """
+        from zscaler.zia.shadow_it_report import ShadowITAPI
+
+        return ShadowITAPI(self.request_executor)
+    
+    @property
     def cloud_browser_isolation(self):
         """
         The interface object for the :ref:`ZIA Cloud Browser Isolation Profile <zia-cloud_browser_isolation>`.
@@ -778,6 +790,157 @@ class LegacyZIAClientHelper:
         from zscaler.zia.iot_report import IOTReportAPI
 
         return IOTReportAPI(self.request_executor)
+
+    @property
+    def mobile_threat_settings(self):
+        """
+        The interface object for the :ref:`ZIA Mobile Threat Settings interface <zia-mobile_threat_settings>`.
+
+        """
+        from zscaler.zia.mobile_threat_settings import MobileAdvancedSettingsAPI
+
+        return MobileAdvancedSettingsAPI(self.request_executor)
+
+    @property
+    def dns_gatways(self):
+        """
+        The interface object for the :ref:`ZIA DNS Gateway interface <zia-dns_gatways>`.
+
+        """
+        from zscaler.zia.dns_gatways import DNSGatewayAPI
+
+        return DNSGatewayAPI(self.request_executor)
+
+    @property
+    def alert_subscriptions(self):
+        """
+        The interface object for the :ref:`ZIA Alert Subscriptions interface <zia-alert_subscriptions>`.
+
+        """
+        from zscaler.zia.alert_subscriptions import AlertSubscriptionsAPI
+
+        return AlertSubscriptionsAPI(self.request_executor)
+
+    @property
+    def bandwidth_classes(self):
+        """
+        The interface object for the :ref:`ZIA Bandwidth Classes interface <zia-bandwidth_classes>`.
+
+        """
+        from zscaler.zia.bandwidth_classes import BandwidthClassesAPI
+
+        return BandwidthClassesAPI(self.request_executor)
+
+    @property
+    def bandwidth_control_rules(self):
+        """
+        The interface object for the :ref:`ZIA Bandwidth Control Rule interface <zia-bandwidth_control_rules>`.
+
+        """
+        from zscaler.zia.bandwidth_control_rules import BandwidthControlRulesAPI
+
+        return BandwidthControlRulesAPI(self.request_executor)
+
+    @property
+    def risk_profiles(self):
+        """
+        The interface object for the :ref:`ZIA Risk Profiles interface <zia-risk_profiles>`.
+
+        """
+        from zscaler.zia.risk_profiles import RiskProfilesAPI
+
+        return RiskProfilesAPI(self.request_executor)
+
+    @property
+    def cloud_app_instances(self):
+        """
+        The interface object for the :ref:`ZIA Cloud Application Instances interface <zia-cloud_app_instances>`.
+
+        """
+        from zscaler.zia.cloud_app_instances import CloudApplicationInstancesAPI
+
+        return CloudApplicationInstancesAPI(self.request_executor)
+
+    @property
+    def tenancy_restriction_profile(self):
+        """
+        The interface object for the :ref:`ZIA Tenant Restriction Profile interface <zia-tenancy_restriction_profile>`.
+
+        """
+        from zscaler.zia.tenancy_restriction_profile import TenancyRestrictionProfileAPI
+
+        return TenancyRestrictionProfileAPI(self.request_executor)
+
+    @property
+    def time_intervals(self):
+        """
+        The interface object for the :ref:`ZIA Time Intervals interface <zia-time_intervals>`.
+
+        """
+        from zscaler.zia.time_intervals import TimeIntervalsAPI
+
+        return TimeIntervalsAPI(self.request_executor)
+
+    @property
+    def ftp_control_policy(self):
+        """
+        The interface object for the :ref:`ZIA FTP Control Policy interface <zia-ftp_control_policy>`.
+
+        """
+        from zscaler.zia.ftp_control_policy import FTPControlPolicyAPI
+
+        return FTPControlPolicyAPI(self.request_executor)
+
+    @property
+    def proxies(self):
+        """
+        The interface object for the :ref:`ZIA Proxies interface <zia-proxies>`.
+
+        """
+        from zscaler.zia.proxies import ProxiesAPI
+
+        return ProxiesAPI(self.request_executor)
+
+    @property
+    def dedicated_ip_gateways(self):
+        """
+        The interface object for the :ref:`ZIA Dedicated IP Gateways interface <zia-dedicated_ip_gateways>`.
+
+        """
+        from zscaler.zia.dedicated_ip_gateways import DedicatedIPGatewaysAPI
+
+        return DedicatedIPGatewaysAPI(self.request_executor)
+
+    @property
+    def traffic_datacenters(self):
+        """
+        The interface object for the :ref:`ZIA Traffic Datacenters interface <zia-traffic_datacenters>`.
+
+        """
+        from zscaler.zia.traffic_datacenters import TrafficDatacentersAPI
+
+        return TrafficDatacentersAPI(self.request_executor)
+
+    @property
+    def nss_servers(self):
+        """
+        The interface object for the :ref:`ZIA NSS Servers interface <zia-nss_servers>`.
+
+        """
+        from zscaler.zia.nss_servers import NssServersAPI
+
+        return NssServersAPI(self.request_executor)
+
+    @property
+    def nat_control_policy(self):
+        """
+        The interface object for the :ref:`ZIA NAT Control Policy interface <zia-nat_control_policy>`.
+
+        """
+
+        from zscaler.zia.nat_control_policy import NatControlPolicyAPI
+
+        return NatControlPolicyAPI(self.request_executor)
 
     """
     Misc

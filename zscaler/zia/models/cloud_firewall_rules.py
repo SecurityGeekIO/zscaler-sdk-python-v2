@@ -100,6 +100,7 @@ class FirewallRule(ZscalerObject):
                 config["departments"] if "departments" in config else [], user_management.Department
             )
             self.groups = ZscalerCollection.form_list(config["groups"] if "groups" in config else [], user_management.Groups)
+
             self.users = ZscalerCollection.form_list(
                 config["users"] if "users" in config else [], user_management.UserManagement
             )
@@ -124,8 +125,13 @@ class FirewallRule(ZscalerObject):
             self.device_groups = ZscalerCollection.form_list(
                 config["deviceGroups"] if "deviceGroups" in config else [], device_groups.DeviceGroups
             )
+
             self.devices = ZscalerCollection.form_list(config["devices"] if "devices" in config else [], devices.Devices)
-            self.labels = ZscalerCollection.form_list(config["labels"] if "labels" in config else [], rule_labels.RuleLabels)
+
+            self.nw_services = ZscalerCollection.form_list(
+                config["labels"] if "labels" in config else [], rule_labels.RuleLabels
+            )
+
             self.nw_services = ZscalerCollection.form_list(
                 config["nwServices"] if "nwServices" in config else [], nw_service.NetworkServices
             )

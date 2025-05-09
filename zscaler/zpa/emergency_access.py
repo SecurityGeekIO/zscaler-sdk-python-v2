@@ -76,12 +76,11 @@ class EmergencyAccessAPI(APIClient):
         if microtenant_id:
             query_params["microtenantId"] = microtenant_id
 
-        request, error = self._request_executor.\
-            create_request(http_method, api_url, body={}, headers={}, params=query_params)
+        request, error = self._request_executor.create_request(http_method, api_url, body={}, headers={}, params=query_params)
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor.execute(request, EmergencyAccessUser)
         if error:
             return (None, response, error)
 

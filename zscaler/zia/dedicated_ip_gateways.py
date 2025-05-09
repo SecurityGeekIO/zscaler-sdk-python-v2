@@ -16,57 +16,67 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from zscaler.api_client import APIClient
 from zscaler.request_executor import RequestExecutor
+from zscaler.zia.models.proxies import Proxies
+from zscaler.zia.models.dedicated_ip_gateways import DedicatedIPGateways
 from zscaler.utils import format_url
 
 
-class AuthDomainsAPI(APIClient):
+class DedicatedIPGatewaysAPI(APIClient):
     """
-    A Client object for the Auth Domains resource.
+    A Client object for the Dedicated IP Gateways resource.
     """
 
-    def __init__(self, request_executor, config):
+    _zia_base_endpoint = "/zia/api/v1"
+
+    def __init__(self, request_executor):
         super().__init__()
         self._request_executor: RequestExecutor = request_executor
-        customer_id = config["client"].get("customerId")
-        self._zpa_base_endpoint = f"/zpa/mgmtconfig/v1/admin/customers/{customer_id}"
 
-    def get_auth_domains(self):
+    def list_dedicated_ip_gw_lite(
+        self,
+        query_params=None,
+    ) -> tuple:
         """
-        Returns information on authentication domains.
+        Retrieves a list of dedicated IP gateways
+
+        Args:
 
         Returns:
-            tuple: A dictionary containing custom ZPA Inspection Control HTTP Methods.
+            tuple: A tuple containing (Proxies instance, Response, error).
 
-        Example:
-            >>> auth_domains, response, error = zpa.authdomains.get_auth_domains()
-            >>> if error is None:
-            ...     pprint(auth_domains)
+        Examples:
+            >>> gw_list, _, error = client.zia.dedicated_ip_gateways.list_dedicated_ip_gw_lite()
+            >>> if error:
+            ...     print(f"Error listing gateways: {error}")
+            ...     return
+            ... print(f"Total gateways found: {len(gw_list)}")
+            ... for gw in gw_list:
+            ...     print(gw.as_dict())
         """
         http_method = "get".upper()
         api_url = format_url(
             f"""
-            {self._zpa_base_endpoint}
-            /authDomains
-            """
+            {self._zia_base_endpoint}
+            /dedicatedIPGateways/lite
+        """
         )
 
         body = {}
         headers = {}
 
-        # Create the request
         request, error = self._request_executor.create_request(http_method, api_url, body, headers)
 
         if error:
             return (None, None, error)
 
-        # Execute the request
-        response, error = self._request_executor.execute(request, str)
-
+        response, error = self._request_executor.execute(request, DedicatedIPGateways)
         if error:
             return (None, response, error)
 
         try:
-            result = response.get_body()
+            result = []
+            for item in response.get_results():
+                result.append(DedicatedIPGateways(self.form_response_body(item)))
         except Exception as error:
             return (None, response, error)
         return (result, response, None)

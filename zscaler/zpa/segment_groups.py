@@ -60,7 +60,7 @@ class SegmentGroupsAPI(APIClient):
             ...     print(group.as_dict())
 
             Fetch segment groups with query_params filters
-            >>> group_list, _, err = client.zpa.pra_portal.list_portals(
+            >>> group_list, _, err = client.zpa.segment_groups.list_groups(
             ... query_params={'search': 'Group01', 'page': '1', 'page_size': '100'})
             ... if err:
             ...     print(f"Error listing segment groups: {err}")
@@ -86,7 +86,7 @@ class SegmentGroupsAPI(APIClient):
         if error:
             return (None, None, error)
 
-        response, error = self._request_executor.execute(request)
+        response, error = self._request_executor.execute(request, SegmentGroup)
         if error:
             return (None, response, error)
 

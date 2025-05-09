@@ -26,7 +26,7 @@ import time
 from typing import Dict, Optional
 from urllib.parse import urlencode
 from datetime import datetime as dt
-
+from functools import wraps
 import pytz
 from box import Box, BoxList
 from dateutil import parser
@@ -75,7 +75,7 @@ reformat_params = [
     ("zpa_application_segment_groups", "zpaApplicationSegmentGroups"),
     ("workload_groups", "workloadGroups"),
     ("service_ids", "services"),
-    # etc. expand as needed
+    ("bandwidth_class_ids", "bandwidthClasses"),
 ]
 
 
@@ -732,6 +732,29 @@ def validate_and_convert_times(start_time_str, end_time_str, time_zone_str):
     return start_epoch, end_epoch
 
 
+def convert_dc_exclusion_times(start_time_str, end_time_str, time_zone_str):
+    """
+    Converts and validates DC exclusion times based on API rules:
+    - start_time must be >= 5 min in the future and within 30 days
+    - end_time must be >= 2 hours after start_time and within 15 days
+    """
+    start_epoch, end_epoch = validate_and_convert_times(start_time_str, end_time_str, time_zone_str)
+
+    now = int(datetime.datetime.now(pytz.timezone(time_zone_str)).timestamp())
+
+    if start_epoch < now + 300:
+        raise ValueError("Start time must be at least 5 minutes in the future.")
+    if start_epoch > now + (30 * 86400):
+        raise ValueError("Start time must be within 30 days from now.")
+
+    if end_epoch < start_epoch + 7200:
+        raise ValueError("End time must be at least 2 hours after start time.")
+    if end_epoch > start_epoch + (15 * 86400):
+        raise ValueError("End time must be within 15 days from start time.")
+
+    return start_epoch, end_epoch
+
+
 def convert_date_time_to_seconds(date_time):
     """
     Takes in a date time string and returns the number of seconds
@@ -760,6 +783,67 @@ def format_url(base_string):
     """
     return "".join([line.strip() for line in base_string.splitlines()])
 
+def zcc_param_mapper(func):
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        query_params = kwargs.get("query_params", {}) or {}
+        mapped_params = {}
+
+        # Normalize and map os_types
+        if "os_type" in query_params:
+            os_raw = query_params["os_type"]
+            if isinstance(os_raw, str):
+                os_raw = [os_raw]  # ✅ support single string value
+
+            mapped = [
+                str(zcc_param_map["os"].get(os_type.lower()))
+                for os_type in os_raw
+                if zcc_param_map["os"].get(os_type.lower())
+            ]
+            if not mapped:
+                raise ValueError("Invalid `os_type` provided.")
+            mapped_params["osType"] = ",".join(mapped)
+
+        # Normalize and map os_types
+        if "device_type" in query_params:
+            os_raw = query_params["device_type"]
+            if isinstance(os_raw, str):
+                os_raw = [os_raw]  # ✅ support single string value
+
+            mapped = [
+                str(zcc_param_map["os"].get(os_type.lower()))
+                for os_type in os_raw
+                if zcc_param_map["os"].get(os_type.lower())
+            ]
+            if not mapped:
+                raise ValueError("Invalid `device_type` provided.")
+            mapped_params["deviceType"] = ",".join(mapped)
+
+        # Normalize and map registration_types
+        if "registration_types" in query_params:
+            reg_raw = query_params["registration_types"]
+            if isinstance(reg_raw, str):
+                reg_raw = [reg_raw]
+
+            mapped = [
+                str(zcc_param_map["reg_type"].get(rt.lower()))
+                for rt in reg_raw
+                if zcc_param_map["reg_type"].get(rt.lower())
+            ]
+            if not mapped:
+                raise ValueError("Invalid `registration_types` provided.")
+            mapped_params["registrationTypes"] = ",".join(mapped)
+
+        # Drop user-friendly keys
+        query_params.pop("os_types", None)
+        query_params.pop("registration_types", None)
+
+        # Merge in mapped numeric params
+        query_params.update(mapped_params)
+        kwargs["query_params"] = query_params
+
+        return func(self, *args, **kwargs)
+    return wrapper
 
 # Maps ZCC numeric os_type and registration_type arguments to a human-readable string
 zcc_param_map = {
